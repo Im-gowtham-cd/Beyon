@@ -1,0 +1,32 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  gap: var(--space-md);
+}
+
+.code {
+  font-size: 6rem;
+  font-weight: var(--font-bold);
+  color: var(--color-primary);
+}
+
+.message {
+  font-size: var(--text-lg);
+  color: var(--color-text-muted);
+}
+
+.link {
+  margin-top: var(--space-md);
+  padding: var(--space-sm) var(--space-lg);
+  background: var(--color-primary);
+  color: white;
+  border-radius: var(--radius-md);
+  transition: background var(--transition-fast);
+}
+
+.link:hover {
+  background: var(--color-primary-hover);
+}

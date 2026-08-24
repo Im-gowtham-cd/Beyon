@@ -1,0 +1,47 @@
+# Beyon Monorepo .gitignore
+
+# Dependencies
+node_modules/
+.pnp.*
+
+# Build output
+dist/
+build/
+out/
+target/
+*.class
+
+# Environment
+.env
+.env.local
+.env.*.local
+.env.production
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Logs
+*.log
+logs/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# TypeScript
+*.tsbuildinfo
+
+# Misc
+*.tgz
+*.tmp
+.cache/
