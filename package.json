@@ -1,0 +1,15 @@
+{
+  "name": "beyon",
+  "private": true,
+  "workspaces": [
+    "web",
+    "desktop",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:web": "bun run --filter @beyon/web dev",
+    "dev:desktop": "bun run --filter @beyon/desktop dev",
+    "build:web": "bun run --filter @beyon/web build",
+    "build:desktop": "bun run --filter @beyon/desktop build"
+  }
+}

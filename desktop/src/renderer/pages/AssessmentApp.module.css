@@ -1,0 +1,45 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: #0a0a0f;
+  color: #e8e8f0;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 24px;
+  background: #12121a;
+  border-bottom: 1px solid #2a2a3a;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: #6c5ce7;
+  color: white;
+  border-radius: 8px;
+  font-weight: 700;
+}
+
+.title {
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.placeholder {
+  color: #8888a0;
+  font-size: 1rem;
+}
