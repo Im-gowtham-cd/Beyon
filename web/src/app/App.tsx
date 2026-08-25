@@ -25,6 +25,9 @@ import { DailyChallengePage } from '../practice/pages/DailyChallengePage';
 import { StatsPage } from '../practice/pages/StatsPage';
 import { LeaderboardPage } from '../practice/pages/LeaderboardPage';
 import { OpportunitiesPage } from '../practice/pages/OpportunitiesPage';
+import { InstitutionDashboard } from '../institution/pages/InstitutionDashboard';
+import { NotificationsPage } from '../notification/pages/NotificationsPage';
+import { MyApplicationsPage } from '../recruitment/pages/MyApplicationsPage';
 import { InstitutionHome } from '../pages/institution/InstitutionHome';
 import { CompanyHome } from '../pages/company/CompanyHome';
 import { AdminHome } from '../pages/admin/AdminHome';
@@ -67,9 +70,12 @@ export function App() {
           <Route path="/stats" element={<StatsPage />} />
           <Route path="/leaderboard" element={<LeaderboardPage />} />
           <Route path="/opportunities" element={<OpportunitiesPage />} />
+          <Route path="/my-applications" element={<MyApplicationsPage />} />
+          <Route path="/notifications" element={<NotificationsPage />} />
         </Route>
         <Route element={<RoleGuard allowedRoles={['INSTITUTION']} />}>
           <Route path="/institution/home" element={<InstitutionHome />} />
+          <Route path="/institution/dashboard" element={<InstitutionDashboard />} />
         </Route>
         <Route element={<RoleGuard allowedRoles={['COMPANY']} />}>
           <Route path="/company/home" element={<CompanyHome />} />

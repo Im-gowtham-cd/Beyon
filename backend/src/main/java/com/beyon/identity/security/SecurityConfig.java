@@ -48,6 +48,10 @@ public class SecurityConfig {
                 .requestMatchers("/api/v1/daily-challenge/**").authenticated()
                 .requestMatchers("/api/v1/gamification/**").authenticated()
                 .requestMatchers("/api/v1/opportunities/**").authenticated()
+                .requestMatchers("/api/v1/institution/**").authenticated()
+                .requestMatchers("/api/v1/follows/**").authenticated()
+                .requestMatchers("/api/v1/notifications/**").authenticated()
+                .requestMatchers("/api/v1/recruitment/**").authenticated()
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);

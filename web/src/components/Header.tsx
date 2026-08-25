@@ -41,6 +41,8 @@ export function Header() {
             {user?.role === 'STUDENT' && <Link to="/student/skills" className={styles.navLink}>Skills</Link>}
             {user?.role === 'STUDENT' && <Link to="/practice" className={styles.navLink}>Practice</Link>}
             {user?.role === 'STUDENT' && <Link to="/daily-challenge" className={styles.navLink}>Challenge</Link>}
+            {user?.role === 'STUDENT' && <Link to="/my-applications" className={styles.navLink}>Applications</Link>}
+            <Link to="/notifications" className={styles.navLink}>🔔</Link>
             <div className={styles.menuContainer} ref={menuRef}>
               <button className={styles.avatarBtn} onClick={() => setMenuOpen(!menuOpen)}>
                 <span className={styles.avatar}>{user?.name?.charAt(0).toUpperCase()}</span>
