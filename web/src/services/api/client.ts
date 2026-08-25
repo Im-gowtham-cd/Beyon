@@ -13,12 +13,16 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
     url += `?${searchParams.toString()}`;
   }
 
+  const token = localStorage.getItem('beyon_token');
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...fetchOptions.headers as Record<string, string>,
+  };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+
   const response = await fetch(url, {
-    headers: {
-      'Content-Type': 'application/json',
-      ...fetchOptions.headers,
-    },
     ...fetchOptions,
+    headers,
   });
 
   if (!response.ok) {
@@ -26,7 +30,8 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
     throw new ApiError(response.status, error.error?.code || 'UNKNOWN', error.error?.message || response.statusText);
   }
 
-  return response.json();
+  const json = await response.json();
+  return json.data !== undefined ? json.data : json;
 }
 
 export const api = {
