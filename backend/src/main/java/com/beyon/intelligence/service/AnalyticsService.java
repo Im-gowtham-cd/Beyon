@@ -1,108 +1,86 @@
 package com.beyon.intelligence.service;
 
-import com.beyon.intelligence.model.*;
-import com.beyon.intelligence.repository.*;
-import com.beyon.recruitment.repository.RecruitmentApplicationRepository;
-import com.beyon.assessment.repository.AssessmentSessionRepository;
-import com.beyon.practice.repository.StudentPracticeStatsRepository;
+import com.beyon.intelligence.model.AnalyticsEvent;
+import com.beyon.intelligence.repository.AnalyticsEventRepository;
+import com.beyon.platform.service.CacheService;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.time.LocalDate;
+
+import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
 public class AnalyticsService {
+    private final AnalyticsEventRepository eventRepo;
+    private final CacheService cacheService;
+    private final ObjectMapper mapper;
 
-    private final InstitutionAnalyticsSnapshotRepository instAnalyticsRepo;
-    private final CompanyAnalyticsSnapshotRepository compAnalyticsRepo;
-    private final StudentSkillIntelligenceRepository skillIntelRepo;
-    private final MatchingScoreRepository matchingRepo;
-    private final com.beyon.profile.repository.StudentProfileRepository studentProfileRepo;
-
-    public AnalyticsService(InstitutionAnalyticsSnapshotRepository instAnalyticsRepo, CompanyAnalyticsSnapshotRepository compAnalyticsRepo,
-                            StudentSkillIntelligenceRepository skillIntelRepo, MatchingScoreRepository matchingRepo,
-                            com.beyon.profile.repository.StudentProfileRepository studentProfileRepo) {
-        this.instAnalyticsRepo = instAnalyticsRepo;
-        this.compAnalyticsRepo = compAnalyticsRepo;
-        this.skillIntelRepo = skillIntelRepo;
-        this.matchingRepo = matchingRepo;
-        this.studentProfileRepo = studentProfileRepo;
+    public AnalyticsService(AnalyticsEventRepository eventRepo, CacheService cacheService, ObjectMapper mapper) {
+        this.eventRepo = eventRepo;
+        this.cacheService = cacheService;
+        this.mapper = mapper;
     }
 
-    public InstitutionAnalyticsSnapshot generateInstitutionAnalytics(UUID institutionId) {
-        InstitutionAnalyticsSnapshot snap = instAnalyticsRepo.findByInstitutionIdAndSnapshotDate(institutionId, LocalDate.now())
-                .orElseGet(() -> {
-                    InstitutionAnalyticsSnapshot s = new InstitutionAnalyticsSnapshot();
-                    s.setInstitutionId(institutionId);
-                    return s;
-                });
-
-        long totalStudents = 1250;
-        long placementSeeking = 920;
-        long placed = 684;
-        BigDecimal rate = placementSeeking > 0
-            ? BigDecimal.valueOf(placed).multiply(new BigDecimal("100")).divide(BigDecimal.valueOf(placementSeeking), 1, RoundingMode.HALF_UP)
-            : BigDecimal.ZERO;
-
-        snap.setTotalStudents((int) totalStudents);
-        snap.setPlacementSeeking((int) placementSeeking);
-        snap.setPlaced((int) placed);
-        snap.setPlacementRate(rate);
-        snap.setAveragePackage(new BigDecimal("7.20"));
-        snap.setHighestPackage(new BigDecimal("28.00"));
-        snap.setCompaniesVisited(45);
-        snap.setSnapshotDate(LocalDate.now());
-
-        return instAnalyticsRepo.save(snap);
+    public void trackEvent(UUID userId, String userRole, String eventType, Map<String, Object> eventData, String page) {
+        AnalyticsEvent event = new AnalyticsEvent();
+        event.setUserId(userId);
+        event.setUserRole(userRole);
+        event.setEventType(eventType);
+        if (eventData != null) {
+            try { event.setEventData(mapper.writeValueAsString(eventData)); } catch (Exception ignored) {}
+        }
+        event.setPage(page);
+        eventRepo.save(event);
     }
 
-    public InstitutionAnalyticsSnapshot getLatestInstitutionAnalytics(UUID institutionId) {
-        return instAnalyticsRepo.findByInstitutionIdOrderBySnapshotDateDesc(institutionId).stream()
-            .findFirst().orElseGet(() -> generateInstitutionAnalytics(institutionId));
+    public Map<String, Object> getStudentAnalytics(UUID userId) {
+        String cacheKey = "analytics:student:" + userId;
+        return cacheService.getOrLoad(cacheKey, Map.class, Duration.ofMinutes(10), () -> {
+            Map<String, Object> analytics = new LinkedHashMap<>();
+            List<Object[]> eventsByType = eventRepo.countEventsByTypeForUser(userId);
+            analytics.put("eventsByType", eventsByType.stream().collect(Collectors.toMap(r -> r[0], r -> r[1])));
+            analytics.put("totalEvents", eventsByType.stream().mapToLong(r -> (Long) r[1]).sum());
+            analytics.put("questionsStarted", eventRepo.countByUserIdAndEventType(userId, "QUESTION_STARTED"));
+            analytics.put("questionsSolved", eventRepo.countByUserIdAndEventType(userId, "QUESTION_SOLVED"));
+            analytics.put("coinsEarned", eventRepo.countByUserIdAndEventType(userId, "COINS_EARNED"));
+            analytics.put("assessmentsCompleted", eventRepo.countByUserIdAndEventType(userId, "ASSESSMENT_COMPLETED"));
+            analytics.put("opportunitiesApplied", eventRepo.countByUserIdAndEventType(userId, "OPPORTUNITY_APPLIED"));
+            return analytics;
+        });
     }
 
-    public CompanyAnalyticsSnapshot generateCompanyAnalytics(UUID companyUserId) {
-        CompanyAnalyticsSnapshot snap = compAnalyticsRepo.findByCompanyUserIdAndSnapshotDate(companyUserId, LocalDate.now())
-                .orElseGet(() -> {
-                    CompanyAnalyticsSnapshot s = new CompanyAnalyticsSnapshot();
-                    s.setCompanyUserId(companyUserId);
-                    return s;
-                });
-
-        snap.setTotalApplications(2450);
-        snap.setTotalAssessments(1820);
-        snap.setTotalShortlisted(320);
-        snap.setTotalInterviews(120);
-        snap.setTotalSelected(28);
-        snap.setAvgAssessmentScore(new BigDecimal("72.5"));
-        snap.setAvgTimeToHireDays(14);
-        BigDecimal conversion = BigDecimal.valueOf(28).multiply(new BigDecimal("100"))
-            .divide(BigDecimal.valueOf(2450), 1, RoundingMode.HALF_UP);
-        snap.setConversionRate(conversion);
-        snap.setSnapshotDate(LocalDate.now());
-
-        return compAnalyticsRepo.save(snap);
+    public Map<String, Object> getInstitutionAnalytics(UUID institutionId) {
+        return getGenericAnalytics("institution", institutionId);
     }
 
-    public CompanyAnalyticsSnapshot getLatestCompanyAnalytics(UUID companyUserId) {
-        return compAnalyticsRepo.findByCompanyUserIdOrderBySnapshotDateDesc(companyUserId).stream()
-            .findFirst().orElseGet(() -> generateCompanyAnalytics(companyUserId));
+    public Map<String, Object> getCompanyAnalytics(UUID companyId) {
+        return getGenericAnalytics("company", companyId);
     }
 
-    public Map<String, Object> getSkillDemandAnalytics(UUID institutionId) {
-        List<StudentSkillIntelligence> allSkills = skillIntelRepo.findAll();
-        Map<String, Long> demand = allSkills.stream()
-            .filter(s -> s.getConfidenceScore().compareTo(new BigDecimal("50")) > 0)
-            .collect(java.util.stream.Collectors.groupingBy(
-                s -> String.valueOf(s.getSkillId()), java.util.stream.Collectors.counting()));
+    public Map<String, Object> getAdminAnalytics() {
+        String cacheKey = "analytics:admin:dashboard";
+        return cacheService.getOrLoad(cacheKey, Map.class, Duration.ofMinutes(5), () -> {
+            Map<String, Object> analytics = new LinkedHashMap<>();
+            analytics.put("totalEvents", eventRepo.count());
+            analytics.put("eventsByType", eventRepo.countAllEventsByType().stream()
+                .collect(Collectors.toMap(r -> r[0], r -> r[1])));
+            analytics.put("eventsByRole", eventRepo.countEventsByRole().stream()
+                .collect(Collectors.toMap(r -> r[0], r -> r[1])));
+            analytics.put("eventsByDay", eventRepo.countEventsByDay(OffsetDateTime.now().minusDays(30)));
+            return analytics;
+        });
+    }
 
-        Map<String, Object> result = new LinkedHashMap<>();
-        result.put("topSkills", demand);
-        result.put("totalSkillsTracked", demand.size());
-        return result;
+    private Map<String, Object> getGenericAnalytics(String type, UUID entityId) {
+        Map<String, Object> analytics = new LinkedHashMap<>();
+        analytics.put("totalEvents", eventRepo.count());
+        analytics.put("eventsByType", eventRepo.countAllEventsByType().stream()
+            .collect(Collectors.toMap(r -> r[0], r -> r[1])));
+        return analytics;
     }
 }

@@ -1,7 +1,8 @@
 package com.beyon.intelligence.controller;
 
-import com.beyon.intelligence.service.AnalyticsService;
+import com.beyon.common.response.ApiResponse;
 import com.beyon.identity.security.JwtUtil;
+import com.beyon.intelligence.service.AnalyticsService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,33 +19,32 @@ public class AnalyticsController {
         this.jwtUtil = jwtUtil;
     }
 
-    @GetMapping("/institution")
-    public ResponseEntity<?> getInstitutionAnalytics(HttpServletRequest request) {
+    @PostMapping("/events")
+    public ResponseEntity<?> trackEvent(@RequestBody Map<String, Object> body, HttpServletRequest request) {
         UUID userId = extractUserId(request);
-        return ResponseEntity.ok(analyticsService.getLatestInstitutionAnalytics(userId));
+        analyticsService.trackEvent(userId, (String) body.get("userRole"), (String) body.get("eventType"),
+            (Map<String, Object>) body.get("eventData"), (String) body.get("page"));
+        return ResponseEntity.ok(ApiResponse.ok(null, "Event tracked"));
     }
 
-    @PostMapping("/institution/generate")
-    public ResponseEntity<?> generateInstitutionAnalytics(HttpServletRequest request) {
-        UUID userId = extractUserId(request);
-        return ResponseEntity.ok(analyticsService.generateInstitutionAnalytics(userId));
+    @GetMapping("/student")
+    public ResponseEntity<?> getStudentAnalytics(HttpServletRequest request) {
+        return ResponseEntity.ok(ApiResponse.ok(analyticsService.getStudentAnalytics(extractUserId(request))));
     }
 
-    @GetMapping("/company")
-    public ResponseEntity<?> getCompanyAnalytics(HttpServletRequest request) {
-        UUID userId = extractUserId(request);
-        return ResponseEntity.ok(analyticsService.getLatestCompanyAnalytics(userId));
+    @GetMapping("/institution/{id}")
+    public ResponseEntity<?> getInstitutionAnalytics(@PathVariable UUID id) {
+        return ResponseEntity.ok(ApiResponse.ok(analyticsService.getInstitutionAnalytics(id)));
     }
 
-    @PostMapping("/company/generate")
-    public ResponseEntity<?> generateCompanyAnalytics(HttpServletRequest request) {
-        UUID userId = extractUserId(request);
-        return ResponseEntity.ok(analyticsService.generateCompanyAnalytics(userId));
+    @GetMapping("/company/{id}")
+    public ResponseEntity<?> getCompanyAnalytics(@PathVariable UUID id) {
+        return ResponseEntity.ok(ApiResponse.ok(analyticsService.getCompanyAnalytics(id)));
     }
 
-    @GetMapping("/skill-demand")
-    public ResponseEntity<?> getSkillDemand(@RequestParam(required = false) UUID institutionId) {
-        return ResponseEntity.ok(analyticsService.getSkillDemandAnalytics(institutionId));
+    @GetMapping("/admin")
+    public ResponseEntity<?> getAdminAnalytics() {
+        return ResponseEntity.ok(ApiResponse.ok(analyticsService.getAdminAnalytics()));
     }
 
     private UUID extractUserId(HttpServletRequest request) {

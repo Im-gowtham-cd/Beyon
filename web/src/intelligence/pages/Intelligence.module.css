@@ -148,3 +148,50 @@
 .pipelineStats { display: flex; gap: 1rem; font-size: 0.8rem; }
 .pipelineDrop { color: #dc2626; }
 .pipelineConv { color: #6b7280; }
+
+.recommendationList { display: flex; flex-direction: column; gap: 0.75rem; }
+.recommendationCard { display: flex; align-items: center; gap: 1rem; background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 1.25rem; }
+.recCompleted { opacity: 0.6; }
+.recRank { font-size: 1.25rem; font-weight: 700; color: #6366f1; min-width: 40px; text-align: center; }
+.recContent { flex: 1; }
+.recHeader { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem; }
+.recType { font-size: 0.8rem; color: #6366f1; font-weight: 500; }
+.recScore { font-size: 0.85rem; font-weight: 600; color: #059669; }
+.recSkill { font-weight: 600; color: #0a0a0f; margin-bottom: 0.25rem; }
+.recReason { font-size: 0.8rem; color: #6b7280; line-height: 1.4; }
+.recAction { padding: 0.4rem 1rem; background: #6366f1; color: #fff; border: none; border-radius: 6px; font-size: 0.8rem; cursor: pointer; white-space: nowrap; }
+.recDoneBadge { font-size: 0.8rem; color: #16a34a; font-weight: 500; }
+
+.pathGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem; }
+.pathCard { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 1.5rem; cursor: pointer; transition: box-shadow 0.2s; }
+.pathCard:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
+.pathTitle { font-weight: 600; font-size: 1.1rem; color: #0a0a0f; margin-bottom: 0.5rem; }
+.pathDesc { font-size: 0.85rem; color: #6b7280; margin-bottom: 1rem; }
+.backBtn { background: none; border: none; color: #6366f1; cursor: pointer; font-size: 0.9rem; margin-bottom: 1rem; font-weight: 500; }
+
+.roadmapTimeline { display: flex; flex-direction: column; gap: 0; }
+.roadmapItem { display: flex; gap: 1rem; padding: 1.25rem; border-left: 3px solid #e5e7eb; margin-left: 0.5rem; }
+.roadmapIcon { font-size: 1.25rem; flex-shrink: 0; margin-top: 0.1rem; }
+.roadmapContent { flex: 1; }
+.roadmapHeader { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem; }
+.roadmapSkill { font-weight: 600; color: #0a0a0f; }
+.roadmapState { padding: 0.2rem 0.6rem; border-radius: 9999px; font-size: 0.7rem; font-weight: 500; }
+.roadmapCoins { font-size: 0.8rem; color: #ca8a04; margin-bottom: 0.25rem; }
+.roadmapProgress { display: flex; align-items: center; gap: 0.5rem; }
+.roadmapPercent { font-size: 0.8rem; color: #6b7280; min-width: 35px; }
+
+.emptyState { text-align: center; padding: 4rem 2rem; }
+.emptyTitle { font-size: 1.25rem; font-weight: 600; color: #0a0a0f; margin-bottom: 0.5rem; }
+.emptyDesc { color: #6b7280; margin-bottom: 1.5rem; }
+
+.postList { display: flex; flex-direction: column; gap: 1rem; }
+.postCard { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 1.5rem; }
+.postHeader { display: flex; justify-content: space-between; margin-bottom: 0.5rem; }
+.postType { font-size: 0.8rem; color: #6366f1; font-weight: 500; }
+.postTime { font-size: 0.75rem; color: #9ca3af; }
+.postTitle { font-weight: 600; font-size: 1.05rem; color: #0a0a0f; margin-bottom: 0.5rem; }
+.postContent { color: #374151; line-height: 1.6; margin-bottom: 0.75rem; }
+.postActions { display: flex; gap: 1rem; font-size: 0.85rem; color: #6b7280; align-items: center; }
+.postLink { color: #6366f1; text-decoration: none; font-weight: 500; }
+.skillBarTrack { flex: 1; height: 6px; background: #f3f4f6; border-radius: 3px; overflow: hidden; }
+.skillBarFill { height: 100%; background: #6366f1; border-radius: 3px; transition: width 0.3s; }

@@ -37,6 +37,9 @@ import { CandidateIntelligencePage } from '../intelligence/pages/CandidateIntell
 import { InterviewManagementPage } from '../intelligence/pages/InterviewManagementPage';
 import { InstitutionAnalyticsPage } from '../intelligence/pages/InstitutionAnalyticsPage';
 import { CompanyAnalyticsPage } from '../intelligence/pages/CompanyAnalyticsPage';
+import { RecommendationsPage } from '../intelligence/pages/RecommendationsPage';
+import { CareerRoadmapPage } from '../intelligence/pages/CareerRoadmapPage';
+import { EntityFeedPage } from '../intelligence/pages/EntityFeedPage';
 import { SocialFeedPage } from '../community/pages/SocialFeedPage';
 import { DiscussionsPage } from '../community/pages/DiscussionsPage';
 import { PortfolioPage } from '../community/pages/PortfolioPage';
@@ -97,6 +100,9 @@ export function App() {
           <Route path="/interview-management" element={<InterviewManagementPage />} />
           <Route path="/institution/analytics" element={<InstitutionAnalyticsPage />} />
           <Route path="/company/analytics" element={<CompanyAnalyticsPage />} />
+          <Route path="/recommendations" element={<RecommendationsPage />} />
+          <Route path="/career-roadmap" element={<CareerRoadmapPage />} />
+          <Route path="/entity-feed" element={<EntityFeedPage />} />
           <Route path="/feed" element={<SocialFeedPage />} />
           <Route path="/discussions" element={<DiscussionsPage />} />
           <Route path="/portfolio" element={<PortfolioPage />} />
