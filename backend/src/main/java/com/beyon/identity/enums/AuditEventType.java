@@ -1,0 +1,12 @@
+package com.beyon.identity.enums;
+
+public enum AuditEventType {
+    LOGIN_SUCCESS,
+    LOGIN_FAILURE,
+    LOGOUT,
+    REGISTRATION,
+    PASSWORD_RESET_REQUESTED,
+    PASSWORD_RESET_COMPLETED,
+    EMAIL_VERIFIED,
+    EMAIL_VERIFICATION_REQUESTED
+}
