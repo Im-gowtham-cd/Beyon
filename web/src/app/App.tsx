@@ -33,6 +33,14 @@ import { CompanyAssessmentsPage } from '../assessment/pages/CompanyAssessmentsPa
 import { SkillProfilePage } from '../intelligence/pages/SkillProfilePage';
 import { CareerPathsPage } from '../intelligence/pages/CareerPathsPage';
 import { CollaborationHubPage } from '../intelligence/pages/CollaborationHubPage';
+import { CandidateIntelligencePage } from '../intelligence/pages/CandidateIntelligencePage';
+import { InterviewManagementPage } from '../intelligence/pages/InterviewManagementPage';
+import { InstitutionAnalyticsPage } from '../intelligence/pages/InstitutionAnalyticsPage';
+import { CompanyAnalyticsPage } from '../intelligence/pages/CompanyAnalyticsPage';
+import { SocialFeedPage } from '../community/pages/SocialFeedPage';
+import { DiscussionsPage } from '../community/pages/DiscussionsPage';
+import { PortfolioPage } from '../community/pages/PortfolioPage';
+import { ResourcesPage } from '../community/pages/ResourcesPage';
 import { InstitutionHome } from '../pages/institution/InstitutionHome';
 import { CompanyHome } from '../pages/company/CompanyHome';
 import { AdminHome } from '../pages/admin/AdminHome';
@@ -81,6 +89,14 @@ export function App() {
           <Route path="/skill-profile" element={<SkillProfilePage />} />
           <Route path="/career-paths" element={<CareerPathsPage />} />
           <Route path="/collaboration" element={<CollaborationHubPage />} />
+          <Route path="/candidate-intelligence" element={<CandidateIntelligencePage />} />
+          <Route path="/interview-management" element={<InterviewManagementPage />} />
+          <Route path="/institution/analytics" element={<InstitutionAnalyticsPage />} />
+          <Route path="/company/analytics" element={<CompanyAnalyticsPage />} />
+          <Route path="/feed" element={<SocialFeedPage />} />
+          <Route path="/discussions" element={<DiscussionsPage />} />
+          <Route path="/portfolio" element={<PortfolioPage />} />
+          <Route path="/resources" element={<ResourcesPage />} />
         </Route>
         <Route element={<RoleGuard allowedRoles={['INSTITUTION']} />}>
           <Route path="/institution/home" element={<InstitutionHome />} />

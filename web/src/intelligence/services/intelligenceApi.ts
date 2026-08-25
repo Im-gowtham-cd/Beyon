@@ -17,8 +17,17 @@ export const intelligenceApi = {
   getMyCareerPaths: async (): Promise<any[]> => api.get('/career-paths/my'),
   getCareerPathDetail: async (pathId: string): Promise<any> => api.get(`/career-paths/${pathId}/detail`),
 
+  getInterviewRounds: async (opportunityId: string): Promise<any[]> => api.get(`/interviews/rounds/opportunity/${opportunityId}`),
+  createInterviewRound: async (round: any): Promise<any> => api.post('/interviews/rounds', round),
+  scheduleInterview: async (schedule: any): Promise<any> => api.post('/interviews/schedule', schedule),
+  getApplicationInterviews: async (applicationId: string): Promise<any[]> => api.get(`/interviews/application/${applicationId}`),
+  submitScorecard: async (scorecard: any): Promise<any> => api.post('/interviews/scorecard', scorecard),
+  getInterviewSummary: async (applicationId: string): Promise<any> => api.get(`/interviews/application/${applicationId}/summary`),
+
   getInstitutionAnalytics: async (): Promise<InstitutionAnalytics> => api.get('/analytics/institution'),
+  generateInstitutionAnalytics: async (): Promise<InstitutionAnalytics> => api.post('/analytics/institution/generate'),
   getCompanyAnalytics: async (): Promise<CompanyAnalytics> => api.get('/analytics/company'),
+  generateCompanyAnalytics: async (): Promise<CompanyAnalytics> => api.post('/analytics/company/generate'),
   getSkillDemand: async (): Promise<any> => api.get('/analytics/skill-demand'),
 
   getPublishedPrograms: async (): Promise<CollaborationProgram[]> => api.get('/collaboration/programs'),

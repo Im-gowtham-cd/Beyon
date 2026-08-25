@@ -1,0 +1,27 @@
+import { api } from '../../services/api/client';
+import type { SocialPost, SocialComment, DiscussionThread, DiscussionReply, VerifiedAchievement, ContentResource } from '../types/community';
+
+export const communityApi = {
+  createPost: async (content: string, title?: string, postType = 'TEXT'): Promise<SocialPost> => api.post('/social/posts', { content, title, postType }),
+  getFeed: async (page = 0, size = 20): Promise<SocialPost[]> => api.get(`/social/feed?page=${page}&size=${size}`),
+  deletePost: async (postId: string): Promise<void> => { await api.delete(`/social/posts/${postId}`); },
+  addComment: async (postId: string, content: string): Promise<SocialComment> => api.post(`/social/posts/${postId}/comments`, { content }),
+  getComments: async (postId: string): Promise<SocialComment[]> => api.get(`/social/posts/${postId}/comments`),
+  toggleLike: async (targetType: string, targetId: string): Promise<{ liked: boolean; likeCount: number }> => api.post('/social/like', { targetType, targetId }),
+
+  createThread: async (categoryId: string, title: string, content: string): Promise<DiscussionThread> => api.post('/discussions/threads', { categoryId, title, content }),
+  getThreads: async (categoryId?: string): Promise<DiscussionThread[]> => api.get(`/discussions/threads${categoryId ? `?categoryId=${categoryId}` : ''}`),
+  getThread: async (threadId: string): Promise<DiscussionThread> => api.get(`/discussions/threads/${threadId}`),
+  addReply: async (threadId: string, content: string): Promise<DiscussionReply> => api.post(`/discussions/threads/${threadId}/replies`, { content }),
+  getReplies: async (threadId: string): Promise<DiscussionReply[]> => api.get(`/discussions/threads/${threadId}/replies`),
+  markSolved: async (threadId: string): Promise<void> => { await api.post(`/discussions/threads/${threadId}/solve`); },
+
+  submitAchievement: async (achievement: Partial<VerifiedAchievement>): Promise<VerifiedAchievement> => api.post('/achievements', achievement),
+  getMyAchievements: async (): Promise<VerifiedAchievement[]> => api.get('/achievements/my'),
+  getPendingVerifications: async (): Promise<VerifiedAchievement[]> => api.get('/achievements/pending'),
+  verifyAchievement: async (id: string, status: string): Promise<VerifiedAchievement> => api.post(`/achievements/${id}/verify`, { status }),
+
+  getPublishedResources: async (): Promise<ContentResource[]> => api.get('/content'),
+  getContentByType: async (type: string): Promise<ContentResource[]> => api.get(`/content/type/${type}`),
+  createResource: async (resource: Partial<ContentResource>): Promise<ContentResource> => api.post('/content', resource),
+};
