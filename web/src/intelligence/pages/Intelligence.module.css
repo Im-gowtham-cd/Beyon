@@ -1,0 +1,69 @@
+.container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+.header { margin-bottom: 2rem; }
+.title { font-size: 1.75rem; font-weight: 700; color: #0a0a0f; margin-bottom: 0.25rem; }
+.subtitle { font-size: 0.95rem; color: #6b7280; }
+.empty { text-align: center; padding: 3rem; color: #6b7280; }
+
+.skillGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 1rem; }
+.skillCard { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 1.5rem; }
+.skillHeader { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+.skillName { font-weight: 600; font-size: 1.1rem; color: #0a0a0f; }
+.levelBadge { padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 500; color: #fff; }
+.skillStats { display: flex; gap: 1.5rem; margin-bottom: 0.75rem; }
+.stat { display: flex; flex-direction: column; }
+.statLabel { font-size: 0.7rem; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em; }
+.statValue { font-size: 1.1rem; font-weight: 700; color: #0a0a0f; }
+.evidenceRow { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+.evidenceTag { padding: 0.2rem 0.5rem; background: #f0fdf4; color: #166534; border-radius: 6px; font-size: 0.75rem; }
+.trendRow { display: flex; justify-content: space-between; align-items: center; }
+.trendLabel { font-size: 0.8rem; color: #6b7280; }
+.verifiedBadge { font-size: 0.75rem; color: #16a34a; font-weight: 500; }
+
+.pathGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1rem; }
+.pathCard { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 1.5rem; cursor: pointer; transition: box-shadow 0.2s; }
+.pathCard:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
+.pathName { font-weight: 600; font-size: 1.1rem; color: #0a0a0f; margin-bottom: 0.25rem; }
+.pathCategory { font-size: 0.8rem; color: #6366f1; font-weight: 500; margin-bottom: 0.5rem; }
+.pathDesc { font-size: 0.85rem; color: #6b7280; margin-bottom: 0.75rem; line-height: 1.5; }
+.pathMeta { display: flex; gap: 1rem; font-size: 0.8rem; color: #6b7280; }
+.backBtn { background: none; border: none; color: #6366f1; cursor: pointer; font-size: 0.9rem; margin-bottom: 1rem; font-weight: 500; }
+.pathDetail { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 2rem; }
+.pathDetailName { font-size: 1.5rem; font-weight: 700; color: #0a0a0f; margin-bottom: 0.5rem; }
+.pathDetailDesc { color: #6b7280; margin-bottom: 1.5rem; line-height: 1.6; }
+.readinessCard { text-align: center; background: #f8fafc; border-radius: 12px; padding: 2rem; margin-bottom: 2rem; }
+.readinessScore { font-size: 3rem; font-weight: 800; color: #6366f1; }
+.readinessLabel { font-size: 0.875rem; color: #6b7280; margin-bottom: 0.25rem; }
+.readinessMeta { font-size: 0.8rem; color: #9ca3af; margin-bottom: 1rem; }
+.progressBar { height: 8px; background: #e5e7eb; border-radius: 4px; overflow: hidden; max-width: 300px; margin: 0 auto; }
+.progressFill { height: 100%; background: #6366f1; border-radius: 4px; transition: width 0.3s; }
+.sectionTitle { font-size: 1rem; font-weight: 600; color: #0a0a0f; margin: 1.5rem 0 0.75rem; }
+.skillList { display: flex; flex-direction: column; gap: 0.5rem; }
+.skillItem { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; border-radius: 8px; font-size: 0.9rem; }
+.skillAcquired { background: #f0fdf4; color: #166534; }
+.skillMissing { background: #fef9c3; color: #854d0e; }
+.skillItemIcon { font-weight: 700; width: 20px; text-align: center; }
+.skillItemName { flex: 1; font-weight: 500; }
+.skillItemLevel { font-size: 0.8rem; color: #6b7280; }
+.gapList { display: flex; flex-direction: column; gap: 0.5rem; }
+.gapItem { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; background: #fef9c3; border-radius: 8px; font-size: 0.85rem; }
+.severityBadge { padding: 0.15rem 0.5rem; border-radius: 4px; font-size: 0.7rem; font-weight: 600; color: #fff; }
+.sevCRITICAL { background: #dc2626; }
+.sevHIGH { background: #ea580c; }
+.sevMEDIUM { background: #ca8a04; }
+.sevLOW { background: #6b7280; }
+.gapHours { margin-left: auto; font-size: 0.8rem; color: #6b7280; }
+.startBtn { margin-top: 1.5rem; padding: 0.75rem 2rem; background: #6366f1; color: #fff; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; }
+
+.filterRow { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+.filterBtn { padding: 0.5rem 1rem; background: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 0.8rem; cursor: pointer; color: #374151; }
+.filterActive { background: #6366f1; color: #fff; border-color: #6366f1; }
+.programGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 1rem; }
+.programCard { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 1.5rem; }
+.programType { font-size: 0.8rem; color: #6366f1; font-weight: 500; margin-bottom: 0.25rem; }
+.programTitle { font-weight: 600; font-size: 1.1rem; color: #0a0a0f; margin-bottom: 0.5rem; }
+.programTopic { font-size: 0.85rem; color: #6b7280; margin-bottom: 0.5rem; }
+.programMeta { display: flex; gap: 1rem; font-size: 0.8rem; color: #6b7280; margin-bottom: 0.5rem; flex-wrap: wrap; }
+.programHost { font-size: 0.8rem; color: #9ca3af; margin-bottom: 0.75rem; }
+.certBadge { display: inline-block; padding: 0.2rem 0.5rem; background: #fef3c7; color: #92400e; border-radius: 6px; font-size: 0.75rem; margin-bottom: 0.75rem; }
+.registerBtn { padding: 0.5rem 1.25rem; background: #6366f1; color: #fff; border: none; border-radius: 8px; font-size: 0.85rem; font-weight: 500; cursor: pointer; }
+.registeredBtn { background: #dcfce7; color: #166534; }

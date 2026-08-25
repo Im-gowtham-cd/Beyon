@@ -30,6 +30,9 @@ import { NotificationsPage } from '../notification/pages/NotificationsPage';
 import { MyApplicationsPage } from '../recruitment/pages/MyApplicationsPage';
 import { AssessmentPage } from '../assessment/pages/AssessmentPage';
 import { CompanyAssessmentsPage } from '../assessment/pages/CompanyAssessmentsPage';
+import { SkillProfilePage } from '../intelligence/pages/SkillProfilePage';
+import { CareerPathsPage } from '../intelligence/pages/CareerPathsPage';
+import { CollaborationHubPage } from '../intelligence/pages/CollaborationHubPage';
 import { InstitutionHome } from '../pages/institution/InstitutionHome';
 import { CompanyHome } from '../pages/company/CompanyHome';
 import { AdminHome } from '../pages/admin/AdminHome';
@@ -75,6 +78,9 @@ export function App() {
           <Route path="/my-applications" element={<MyApplicationsPage />} />
           <Route path="/notifications" element={<NotificationsPage />} />
           <Route path="/assessment" element={<AssessmentPage />} />
+          <Route path="/skill-profile" element={<SkillProfilePage />} />
+          <Route path="/career-paths" element={<CareerPathsPage />} />
+          <Route path="/collaboration" element={<CollaborationHubPage />} />
         </Route>
         <Route element={<RoleGuard allowedRoles={['INSTITUTION']} />}>
           <Route path="/institution/home" element={<InstitutionHome />} />

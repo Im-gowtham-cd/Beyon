@@ -3,7 +3,6 @@ package com.beyon.assessment.controller;
 import com.beyon.assessment.service.AssessmentSessionService;
 import com.beyon.assessment.service.ProctoringService;
 import com.beyon.identity.security.JwtUtil;
-import com.beyon.identity.repository.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,13 +15,11 @@ public class AssessmentController {
     private final AssessmentSessionService sessionService;
     private final ProctoringService proctoringService;
     private final JwtUtil jwtUtil;
-    private final UserRepository userRepository;
 
-    public AssessmentController(AssessmentSessionService sessionService, ProctoringService proctoringService, JwtUtil jwtUtil, UserRepository userRepository) {
+    public AssessmentController(AssessmentSessionService sessionService, ProctoringService proctoringService, JwtUtil jwtUtil) {
         this.sessionService = sessionService;
         this.proctoringService = proctoringService;
         this.jwtUtil = jwtUtil;
-        this.userRepository = userRepository;
     }
 
     @PostMapping("/session")
