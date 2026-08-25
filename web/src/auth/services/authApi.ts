@@ -11,6 +11,12 @@ export const authApi = {
   getMe: () =>
     api.get<UserInfo>('/auth/me'),
 
+  updateProfile: (name: string) =>
+    api.put<void>('/auth/update-profile', { name }),
+
+  changePassword: (currentPassword: string, newPassword: string, confirmPassword: string) =>
+    api.post<void>('/auth/change-password', { currentPassword, newPassword, confirmPassword }),
+
   verifyEmail: (token: string) =>
     api.post<void>('/auth/verify-email', { token }),
 
