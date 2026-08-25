@@ -179,4 +179,55 @@
 .feedbackType { font-size: 0.8rem; color: #6366f1; font-weight: 500; }
 .feedbackTitle { font-weight: 600; color: #0a0a0f; margin-bottom: 0.25rem; }
 .feedbackDesc { font-size: 0.9rem; color: #6b7280; line-height: 1.5; margin-bottom: 0.5rem; }
-.feedbackMeta { display: flex; gap: 1rem; font-size: 0.8rem; color: #9ca3af; }
+.feedbackMeta { display: flex; gap: 1rem; font-size: 0.8rem; color: #9ca3af; align-items: center; }
+.reportNumber { font-family: monospace; font-size: 0.8rem; color: #6b7280; font-weight: 500; }
+.categoryBadge { padding: 0.15rem 0.5rem; background: #f3f4f6; border-radius: 4px; font-size: 0.7rem; color: #374151; }
+.severityBadge { padding: 0.2rem 0.6rem; border-radius: 9999px; font-size: 0.7rem; font-weight: 500; color: #fff; }
+
+.formRow { display: flex; gap: 1rem; }
+.similarBox { background: #fefce8; border: 1px solid #fde047; border-radius: 10px; padding: 1rem; margin-bottom: 0.5rem; }
+.similarTitle { font-weight: 600; font-size: 0.85rem; color: #854d0e; margin-bottom: 0.5rem; }
+.similarItem { display: flex; align-items: center; gap: 0.75rem; padding: 0.35rem 0; font-size: 0.85rem; }
+.similarId { font-family: monospace; color: #6b7280; font-size: 0.75rem; }
+.similarText { color: #374151; flex: 1; }
+.similarHint { font-size: 0.75rem; color: #92400e; margin-top: 0.5rem; }
+
+.contextInfo { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 10px; padding: 1rem; margin-bottom: 1rem; }
+.contextTitle { font-weight: 600; font-size: 0.8rem; color: #374151; margin-bottom: 0.5rem; }
+.contextGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0.5rem; font-size: 0.8rem; color: #6b7280; }
+
+.errorBanner { background: #fef2f2; color: #991b1b; padding: 0.75rem 1rem; border-radius: 8px; margin-bottom: 1.5rem; font-size: 0.9rem; display: flex; align-items: center; gap: 1rem; }
+.retryBtn { background: #dc2626; color: #fff; border: none; padding: 0.4rem 1rem; border-radius: 6px; font-size: 0.8rem; cursor: pointer; }
+
+.emptyState { text-align: center; padding: 4rem 2rem; }
+.emptyTitle { font-size: 1.25rem; font-weight: 600; color: #0a0a0f; margin-bottom: 0.5rem; }
+.emptyDesc { color: #6b7280; margin-bottom: 1.5rem; }
+
+.detailView { max-width: 800px; }
+.detailHeader { margin-bottom: 2rem; }
+.detailBadges { display: flex; gap: 0.5rem; margin-top: 0.5rem; }
+.detailTitle { font-size: 1.5rem; font-weight: 700; color: #0a0a0f; margin-top: 0.25rem; }
+.detailSection { margin-bottom: 2rem; }
+.detailSectionTitle { font-size: 1rem; font-weight: 600; color: #0a0a0f; margin-bottom: 0.75rem; padding-bottom: 0.5rem; border-bottom: 1px solid #e5e7eb; }
+.detailContent { color: #374151; line-height: 1.6; white-space: pre-wrap; }
+
+.adminActions { display: flex; gap: 1rem; margin-bottom: 2rem; padding: 1rem; background: #f9fafb; border-radius: 10px; }
+
+.timeline { display: flex; flex-direction: column; gap: 0.75rem; padding-left: 1rem; border-left: 2px solid #e5e7eb; }
+.timelineItem { display: flex; align-items: flex-start; gap: 0.75rem; position: relative; }
+.timelineDot { width: 10px; height: 10px; border-radius: 50%; background: #6366f1; flex-shrink: 0; margin-top: 0.25rem; margin-left: -1.25rem; }
+.timelineStatus { font-size: 0.85rem; font-weight: 500; color: #374151; }
+.timelineNote { font-size: 0.8rem; color: #6b7280; }
+.timelineTime { font-size: 0.7rem; color: #9ca3af; margin-top: 0.15rem; }
+
+.internalNote { background: #fefce8; border: 1px solid #fde047; border-radius: 8px; padding: 0.75rem 1rem; margin-bottom: 0.5rem; }
+.noteContent { font-size: 0.9rem; color: #374151; }
+.noteTime { font-size: 0.7rem; color: #9ca3af; margin-top: 0.25rem; }
+
+.filterSelect { padding: 0.5rem 0.75rem; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 0.8rem; background: #fff; }
+.searchInput { padding: 0.5rem 0.75rem; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 0.8rem; flex: 1; min-width: 200px; }
+
+.pagination { display: flex; justify-content: center; align-items: center; gap: 1rem; margin-top: 1.5rem; }
+.pagination button { padding: 0.5rem 1rem; background: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 6px; cursor: pointer; font-size: 0.8rem; }
+.pagination button:disabled { opacity: 0.5; cursor: not-allowed; }
+.pagination span { font-size: 0.85rem; color: #6b7280; }

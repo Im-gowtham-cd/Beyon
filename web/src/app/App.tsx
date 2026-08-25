@@ -44,6 +44,7 @@ import { ResourcesPage } from '../community/pages/ResourcesPage';
 import { DashboardPage } from '../community/pages/DashboardPage';
 import { MessagingPage } from '../community/pages/MessagingPage';
 import { FeedbackPage } from '../community/pages/FeedbackPage';
+import { AdminFeedbackPage } from '../community/pages/AdminFeedbackPage';
 import { InstitutionHome } from '../pages/institution/InstitutionHome';
 import { CompanyHome } from '../pages/company/CompanyHome';
 import { AdminHome } from '../pages/admin/AdminHome';
@@ -103,6 +104,7 @@ export function App() {
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/messages" element={<MessagingPage />} />
           <Route path="/feedback" element={<FeedbackPage />} />
+          <Route path="/feedback/:id" element={<FeedbackPage />} />
         </Route>
         <Route element={<RoleGuard allowedRoles={['INSTITUTION']} />}>
           <Route path="/institution/home" element={<InstitutionHome />} />
@@ -114,6 +116,7 @@ export function App() {
         </Route>
         <Route element={<RoleGuard allowedRoles={['ADMIN']} />}>
           <Route path="/admin/home" element={<AdminHome />} />
+          <Route path="/admin/feedback" element={<AdminFeedbackPage />} />
         </Route>
       </Route>
 
