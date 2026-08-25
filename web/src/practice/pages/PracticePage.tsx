@@ -1,0 +1,101 @@
+import { useState, useEffect, useCallback } from 'react';
+import { Link } from 'react-router-dom';
+import { practiceApi, questionApi } from '../services/practiceApi';
+import type { Question } from '../types/practice';
+import styles from './PracticePages.module.css';
+
+export function PracticePage() {
+  const [questions, setQuestions] = useState<Question[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [difficulty, setDifficulty] = useState('');
+  const [stats, setStats] = useState({ total: 0, easy: 0, medium: 0, hard: 0 });
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [q, s] = await Promise.all([
+        practiceApi.getQuestions(difficulty ? { difficulty } : undefined),
+        questionApi.getStats(),
+      ]);
+      setQuestions(q);
+      setStats({ total: s.total || 0, easy: s.easy || 0, medium: s.medium || 0, hard: s.hard || 0 });
+    } catch { /* */ }
+    setLoading(false);
+  }, [difficulty]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const diffColors: Record<string, string> = {
+    EASY: 'var(--color-secondary)',
+    MEDIUM: 'var(--color-warning)',
+    HARD: 'var(--color-error)',
+  };
+
+  return (
+    <div className={styles.page}>
+      <div className={styles.pageHeader}>
+        <h1 className={styles.title}>Practice</h1>
+      </div>
+
+      <div className={styles.statsRow}>
+        <div className={styles.statCard}>
+          <span className={styles.statLabel}>Total</span>
+          <span className={styles.statValue}>{stats.total}</span>
+        </div>
+        <div className={styles.statCard}>
+          <span className={styles.statLabel}>Easy</span>
+          <span className={styles.statValue} style={{ color: diffColors.EASY }}>{stats.easy}</span>
+        </div>
+        <div className={styles.statCard}>
+          <span className={styles.statLabel}>Medium</span>
+          <span className={styles.statValue} style={{ color: diffColors.MEDIUM }}>{stats.medium}</span>
+        </div>
+        <div className={styles.statCard}>
+          <span className={styles.statLabel}>Hard</span>
+          <span className={styles.statValue} style={{ color: diffColors.HARD }}>{stats.hard}</span>
+        </div>
+      </div>
+
+      <div className={styles.filters}>
+        {['', 'EASY', 'MEDIUM', 'HARD'].map(d => (
+          <button
+            key={d}
+            className={`${styles.filterChip} ${difficulty === d ? styles.filterActive : ''}`}
+            onClick={() => setDifficulty(d)}
+          >
+            {d || 'All'}
+          </button>
+        ))}
+      </div>
+
+      {loading ? (
+        <div className={styles.loadingContainer}>
+          {[1, 2, 3].map(i => <div key={i} className={styles.skeleton} style={{ height: 60 }} />)}
+        </div>
+      ) : questions.length === 0 ? (
+        <div className={styles.emptyState}>
+          <p className={styles.emptyText}>No questions available yet. Check back soon!</p>
+        </div>
+      ) : (
+        <div className={styles.questionList}>
+          {questions.map(q => (
+            <Link key={q.id} to={`/practice/${q.id}`} className={styles.questionCard}>
+              <div className={styles.questionInfo}>
+                <h3 className={styles.questionTitle}>{q.title}</h3>
+                <div className={styles.questionMeta}>
+                  <span className={styles.diffBadge} style={{ color: diffColors[q.difficulty] || 'var(--color-text)' }}>
+                    {q.difficulty}
+                  </span>
+                  <span className={styles.typeBadge}>{q.questionType.replace('_', ' ')}</span>
+                </div>
+              </div>
+              <span className={styles.arrow}>→</span>
+            </Link>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+

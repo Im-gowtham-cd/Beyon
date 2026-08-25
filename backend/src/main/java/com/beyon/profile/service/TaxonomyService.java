@@ -44,7 +44,7 @@ public class TaxonomyService {
     }
 
     public List<Skill> getSkillsByCategory(UUID categoryId) {
-        return skillRepository.findByCategoryId(categoryId);
+        return skillRepository.findByCategoryIdAndActiveTrue(categoryId);
     }
 
     public Skill getSkillBySlug(String slug) {

@@ -19,6 +19,12 @@ import { PublicProfilePage } from '../student/pages/PublicProfilePage';
 import { SkillExplorer } from '../student/pages/SkillExplorer';
 import { SkillDetail } from '../student/pages/SkillDetail';
 import { TopicDetail } from '../student/pages/TopicDetail';
+import { PracticePage } from '../practice/pages/PracticePage';
+import { QuestionDetailPage } from '../practice/pages/QuestionDetailPage';
+import { DailyChallengePage } from '../practice/pages/DailyChallengePage';
+import { StatsPage } from '../practice/pages/StatsPage';
+import { LeaderboardPage } from '../practice/pages/LeaderboardPage';
+import { OpportunitiesPage } from '../practice/pages/OpportunitiesPage';
 import { InstitutionHome } from '../pages/institution/InstitutionHome';
 import { CompanyHome } from '../pages/company/CompanyHome';
 import { AdminHome } from '../pages/admin/AdminHome';
@@ -55,6 +61,12 @@ export function App() {
           <Route path="/student/skills" element={<SkillExplorer />} />
           <Route path="/student/skills/:skillSlug" element={<SkillDetail />} />
           <Route path="/student/skills/:skillSlug/:topicSlug" element={<TopicDetail />} />
+          <Route path="/practice" element={<PracticePage />} />
+          <Route path="/practice/:id" element={<QuestionDetailPage />} />
+          <Route path="/daily-challenge" element={<DailyChallengePage />} />
+          <Route path="/stats" element={<StatsPage />} />
+          <Route path="/leaderboard" element={<LeaderboardPage />} />
+          <Route path="/opportunities" element={<OpportunitiesPage />} />
         </Route>
         <Route element={<RoleGuard allowedRoles={['INSTITUTION']} />}>
           <Route path="/institution/home" element={<InstitutionHome />} />
