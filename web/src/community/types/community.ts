@@ -155,3 +155,15 @@ export interface ProjectVerification {
   verifiedAt?: string;
   createdAt: string;
 }
+
+export interface UserFeedback {
+  id: string;
+  userId: string;
+  feedbackType: string;
+  title: string;
+  description: string;
+  module?: string;
+  severity: string;
+  status: string;
+  createdAt: string;
+}

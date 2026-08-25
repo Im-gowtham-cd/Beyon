@@ -1,5 +1,5 @@
 import { api } from '../../services/api/client';
-import type { SocialPost, SocialComment, DiscussionThread, DiscussionReply, VerifiedAchievement, ContentResource, SmartNotification, MessageConversation, Message, UserReputation, DashboardData, ProjectVerification } from '../types/community';
+import type { SocialPost, SocialComment, DiscussionThread, DiscussionReply, VerifiedAchievement, ContentResource, SmartNotification, MessageConversation, Message, UserReputation, DashboardData, ProjectVerification, UserFeedback } from '../types/community';
 
 export const communityApi = {
   createPost: async (content: string, title?: string, postType = 'TEXT'): Promise<SocialPost> => api.post('/social/posts', { content, title, postType }),
@@ -46,4 +46,8 @@ export const communityApi = {
   getFollowers: async (userId: string): Promise<string[]> => api.get(`/follows/${userId}/followers`),
   getFollowing: async (userId: string): Promise<string[]> => api.get(`/follows/${userId}/following`),
   isFollowing: async (targetId: string): Promise<{ following: boolean }> => api.get(`/follows/check/${targetId}`),
+
+  submitFeedback: async (feedback: { feedbackType: string; title: string; description: string; module?: string; severity?: string }): Promise<UserFeedback> => api.post('/feedback', feedback),
+  getMyFeedback: async (): Promise<UserFeedback[]> => api.get('/feedback/my'),
+  getOpenFeedback: async (): Promise<UserFeedback[]> => api.get('/feedback/open'),
 };

@@ -73,6 +73,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/v1/verifications/**").authenticated()
                 .requestMatchers("/api/v1/health").permitAll()
                 .requestMatchers("/api/v1/ready").permitAll()
+                .requestMatchers("/api/v1/feedback/**").authenticated()
                 .requestMatchers("/api/v1/privacy/**").authenticated()
                 .requestMatchers("/api/v1/audit/**").authenticated()
                 .requestMatchers("/api/v1/metrics").permitAll()
