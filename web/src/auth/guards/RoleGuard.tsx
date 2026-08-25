@@ -2,11 +2,21 @@ import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import type { UserRole } from '../types/auth';
 
-export function RoleGuard({ allowedRoles }: { allowedRoles: UserRole[] }) {
-  const { user, loading, authenticated } = useAuth();
+interface Props {
+  allowedRoles: UserRole[];
+  requireProfile?: boolean;
+}
+
+export function RoleGuard({ allowedRoles, requireProfile = false }: Props) {
+  const { user, loading, authenticated, profileCompleted } = useAuth();
 
   if (loading) {
-    return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', color: 'var(--color-text-muted)' }}>Loading...</div>;
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', gap: 'var(--space-md)' }}>
+        <div style={{ width: 40, height: 40, background: 'var(--color-primary)', borderRadius: 'var(--radius-sm)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-heading)', fontWeight: 'var(--font-bold)', color: 'var(--color-black)' }}>B</div>
+        <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-sm)' }}>Restoring your session...</p>
+      </div>
+    );
   }
 
   if (!authenticated || !user) {
@@ -14,7 +24,12 @@ export function RoleGuard({ allowedRoles }: { allowedRoles: UserRole[] }) {
   }
 
   if (!allowedRoles.includes(user.role)) {
-    return <Navigate to="/403" replace />;
+    return <Navigate to="/unauthorized" replace />;
+  }
+
+  if (requireProfile && !profileCompleted) {
+    const role = user.role.toLowerCase();
+    return <Navigate to={`/onboarding/${role}`} replace />;
   }
 
   return <Outlet />;

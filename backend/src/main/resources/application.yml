@@ -31,6 +31,11 @@ spring:
       uri: ${MONGODB_URI:mongodb://localhost:27017/beyon}
     redis:
       url: ${REDIS_URL:redis://localhost:6379}
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 2
 
   jackson:
     default-property-inclusion: non_null

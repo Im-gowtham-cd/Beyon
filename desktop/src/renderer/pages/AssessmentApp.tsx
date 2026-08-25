@@ -43,7 +43,6 @@ export function AssessmentApp() {
           setUser(json.data);
         }
       } catch {
-        // Auth check failed
       } finally {
         setLoading(false);
       }

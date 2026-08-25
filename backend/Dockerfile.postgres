@@ -1,0 +1,16 @@
+FROM postgres:17
+
+# Copy custom pg_hba.conf
+COPY pg_hba.conf /docker-entrypoint-initdb.d/pg_hba-init.sh
+
+# Make it executable
+RUN chmod +x /docker-entrypoint-initdb.d/pg_hba-init.sh
+
+# The init script should copy the config to the right location
+RUN echo '#!/bin/bash' > /docker-entrypoint-initdb.d/pg_hba-init.sh && \
+    echo 'cp /docker-entrypoint-initdb.d/pg_hba.conf $PGDATA/pg_hba.conf' >> /docker-entrypoint-initdb.d/pg_hba-init.sh && \
+    echo 'chmod 640 $PGDATA/pg_hba.conf' >> /docker-entrypoint-initdb.d/pg_hba-init.sh && \
+    echo 'chown postgres:postgres $PGDATA/pg_hba.conf' >> /docker-entrypoint-initdb.d/pg_hba-init.sh && \
+    chmod +x /docker-entrypoint-initdb.d/pg_hba-init.sh
+
+COPY pg_hba.conf /docker-entrypoint-initdb.d/pg_hba.conf

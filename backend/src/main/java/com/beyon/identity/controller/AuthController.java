@@ -46,6 +46,26 @@ public class AuthController {
         return ResponseEntity.ok(ApiResponse.ok(user));
     }
 
+    @PutMapping("/update-profile")
+    public ResponseEntity<ApiResponse<Void>> updateProfile(
+            @RequestBody UpdateProfileRequest request,
+            Authentication authentication) {
+        JwtUserDetails details = (JwtUserDetails) authentication.getDetails();
+        UUID userId = UUID.fromString(details.getUserId());
+        authService.updateProfile(userId, request.getName());
+        return ResponseEntity.ok(ApiResponse.ok());
+    }
+
+    @PostMapping("/change-password")
+    public ResponseEntity<ApiResponse<Void>> changePassword(
+            @Valid @RequestBody ChangePasswordRequest request,
+            Authentication authentication) {
+        JwtUserDetails details = (JwtUserDetails) authentication.getDetails();
+        UUID userId = UUID.fromString(details.getUserId());
+        authService.changePassword(userId, request.getCurrentPassword(), request.getNewPassword(), request.getConfirmPassword());
+        return ResponseEntity.ok(ApiResponse.ok());
+    }
+
     @PostMapping("/verify-email")
     public ResponseEntity<ApiResponse<Void>> verifyEmail(@Valid @RequestBody VerifyEmailRequest request) {
         authService.verifyEmail(request.getToken());

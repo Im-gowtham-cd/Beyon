@@ -1,0 +1,103 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.skillsList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.skillRow {
+  display: grid;
+  grid-template-columns: 1fr 120px 120px auto;
+  gap: var(--space-sm);
+  align-items: end;
+  padding: var(--space-sm) var(--space-md);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+}
+
+.skillRow select,
+.skillRow input {
+  padding: 8px 12px;
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text);
+  font-size: var(--text-sm);
+  font-family: var(--font-body);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.skillRow select:focus,
+.skillRow input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.removeBtn {
+  padding: 8px 12px;
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-error);
+  cursor: pointer;
+  font-size: var(--text-sm);
+}
+
+.removeBtn:hover {
+  background: rgba(255, 92, 92, 0.1);
+}
+
+.addRow {
+  display: grid;
+  grid-template-columns: 1fr 120px 120px auto;
+  gap: var(--space-sm);
+  align-items: end;
+}
+
+.addRow select,
+.addRow input {
+  padding: 8px 12px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text);
+  font-size: var(--text-sm);
+  font-family: var(--font-body);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.addRow select:focus,
+.addRow input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.addBtn {
+  padding: 8px 16px;
+  background: var(--color-primary);
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--color-black);
+  font-weight: var(--font-medium);
+  font-size: var(--text-sm);
+  cursor: pointer;
+}
+
+.addBtn:hover {
+  opacity: 0.9;
+}
+
+@media (max-width: 768px) {
+  .skillRow,
+  .addRow {
+    grid-template-columns: 1fr;
+  }
+}

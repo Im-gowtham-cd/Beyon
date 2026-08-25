@@ -1,0 +1,84 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  text-align: center;
+  padding: var(--space-2xl);
+}
+
+.iconCircle {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  margin-bottom: var(--space-xl);
+}
+
+.iconCircle.warning {
+  background: rgba(255, 176, 32, 0.15);
+  border: 2px solid var(--color-warning);
+}
+
+.iconCircle.error {
+  background: rgba(255, 92, 92, 0.15);
+  border: 2px solid var(--color-error);
+}
+
+.title {
+  font-family: var(--font-heading);
+  font-size: var(--text-3xl);
+  font-weight: var(--font-bold);
+  color: var(--color-text);
+  margin: 0 0 var(--space-md);
+}
+
+.subtitle {
+  color: var(--color-text-muted);
+  font-size: var(--text-lg);
+  max-width: 500px;
+  margin: 0 0 var(--space-md);
+}
+
+.detail {
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  max-width: 500px;
+  margin: 0 0 var(--space-2xl);
+}
+
+.actions {
+  display: flex;
+  gap: var(--space-md);
+}
+
+.button {
+  padding: 12px 24px;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-base);
+  font-family: var(--font-body);
+  font-weight: var(--font-medium);
+  cursor: pointer;
+  transition: opacity var(--transition-fast);
+}
+
+.button.primary {
+  background: var(--color-primary);
+  border: none;
+  color: var(--color-black);
+  text-decoration: none;
+}
+
+.button.secondary {
+  background: transparent;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+}
+
+.button:hover {
+  opacity: 0.9;
+}
