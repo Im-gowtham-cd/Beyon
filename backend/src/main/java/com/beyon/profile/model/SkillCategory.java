@@ -5,8 +5,8 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Entity
-@Table(name = "skills")
-public class Skill {
+@Table(name = "skill_categories")
+public class SkillCategory {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -19,14 +19,11 @@ public class Skill {
     @Column(nullable = false, unique = true, length = 120)
     private String slug;
 
-    @Column(nullable = false, length = 50)
-    private String category;
-
-    @Column(columnDefinition = "uuid")
-    private UUID categoryId;
-
     @Column(columnDefinition = "TEXT")
     private String description;
+
+    @Column(nullable = false)
+    private int displayOrder = 0;
 
     @Column(nullable = false)
     private boolean active = true;
@@ -40,12 +37,10 @@ public class Skill {
     public void setName(String name) { this.name = name; }
     public String getSlug() { return slug; }
     public void setSlug(String slug) { this.slug = slug; }
-    public String getCategory() { return category; }
-    public void setCategory(String category) { this.category = category; }
-    public UUID getCategoryId() { return categoryId; }
-    public void setCategoryId(UUID categoryId) { this.categoryId = categoryId; }
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
+    public int getDisplayOrder() { return displayOrder; }
+    public void setDisplayOrder(int displayOrder) { this.displayOrder = displayOrder; }
     public boolean isActive() { return active; }
     public void setActive(boolean active) { this.active = active; }
     public Instant getCreatedAt() { return createdAt; }

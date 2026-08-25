@@ -39,8 +39,9 @@ public class SecurityConfig {
                 .requestMatchers("/api/v1/onboarding/**").authenticated()
                 .requestMatchers("/api/v1/profile").authenticated()
                 .requestMatchers("/api/v1/student/public/**").permitAll()
+                .requestMatchers("/api/v1/taxonomy/**").permitAll()
+                .requestMatchers("/api/v1/skills/**").permitAll()
                 .requestMatchers("/api/v1/student/**").authenticated()
-                .requestMatchers("/api/v1/skills/**").authenticated()
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);

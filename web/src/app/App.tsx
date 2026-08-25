@@ -16,6 +16,9 @@ import { RoleGuard } from '../auth/guards/RoleGuard';
 import { StudentHome } from '../pages/student/StudentHome';
 import { StudentProfilePage } from '../student/pages/StudentProfilePage';
 import { PublicProfilePage } from '../student/pages/PublicProfilePage';
+import { SkillExplorer } from '../student/pages/SkillExplorer';
+import { SkillDetail } from '../student/pages/SkillDetail';
+import { TopicDetail } from '../student/pages/TopicDetail';
 import { InstitutionHome } from '../pages/institution/InstitutionHome';
 import { CompanyHome } from '../pages/company/CompanyHome';
 import { AdminHome } from '../pages/admin/AdminHome';
@@ -49,6 +52,9 @@ export function App() {
           <Route path="/student/home" element={<StudentHome />} />
           <Route path="/student/profile" element={<StudentProfilePage />} />
           <Route path="/student/profile/edit" element={<StudentProfilePage />} />
+          <Route path="/student/skills" element={<SkillExplorer />} />
+          <Route path="/student/skills/:skillSlug" element={<SkillDetail />} />
+          <Route path="/student/skills/:skillSlug/:topicSlug" element={<TopicDetail />} />
         </Route>
         <Route element={<RoleGuard allowedRoles={['INSTITUTION']} />}>
           <Route path="/institution/home" element={<InstitutionHome />} />
