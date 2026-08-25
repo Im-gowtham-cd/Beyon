@@ -9,7 +9,12 @@
   "scripts": {
     "dev:web": "bun run --filter @beyon/web dev",
     "dev:desktop": "bun run --filter @beyon/desktop dev",
+    "dev:backend": "cd backend && ./mvnw spring-boot:run -Dspring-boot.run.profiles=dev",
+    "dev:ai": "cd ai-service && uvicorn app.main:app --reload --port 8001",
+    "dev:all": "bun run dev:web & bun run dev:backend & bun run dev:ai",
     "build:web": "bun run --filter @beyon/web build",
-    "build:desktop": "bun run --filter @beyon/desktop build"
+    "build:desktop": "bun run --filter @beyon/desktop build:renderer",
+    "build:all": "bun run build:web && bun run build:desktop",
+    "typecheck:all": "bun run --filter @beyon/web typecheck && bun run --filter @beyon/desktop typecheck"
   }
 }

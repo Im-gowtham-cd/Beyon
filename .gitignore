@@ -45,3 +45,6 @@ venv/
 *.tgz
 *.tmp
 .cache/
+
+.freebuff
+.github
