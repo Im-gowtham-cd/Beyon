@@ -52,6 +52,11 @@ public class SecurityConfig {
                 .requestMatchers("/api/v1/follows/**").authenticated()
                 .requestMatchers("/api/v1/notifications/**").authenticated()
                 .requestMatchers("/api/v1/recruitment/**").authenticated()
+                .requestMatchers("/api/v1/assessment/session").authenticated()
+                .requestMatchers("/api/v1/assessment/launch").authenticated()
+                .requestMatchers("/api/v1/assessment/**").authenticated()
+                .requestMatchers("/api/v1/proctoring/**").authenticated()
+                .requestMatchers("/api/v1/assessment-policies/**").authenticated()
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);

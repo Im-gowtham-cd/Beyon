@@ -28,6 +28,8 @@ import { OpportunitiesPage } from '../practice/pages/OpportunitiesPage';
 import { InstitutionDashboard } from '../institution/pages/InstitutionDashboard';
 import { NotificationsPage } from '../notification/pages/NotificationsPage';
 import { MyApplicationsPage } from '../recruitment/pages/MyApplicationsPage';
+import { AssessmentPage } from '../assessment/pages/AssessmentPage';
+import { CompanyAssessmentsPage } from '../assessment/pages/CompanyAssessmentsPage';
 import { InstitutionHome } from '../pages/institution/InstitutionHome';
 import { CompanyHome } from '../pages/company/CompanyHome';
 import { AdminHome } from '../pages/admin/AdminHome';
@@ -72,6 +74,7 @@ export function App() {
           <Route path="/opportunities" element={<OpportunitiesPage />} />
           <Route path="/my-applications" element={<MyApplicationsPage />} />
           <Route path="/notifications" element={<NotificationsPage />} />
+          <Route path="/assessment" element={<AssessmentPage />} />
         </Route>
         <Route element={<RoleGuard allowedRoles={['INSTITUTION']} />}>
           <Route path="/institution/home" element={<InstitutionHome />} />
@@ -79,6 +82,7 @@ export function App() {
         </Route>
         <Route element={<RoleGuard allowedRoles={['COMPANY']} />}>
           <Route path="/company/home" element={<CompanyHome />} />
+          <Route path="/company/assessments" element={<CompanyAssessmentsPage />} />
         </Route>
         <Route element={<RoleGuard allowedRoles={['ADMIN']} />}>
           <Route path="/admin/home" element={<AdminHome />} />
