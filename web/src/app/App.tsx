@@ -40,6 +40,8 @@ import { CompanyAnalyticsPage } from '../intelligence/pages/CompanyAnalyticsPage
 import { RecommendationsPage } from '../intelligence/pages/RecommendationsPage';
 import { CareerRoadmapPage } from '../intelligence/pages/CareerRoadmapPage';
 import { EntityFeedPage } from '../intelligence/pages/EntityFeedPage';
+import { AssessmentBuilderPage } from '../assessment/pages/AssessmentBuilderPage';
+import { PipelinePage } from '../recruitment/pages/PipelinePage';
 import { SocialFeedPage } from '../community/pages/SocialFeedPage';
 import { DiscussionsPage } from '../community/pages/DiscussionsPage';
 import { PortfolioPage } from '../community/pages/PortfolioPage';
@@ -103,6 +105,8 @@ export function App() {
           <Route path="/recommendations" element={<RecommendationsPage />} />
           <Route path="/career-roadmap" element={<CareerRoadmapPage />} />
           <Route path="/entity-feed" element={<EntityFeedPage />} />
+          <Route path="/assessment-builder" element={<AssessmentBuilderPage />} />
+          <Route path="/recruitment/pipeline" element={<PipelinePage />} />
           <Route path="/feed" element={<SocialFeedPage />} />
           <Route path="/discussions" element={<DiscussionsPage />} />
           <Route path="/portfolio" element={<PortfolioPage />} />
@@ -119,6 +123,7 @@ export function App() {
         <Route element={<RoleGuard allowedRoles={['COMPANY']} />}>
           <Route path="/company/home" element={<CompanyHome />} />
           <Route path="/company/assessments" element={<CompanyAssessmentsPage />} />
+          <Route path="/company/assessment-builder" element={<AssessmentBuilderPage />} />
         </Route>
         <Route element={<RoleGuard allowedRoles={['ADMIN']} />}>
           <Route path="/admin/home" element={<AdminHome />} />

@@ -67,6 +67,8 @@ public class SecurityConfig {
                 .requestMatchers("/api/v1/roadmap/**").authenticated()
                 .requestMatchers("/api/v1/requirements/**").authenticated()
                 .requestMatchers("/api/v1/entity-posts/**").authenticated()
+                .requestMatchers("/api/v1/assessment-builder/**").authenticated()
+                .requestMatchers("/api/v1/pipeline/**").authenticated()
                 .requestMatchers("/api/v1/social/**").authenticated()
                 .requestMatchers("/api/v1/discussions/**").authenticated()
                 .requestMatchers("/api/v1/achievements/**").authenticated()
