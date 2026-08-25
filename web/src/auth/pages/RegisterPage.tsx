@@ -6,7 +6,6 @@ import { AuthInput } from '../components/AuthInput';
 import { PasswordInput } from '../components/PasswordInput';
 import { AuthButton } from '../components/AuthButton';
 import { RoleCard } from '../components/RoleCard';
-import { useAuth } from '../context/AuthContext';
 import { authApi } from '../services/authApi';
 import type { ApiError } from '../../services/api/client';
 import type { UserRole } from '../types/auth';
@@ -14,9 +13,14 @@ import styles from './RegisterPage.module.css';
 
 type SelectableRole = Exclude<UserRole, 'ADMIN'>;
 
+const ONBOARDING_ROUTES: Record<SelectableRole, string> = {
+  STUDENT: '/onboarding/student',
+  INSTITUTION: '/onboarding/institution',
+  COMPANY: '/onboarding/company',
+};
+
 export function RegisterPage() {
   const navigate = useNavigate();
-  useAuth();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -53,7 +57,7 @@ export function RegisterPage() {
     setLoading(true);
     try {
       await authApi.register({ name: name.trim(), email: email.trim(), password, confirmPassword, role: role! });
-      navigate('/verify-email', { state: { email: email.trim() } });
+      navigate(ONBOARDING_ROUTES[role!]);
     } catch (err) {
       const apiErr = err as ApiError;
       setApiError(apiErr.message || 'Registration failed. Please try again.');
@@ -161,7 +165,7 @@ export function RegisterPage() {
           </div>
 
           <AuthButton type="submit" loading={loading}>
-            Create account
+            Create account & start onboarding
           </AuthButton>
         </form>
       </AuthCard>

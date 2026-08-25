@@ -3,9 +3,11 @@ import type { AuthState, UserInfo } from '../types/auth';
 import { authApi } from '../services/authApi';
 
 interface AuthContextValue extends AuthState {
+  profileCompleted: boolean;
   login: (token: string, user: UserInfo) => void;
   logout: () => void;
   refreshUser: () => Promise<void>;
+  setProfileCompleted: (val: boolean) => void;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -19,11 +21,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     loading: true,
     authenticated: false,
   });
+  const [profileCompleted, setProfileCompletedState] = useState(false);
 
   const refreshUser = useCallback(async () => {
     const token = localStorage.getItem(TOKEN_KEY);
     if (!token) {
       setState({ user: null, token: null, loading: false, authenticated: false });
+      setProfileCompletedState(false);
       return;
     }
 
@@ -33,6 +37,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch {
       localStorage.removeItem(TOKEN_KEY);
       setState({ user: null, token: null, loading: false, authenticated: false });
+      setProfileCompletedState(false);
     }
   }, []);
 
@@ -48,10 +53,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = () => {
     localStorage.removeItem(TOKEN_KEY);
     setState({ user: null, token: null, loading: false, authenticated: false });
+    setProfileCompletedState(false);
+  };
+
+  const setProfileCompleted = (val: boolean) => {
+    setProfileCompletedState(val);
   };
 
   return (
-    <AuthContext.Provider value={{ ...state, login, logout, refreshUser }}>
+    <AuthContext.Provider value={{ ...state, profileCompleted, login, logout, refreshUser, setProfileCompleted }}>
       {children}
     </AuthContext.Provider>
   );

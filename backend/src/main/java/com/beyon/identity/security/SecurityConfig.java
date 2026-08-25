@@ -36,6 +36,8 @@ public class SecurityConfig {
                 .requestMatchers("/api/v1/auth/forgot-password").permitAll()
                 .requestMatchers("/api/v1/auth/reset-password").permitAll()
                 .requestMatchers("/api/v1/auth/me").authenticated()
+                .requestMatchers("/api/v1/onboarding/**").authenticated()
+                .requestMatchers("/api/v1/profile").authenticated()
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
