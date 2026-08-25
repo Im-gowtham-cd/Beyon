@@ -1,0 +1,85 @@
+.progress {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin-bottom: var(--space-2xl);
+  max-width: 800px;
+}
+
+.step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  position: relative;
+}
+
+.stepCircle {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+  border: 2px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  transition: all var(--transition-base);
+  position: relative;
+  z-index: 2;
+}
+
+.step.active .stepCircle {
+  border-color: var(--color-primary);
+  background: var(--color-primary);
+  color: var(--color-black);
+}
+
+.step.completed .stepCircle {
+  border-color: var(--color-secondary);
+  background: var(--color-secondary);
+  color: var(--color-black);
+}
+
+.stepLabel {
+  margin-top: var(--space-sm);
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  text-align: center;
+  white-space: nowrap;
+}
+
+.step.active .stepLabel {
+  color: var(--color-primary);
+  font-weight: var(--font-medium);
+}
+
+.step.completed .stepLabel {
+  color: var(--color-secondary);
+}
+
+.connector {
+  height: 2px;
+  flex: 1;
+  background: var(--color-border);
+  position: relative;
+  top: -18px;
+  z-index: 1;
+}
+
+.connector.completed {
+  background: var(--color-secondary);
+}
+
+@media (max-width: 600px) {
+  .stepLabel {
+    font-size: 0.625rem;
+  }
+  .stepCircle {
+    width: 28px;
+    height: 28px;
+    font-size: var(--text-xs);
+  }
+}

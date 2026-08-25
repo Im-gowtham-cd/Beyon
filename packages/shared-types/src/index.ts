@@ -28,3 +28,14 @@ export interface UserInfo {
   status: AccountStatus;
   emailVerified: boolean;
 }
+
+export type SkillProficiency = 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED' | 'EXPERT';
+
+export type PlacementPreference = 'PLACEMENT_WILLING' | 'PLACEMENT_NOT_WILLING';
+
+export type WorkType = 'ON_SITE' | 'HYBRID' | 'REMOTE' | 'ANY';
+
+export interface ProfileCompletion {
+  percentage: number;
+  completed: boolean;
+}

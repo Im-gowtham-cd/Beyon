@@ -8,13 +8,16 @@ import { VerifyEmailPage } from '../auth/pages/VerifyEmailPage';
 import { ForgotPasswordPage } from '../auth/pages/ForgotPasswordPage';
 import { ResetPasswordPage } from '../auth/pages/ResetPasswordPage';
 import { UnauthorizedPage } from '../auth/pages/UnauthorizedPage';
-import { RoleSelectPage } from '../auth/pages/RoleSelectPage';
 import { ProtectedRoute } from '../auth/guards/ProtectedRoute';
 import { RoleGuard } from '../auth/guards/RoleGuard';
 import { StudentHome } from '../pages/student/StudentHome';
 import { InstitutionHome } from '../pages/institution/InstitutionHome';
 import { CompanyHome } from '../pages/company/CompanyHome';
 import { AdminHome } from '../pages/admin/AdminHome';
+import { StudentOnboarding } from '../onboarding/pages/student/StudentOnboarding';
+import { InstitutionOnboarding } from '../onboarding/pages/institution/InstitutionOnboarding';
+import { CompanyOnboarding } from '../onboarding/pages/company/CompanyOnboarding';
+import { CompletionPage } from '../onboarding/pages/shared/CompletionPage';
 
 export function App() {
   return (
@@ -25,9 +28,13 @@ export function App() {
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route path="/403" element={<UnauthorizedPage />} />
-      <Route path="/select-role" element={<RoleSelectPage />} />
 
       <Route element={<ProtectedRoute />}>
+        <Route path="/onboarding/student" element={<StudentOnboarding />} />
+        <Route path="/onboarding/institution" element={<InstitutionOnboarding />} />
+        <Route path="/onboarding/company" element={<CompanyOnboarding />} />
+        <Route path="/onboarding/complete" element={<CompletionPage />} />
+
         <Route element={<RoleGuard allowedRoles={['STUDENT']} />}>
           <Route path="/student/home" element={<StudentHome />} />
         </Route>
