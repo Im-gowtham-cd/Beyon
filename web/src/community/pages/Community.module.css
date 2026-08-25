@@ -4,6 +4,71 @@
 .subtitle { font-size: 0.95rem; color: #6b7280; margin-top: 0.25rem; }
 .empty { text-align: center; padding: 3rem; color: #6b7280; }
 
+.dashboardHeader { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+.notifBadge { background: #ef4444; color: #fff; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.8rem; font-weight: 500; }
+
+.statsRow { display: flex; gap: 1rem; margin-bottom: 2rem; }
+.statCard { flex: 1; background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 1.25rem; text-align: center; }
+.statValue { font-size: 1.75rem; font-weight: 700; color: #6366f1; }
+.statLabel { font-size: 0.8rem; color: #6b7280; margin-top: 0.25rem; }
+
+.section { margin-bottom: 2rem; }
+.sectionTitle { font-size: 1.1rem; font-weight: 600; color: #0a0a0f; margin-bottom: 1rem; }
+
+.skillBars { display: flex; flex-direction: column; gap: 0.75rem; }
+.skillBarRow { display: flex; align-items: center; gap: 0.75rem; }
+.skillBarInfo { display: flex; justify-content: space-between; width: 140px; flex-shrink: 0; }
+.skillBarName { font-size: 0.85rem; font-weight: 500; color: #374151; }
+.skillBarScore { font-size: 0.85rem; color: #6b7280; }
+.skillBarTrack { flex: 1; height: 8px; background: #f3f4f6; border-radius: 4px; overflow: hidden; }
+.skillBarFill { height: 100%; background: #6366f1; border-radius: 4px; transition: width 0.3s ease; }
+.profBadge { font-size: 0.7rem; font-weight: 500; width: 80px; text-align: right; flex-shrink: 0; }
+
+.gapList { display: flex; flex-direction: column; gap: 0.5rem; }
+.gapCard { background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 1rem; display: flex; align-items: center; gap: 1rem; }
+.gapSkill { font-weight: 600; color: #0a0a0f; font-size: 0.9rem; min-width: 80px; }
+.gapLevels { flex: 1; display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; }
+.gapCurrent { color: #9ca3af; }
+.gapArrow { color: #d1d5db; }
+.gapRequired { color: #374151; font-weight: 500; }
+.severityBadge { padding: 0.2rem 0.6rem; border-radius: 9999px; font-size: 0.7rem; font-weight: 500; color: #fff; }
+
+.careerCards { display: flex; gap: 1rem; }
+.careerCard { flex: 1; background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 1.25rem; text-align: center; }
+.careerScore { font-size: 2rem; font-weight: 700; color: #6366f1; }
+.careerLabel { font-size: 0.8rem; color: #6b7280; }
+.careerSkills { font-size: 0.8rem; color: #6b7280; margin: 0.5rem 0; }
+
+.matchList { display: flex; flex-direction: column; gap: 0.75rem; }
+.matchCard { background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 1rem; display: flex; align-items: center; gap: 1rem; }
+.matchScore { font-size: 1.5rem; font-weight: 700; color: #059669; min-width: 60px; text-align: center; }
+.matchInfo { flex: 1; }
+.matchTitle { font-weight: 600; color: #0a0a0f; font-size: 0.9rem; }
+.matchMeta { font-size: 0.8rem; color: #6b7280; }
+
+.discussionList { display: flex; flex-direction: column; gap: 0.5rem; }
+.discussionCard { background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 1rem; cursor: pointer; transition: box-shadow 0.2s; }
+.discussionCard:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+.discussionTitle { font-weight: 600; color: #0a0a0f; font-size: 0.95rem; }
+.discussionMeta { font-size: 0.8rem; color: #6b7280; margin-top: 0.25rem; display: flex; gap: 0.5rem; align-items: center; }
+
+.postHighlights { display: flex; flex-direction: column; gap: 0.5rem; }
+.postHighlight { background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 1rem; }
+.postHighlightContent { color: #374151; font-size: 0.9rem; line-height: 1.5; }
+.postHighlightMeta { font-size: 0.8rem; color: #9ca3af; margin-top: 0.5rem; }
+
+.tabRow { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; border-bottom: 1px solid #e5e7eb; padding-bottom: 0.5rem; }
+.tabBtn { padding: 0.5rem 1rem; background: none; border: none; color: #6b7280; cursor: pointer; font-size: 0.9rem; font-weight: 500; border-radius: 6px 6px 0 0; }
+.tabActive { color: #6366f1; border-bottom: 2px solid #6366f1; }
+
+.formGroup { display: flex; flex-direction: column; gap: 0.25rem; }
+.formLabel { font-size: 0.8rem; font-weight: 500; color: #374151; }
+.formInput, .formSelect, .formTextarea { padding: 0.625rem 1rem; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 0.95rem; outline: none; font-family: inherit; }
+.formInput:focus, .formSelect:focus, .formTextarea:focus { border-color: #6366f1; }
+.formTextarea { resize: vertical; }
+.submitBtn { padding: 0.625rem 1.5rem; background: #6366f1; color: #fff; border: none; border-radius: 8px; font-weight: 500; cursor: pointer; font-size: 0.9rem; }
+.submitBtn:disabled { opacity: 0.5; }
+
 .compose { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 1rem; margin-bottom: 1.5rem; }
 .composeInput { width: 100%; border: none; resize: none; font-size: 0.95rem; outline: none; font-family: inherit; }
 .composeBtn { margin-top: 0.75rem; padding: 0.5rem 1.5rem; background: #6366f1; color: #fff; border: none; border-radius: 8px; font-weight: 500; cursor: pointer; }
@@ -72,3 +137,29 @@
 .resourceMeta { display: flex; gap: 0.75rem; font-size: 0.8rem; color: #6b7280; align-items: center; }
 .difficultyBadge { padding: 0.15rem 0.5rem; background: #dbeafe; color: #1e40af; border-radius: 4px; font-size: 0.7rem; }
 .freeBadge { padding: 0.15rem 0.5rem; background: #dcfce7; color: #166534; border-radius: 4px; font-size: 0.7rem; }
+
+.messagingLayout { display: flex; height: calc(100vh - 120px); max-width: 1100px; margin: 0 auto; border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden; }
+.conversationList { width: 300px; border-right: 1px solid #e5e7eb; overflow-y: auto; flex-shrink: 0; }
+.messagingHeader { padding: 1rem 1.25rem; border-bottom: 1px solid #e5e7eb; }
+.messagingTitle { font-size: 1.1rem; font-weight: 600; color: #0a0a0f; }
+.conversationItem { padding: 1rem 1.25rem; border-bottom: 1px solid #f3f4f6; cursor: pointer; transition: background 0.15s; }
+.conversationItem:hover { background: #f9fafb; }
+.conversationActive { background: #eef2ff; border-left: 3px solid #6366f1; }
+.conversationTitle { font-weight: 500; color: #0a0a0f; font-size: 0.9rem; }
+.conversationTime { font-size: 0.75rem; color: #9ca3af; margin-top: 0.25rem; }
+.emptyConversation { padding: 2rem; text-align: center; color: #9ca3af; font-size: 0.9rem; }
+
+.messagePanel { flex: 1; display: flex; flex-direction: column; }
+.messagePanelHeader { padding: 1rem 1.25rem; border-bottom: 1px solid #e5e7eb; }
+.messagePanelHeader h3 { font-size: 1rem; font-weight: 600; color: #0a0a0f; }
+.messageList { flex: 1; overflow-y: auto; padding: 1rem 1.25rem; display: flex; flex-direction: column; gap: 0.5rem; }
+.emptyMessages { text-align: center; color: #9ca3af; padding: 3rem; }
+.messageBubble { max-width: 70%; padding: 0.75rem 1rem; border-radius: 12px; background: #f3f4f6; }
+.messageContent { font-size: 0.9rem; color: #374151; line-height: 1.5; }
+.messageTime { font-size: 0.7rem; color: #9ca3af; margin-top: 0.25rem; }
+.messageInputRow { display: flex; gap: 0.5rem; padding: 1rem 1.25rem; border-top: 1px solid #e5e7eb; }
+.messageInput { flex: 1; padding: 0.625rem 1rem; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 0.9rem; outline: none; }
+.messageInput:focus { border-color: #6366f1; }
+.sendBtn { padding: 0.625rem 1.25rem; background: #6366f1; color: #fff; border: none; border-radius: 8px; font-weight: 500; cursor: pointer; }
+.sendBtn:disabled { opacity: 0.5; }
+.emptyMessagePanel { flex: 1; display: flex; align-items: center; justify-content: center; color: #9ca3af; }

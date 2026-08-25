@@ -5,6 +5,8 @@ export interface SocialPost {
   postType: string;
   title?: string;
   content: string;
+  imageUrl?: string;
+  linkUrl?: string;
   likeCount: number;
   commentCount: number;
   shareCount: number;
@@ -49,6 +51,15 @@ export interface DiscussionReply {
   createdAt: string;
 }
 
+export interface DiscussionCategory {
+  id: string;
+  name: string;
+  slug: string;
+  description: string;
+  icon: string;
+  threadCount: number;
+}
+
 export interface VerifiedAchievement {
   id: string;
   studentId: string;
@@ -76,4 +87,71 @@ export interface ContentResource {
   rating?: number;
   tags: string;
   status: string;
+}
+
+export interface SmartNotification {
+  id: string;
+  userId: string;
+  notificationType: string;
+  priority: string;
+  title: string;
+  body?: string;
+  actionUrl?: string;
+  isRead: boolean;
+  createdAt: string;
+}
+
+export interface MessageConversation {
+  id: string;
+  title?: string;
+  lastMessageAt: string;
+  createdAt: string;
+}
+
+export interface Message {
+  id: string;
+  conversationId: string;
+  senderId: string;
+  content: string;
+  isRead: boolean;
+  createdAt: string;
+}
+
+export interface UserReputation {
+  totalReputation: number;
+  answersCount: number;
+  acceptedAnswers: number;
+  upvotesReceived: number;
+  recentEvents: ReputationEvent[];
+}
+
+export interface ReputationEvent {
+  id: string;
+  eventType: string;
+  points: number;
+  referenceType?: string;
+  referenceId?: string;
+  createdAt: string;
+}
+
+export interface DashboardData {
+  unreadNotifications: number;
+  reputation?: { total: number; answers: number; accepted: number };
+  topSkills: Array<{ skillId: string; confidenceScore: number; proficiency: string; accuracy: number; questionsSolved: number }>;
+  skillGaps: Array<{ requiredSkillId: string; severity: string; requiredLevel: string; currentLevel: string }>;
+  recommendedOpportunities: Array<{ opportunityId: string; totalScore: number; skillScore: number }>;
+  recentDiscussions: Array<{ id: string; title: string; replyCount: number; solved: boolean }>;
+  recentPosts: Array<{ id: string; content: string; likeCount: number; commentCount: number }>;
+  careerProgress: Array<{ careerPathId: string; readinessScore: number; skillsAcquired: number; skillsTotal: number }>;
+}
+
+export interface ProjectVerification {
+  id: string;
+  projectId: string;
+  studentId: string;
+  verificationType: string;
+  evidenceUrl?: string;
+  status: string;
+  verifiedAt?: string;
+  createdAt: string;
 }

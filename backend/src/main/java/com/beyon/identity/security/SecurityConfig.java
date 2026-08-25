@@ -69,6 +69,8 @@ public class SecurityConfig {
                 .requestMatchers("/api/v1/messages/**").authenticated()
                 .requestMatchers("/api/v1/notification-preferences/**").authenticated()
                 .requestMatchers("/api/v1/content/**").authenticated()
+                .requestMatchers("/api/v1/dashboard/**").authenticated()
+                .requestMatchers("/api/v1/verifications/**").authenticated()
                 .requestMatchers("/api/v1/health").permitAll()
                 .requestMatchers("/api/v1/ready").permitAll()
                 .requestMatchers("/api/v1/metrics").permitAll()

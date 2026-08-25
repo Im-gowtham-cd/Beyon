@@ -1,5 +1,5 @@
 import { api } from '../../services/api/client';
-import type { SocialPost, SocialComment, DiscussionThread, DiscussionReply, VerifiedAchievement, ContentResource } from '../types/community';
+import type { SocialPost, SocialComment, DiscussionThread, DiscussionReply, VerifiedAchievement, ContentResource, SmartNotification, MessageConversation, Message, UserReputation, DashboardData, ProjectVerification } from '../types/community';
 
 export const communityApi = {
   createPost: async (content: string, title?: string, postType = 'TEXT'): Promise<SocialPost> => api.post('/social/posts', { content, title, postType }),
@@ -24,4 +24,26 @@ export const communityApi = {
   getPublishedResources: async (): Promise<ContentResource[]> => api.get('/content'),
   getContentByType: async (type: string): Promise<ContentResource[]> => api.get(`/content/type/${type}`),
   createResource: async (resource: Partial<ContentResource>): Promise<ContentResource> => api.post('/content', resource),
+
+  getDashboard: async (): Promise<DashboardData> => api.get('/dashboard'),
+  getNotifications: async (): Promise<SmartNotification[]> => api.get('/dashboard/notifications'),
+  getUnreadNotifications: async (): Promise<SmartNotification[]> => api.get('/dashboard/notifications/unread'),
+  getUnreadCount: async (): Promise<{ count: number }> => api.get('/dashboard/notifications/unread/count'),
+  markNotificationRead: async (id: string): Promise<void> => { await api.post(`/dashboard/notifications/${id}/read`); },
+  markAllRead: async (): Promise<{ marked: number }> => api.post('/dashboard/notifications/read-all'),
+  getReputation: async (): Promise<UserReputation> => api.get('/dashboard/reputation'),
+
+  getConversations: async (): Promise<MessageConversation[]> => api.get('/messages/conversations'),
+  startConversation: async (participantIds: string[], title?: string): Promise<MessageConversation> => api.post('/messages/conversations', { participantIds, title }),
+  getMessages: async (conversationId: string): Promise<Message[]> => api.get(`/messages/conversations/${conversationId}/messages`),
+  sendMessage: async (conversationId: string, content: string): Promise<Message> => api.post(`/messages/conversations/${conversationId}/messages`, { content }),
+
+  submitProjectVerification: async (projectId: string, verificationType: string, evidenceUrl: string): Promise<ProjectVerification> => api.post('/verifications/project', { projectId, verificationType, evidenceUrl }),
+  getProjectVerifications: async (projectId: string): Promise<ProjectVerification[]> => api.get(`/verifications/project/${projectId}`),
+
+  follow: async (targetId: string, targetType: string): Promise<{ following: boolean }> => api.post('/follows', { targetId, targetType }),
+  unfollow: async (targetId: string): Promise<void> => { await api.delete(`/follows/${targetId}`); },
+  getFollowers: async (userId: string): Promise<string[]> => api.get(`/follows/${userId}/followers`),
+  getFollowing: async (userId: string): Promise<string[]> => api.get(`/follows/${userId}/following`),
+  isFollowing: async (targetId: string): Promise<{ following: boolean }> => api.get(`/follows/check/${targetId}`),
 };

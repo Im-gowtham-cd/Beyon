@@ -41,6 +41,8 @@ import { SocialFeedPage } from '../community/pages/SocialFeedPage';
 import { DiscussionsPage } from '../community/pages/DiscussionsPage';
 import { PortfolioPage } from '../community/pages/PortfolioPage';
 import { ResourcesPage } from '../community/pages/ResourcesPage';
+import { DashboardPage } from '../community/pages/DashboardPage';
+import { MessagingPage } from '../community/pages/MessagingPage';
 import { InstitutionHome } from '../pages/institution/InstitutionHome';
 import { CompanyHome } from '../pages/company/CompanyHome';
 import { AdminHome } from '../pages/admin/AdminHome';
@@ -97,6 +99,8 @@ export function App() {
           <Route path="/discussions" element={<DiscussionsPage />} />
           <Route path="/portfolio" element={<PortfolioPage />} />
           <Route path="/resources" element={<ResourcesPage />} />
+          <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/messages" element={<MessagingPage />} />
         </Route>
         <Route element={<RoleGuard allowedRoles={['INSTITUTION']} />}>
           <Route path="/institution/home" element={<InstitutionHome />} />
