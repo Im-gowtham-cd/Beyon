@@ -42,6 +42,9 @@ public class StudentProject {
 
     private LocalDate endDate;
 
+    @Column(nullable = false)
+    private boolean featured = false;
+
     @Column(nullable = false, updatable = false)
     private Instant createdAt = Instant.now();
 
@@ -74,5 +77,7 @@ public class StudentProject {
     public LocalDate getEndDate() { return endDate; }
     public void setEndDate(LocalDate endDate) { this.endDate = endDate; }
     public Instant getCreatedAt() { return createdAt; }
+    public boolean isFeatured() { return featured; }
+    public void setFeatured(boolean featured) { this.featured = featured; }
     public Instant getUpdatedAt() { return updatedAt; }
 }

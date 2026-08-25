@@ -76,6 +76,7 @@ public class AuthService {
         user.setDisplayName(request.getName());
         user.setRole(request.getRole());
         user.setStatus(AccountStatus.PENDING_VERIFICATION);
+        user.setProfileStatus(AccountStatus.INCOMPLETE);
         user.setEmailVerified(false);
         userRepository.save(user);
 
@@ -83,8 +84,7 @@ public class AuthService {
 
         auditService.log(AuditEventType.REGISTRATION, user.getEmail(), null, null);
 
-        return new AuthResponse.UserInfo(user.getId(), user.getEmail(), user.getDisplayName(),
-                user.getRole(), user.getStatus(), user.isEmailVerified());
+        return buildUserInfo(user);
     }
 
     public AuthResponse login(LoginRequest request, String ipAddress, String userAgent) {
@@ -118,9 +118,7 @@ public class AuthService {
 
         auditService.log(AuditEventType.LOGIN_SUCCESS, user.getEmail(), ipAddress, userAgent);
 
-        AuthResponse.UserInfo userInfo = new AuthResponse.UserInfo(
-                user.getId(), user.getEmail(), user.getDisplayName(),
-                user.getRole(), user.getStatus(), user.isEmailVerified());
+        AuthResponse.UserInfo userInfo = buildUserInfo(user);
 
         return new AuthResponse(token, userInfo);
     }
@@ -129,8 +127,39 @@ public class AuthService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-        return new AuthResponse.UserInfo(user.getId(), user.getEmail(), user.getDisplayName(),
-                user.getRole(), user.getStatus(), user.isEmailVerified());
+        return buildUserInfo(user);
+    }
+
+    @Transactional
+    public void updateProfile(UUID userId, String displayName) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        if (displayName != null && !displayName.isBlank()) {
+            user.setDisplayName(displayName);
+        }
+        userRepository.save(user);
+    }
+
+    @Transactional
+    public void changePassword(UUID userId, String currentPassword, String newPassword, String confirmPassword) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        if (!passwordEncoder.matches(currentPassword, user.getPasswordHash())) {
+            throw new UnauthorizedException("Current password is incorrect");
+        }
+
+        if (!newPassword.equals(confirmPassword)) {
+            throw new IllegalArgumentException("New passwords do not match");
+        }
+
+        validatePasswordStrength(newPassword);
+
+        user.setPasswordHash(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+
+        auditService.log(AuditEventType.PASSWORD_RESET_COMPLETED, user.getEmail(), null, null);
     }
 
     @Transactional
@@ -232,6 +261,13 @@ public class AuthService {
         userRepository.save(user);
 
         auditService.log(AuditEventType.PASSWORD_RESET_COMPLETED, user.getEmail(), null, null);
+    }
+
+    private AuthResponse.UserInfo buildUserInfo(User user) {
+        return new AuthResponse.UserInfo(
+                user.getId(), user.getEmail(), user.getDisplayName(),
+                user.getRole(), user.getStatus(), user.getProfileStatus(),
+                user.isEmailVerified());
     }
 
     private void createEmailVerificationToken(UUID userId) {

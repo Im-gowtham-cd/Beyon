@@ -1,16 +1,37 @@
+import { Link } from 'react-router-dom';
 import { useAuth } from '../../auth/context/AuthContext';
+import styles from './StudentHome.module.css';
 
 export function StudentHome() {
   const { user } = useAuth();
 
   return (
-    <div style={{ padding: 'var(--space-2xl)', maxWidth: 'var(--max-content)', margin: '0 auto' }}>
-      <h1 style={{ fontFamily: 'var(--font-heading)', fontWeight: 'var(--font-bold)', fontSize: 'var(--text-3xl)', color: 'var(--color-text)', marginBottom: 'var(--space-md)' }}>
+    <div className={styles.page}>
+      <h1 className={styles.title}>
         Welcome back, {user?.name?.split(' ')[0]}.
       </h1>
-      <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-lg)' }}>
-        Your Student workspace will appear here.
-      </p>
+      <div className={styles.cards}>
+        <Link to="/student/profile" className={styles.card}>
+          <span className={styles.cardIcon}>👤</span>
+          <span className={styles.cardTitle}>Profile</span>
+          <span className={styles.cardDesc}>View and edit your profile</span>
+        </Link>
+        <div className={`${styles.card} ${styles.cardDisabled}`}>
+          <span className={styles.cardIcon}>⚡</span>
+          <span className={styles.cardTitle}>Challenges</span>
+          <span className={styles.cardDesc}>Coming soon</span>
+        </div>
+        <div className={`${styles.card} ${styles.cardDisabled}`}>
+          <span className={styles.cardIcon}>🏆</span>
+          <span className={styles.cardTitle}>Assessments</span>
+          <span className={styles.cardDesc}>Coming soon</span>
+        </div>
+        <div className={`${styles.card} ${styles.cardDisabled}`}>
+          <span className={styles.cardIcon}>🪙</span>
+          <span className={styles.cardTitle}>Coins</span>
+          <span className={styles.cardDesc}>Coming soon</span>
+        </div>
+      </div>
     </div>
   );
 }

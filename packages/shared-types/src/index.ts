@@ -18,7 +18,7 @@ export interface ApiError {
 
 export type UserRole = 'STUDENT' | 'COMPANY' | 'INSTITUTION' | 'ADMIN';
 
-export type AccountStatus = 'PENDING_VERIFICATION' | 'ACTIVE' | 'SUSPENDED' | 'DEACTIVATED';
+export type AccountStatus = 'PENDING_VERIFICATION' | 'ACTIVE' | 'SUSPENDED' | 'DEACTIVATED' | 'INCOMPLETE' | 'COMPLETED' | 'PENDING_INSTITUTION_VERIFICATION' | 'PENDING_COMPANY_VERIFICATION' | 'REJECTED';
 
 export interface UserInfo {
   id: string;
@@ -26,6 +26,7 @@ export interface UserInfo {
   name: string;
   role: UserRole;
   status: AccountStatus;
+  profileStatus: AccountStatus;
   emailVerified: boolean;
 }
 

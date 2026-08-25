@@ -8,9 +8,14 @@ import { VerifyEmailPage } from '../auth/pages/VerifyEmailPage';
 import { ForgotPasswordPage } from '../auth/pages/ForgotPasswordPage';
 import { ResetPasswordPage } from '../auth/pages/ResetPasswordPage';
 import { UnauthorizedPage } from '../auth/pages/UnauthorizedPage';
+import { VerificationPendingPage } from '../auth/pages/VerificationPendingPage';
+import { AccountSuspendedPage } from '../auth/pages/AccountSuspendedPage';
+import { SettingsPage } from '../auth/pages/SettingsPage';
 import { ProtectedRoute } from '../auth/guards/ProtectedRoute';
 import { RoleGuard } from '../auth/guards/RoleGuard';
 import { StudentHome } from '../pages/student/StudentHome';
+import { StudentProfilePage } from '../student/pages/StudentProfilePage';
+import { PublicProfilePage } from '../student/pages/PublicProfilePage';
 import { InstitutionHome } from '../pages/institution/InstitutionHome';
 import { CompanyHome } from '../pages/company/CompanyHome';
 import { AdminHome } from '../pages/admin/AdminHome';
@@ -27,6 +32,7 @@ export function App() {
       <Route path="/verify-email" element={<VerifyEmailPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
+      <Route path="/unauthorized" element={<UnauthorizedPage />} />
       <Route path="/403" element={<UnauthorizedPage />} />
 
       <Route element={<ProtectedRoute />}>
@@ -35,8 +41,14 @@ export function App() {
         <Route path="/onboarding/company" element={<CompanyOnboarding />} />
         <Route path="/onboarding/complete" element={<CompletionPage />} />
 
+        <Route path="/verification-pending" element={<VerificationPendingPage />} />
+        <Route path="/account-suspended" element={<AccountSuspendedPage />} />
+        <Route path="/settings" element={<SettingsPage />} />
+
         <Route element={<RoleGuard allowedRoles={['STUDENT']} />}>
           <Route path="/student/home" element={<StudentHome />} />
+          <Route path="/student/profile" element={<StudentProfilePage />} />
+          <Route path="/student/profile/edit" element={<StudentProfilePage />} />
         </Route>
         <Route element={<RoleGuard allowedRoles={['INSTITUTION']} />}>
           <Route path="/institution/home" element={<InstitutionHome />} />
@@ -48,6 +60,8 @@ export function App() {
           <Route path="/admin/home" element={<AdminHome />} />
         </Route>
       </Route>
+
+      <Route path="/student/u/:username" element={<PublicProfilePage />} />
 
       <Route element={<MainLayout />}>
         <Route path="/" element={<HomePage />} />

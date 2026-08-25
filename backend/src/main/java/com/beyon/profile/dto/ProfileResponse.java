@@ -27,6 +27,7 @@ public class ProfileResponse {
         private String name;
         private UserRole role;
         private String status;
+        private String profileStatus;
         private boolean emailVerified;
         private boolean profileCompleted;
 
@@ -36,6 +37,7 @@ public class ProfileResponse {
             this.name = user.getDisplayName();
             this.role = user.getRole();
             this.status = user.getStatus().name();
+            this.profileStatus = user.getProfileStatus() != null ? user.getProfileStatus().name() : null;
             this.emailVerified = user.isEmailVerified();
             this.profileCompleted = profileCompleted;
         }
@@ -45,6 +47,7 @@ public class ProfileResponse {
         public String getName() { return name; }
         public UserRole getRole() { return role; }
         public String getStatus() { return status; }
+        public String getProfileStatus() { return profileStatus; }
         public boolean isEmailVerified() { return emailVerified; }
         public boolean isProfileCompleted() { return profileCompleted; }
     }
@@ -55,6 +58,9 @@ public class ProfileResponse {
         private List<StudentCertification> certifications;
         private List<StudentProject> projects;
         private List<StudentLink> links;
+        private List<StudentAchievement> achievements;
+        private List<StudentLearningSkill> learningSkills;
+        private StudentCareerPreferences careerPreferences;
 
         public StudentProfile getProfile() { return profile; }
         public void setProfile(StudentProfile profile) { this.profile = profile; }
@@ -66,6 +72,12 @@ public class ProfileResponse {
         public void setProjects(List<StudentProject> projects) { this.projects = projects; }
         public List<StudentLink> getLinks() { return links; }
         public void setLinks(List<StudentLink> links) { this.links = links; }
+        public List<StudentAchievement> getAchievements() { return achievements; }
+        public void setAchievements(List<StudentAchievement> achievements) { this.achievements = achievements; }
+        public List<StudentLearningSkill> getLearningSkills() { return learningSkills; }
+        public void setLearningSkills(List<StudentLearningSkill> learningSkills) { this.learningSkills = learningSkills; }
+        public StudentCareerPreferences getCareerPreferences() { return careerPreferences; }
+        public void setCareerPreferences(StudentCareerPreferences careerPreferences) { this.careerPreferences = careerPreferences; }
     }
 
     public static class InstitutionProfileData {

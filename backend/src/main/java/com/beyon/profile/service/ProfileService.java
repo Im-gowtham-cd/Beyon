@@ -19,6 +19,9 @@ public class ProfileService {
     private final StudentCertificationRepository studentCertificationRepository;
     private final StudentProjectRepository studentProjectRepository;
     private final StudentLinkRepository studentLinkRepository;
+    private final StudentAchievementRepository studentAchievementRepository;
+    private final StudentLearningSkillRepository studentLearningSkillRepository;
+    private final StudentCareerPreferencesRepository studentCareerPreferencesRepository;
     private final InstitutionProfileRepository institutionProfileRepository;
     private final InstitutionPlacementHistoryRepository institutionPlacementHistoryRepository;
     private final InstitutionRepresentativeRepository institutionRepresentativeRepository;
@@ -33,6 +36,9 @@ public class ProfileService {
                           StudentCertificationRepository studentCertificationRepository,
                           StudentProjectRepository studentProjectRepository,
                           StudentLinkRepository studentLinkRepository,
+                          StudentAchievementRepository studentAchievementRepository,
+                          StudentLearningSkillRepository studentLearningSkillRepository,
+                          StudentCareerPreferencesRepository studentCareerPreferencesRepository,
                           InstitutionProfileRepository institutionProfileRepository,
                           InstitutionPlacementHistoryRepository institutionPlacementHistoryRepository,
                           InstitutionRepresentativeRepository institutionRepresentativeRepository,
@@ -46,6 +52,9 @@ public class ProfileService {
         this.studentCertificationRepository = studentCertificationRepository;
         this.studentProjectRepository = studentProjectRepository;
         this.studentLinkRepository = studentLinkRepository;
+        this.studentAchievementRepository = studentAchievementRepository;
+        this.studentLearningSkillRepository = studentLearningSkillRepository;
+        this.studentCareerPreferencesRepository = studentCareerPreferencesRepository;
         this.institutionProfileRepository = institutionProfileRepository;
         this.institutionPlacementHistoryRepository = institutionPlacementHistoryRepository;
         this.institutionRepresentativeRepository = institutionRepresentativeRepository;
@@ -92,6 +101,9 @@ public class ProfileService {
         data.setCertifications(studentCertificationRepository.findByUserId(userId));
         data.setProjects(studentProjectRepository.findByUserId(userId));
         data.setLinks(studentLinkRepository.findByUserId(userId));
+        data.setAchievements(studentAchievementRepository.findByUserIdOrderByAchievementDateDesc(userId));
+        data.setLearningSkills(studentLearningSkillRepository.findByUserIdOrderByCreatedAtDesc(userId));
+        data.setCareerPreferences(studentCareerPreferencesRepository.findByUserId(userId).orElse(null));
         return data;
     }
 

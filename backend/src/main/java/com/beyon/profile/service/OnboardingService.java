@@ -2,6 +2,7 @@ package com.beyon.profile.service;
 
 import com.beyon.common.exception.ConflictException;
 import com.beyon.common.exception.ResourceNotFoundException;
+import com.beyon.identity.enums.AccountStatus;
 import com.beyon.identity.enums.UserRole;
 import com.beyon.identity.model.User;
 import com.beyon.identity.repository.UserRepository;
@@ -11,9 +12,7 @@ import com.beyon.profile.repository.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 public class OnboardingService {
@@ -96,6 +95,9 @@ public class OnboardingService {
         profile.setResumeUrl(req.getResumeUrl());
         profile.setCompletionPct(calculateStudentCompletion(req));
         studentProfileRepository.save(profile);
+
+        user.setProfileStatus(AccountStatus.COMPLETED);
+        userRepository.save(user);
 
         if (req.getSkills() != null) {
             for (StudentOnboardingRequest.SkillEntry s : req.getSkills()) {
@@ -192,6 +194,9 @@ public class OnboardingService {
         profile.setCompletionPct(calculateInstitutionCompletion(req));
         institutionProfileRepository.save(profile);
 
+        user.setProfileStatus(AccountStatus.PENDING_INSTITUTION_VERIFICATION);
+        userRepository.save(user);
+
         if (req.getPlacementHistory() != null) {
             for (InstitutionOnboardingRequest.PlacementHistoryEntry h : req.getPlacementHistory()) {
                 InstitutionPlacementHistory history = new InstitutionPlacementHistory();
@@ -252,6 +257,9 @@ public class OnboardingService {
         profile.setVerificationDocUrl(req.getVerificationDocUrl());
         profile.setCompletionPct(calculateCompanyCompletion(req));
         companyProfileRepository.save(profile);
+
+        user.setProfileStatus(AccountStatus.PENDING_COMPANY_VERIFICATION);
+        userRepository.save(user);
 
         if (req.getHiringTypes() != null || req.getPreferredLevels() != null || req.getRecruitmentRegions() != null) {
             CompanyHiringPreference prefs = new CompanyHiringPreference();
