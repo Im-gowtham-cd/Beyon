@@ -68,6 +68,14 @@ public class StudentProfile {
     @Column(length = 20)
     private WorkType preferredWorkType;
 
+    @Column(length = 50)
+    private String username;
+
+    private Integer graduationYear;
+
+    @Column(columnDefinition = "TEXT")
+    private String preferredLocations;
+
     @Column(columnDefinition = "TEXT")
     private String aboutMe;
 
@@ -134,5 +142,11 @@ public class StudentProfile {
     public int getCompletionPct() { return completionPct; }
     public void setCompletionPct(int completionPct) { this.completionPct = completionPct; }
     public Instant getCreatedAt() { return createdAt; }
+    public String getUsername() { return username; }
+    public void setUsername(String username) { this.username = username; }
+    public Integer getGraduationYear() { return graduationYear; }
+    public void setGraduationYear(Integer graduationYear) { this.graduationYear = graduationYear; }
+    public String getPreferredLocations() { return preferredLocations; }
+    public void setPreferredLocations(String preferredLocations) { this.preferredLocations = preferredLocations; }
     public Instant getUpdatedAt() { return updatedAt; }
 }

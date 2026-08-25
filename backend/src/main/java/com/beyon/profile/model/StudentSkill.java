@@ -27,8 +27,20 @@ public class StudentSkill {
     @Column(length = 20)
     private SkillProficiency proficiency;
 
+    @Column(nullable = false, length = 30)
+    private String source = "SELF_REPORTED";
+
+    @Column(nullable = false)
+    private boolean verified = false;
+
     @Column(nullable = false, updatable = false)
     private Instant createdAt = Instant.now();
+
+    @Column(nullable = false)
+    private Instant updatedAt = Instant.now();
+
+    @PreUpdate
+    protected void onUpdate() { this.updatedAt = Instant.now(); }
 
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
@@ -40,5 +52,10 @@ public class StudentSkill {
     public void setCategory(String category) { this.category = category; }
     public SkillProficiency getProficiency() { return proficiency; }
     public void setProficiency(SkillProficiency proficiency) { this.proficiency = proficiency; }
+    public String getSource() { return source; }
+    public void setSource(String source) { this.source = source; }
+    public boolean isVerified() { return verified; }
+    public void setVerified(boolean verified) { this.verified = verified; }
     public Instant getCreatedAt() { return createdAt; }
+    public Instant getUpdatedAt() { return updatedAt; }
 }

@@ -14,6 +14,8 @@ import { SettingsPage } from '../auth/pages/SettingsPage';
 import { ProtectedRoute } from '../auth/guards/ProtectedRoute';
 import { RoleGuard } from '../auth/guards/RoleGuard';
 import { StudentHome } from '../pages/student/StudentHome';
+import { StudentProfilePage } from '../student/pages/StudentProfilePage';
+import { PublicProfilePage } from '../student/pages/PublicProfilePage';
 import { InstitutionHome } from '../pages/institution/InstitutionHome';
 import { CompanyHome } from '../pages/company/CompanyHome';
 import { AdminHome } from '../pages/admin/AdminHome';
@@ -45,6 +47,8 @@ export function App() {
 
         <Route element={<RoleGuard allowedRoles={['STUDENT']} />}>
           <Route path="/student/home" element={<StudentHome />} />
+          <Route path="/student/profile" element={<StudentProfilePage />} />
+          <Route path="/student/profile/edit" element={<StudentProfilePage />} />
         </Route>
         <Route element={<RoleGuard allowedRoles={['INSTITUTION']} />}>
           <Route path="/institution/home" element={<InstitutionHome />} />
@@ -56,6 +60,8 @@ export function App() {
           <Route path="/admin/home" element={<AdminHome />} />
         </Route>
       </Route>
+
+      <Route path="/student/u/:username" element={<PublicProfilePage />} />
 
       <Route element={<MainLayout />}>
         <Route path="/" element={<HomePage />} />

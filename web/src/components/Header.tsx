@@ -37,6 +37,7 @@ export function Header() {
         {authenticated ? (
           <>
             <Link to={dashboardPath} className={styles.navLink}>Dashboard</Link>
+            {user?.role === 'STUDENT' && <Link to="/student/profile" className={styles.navLink}>Profile</Link>}
             <div className={styles.menuContainer} ref={menuRef}>
               <button className={styles.avatarBtn} onClick={() => setMenuOpen(!menuOpen)}>
                 <span className={styles.avatar}>{user?.name?.charAt(0).toUpperCase()}</span>

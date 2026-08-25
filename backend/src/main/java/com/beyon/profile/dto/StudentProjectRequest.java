@@ -1,63 +1,19 @@
-package com.beyon.profile.model;
+package com.beyon.profile.dto;
 
-import jakarta.persistence.*;
-import java.time.Instant;
 import java.time.LocalDate;
-import java.util.UUID;
 
-@Entity
-@Table(name = "student_projects")
-public class StudentProject {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(columnDefinition = "uuid")
-    private UUID id;
-
-    @Column(nullable = false)
-    private UUID userId;
-
-    @Column(nullable = false, length = 200)
+public class StudentProjectRequest {
     private String name;
-
-    @Column(columnDefinition = "TEXT")
     private String description;
-
-    @Column(length = 100)
     private String role;
-
-    @Column(columnDefinition = "TEXT")
     private String technologies;
-
-    @Column(length = 500)
     private String githubUrl;
-
-    @Column(length = 500)
     private String liveUrl;
-
-    @Column(length = 500)
     private String imageUrl;
-
     private LocalDate startDate;
-
     private LocalDate endDate;
+    private Boolean featured;
 
-    @Column(nullable = false)
-    private boolean featured = false;
-
-    @Column(nullable = false, updatable = false)
-    private Instant createdAt = Instant.now();
-
-    @Column(nullable = false)
-    private Instant updatedAt = Instant.now();
-
-    @PreUpdate
-    protected void onUpdate() { this.updatedAt = Instant.now(); }
-
-    public UUID getId() { return id; }
-    public void setId(UUID id) { this.id = id; }
-    public UUID getUserId() { return userId; }
-    public void setUserId(UUID userId) { this.userId = userId; }
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
     public String getDescription() { return description; }
@@ -76,8 +32,6 @@ public class StudentProject {
     public void setStartDate(LocalDate startDate) { this.startDate = startDate; }
     public LocalDate getEndDate() { return endDate; }
     public void setEndDate(LocalDate endDate) { this.endDate = endDate; }
-    public Instant getCreatedAt() { return createdAt; }
-    public boolean isFeatured() { return featured; }
-    public void setFeatured(boolean featured) { this.featured = featured; }
-    public Instant getUpdatedAt() { return updatedAt; }
+    public Boolean getFeatured() { return featured; }
+    public void setFeatured(Boolean featured) { this.featured = featured; }
 }
