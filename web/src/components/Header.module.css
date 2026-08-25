@@ -26,13 +26,15 @@
   width: 36px;
   height: 36px;
   background: var(--color-primary);
-  color: white;
-  border-radius: var(--radius-md);
+  color: var(--color-black);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-heading);
   font-weight: var(--font-bold);
   font-size: var(--text-lg);
 }
 
 .logoText {
+  font-family: var(--font-heading);
   font-size: var(--text-xl);
   font-weight: var(--font-bold);
   letter-spacing: -0.5px;
@@ -44,7 +46,56 @@
   gap: var(--space-md);
 }
 
-.placeholder {
-  color: var(--color-text-muted);
+.navLink {
+  color: var(--color-text-secondary);
+  text-decoration: none;
   font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  transition: color var(--transition-fast);
+}
+
+.navLink:hover {
+  color: var(--color-text);
+}
+
+.registerBtn {
+  padding: 8px 20px;
+  background: var(--color-primary);
+  color: var(--color-black);
+  border: none;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+  cursor: pointer;
+  text-decoration: none;
+  transition: opacity var(--transition-fast);
+}
+
+.registerBtn:hover {
+  opacity: 0.9;
+}
+
+.userName {
+  color: var(--color-text-secondary);
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+}
+
+.logoutBtn {
+  padding: 8px 16px;
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-secondary);
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  cursor: pointer;
+  transition: border-color var(--transition-fast), color var(--transition-fast);
+}
+
+.logoutBtn:hover {
+  border-color: var(--color-text-muted);
+  color: var(--color-text);
 }

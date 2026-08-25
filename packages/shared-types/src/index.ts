@@ -17,3 +17,14 @@ export interface ApiError {
 }
 
 export type UserRole = 'STUDENT' | 'COMPANY' | 'INSTITUTION' | 'ADMIN';
+
+export type AccountStatus = 'PENDING_VERIFICATION' | 'ACTIVE' | 'SUSPENDED' | 'DEACTIVATED';
+
+export interface UserInfo {
+  id: string;
+  email: string;
+  name: string;
+  role: UserRole;
+  status: AccountStatus;
+  emailVerified: boolean;
+}
