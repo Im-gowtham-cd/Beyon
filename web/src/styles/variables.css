@@ -1,47 +1,84 @@
+/* ================================================================
+   BEYON DESIGN SYSTEM v2.0
+   Inspired by institutional design — Deep Blue + Yellow Accent
+   ================================================================ */
+
+@font-face {
+  font-family: 'ClashDisplay';
+  src: url('/fonts/ClashDisplay.ttf') format('truetype');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Montserrat';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('/fonts/Montserrat-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
 :root {
-  --color-primary:        #E1FB15;
-  --color-primary-hover:  #cbe512;
-  --color-secondary:      #32D583;
-  --color-white:          #FFFFFF;
-  --color-black:          #131313;
+  /* ── Brand Colors ── */
+  --color-primary:        #253cac;
+  --color-primary-rgb:    37, 60, 172;
+  --color-primary-dark:   #1c2d81;
+  --color-primary-light:  #019fdb;
+  --color-primary-hover:  #1e3299;
 
-  --color-bg:             #131313;
-  --color-surface:        #1A1A1A;
-  --color-surface-2:      #232325;
-  --color-surface-3:      #2A2A2C;
-  --color-border:         #2A2A2C;
+  --color-accent:         #fed601;
+  --color-accent-rgb:     254, 214, 1;
+  --color-accent-dark:    #8b7500;
 
-  --color-text:           #E8E8F0;
-  --color-text-secondary: #B5B5B8;
-  --color-text-muted:     #8A8A8E;
+  /* ── Background & Surface ── */
+  --color-bg:             #f4f6fb;
+  --color-bg-rgb:         244, 246, 251;
+  --color-surface:        #fefefe;
+  --color-surface-rgb:    254, 254, 254;
+  --color-surface-2:      #f8f9fc;
+  --color-surface-3:      #eef1f6;
+  --color-white:          #fefefe;
 
-  --color-success:        #32D583;
-  --color-warning:        #FFB020;
-  --color-error:          #FF5C5C;
-  --color-info:           #74B9FF;
+  /* ── Text ── */
+  --color-text:           #0d0d0e;
+  --color-text-primary:   #0d0d0e;
+  --color-text-secondary: #515150;
+  --color-text-muted:     #77777a;
 
-  --space-xs:  4px;
-  --space-sm:  8px;
-  --space-md:  16px;
-  --space-lg:  24px;
-  --space-xl:  32px;
-  --space-2xl: 48px;
+  /* ── Borders ── */
+  --color-border:         #bcbcbd;
+  --color-border-light:   #e7e7e9;
 
-  --radius-sm:  12px;
-  --radius-md:  20px;
-  --radius-lg:  32px;
-  --radius-xl:  40px;
-  --radius-full: 9999px;
+  /* ── Status ── */
+  --color-success:        #01a03a;
+  --color-success-light:  #91bd4b;
+  --color-warning:        #c98f00;
+  --color-danger:         #c62828;
+  --color-info:           #019fdb;
 
-  --shadow-sm:  0 1px 3px rgba(0, 0, 0, 0.3);
-  --shadow-md:  0 4px 12px rgba(0, 0, 0, 0.4);
-  --shadow-lg:  0 8px 32px rgba(0, 0, 0, 0.5);
-  --shadow-glow: 0 0 60px rgba(225, 251, 21, 0.22);
+  /* ── Overlay ── */
+  --color-overlay:        rgba(0, 0, 0, 0.45);
 
-  --font-body: 'General Sans', -apple-system, 'Segoe UI', Inter, sans-serif;
-  --font-heading: 'Clash Grotesk', 'General Sans', -apple-system, sans-serif;
-  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  /* ── Typography ── */
+  --font-body:            'Montserrat', -apple-system, 'Segoe UI', sans-serif;
+  --font-heading:         'ClashDisplay', 'Montserrat', sans-serif;
+  --font-display:         'Montserrat', sans-serif;
+  --font-mono:            'JetBrains Mono', 'Fira Code', monospace;
 
+  /* ── Font Sizes (fluid) ── */
+  --fs-sm:                14px;
+  --fs-base:              16px;
+  --fs-lg:                18px;
+  --fs-xl:                clamp(1.125rem, 2.5vw, 1.25rem);
+  --fs-2xl:               clamp(1.25rem, 3vw, 1.5rem);
+  --fs-3xl:               clamp(1.375rem, 3.5vw, 1.75rem);
+  --fs-4xl:               clamp(1.5rem, 4vw, 2rem);
+  --fs-5xl:               clamp(1.625rem, 4.5vw, 2.25rem);
+  --fs-6xl:               clamp(1.875rem, 5.5vw, 2.625rem);
+
+  /* Legacy aliases */
   --text-xs:   0.75rem;
   --text-sm:   0.875rem;
   --text-base: 1rem;
@@ -51,16 +88,50 @@
   --text-3xl:  2rem;
   --text-4xl:  2.5rem;
 
+  /* ── Font Weights ── */
   --font-normal:   400;
   --font-medium:   500;
   --font-semibold: 600;
   --font-bold:     700;
+  --font-extrabold: 800;
 
-  --transition-fast: 150ms ease;
-  --transition-base: 250ms ease;
-  --transition-slow: 400ms ease;
+  /* ── Spacing ── */
+  --space-xs:  4px;
+  --space-sm:  8px;
+  --space-md:  16px;
+  --space-lg:  24px;
+  --space-xl:  32px;
+  --space-2xl: 48px;
 
+  /* ── Border Radius (sharp corners) ── */
+  --radius-xs:   0px;
+  --radius-sm:   0px;
+  --radius-md:   0px;
+  --radius-lg:   0px;
+  --radius-xl:   0px;
+  --radius-full: 9999px;
+
+  /* ── Shadows ── */
+  --shadow-sm:   0 1px 3px rgba(0, 0, 0, 0.08);
+  --shadow-md:   0 4px 12px rgba(0, 0, 0, 0.10);
+  --shadow-lg:   0 8px 24px rgba(0, 0, 0, 0.12);
+  --shadow-glow: 0 0 60px rgba(37, 60, 172, 0.15);
+
+  /* ── Navigation ── */
+  --nav-utility: 32px;
+  --nav-main:    72px;
+  --nav-height:  calc(var(--nav-utility) + var(--nav-main));
   --sidebar-width: 260px;
-  --header-height: 64px;
-  --max-content:   1200px;
+  --header-height: var(--nav-height);
+  --max-content:   1400px;
+
+  /* ── Transitions ── */
+  --transition:        all 0.3s ease;
+  --transition-fast:   color 0.2s ease;
+  --transition-slow:   all 0.4s ease;
+
+  /* ── Legacy aliases (for backward compat) ── */
+  --color-primary-hover: var(--color-primary-hover);
+  --color-secondary:     var(--color-accent);
+  --color-bg-dark:       var(--color-primary-dark);
 }
