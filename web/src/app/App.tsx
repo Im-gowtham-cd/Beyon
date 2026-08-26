@@ -69,6 +69,9 @@ import { PlacementDashboardPage } from '../recruitment/pages/PlacementDashboardP
 import { PlacementIntelligencePage } from '../recruitment/pages/PlacementIntelligencePage';
 import { ProfessionalProfilePage } from '../profile/pages/ProfessionalProfilePage';
 import { CredentialVerificationPage } from '../profile/pages/CredentialVerificationPage';
+import { TeamFormationPage } from '../community/pages/TeamFormationPage';
+import { AdminDashboardPage } from '../pages/admin/AdminDashboardPage';
+import { ReportsPage } from '../pages/admin/ReportsPage';
 import { SocialFeedPage } from '../community/pages/SocialFeedPage';
 import { DiscussionsPage } from '../community/pages/DiscussionsPage';
 import { PortfolioPage } from '../community/pages/PortfolioPage';
@@ -156,6 +159,7 @@ export function App() {
           <Route path="/challenges" element={<ChallengesPage />} />
           <Route path="/live-projects" element={<LiveProjectsPage />} />
           <Route path="/research" element={<ResearchPage />} />
+          <Route path="/teams" element={<TeamFormationPage />} />
           <Route path="/skill-taxonomy" element={<SkillTaxonomyPage />} />
           <Route path="/skill-graph" element={<SkillGraphPage />} />
           <Route path="/skill-gaps" element={<SkillGapAnalysisPage />} />
@@ -179,7 +183,9 @@ export function App() {
         </Route>
         <Route element={<RoleGuard allowedRoles={['ADMIN']} />}>
           <Route path="/admin/home" element={<AdminHome />} />
+          <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
           <Route path="/admin/feedback" element={<AdminFeedbackPage />} />
+          <Route path="/admin/reports" element={<ReportsPage />} />
         </Route>
       </Route>
 
