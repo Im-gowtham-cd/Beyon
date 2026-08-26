@@ -98,6 +98,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/v1/certificates/**").authenticated()
                 .requestMatchers("/api/v1/growth/**").authenticated()
                 .requestMatchers("/api/v1/feed/**").authenticated()
+                .requestMatchers("/api/v1/career-intel/**").authenticated()
                 .requestMatchers("/api/v1/feedback/**").authenticated()
                 .requestMatchers("/api/v1/privacy/**").authenticated()
                 .requestMatchers("/api/v1/audit/**").authenticated()

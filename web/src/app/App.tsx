@@ -57,6 +57,12 @@ import { EventsPage } from '../community/pages/EventsPage';
 import { ChallengesPage } from '../community/pages/ChallengesPage';
 import { LiveProjectsPage } from '../community/pages/LiveProjectsPage';
 import { ResearchPage } from '../community/pages/ResearchPage';
+import { SkillTaxonomyPage } from '../intelligence/pages/SkillTaxonomyPage';
+import { SkillGraphPage } from '../intelligence/pages/SkillGraphPage';
+import { SkillGapAnalysisPage } from '../intelligence/pages/SkillGapAnalysisPage';
+import { CareerAdvisorPage } from '../intelligence/pages/CareerAdvisorPage';
+import { AdaptiveLearningPage } from '../intelligence/pages/AdaptiveLearningPage';
+import { CareerIntelligenceDashboard } from '../intelligence/pages/CareerIntelligenceDashboard';
 import { SocialFeedPage } from '../community/pages/SocialFeedPage';
 import { DiscussionsPage } from '../community/pages/DiscussionsPage';
 import { PortfolioPage } from '../community/pages/PortfolioPage';
@@ -144,6 +150,12 @@ export function App() {
           <Route path="/challenges" element={<ChallengesPage />} />
           <Route path="/live-projects" element={<LiveProjectsPage />} />
           <Route path="/research" element={<ResearchPage />} />
+          <Route path="/skill-taxonomy" element={<SkillTaxonomyPage />} />
+          <Route path="/skill-graph" element={<SkillGraphPage />} />
+          <Route path="/skill-gaps" element={<SkillGapAnalysisPage />} />
+          <Route path="/career-advisor" element={<CareerAdvisorPage />} />
+          <Route path="/adaptive-learning" element={<AdaptiveLearningPage />} />
+          <Route path="/career-intelligence" element={<CareerIntelligenceDashboard />} />
         </Route>
         <Route element={<RoleGuard allowedRoles={['INSTITUTION']} />}>
           <Route path="/institution/home" element={<InstitutionHome />} />

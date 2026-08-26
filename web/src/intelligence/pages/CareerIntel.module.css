@@ -1,0 +1,143 @@
+.container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+.header { margin-bottom: 2rem; }
+.title { font-size: 1.75rem; font-weight: 700; color: #0a0a0f; margin-bottom: 0.25rem; }
+.subtitle { font-size: 0.95rem; color: #6b7280; }
+.empty { text-align: center; padding: 3rem; color: #6b7280; }
+
+/* Skill Taxonomy */
+.taxonomyTree { display: flex; flex-direction: column; gap: 0.5rem; }
+.taxonomyNode { display: flex; align-items: center; gap: 1rem; padding: 1rem 1.25rem; background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; cursor: pointer; transition: all 0.15s; }
+.taxonomyNode:hover { border-color: #6366f1; background: #f5f3ff; }
+.taxonomyIcon { font-size: 1.5rem; }
+.taxonomyInfo { flex: 1; }
+.taxonomyName { font-weight: 600; font-size: 1rem; color: #0a0a0f; }
+.taxonomyDesc { font-size: 0.8rem; color: #6b7280; margin-top: 0.15rem; }
+.taxonomyMeta { display: flex; gap: 0.75rem; margin-top: 0.25rem; }
+.demandTag { padding: 0.15rem 0.5rem; border-radius: 4px; font-size: 0.7rem; font-weight: 500; }
+.demandHIGH { background: #dcfce7; color: #166534; }
+.demandMEDIUM { background: #fef9c3; color: #854d0e; }
+.demandLOW { background: #f3f4f6; color: #6b7280; }
+.breadcrumb { display: flex; gap: 0.5rem; align-items: center; margin-bottom: 1rem; font-size: 0.85rem; color: #6366f1; cursor: pointer; }
+.breadcrumb:hover { text-decoration: underline; }
+
+/* Skill Graph */
+.graphContainer { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; }
+.graphCard { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 1.25rem; }
+.graphSkillName { font-weight: 600; font-size: 1rem; color: #0a0a0f; margin-bottom: 0.5rem; }
+.graphPctRow { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem; }
+.graphPct { font-size: 1.5rem; font-weight: 800; color: #6366f1; min-width: 60px; }
+.graphBar { flex: 1; height: 8px; background: #f3f4f6; border-radius: 4px; overflow: hidden; }
+.graphBarFill { height: 100%; border-radius: 4px; transition: width 0.3s; }
+.graphBarFillLevel5 { background: #16a34a; }
+.graphBarFillLevel4 { background: #2563eb; }
+.graphBarFillLevel3 { background: #ca8a04; }
+.graphBarFillLevel2 { background: #ea580c; }
+.graphBarFillLevel1 { background: #6b7280; }
+.graphLevel { padding: 0.2rem 0.6rem; border-radius: 9999px; font-size: 0.7rem; font-weight: 500; color: #fff; }
+.graphMeta { display: flex; justify-content: space-between; font-size: 0.75rem; color: #6b7280; }
+.graphVerified { color: #16a34a; font-weight: 500; }
+.trendUp { color: #16a34a; }
+.trendDown { color: #dc2626; }
+.trendStable { color: #6b7280; }
+
+/* Skill Gap Analysis */
+.gapSummary { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+.gapSummaryCard { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 1.25rem; text-align: center; }
+.gapSummaryValue { font-size: 1.75rem; font-weight: 800; margin-bottom: 0.25rem; }
+.gapSummaryLabel { font-size: 0.75rem; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em; }
+.gapSummaryGood { color: #16a34a; }
+.gapSummaryWarn { color: #ca8a04; }
+.gapSummaryBad { color: #dc2626; }
+
+.gapList { display: flex; flex-direction: column; gap: 0.5rem; }
+.gapItem { display: flex; align-items: center; gap: 1rem; padding: 1rem 1.25rem; background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; }
+.gapStatus { padding: 0.2rem 0.6rem; border-radius: 9999px; font-size: 0.7rem; font-weight: 600; color: #fff; min-width: 100px; text-align: center; }
+.gapStatusStrong { background: #16a34a; }
+.gapStatusNeedsWork { background: #ca8a04; }
+.gapStatusCritical { background: #dc2626; }
+.gapSkillName { flex: 1; font-weight: 500; color: #0a0a0f; }
+.gapLevels { font-size: 0.8rem; color: #6b7280; }
+.gapBar { width: 120px; }
+.gapBarTrack { height: 6px; background: #f3f4f6; border-radius: 3px; overflow: hidden; }
+.gapBarFill { height: 100%; border-radius: 3px; }
+
+/* Career Advisor */
+.advisorContainer { display: grid; grid-template-columns: 1fr; gap: 1.5rem; }
+.advisorChat { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden; }
+.chatHeader { padding: 1rem 1.25rem; border-bottom: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center; }
+.chatTitle { font-weight: 600; color: #0a0a0f; }
+.chatMessages { padding: 1.25rem; max-height: 500px; overflow-y: auto; display: flex; flex-direction: column; gap: 1rem; }
+.chatMsg { max-width: 80%; padding: 0.75rem 1rem; border-radius: 12px; font-size: 0.9rem; line-height: 1.5; }
+.chatMsgUser { align-self: flex-end; background: #6366f1; color: #fff; border-bottom-right-radius: 4px; }
+.chatMsgAi { align-self: flex-start; background: #f3f4f6; color: #1a1a1a; border-bottom-left-radius: 4px; }
+.chatMsgAi p { margin: 0.25rem 0; }
+.chatMsgAi strong { color: #0a0a0f; }
+.chatInput { display: flex; gap: 0.5rem; padding: 1rem 1.25rem; border-top: 1px solid #e5e7eb; }
+.chatInput input { flex: 1; padding: 0.625rem 1rem; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 0.9rem; outline: none; }
+.chatInput input:focus { border-color: #6366f1; }
+.chatSendBtn { padding: 0.625rem 1.25rem; background: #6366f1; color: #fff; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; }
+.chatSendBtn:hover { background: #4f46e5; }
+.chatSendBtn:disabled { background: #9ca3af; cursor: not-allowed; }
+
+.sessionList { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1rem; }
+.sessionItem { padding: 0.75rem 1rem; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; cursor: pointer; font-size: 0.85rem; }
+.sessionItem:hover { border-color: #6366f1; }
+.sessionActive { border-color: #6366f1; background: #f5f3ff; }
+
+/* Adaptive Learning */
+.adaptivePath { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; }
+.adaptiveProgress { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; }
+.adaptiveProgressPct { font-size: 2rem; font-weight: 800; color: #6366f1; }
+.adaptiveProgressBar { flex: 1; height: 10px; background: #f3f4f6; border-radius: 5px; overflow: hidden; }
+.adaptiveProgressFill { height: 100%; background: #6366f1; border-radius: 5px; transition: width 0.3s; }
+.stepList { display: flex; flex-direction: column; gap: 0.5rem; }
+.stepItem { display: flex; align-items: center; gap: 1rem; padding: 1rem 1.25rem; border-left: 3px solid #e5e7eb; }
+.stepCompleted { border-left-color: #16a34a; background: #f0fdf4; }
+.stepInProgress { border-left-color: #6366f1; background: #f5f3ff; }
+.stepLocked { border-left-color: #e5e7eb; opacity: 0.6; }
+.stepIcon { font-size: 1.25rem; }
+.stepInfo { flex: 1; }
+.stepName { font-weight: 600; color: #0a0a0f; font-size: 0.95rem; }
+.stepConcept { font-size: 0.8rem; color: #6b7280; margin-top: 0.15rem; }
+.stepState { padding: 0.2rem 0.6rem; border-radius: 9999px; font-size: 0.7rem; font-weight: 500; color: #fff; }
+.stepCompleteBadge { background: #16a34a; }
+.stepInProgressBadge { background: #6366f1; }
+.stepLockedBadge { background: #9ca3af; }
+
+/* Career Intelligence Dashboard */
+.dashGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+.dashCard { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 1.5rem; text-align: center; }
+.dashValue { font-size: 2rem; font-weight: 800; color: #6366f1; margin-bottom: 0.25rem; }
+.dashLabel { font-size: 0.75rem; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em; }
+
+.sectionCard { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; }
+.sectionTitle { font-size: 1.1rem; font-weight: 600; color: #0a0a0f; margin-bottom: 1rem; }
+
+/* Portfolio Analysis */
+.portfolioScore { text-align: center; padding: 2rem; }
+.portfolioScoreValue { font-size: 3rem; font-weight: 800; color: #6366f1; }
+.portfolioScoreLabel { font-size: 0.85rem; color: #6b7280; }
+.portfolioBreakdown { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 1rem; margin-top: 1.5rem; }
+.breakdownItem { text-align: center; }
+.breakdownBar { height: 8px; background: #f3f4f6; border-radius: 4px; overflow: hidden; margin-top: 0.5rem; }
+.breakdownBarFill { height: 100%; background: #6366f1; border-radius: 4px; }
+.breakdownLabel { font-size: 0.8rem; color: #6b7280; margin-top: 0.5rem; }
+.breakdownValue { font-size: 1.1rem; font-weight: 700; color: #0a0a0f; }
+
+.recommendationList { display: flex; flex-direction: column; gap: 0.5rem; }
+.recommendationItem { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; background: #f9fafb; border-radius: 8px; }
+.recPriority { padding: 0.15rem 0.5rem; border-radius: 4px; font-size: 0.7rem; font-weight: 600; color: #fff; }
+.recHigh { background: #dc2626; }
+.recMedium { background: #ca8a04; }
+.recLow { background: #6b7280; }
+.recAction { font-size: 0.85rem; color: #374151; flex: 1; }
+
+.btn { padding: 0.625rem 1.5rem; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.9rem; }
+.btnPrimary { background: #6366f1; color: #fff; }
+.btnPrimary:hover { background: #4f46e5; }
+.btnSecondary { background: #f3f4f6; color: #374151; border: 1px solid #e5e7eb; }
+.btnSecondary:hover { background: #e5e7eb; }
+
+.loading { text-align: center; padding: 3rem; color: #6b7280; }
+.loadingSpinner { display: inline-block; width: 20px; height: 20px; border: 2px solid #e5e7eb; border-top-color: #6366f1; border-radius: 50%; animation: spin 0.6s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
