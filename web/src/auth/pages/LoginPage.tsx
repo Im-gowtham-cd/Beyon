@@ -5,6 +5,7 @@ import { PasswordInput } from '../components/PasswordInput';
 import { AuthButton } from '../components/AuthButton';
 import { useAuth } from '../context/AuthContext';
 import { authApi } from '../services/authApi';
+import { appwriteAuth } from '../services/appwriteAuth';
 import type { ApiError } from '../../services/api/client';
 import styles from './LoginPage.module.css';
 
@@ -22,6 +23,14 @@ export function LoginPage() {
     setLoading(true);
 
     try {
+      // Try Appwrite login first (best-effort during migration)
+      try {
+        await appwriteAuth.login(email, password);
+      } catch {
+        // Appwrite login failed, continue with backend auth
+      }
+
+      // Always call backend to get/sync user profile and JWT token
       const response = await authApi.login({ email, password });
       login(response.accessToken, response.user);
 

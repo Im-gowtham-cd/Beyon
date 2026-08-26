@@ -7,6 +7,7 @@ import { PasswordInput } from '../components/PasswordInput';
 import { AuthButton } from '../components/AuthButton';
 import { RoleCard } from '../components/RoleCard';
 import { authApi } from '../services/authApi';
+import { appwriteAuth } from '../services/appwriteAuth';
 import type { ApiError } from '../../services/api/client';
 import type { UserRole } from '../types/auth';
 import styles from './RegisterPage.module.css';
@@ -56,6 +57,12 @@ export function RegisterPage() {
 
     setLoading(true);
     try {
+      // Register in Appwrite (identity) and backend (profile)
+      try {
+        await appwriteAuth.register(name.trim(), email.trim(), password);
+      } catch {
+        // Appwrite registration is best-effort during migration
+      }
       await authApi.register({ name: name.trim(), email: email.trim(), password, confirmPassword, role: role! });
       navigate(ONBOARDING_ROUTES[role!]);
     } catch (err) {
