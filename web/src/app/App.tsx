@@ -67,6 +67,8 @@ import { DriveBuilderPage } from '../recruitment/pages/DriveBuilderPage';
 import { CandidateDiscoveryPage } from '../recruitment/pages/CandidateDiscoveryPage';
 import { PlacementDashboardPage } from '../recruitment/pages/PlacementDashboardPage';
 import { PlacementIntelligencePage } from '../recruitment/pages/PlacementIntelligencePage';
+import { ProfessionalProfilePage } from '../profile/pages/ProfessionalProfilePage';
+import { CredentialVerificationPage } from '../profile/pages/CredentialVerificationPage';
 import { SocialFeedPage } from '../community/pages/SocialFeedPage';
 import { DiscussionsPage } from '../community/pages/DiscussionsPage';
 import { PortfolioPage } from '../community/pages/PortfolioPage';
@@ -164,6 +166,7 @@ export function App() {
           <Route path="/candidates" element={<CandidateDiscoveryPage />} />
           <Route path="/placement" element={<PlacementDashboardPage />} />
           <Route path="/placement-intelligence" element={<PlacementIntelligencePage />} />
+          <Route path="/professional-profile" element={<ProfessionalProfilePage />} />
         </Route>
         <Route element={<RoleGuard allowedRoles={['INSTITUTION']} />}>
           <Route path="/institution/home" element={<InstitutionHome />} />
@@ -180,6 +183,8 @@ export function App() {
         </Route>
       </Route>
 
+      <Route path="/verify/:certificateNumber" element={<CredentialVerificationPage />} />
+      <Route path="/verify" element={<CredentialVerificationPage />} />
       <Route path="/student/u/:username" element={<PublicProfilePage />} />
 
       <Route element={<MainLayout />}>

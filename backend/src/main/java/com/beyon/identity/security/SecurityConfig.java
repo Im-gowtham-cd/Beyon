@@ -104,6 +104,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/v1/candidates/**").authenticated()
                 .requestMatchers("/api/v1/recruitment-interviews/**").authenticated()
                 .requestMatchers("/api/v1/intelligence/**").authenticated()
+                .requestMatchers("/api/v1/professional/**").authenticated()
                 .requestMatchers("/api/v1/feedback/**").authenticated()
                 .requestMatchers("/api/v1/privacy/**").authenticated()
                 .requestMatchers("/api/v1/audit/**").authenticated()
