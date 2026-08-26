@@ -42,6 +42,18 @@ import { CareerRoadmapPage } from '../intelligence/pages/CareerRoadmapPage';
 import { EntityFeedPage } from '../intelligence/pages/EntityFeedPage';
 import { AssessmentBuilderPage } from '../assessment/pages/AssessmentBuilderPage';
 import { PipelinePage } from '../recruitment/pages/PipelinePage';
+import { SkillXpDashboard } from '../practice/pages/SkillXpDashboard';
+import { AchievementsPage } from '../practice/pages/AchievementsPage';
+import { WeeklyTestPage } from '../practice/pages/WeeklyTestPage';
+import { LearningProgramsPage } from '../intelligence/pages/LearningProgramsPage';
+import { CertificatePage } from '../intelligence/pages/CertificatePage';
+import { GrowthIntelligencePage } from '../intelligence/pages/GrowthIntelligencePage';
+import { PersonalizedFeedPage } from '../intelligence/pages/PersonalizedFeedPage';
+import { MentorshipPage } from '../community/pages/MentorshipPage';
+import { EventsPage } from '../community/pages/EventsPage';
+import { ChallengesPage } from '../community/pages/ChallengesPage';
+import { LiveProjectsPage } from '../community/pages/LiveProjectsPage';
+import { ResearchPage } from '../community/pages/ResearchPage';
 import { SocialFeedPage } from '../community/pages/SocialFeedPage';
 import { DiscussionsPage } from '../community/pages/DiscussionsPage';
 import { PortfolioPage } from '../community/pages/PortfolioPage';
@@ -115,6 +127,18 @@ export function App() {
           <Route path="/messages" element={<MessagingPage />} />
           <Route path="/feedback" element={<FeedbackPage />} />
           <Route path="/feedback/:id" element={<FeedbackPage />} />
+          <Route path="/skill-xp" element={<SkillXpDashboard />} />
+          <Route path="/achievements" element={<AchievementsPage />} />
+          <Route path="/weekly-tests" element={<WeeklyTestPage />} />
+          <Route path="/learning-programs" element={<LearningProgramsPage />} />
+          <Route path="/certificates" element={<CertificatePage />} />
+          <Route path="/growth-intelligence" element={<GrowthIntelligencePage />} />
+          <Route path="/personalized-feed" element={<PersonalizedFeedPage />} />
+          <Route path="/mentorship" element={<MentorshipPage />} />
+          <Route path="/events" element={<EventsPage />} />
+          <Route path="/challenges" element={<ChallengesPage />} />
+          <Route path="/live-projects" element={<LiveProjectsPage />} />
+          <Route path="/research" element={<ResearchPage />} />
         </Route>
         <Route element={<RoleGuard allowedRoles={['INSTITUTION']} />}>
           <Route path="/institution/home" element={<InstitutionHome />} />

@@ -1,0 +1,10 @@
+package com.beyon.intelligence.repository;
+
+import com.beyon.intelligence.model.StudentGrowthScore;
+import org.springframework.data.jpa.repository.JpaRepository;
+import java.util.Optional;
+import java.util.UUID;
+
+public interface StudentGrowthScoreRepository extends JpaRepository<StudentGrowthScore, UUID> {
+    Optional<StudentGrowthScore> findByStudentId(UUID studentId);
+}

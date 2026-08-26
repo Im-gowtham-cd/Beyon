@@ -132,3 +132,73 @@ export interface OpportunityApplication {
   coinsSpent: number;
   appliedAt?: string;
 }
+
+export interface SkillXpTransaction {
+  id: string;
+  studentId: string;
+  skillId: string;
+  skillName: string;
+  xpAmount: number;
+  source: string;
+  sourceId?: string;
+  description?: string;
+  createdAt: string;
+}
+
+export interface SkillLevel {
+  id: string;
+  studentId: string;
+  skillId: string;
+  skillName: string;
+  totalXp: number;
+  currentLevel: number;
+  levelName: string;
+  xpForNextLevel: number;
+  updatedAt: string;
+}
+
+export interface WeeklyTest {
+  id: string;
+  title: string;
+  description?: string;
+  testDate: string;
+  durationMinutes: number;
+  totalQuestions: number;
+  totalMarks: number;
+  passingMarks: number;
+  coinReward: number;
+  xpReward: number;
+  status: string;
+}
+
+export interface WeeklyTestAttempt {
+  id: string;
+  testId: string;
+  studentId: string;
+  score: number;
+  correctAnswers: number;
+  totalAnswered: number;
+  timeTakenSeconds: number;
+  status: string;
+  startedAt?: string;
+  completedAt?: string;
+}
+
+export interface Achievement {
+  id: string;
+  studentId: string;
+  achievementKey: string;
+  achievementName: string;
+  description?: string;
+  badgeIcon?: string;
+  category: string;
+  rarity: string;
+  earnedAt: string;
+}
+
+export interface StreakInfo {
+  currentStreak: number;
+  longestStreak: number;
+  lastActivityDate?: string;
+  streakFreezesAvailable: number;
+}

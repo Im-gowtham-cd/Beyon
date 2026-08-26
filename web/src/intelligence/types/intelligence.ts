@@ -118,3 +118,83 @@ export interface CollaborationProgram {
   location?: string;
   certificateProvided: boolean;
 }
+
+export interface LearningProgram {
+  id: string;
+  title: string;
+  description?: string;
+  skillId?: string;
+  skillName?: string;
+  difficulty: string;
+  durationHours: number;
+  coinReward: number;
+  xpReward: number;
+  createdBy: string;
+  creatorType: string;
+  certificateProvided: boolean;
+  status: string;
+  moduleCount?: number;
+  enrolledCount?: number;
+}
+
+export interface LearningProgramModule {
+  id: string;
+  programId: string;
+  title: string;
+  description?: string;
+  sortOrder: number;
+  estimatedMinutes: number;
+  resourceUrl?: string;
+  contentType: string;
+}
+
+export interface LearningProgramEnrollment {
+  id: string;
+  programId: string;
+  studentId: string;
+  status: string;
+  progressPercent: number;
+  enrolledAt: string;
+  completedAt?: string;
+}
+
+export interface StudentCertificate {
+  id: string;
+  studentId: string;
+  certificateNumber: string;
+  certificateType: string;
+  title: string;
+  issuerName: string;
+  issuerType: string;
+  skillsCovered?: string;
+  score?: number;
+  issuedAt: string;
+  expiresAt?: string;
+  verificationUrl?: string;
+}
+
+export interface GrowthScore {
+  overallScore: number;
+  skillsScore: number;
+  consistencyScore: number;
+  assessmentScore: number;
+  certificationScore: number;
+  projectScore: number;
+  careerReadinessScore: number;
+  readinessLevel: string;
+  strengths: { skillName: string; level: string }[];
+  improvements: { skillName: string; currentLevel: string; targetLevel: string }[];
+}
+
+export interface PersonalizedFeedItem {
+  id: string;
+  feedType: string;
+  title: string;
+  description?: string;
+  actionLabel?: string;
+  actionUrl?: string;
+  coinReward?: number;
+  xpReward?: number;
+  priority: number;
+  createdAt: string;
+}

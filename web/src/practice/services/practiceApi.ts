@@ -2,7 +2,8 @@ import { api } from '../../services/api/client';
 import type {
   Question, QuestionOption, StudentQuestionAttempt, PracticeStats,
   DailyChallenge, CoinWallet, CoinTransaction, StudentStreak, AchievementBadge,
-  LeaderboardEntry, CompanyOpportunity, OpportunityApplication
+  LeaderboardEntry, CompanyOpportunity, OpportunityApplication,
+  SkillXpTransaction, SkillLevel, WeeklyTest, WeeklyTestAttempt, Achievement, StreakInfo
 } from '../types/practice';
 
 export const questionApi = {
@@ -62,4 +63,34 @@ export const opportunityApi = {
   checkEligibility: (id: string) => api.get<{ eligible: boolean; reasons: string[]; coinBalance: number; requiredCoins: number }>(`/opportunities/${id}/eligibility`),
   apply: (id: string) => api.post<OpportunityApplication>(`/opportunities/${id}/apply`),
   getMyApplications: () => api.get<OpportunityApplication[]>('/opportunities/my-applications'),
+};
+
+export const skillXpApi = {
+  getLevels: () => api.get<SkillLevel[]>('/skill-xp/levels'),
+  getTransactions: (skillId?: string) => {
+    const q = skillId ? `?skillId=${skillId}` : '';
+    return api.get<SkillXpTransaction[]>(`/skill-xp/transactions${q}`);
+  },
+  getLeaderboard: (skillId: string) => api.get<LeaderboardEntry[]>(`/skill-xp/leaderboard?skillId=${skillId}`),
+};
+
+export const weeklyTestApi = {
+  getAvailable: () => api.get<WeeklyTest[]>('/weekly-tests'),
+  getTest: (id: string) => api.get<WeeklyTest>(`/weekly-tests/${id}`),
+  start: (id: string) => api.post<WeeklyTestAttempt>(`/weekly-tests/${id}/start`),
+  submit: (id: string, answers: Record<string, string>, timeTakenSeconds: number) =>
+    api.post<WeeklyTestAttempt>(`/weekly-tests/${id}/submit`, { answers, timeTakenSeconds }),
+  getMyAttempts: () => api.get<WeeklyTestAttempt[]>('/weekly-tests/my-attempts'),
+  getLeaderboard: () => api.get<LeaderboardEntry[]>('/weekly-tests/leaderboard'),
+};
+
+export const achievementApi = {
+  getAchievements: () => api.get<Achievement[]>('/achievements'),
+  getBadges: () => api.get<AchievementBadge[]>('/achievements/badges'),
+  getCategories: () => api.get<Record<string, Achievement[]>[]>('/achievements/categories'),
+};
+
+export const streakApi = {
+  getInfo: () => api.get<StreakInfo>('/streak'),
+  getFreezes: () => api.get<number>('/streak/freezes'),
 };
