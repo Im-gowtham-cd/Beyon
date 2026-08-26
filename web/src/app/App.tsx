@@ -11,6 +11,8 @@ import { UnauthorizedPage } from '../auth/pages/UnauthorizedPage';
 import { VerificationPendingPage } from '../auth/pages/VerificationPendingPage';
 import { AccountSuspendedPage } from '../auth/pages/AccountSuspendedPage';
 import { SettingsPage } from '../auth/pages/SettingsPage';
+import { PrivacySettingsPage } from '../auth/pages/PrivacySettingsPage';
+import { SessionSettingsPage } from '../auth/pages/SessionSettingsPage';
 import { ProtectedRoute } from '../auth/guards/ProtectedRoute';
 import { RoleGuard } from '../auth/guards/RoleGuard';
 import { StudentHome } from '../pages/student/StudentHome';
@@ -90,6 +92,8 @@ export function App() {
         <Route path="/verification-pending" element={<VerificationPendingPage />} />
         <Route path="/account-suspended" element={<AccountSuspendedPage />} />
         <Route path="/settings" element={<SettingsPage />} />
+        <Route path="/settings/privacy" element={<PrivacySettingsPage />} />
+        <Route path="/settings/sessions" element={<SessionSettingsPage />} />
 
         <Route element={<RoleGuard allowedRoles={['STUDENT']} />}>
           <Route path="/student/home" element={<StudentHome />} />
