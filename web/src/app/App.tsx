@@ -63,6 +63,9 @@ import { SkillGapAnalysisPage } from '../intelligence/pages/SkillGapAnalysisPage
 import { CareerAdvisorPage } from '../intelligence/pages/CareerAdvisorPage';
 import { AdaptiveLearningPage } from '../intelligence/pages/AdaptiveLearningPage';
 import { CareerIntelligenceDashboard } from '../intelligence/pages/CareerIntelligenceDashboard';
+import { DriveBuilderPage } from '../recruitment/pages/DriveBuilderPage';
+import { CandidateDiscoveryPage } from '../recruitment/pages/CandidateDiscoveryPage';
+import { PlacementDashboardPage } from '../recruitment/pages/PlacementDashboardPage';
 import { SocialFeedPage } from '../community/pages/SocialFeedPage';
 import { DiscussionsPage } from '../community/pages/DiscussionsPage';
 import { PortfolioPage } from '../community/pages/PortfolioPage';
@@ -156,6 +159,9 @@ export function App() {
           <Route path="/career-advisor" element={<CareerAdvisorPage />} />
           <Route path="/adaptive-learning" element={<AdaptiveLearningPage />} />
           <Route path="/career-intelligence" element={<CareerIntelligenceDashboard />} />
+          <Route path="/drives" element={<DriveBuilderPage />} />
+          <Route path="/candidates" element={<CandidateDiscoveryPage />} />
+          <Route path="/placement" element={<PlacementDashboardPage />} />
         </Route>
         <Route element={<RoleGuard allowedRoles={['INSTITUTION']} />}>
           <Route path="/institution/home" element={<InstitutionHome />} />
