@@ -6,40 +6,386 @@
   color: #e8e8f0;
 }
 
-.header {
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  max-width: 640px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.logoLarge {
+  width: 64px;
+  height: 64px;
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 16px 24px;
+  justify-content: center;
+  background: #6c5ce7;
+  color: white;
+  border-radius: 16px;
+  font-weight: 800;
+  font-size: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  text-align: center;
+}
+
+.subtitle {
+  color: #8888a0;
+  font-size: 0.95rem;
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.btn {
+  padding: 0.75rem 2rem;
+  background: #6c5ce7;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.btn:hover {
+  background: #5a4bd1;
+}
+
+.cameraPreview {
+  width: 320px;
+  height: 240px;
+  background: #1a1a2e;
+  border: 2px solid #2a2a3a;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.checkList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
+  margin-bottom: 1.5rem;
+}
+
+.checkItem {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  background: #12121a;
+  border: 1px solid #2a2a3a;
+  border-radius: 10px;
+}
+
+.checkIcon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.875rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.checkPass {
+  background: #166534;
+  color: #86efac;
+}
+
+.checkPending {
+  background: #2a2a3a;
+  color: #8888a0;
+}
+
+.checkLabel {
+  font-weight: 500;
+}
+
+.checkStatus {
+  font-size: 0.8rem;
+  color: #8888a0;
+}
+
+.instructions {
+  text-align: left;
+  line-height: 2;
+  font-size: 0.95rem;
+  width: 100%;
+}
+
+.assessmentHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 24px;
   background: #12121a;
   border-bottom: 1px solid #2a2a3a;
 }
 
-.logo {
+.timerSection {
   display: flex;
   align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  background: #6c5ce7;
-  color: white;
-  border-radius: 8px;
+  gap: 8px;
+}
+
+.timerLabel {
+  font-size: 0.7rem;
+  color: #8888a0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.timerValue {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1.25rem;
   font-weight: 700;
 }
 
-.title {
-  font-size: 1.125rem;
+.timerWarning {
+  color: #ef4444;
+}
+
+.assessmentTitle {
+  font-size: 0.875rem;
   font-weight: 600;
 }
 
-.main {
+.warningBadge {
+  font-size: 0.8rem;
+  color: #fbbf24;
+}
+
+.body {
   flex: 1;
+  display: flex;
+  gap: 1rem;
+  padding: 1rem;
+  overflow: hidden;
+}
+
+.palette {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+  padding: 1rem;
+  overflow-y: auto;
+  max-height: calc(100vh - 140px);
+}
+
+.paletteBtn {
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
+  border: 1px solid #2a2a3a;
+  border-radius: 8px;
+  background: #1a1a2e;
+  color: #e8e8f0;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
 }
 
-.placeholder {
+.paletteBtn:hover {
+  border-color: #6c5ce7;
+}
+
+.paletteActive {
+  background: #6c5ce7;
+  border-color: #6c5ce7;
+  color: #fff;
+}
+
+.paletteAnswered {
+  background: #166534;
+  border-color: #86efac;
+  color: #86efac;
+}
+
+.paletteMarked {
+  background: #92400e;
+  border-color: #fbbf24;
+  color: #fbbf24;
+}
+
+.questionArea {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  padding: 1rem 1.5rem;
+}
+
+.questionNum {
+  font-size: 0.8rem;
   color: #8888a0;
-  font-size: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.questionText {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  line-height: 1.6;
+}
+
+.options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  border: 2px solid #2a2a3a;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.option:hover {
+  border-color: #6c5ce7;
+  background: rgba(108, 92, 231, 0.05);
+}
+
+.optionSelected {
+  border-color: #6c5ce7;
+  background: rgba(108, 92, 231, 0.1);
+}
+
+.optionMarker {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 0.8rem;
+  background: #2a2a3a;
+  color: #8888a0;
+  flex-shrink: 0;
+}
+
+.optionSelected .optionMarker {
+  background: #6c5ce7;
+  color: #fff;
+}
+
+.questionActions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.markBtn {
+  padding: 0.5rem 1rem;
+  background: #1a1a2e;
+  border: 1px solid #fbbf24;
+  border-radius: 8px;
+  color: #fbbf24;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.markedActive {
+  background: #fbbf24;
+  color: #92400e;
+}
+
+.navBar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 24px;
+  background: #12121a;
+  border-top: 1px solid #2a2a3a;
+}
+
+.navBtn {
+  padding: 0.625rem 1.25rem;
+  background: #1a1a2e;
+  border: 1px solid #2a2a3a;
+  border-radius: 8px;
+  color: #e8e8f0;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.navBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.navBtnPrimary {
+  background: #6c5ce7;
+  border-color: #6c5ce7;
+}
+
+.navBtnSubmit {
+  background: #16a34a;
+  border-color: #16a34a;
+  color: #fff;
+}
+
+.resultScore {
+  font-size: 4rem;
+  font-weight: 800;
+  color: #6c5ce7;
+  margin: 1rem 0;
+}
+
+.resultGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+  width: 100%;
+  max-width: 400px;
+  margin-top: 1.5rem;
+}
+
+.resultItem {
+  background: #12121a;
+  border: 1px solid #2a2a3a;
+  border-radius: 10px;
+  padding: 1rem;
+  text-align: center;
+}
+
+.resultLabel {
+  font-size: 0.75rem;
+  color: #8888a0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.25rem;
+}
+
+.resultValue {
+  font-size: 1.25rem;
+  font-weight: 700;
 }

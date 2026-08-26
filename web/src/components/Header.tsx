@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/context/AuthContext';
+import { SearchBar } from '../shared/components/SearchBar';
 import styles from './Header.module.css';
 
 export function Header() {
@@ -38,6 +39,12 @@ export function Header() {
           <>
             <Link to={dashboardPath} className={styles.navLink}>Dashboard</Link>
             {user?.role === 'STUDENT' && <Link to="/student/profile" className={styles.navLink}>Profile</Link>}
+            {user?.role === 'STUDENT' && <Link to="/student/skills" className={styles.navLink}>Skills</Link>}
+            {user?.role === 'STUDENT' && <Link to="/practice" className={styles.navLink}>Practice</Link>}
+            {user?.role === 'STUDENT' && <Link to="/daily-challenge" className={styles.navLink}>Challenge</Link>}
+            {user?.role === 'STUDENT' && <Link to="/my-applications" className={styles.navLink}>Applications</Link>}
+            <SearchBar />
+            <Link to="/notifications" className={styles.navLink}>🔔</Link>
             <div className={styles.menuContainer} ref={menuRef}>
               <button className={styles.avatarBtn} onClick={() => setMenuOpen(!menuOpen)}>
                 <span className={styles.avatar}>{user?.name?.charAt(0).toUpperCase()}</span>

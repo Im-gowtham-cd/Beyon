@@ -22,6 +22,9 @@ public class Skill {
     @Column(nullable = false, length = 50)
     private String category;
 
+    @Column(columnDefinition = "uuid")
+    private UUID categoryId;
+
     @Column(columnDefinition = "TEXT")
     private String description;
 
@@ -39,6 +42,8 @@ public class Skill {
     public void setSlug(String slug) { this.slug = slug; }
     public String getCategory() { return category; }
     public void setCategory(String category) { this.category = category; }
+    public UUID getCategoryId() { return categoryId; }
+    public void setCategoryId(UUID categoryId) { this.categoryId = categoryId; }
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
     public boolean isActive() { return active; }

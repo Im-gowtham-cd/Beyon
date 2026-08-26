@@ -24,4 +24,6 @@ public interface SkillRepository extends JpaRepository<Skill, UUID> {
 
     @Query("SELECT s FROM Skill s WHERE s.active = true ORDER BY s.category, s.name")
     List<Skill> findAllActive();
+
+    List<Skill> findByCategoryIdAndActiveTrue(UUID categoryId);
 }
