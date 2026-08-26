@@ -1,11 +1,12 @@
 import { useState, useRef, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { NavLink, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../auth/context/AuthContext';
 import styles from './Header.module.css';
 
 export function Header() {
   const { authenticated, user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -21,15 +22,22 @@ export function Header() {
   }, [menuOpen]);
 
   useEffect(() => {
-    function handleKeydown(e: KeyboardEvent) {
-      if (e.key === 'Escape' && mobileOpen) {
+    function onKeydown(e: KeyboardEvent) {
+      if (e.key === 'Escape' && (mobileOpen || menuOpen)) {
         setMobileOpen(false);
+        setMenuOpen(false);
         document.body.style.overflow = '';
       }
     }
-    window.addEventListener('keydown', handleKeydown);
-    return () => window.removeEventListener('keydown', handleKeydown);
-  }, [mobileOpen]);
+    window.addEventListener('keydown', onKeydown);
+    return () => window.removeEventListener('keydown', onKeydown);
+  }, [mobileOpen, menuOpen]);
+
+  useEffect(() => {
+    setMobileOpen(false);
+    setMenuOpen(false);
+    document.body.style.overflow = '';
+  }, [location.pathname]);
 
   function handleLogout() {
     logout();
@@ -39,8 +47,11 @@ export function Header() {
   }
 
   function toggleMenu() {
-    setMobileOpen(!mobileOpen);
-    document.body.style.overflow = !mobileOpen ? 'hidden' : '';
+    setMobileOpen(prev => {
+      const next = !prev;
+      document.body.style.overflow = next ? 'hidden' : '';
+      return next;
+    });
   }
 
   function closeMobile() {
@@ -50,7 +61,16 @@ export function Header() {
 
   const dashboardPath = user ? `/${user.role.toLowerCase()}/home` : '/';
 
+  const publicLinks = [
+    { label: 'Home', href: '/' },
+    { label: 'Practice', href: '/practice' },
+    { label: 'Skills', href: '/student/skills' },
+    { label: 'Assessment', href: '/assessment' },
+    { label: 'Opportunities', href: '/opportunities' },
+  ];
+
   const studentLinks = [
+    { label: 'Dashboard', href: '/student/home' },
     { label: 'Practice', href: '/practice' },
     { label: 'Skills', href: '/student/skills' },
     { label: 'Challenges', href: '/daily-challenge' },
@@ -61,87 +81,121 @@ export function Header() {
     { label: 'Dashboard', href: '/company/home' },
     { label: 'Assessments', href: '/company/assessments' },
     { label: 'Drives', href: '/drives' },
+    { label: 'Candidates', href: '/candidates' },
   ];
 
   const institutionLinks = [
     { label: 'Dashboard', href: '/institution/home' },
     { label: 'Analytics', href: '/institution/analytics' },
+    { label: 'Students', href: '/institution/dashboard' },
   ];
 
   const adminLinks = [
     { label: 'Dashboard', href: '/admin/home' },
     { label: 'Reports', href: '/admin/reports' },
+    { label: 'Feedback', href: '/admin/feedback' },
   ];
 
-  const navLinks = user?.role === 'STUDENT' ? studentLinks
-    : user?.role === 'COMPANY' ? companyLinks
-    : user?.role === 'INSTITUTION' ? institutionLinks
-    : user?.role === 'ADMIN' ? adminLinks
-    : [];
+  const navLinks = !authenticated
+    ? publicLinks
+    : user?.role === 'STUDENT'
+    ? studentLinks
+    : user?.role === 'COMPANY'
+    ? companyLinks
+    : user?.role === 'INSTITUTION'
+    ? institutionLinks
+    : user?.role === 'ADMIN'
+    ? adminLinks
+    : publicLinks;
 
   return (
-    <header className={styles.header}>
+    <header className={styles.appNavbar}>
       {/* Utility Bar */}
       <div className={styles.utilityBar}>
         <span className={styles.utilityInstitution}>
-          <i className="bx bx-rocket" /> Beyon — AI Skill Development Platform
+          <i className="bx bx-rocket" /> Beyon — AI Skill Development, Assessment &amp; Recruitment Platform
         </span>
         <span className={styles.utilityLinks}>
-          <Link to="/login">
-            <i className="bx bx-log-in" /> Sign In
-          </Link>
-          <Link to="/register">
-            <i className="bx bx-user-plus" /> Get Started
+          <a href="mailto:support@beyon.dev" aria-label="Email Support">
+            <i className="bx bx-envelope" /> support@beyon.dev
+          </a>
+          <span className={styles.utilityDivider}>|</span>
+          <Link to="/verify">
+            <i className="bx bx-badge-check" /> Verify Credentials
           </Link>
         </span>
       </div>
 
       {/* Main Bar */}
       <div className={styles.mainBar}>
-        <Link to="/" className={styles.brandMark}>
-          <span className={styles.brandAccent} />
+        <Link to="/" className={styles.navTitle} onClick={closeMobile}>
+          <span className={styles.brandMark} aria-hidden="true" />
           <span className={styles.brandText}>Beyon</span>
           <span className={styles.brandSub}>AI Skill Platform</span>
         </Link>
 
-        {/* Mobile Hamburger */}
         <button
           className={`${styles.hamburger} ${mobileOpen ? styles.active : ''}`}
           onClick={toggleMenu}
-          aria-label="Toggle navigation"
+          aria-label="Toggle navigation menu"
           aria-expanded={mobileOpen}
+          aria-controls="mobile-nav"
         >
           <span /><span /><span />
         </button>
 
-        {/* Overlay */}
         <div
-          className={`${styles.overlay} ${mobileOpen ? styles.active : ''}`}
+          className={`${styles.navOverlay} ${mobileOpen ? styles.active : ''}`}
           onClick={closeMobile}
         />
 
-        {/* Nav Links */}
-        <nav className={`${styles.navLinks} ${mobileOpen ? styles.active : ''}`}>
-          {authenticated ? (
-            <>
-              <span className={styles.navPrimary}>
-                <Link to={dashboardPath} className={styles.navLink}>Dashboard</Link>
-                {navLinks.map(item => (
-                  <Link key={item.href} to={item.href} className={styles.navLink} onClick={closeMobile}>
-                    {item.label}
-                  </Link>
-                ))}
-              </span>
-              <span className={styles.navActions}>
-                <Link to="/notifications" className={styles.navLink}>
+        <nav
+          className={`${styles.navLinks} ${mobileOpen ? styles.active : ''}`}
+          id="mobile-nav"
+          aria-label="Primary"
+        >
+          <span className={styles.navPrimaryLinks}>
+            {navLinks.map(item => (
+              <NavLink
+                key={item.href}
+                to={item.href}
+                className={({ isActive }) =>
+                  `${styles.navLink} ${isActive ? styles.activeLink : ''}`
+                }
+                end={item.href === '/' || item.href === dashboardPath}
+                onClick={closeMobile}
+              >
+                {item.label}
+              </NavLink>
+            ))}
+          </span>
+
+          <span className={styles.navActions}>
+            {authenticated ? (
+              <>
+                <Link
+                  to="/notifications"
+                  className={styles.iconBtn}
+                  aria-label="Notifications"
+                  onClick={closeMobile}
+                >
                   <i className="bx bx-bell" />
                 </Link>
+
                 <div className={styles.menuContainer} ref={menuRef}>
-                  <button className={styles.avatarBtn} onClick={() => setMenuOpen(!menuOpen)}>
-                    <span className={styles.avatar}>{user?.name?.charAt(0).toUpperCase()}</span>
+                  <button
+                    type="button"
+                    className={styles.avatarBtn}
+                    onClick={() => setMenuOpen(!menuOpen)}
+                    aria-expanded={menuOpen}
+                  >
+                    <span className={styles.avatar}>
+                      {user?.name?.charAt(0).toUpperCase() || 'U'}
+                    </span>
                     <span className={styles.userName}>{user?.name}</span>
                     <i className="bx bx-chevron-down" />
                   </button>
+
                   {menuOpen && (
                     <div className={styles.dropdown}>
                       <div className={styles.dropdownHeader}>
@@ -149,33 +203,42 @@ export function Header() {
                         <span className={styles.dropdownRole}>{user?.role}</span>
                       </div>
                       <div className={styles.dropdownDivider} />
-                      <Link to="/settings" className={styles.dropdownItem} onClick={() => setMenuOpen(false)}>
-                        <i className="bx bx-cog" /> Settings
-                      </Link>
-                      <Link to="/student/profile" className={styles.dropdownItem} onClick={() => setMenuOpen(false)}>
+                      <Link
+                        to="/student/profile"
+                        className={styles.dropdownItem}
+                        onClick={() => setMenuOpen(false)}
+                      >
                         <i className="bx bx-user" /> Profile
                       </Link>
-                      <button className={styles.dropdownItem} onClick={handleLogout}>
+                      <Link
+                        to="/settings"
+                        className={styles.dropdownItem}
+                        onClick={() => setMenuOpen(false)}
+                      >
+                        <i className="bx bx-cog" /> Settings
+                      </Link>
+                      <button
+                        type="button"
+                        className={styles.dropdownItem}
+                        onClick={handleLogout}
+                      >
                         <i className="bx bx-log-out" /> Sign Out
                       </button>
                     </div>
                   )}
                 </div>
-              </span>
-            </>
-          ) : (
-            <>
-              <span className={styles.navPrimary}>
-                <Link to="/" className={styles.navLink}>Home</Link>
-                <Link to="/login" className={styles.navLink}>Sign In</Link>
-              </span>
-              <span className={styles.navActions}>
-                <Link to="/register" className={styles.registerBtn}>
+              </>
+            ) : (
+              <>
+                <Link to="/login" className={styles.loginBtn} onClick={closeMobile}>
+                  Sign In
+                </Link>
+                <Link to="/register" className={styles.registerBtn} onClick={closeMobile}>
                   <i className="bx bx-rocket" /> Get Started
                 </Link>
-              </span>
-            </>
-          )}
+              </>
+            )}
+          </span>
         </nav>
       </div>
     </header>

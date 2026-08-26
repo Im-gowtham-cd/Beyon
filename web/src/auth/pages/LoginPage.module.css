@@ -1,14 +1,10 @@
-/* ================================================================
-   LOGIN PAGE — Beyon Design System v2.0
-   Side panel layout with utility bar
-   ================================================================ */
-
 .loginPage {
   display: flex;
   flex-direction: column;
-  height: 100vh;
-  height: 100dvh;
+  min-height: 100vh;
+  min-height: 100dvh;
   overflow: hidden;
+  background: var(--color-background);
 }
 
 .loginMain {
@@ -18,29 +14,37 @@
   align-items: center;
   justify-content: center;
   padding: calc(var(--nav-height) + 20px) 5% 20px;
-  background: var(--color-bg);
+  background: var(--color-background);
 }
 
 .loginCard {
   display: grid;
   grid-template-columns: 0.95fr 1.15fr;
   width: 100%;
+  max-width: 1100px;
   max-height: 100%;
   overflow-x: hidden;
   overflow-y: auto;
   background: var(--color-surface);
   border-radius: var(--radius-md);
-  height: 100%;
   box-shadow: var(--shadow-lg);
   scrollbar-width: thin;
   scrollbar-color: var(--color-border) transparent;
 }
 
-/* ── Side Panel ── */
+.loginCard::-webkit-scrollbar {
+  width: 8px;
+}
+
+.loginCard::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 4px;
+}
+
 .loginAside {
   background: var(--color-primary-dark);
   color: var(--color-surface);
-  padding: clamp(20px, 2.5vw, 30px);
+  padding: clamp(24px, 3vw, 36px);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -131,6 +135,7 @@
   line-height: 1.7;
   opacity: 0.78;
   margin-bottom: 14px;
+  color: var(--color-surface);
 }
 
 .asideFeatures {
@@ -165,6 +170,7 @@
   opacity: 0.75;
   position: relative;
   z-index: 1;
+  color: var(--color-surface);
 }
 
 .asideFoot i {
@@ -172,20 +178,26 @@
   color: var(--color-accent);
 }
 
-/* ── Login Panel ── */
 .loginPanel {
   background: var(--color-surface);
-  padding: clamp(20px, 2.5vw, 28px);
+  padding: clamp(24px, 3vw, 36px);
   display: flex;
-  margin-left: 4%;
   flex-direction: column;
-  width: 80%;
   justify-content: center;
   position: relative;
   overflow: hidden;
 }
 
-.loginTitle {
+.loginLogo {
+  height: 48px;
+  width: auto;
+  object-fit: contain;
+  mix-blend-mode: multiply;
+  margin-bottom: 16px;
+  align-self: flex-start;
+}
+
+.loginPanel h1 {
   font-family: var(--font-heading);
   font-size: var(--fs-4xl);
   font-weight: 800;
@@ -197,7 +209,7 @@
   letter-spacing: -0.01em;
 }
 
-.loginTitle::after {
+.loginPanel h1::after {
   content: '';
   position: absolute;
   width: 44px;
@@ -210,12 +222,11 @@
 .loginIntro {
   font-size: 14px;
   line-height: 1.6;
-  color: var(--color-text-secondary);
+  color: var(--text-secondary);
   margin-bottom: 14px;
-  max-width: 42ch;
+  max-width: 44ch;
 }
 
-/* ── Form ── */
 .loginForm {
   display: flex;
   flex-direction: column;
@@ -225,7 +236,7 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
 }
 
 .inputGroup label {
@@ -233,7 +244,7 @@
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--color-text-secondary);
+  color: var(--text-secondary);
 }
 
 .inputWrapper {
@@ -251,23 +262,24 @@
   box-shadow: 0 0 0 3px rgba(var(--color-primary-rgb), 0.12);
 }
 
-.inputWrapper.inputError {
+.inputWrapper.error {
   border-color: var(--color-danger);
   box-shadow: 0 0 0 3px rgba(198, 40, 40, 0.1);
 }
 
-.input-icon {
+.inputIcon {
   font-size: 18px;
-  color: var(--color-text-secondary);
+  color: var(--text-secondary);
   margin-right: 10px;
   flex-shrink: 0;
 }
 
-.inputWrapper:focus-within .input-icon {
+.inputWrapper:focus-within .inputIcon {
   color: var(--color-primary);
 }
 
-.inputWrapper input {
+.inputWrapper input,
+.inputWrapper select {
   flex: 1;
   min-width: 0;
   padding: 10px 0;
@@ -275,18 +287,12 @@
   background: transparent;
   font-family: var(--font-body);
   font-size: var(--fs-base);
-  color: var(--color-text);
+  color: var(--text-primary);
   outline: none;
 }
 
 .inputWrapper input::placeholder {
-  color: var(--color-text-muted);
-}
-
-.inputErrorMsg {
-  font-size: 12px;
-  color: var(--color-danger);
-  padding-left: 4px;
+  color: var(--text-muted);
 }
 
 .togglePassword {
@@ -295,10 +301,12 @@
   cursor: pointer;
   padding: 5px;
   font-size: 20px;
-  color: var(--color-text-secondary);
+  color: var(--text-secondary);
   opacity: 0.6;
   transition: var(--transition);
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
 }
 
 .togglePassword:hover {
@@ -306,13 +314,19 @@
   color: var(--color-primary);
 }
 
-/* ── Options ── */
+.inputError {
+  font-size: 12px;
+  color: var(--color-danger);
+  padding-left: 4px;
+  display: block;
+}
+
 .loginOptions {
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 12px;
-  margin: 0 0 12px;
+  margin: 0 0 14px;
 }
 
 .rememberMe {
@@ -320,11 +334,11 @@
   align-items: center;
   gap: 10px;
   font-size: 14px;
-  color: var(--color-text-secondary);
+  color: var(--text-secondary);
   cursor: pointer;
   user-select: none;
   position: relative;
-  padding-left: 30px;
+  padding-left: 28px;
 }
 
 .rememberMe input {
@@ -338,8 +352,8 @@
 .checkmark {
   position: absolute;
   left: 0;
-  height: 20px;
-  width: 20px;
+  height: 18px;
+  width: 18px;
   border: 1.5px solid var(--color-primary);
   border-radius: var(--radius-xs);
   transition: var(--transition);
@@ -360,8 +374,8 @@
   display: none;
   left: 5px;
   top: 1px;
-  width: 6px;
-  height: 10px;
+  width: 5px;
+  height: 9px;
   border: solid var(--color-surface);
   border-width: 0 2px 2px 0;
   transform: rotate(45deg);
@@ -396,10 +410,9 @@
   width: 100%;
 }
 
-/* ── Login Button ── */
 .loginBtn {
   width: 100%;
-  padding: 14px;
+  padding: 13px;
   background: var(--color-primary);
   color: var(--color-surface);
   border: 1.5px solid var(--color-primary);
@@ -433,7 +446,22 @@
   cursor: not-allowed;
 }
 
-/* ── Help ── */
+.switchAuth {
+  margin-top: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.switchLink {
+  color: var(--color-primary);
+  font-weight: 700;
+  text-decoration: underline;
+}
+
 .loginHelp {
   display: flex;
   align-items: flex-start;
@@ -442,7 +470,7 @@
   padding-top: 12px;
   border-top: 1px solid var(--color-border-light);
   font-size: 13px;
-  color: var(--color-text-secondary);
+  color: var(--text-secondary);
   line-height: 1.6;
 }
 
@@ -453,8 +481,7 @@
   flex-shrink: 0;
 }
 
-/* ── Toast ── */
-.toast {
+.loginToast {
   position: absolute;
   bottom: 20px;
   left: 50%;
@@ -473,28 +500,24 @@
   max-width: calc(100% - 32px);
   box-shadow: var(--shadow-md);
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  z-index: 2;
-  animation: toastIn 0.4s ease forwards;
+  z-index: 20;
 }
 
-.toastError {
+.loginToast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+  pointer-events: auto;
+}
+
+.loginToast.toastError {
   background: var(--color-danger);
 }
 
-@keyframes toastIn {
-  to {
-    opacity: 1;
-    transform: translateX(-50%) translateY(0);
-    pointer-events: auto;
-  }
-}
-
-.toast i {
+.loginToast i {
   font-size: 20px;
   flex-shrink: 0;
 }
 
-/* ── Responsive ── */
 @media (max-width: 1024px) {
   .loginAside {
     gap: 20px;
@@ -548,7 +571,11 @@
   .loginPanel {
     padding: 20px 18px;
   }
-  .loginTitle {
+  .loginLogo {
+    height: 30px;
+    margin-bottom: 10px;
+  }
+  .loginPanel h1 {
     font-size: var(--fs-2xl);
     padding-bottom: 8px;
   }
@@ -558,13 +585,6 @@
   }
   .inputGroup {
     margin-bottom: 8px;
-  }
-  .inputGroup label {
-    font-size: 0.68rem;
-  }
-  .inputWrapper input {
-    padding: 11px 0;
-    font-size: 15px;
   }
   .loginOptions {
     flex-wrap: wrap;
@@ -577,27 +597,5 @@
     margin-top: 14px;
     padding-top: 12px;
     font-size: 12px;
-  }
-  .toast {
-    bottom: 12px;
-    padding: 10px 16px;
-  }
-}
-
-@media (max-width: 480px) {
-  .loginAside .asideBody {
-    display: none;
-  }
-  .loginPanel .loginIntro {
-    display: none;
-  }
-  .loginPanel {
-    padding: 16px 16px;
-  }
-  .inputWrapper input {
-    padding: 9px 0;
-  }
-  .loginHelp {
-    font-size: 11px;
   }
 }

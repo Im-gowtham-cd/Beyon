@@ -19,7 +19,7 @@ export function LoginPage() {
 
   function validateEmail() {
     if (!email.trim()) {
-      setErrors(prev => ({ ...prev, email: 'Email is required' }));
+      setErrors(prev => ({ ...prev, email: 'Username or email is required' }));
       return false;
     }
     setErrors(prev => ({ ...prev, email: '' }));
@@ -52,7 +52,7 @@ export function LoginPage() {
       try {
         await appwriteAuth.login(email, password);
       } catch {
-        // Appwrite login failed, continue with backend auth
+        // Appwrite login fallback
       }
 
       const response = await authApi.login({ email, password });
@@ -71,7 +71,10 @@ export function LoginPage() {
         return;
       }
 
-      if (profileStatus === 'PENDING_INSTITUTION_VERIFICATION' || profileStatus === 'PENDING_COMPANY_VERIFICATION') {
+      if (
+        profileStatus === 'PENDING_INSTITUTION_VERIFICATION' ||
+        profileStatus === 'PENDING_COMPANY_VERIFICATION'
+      ) {
         navigate('/verification-pending');
         return;
       }
@@ -98,23 +101,29 @@ export function LoginPage() {
     <div className={styles.loginPage}>
       <main className={styles.loginMain}>
         <div className={styles.loginCard}>
-          {/* Side Panel */}
+          {/* Left Aside */}
           <aside className={styles.loginAside}>
             <div className={styles.asideBrand}>
-              <span className={styles.asideMark} />
+              <span className={styles.asideMark} aria-hidden="true" />
               <div className={styles.asideBrandText}>
                 <span className={styles.asideName}>Beyon</span>
-                <span className={styles.asideSub}>AI Skill Development Platform</span>
+                <span className={styles.asideSub}>AI Skill Development &amp; Recruitment</span>
               </div>
             </div>
 
             <div className={styles.asideBody}>
               <h2>Learn, Practice, Prove &amp; Get Hired</h2>
-              <p>Access the complete AI-powered skill development, assessment and recruitment platform.</p>
+              <p>Secure portal access for candidates, educational institutions, and hiring enterprise partners.</p>
               <ul className={styles.asideFeatures}>
-                <li><i className="bx bx-chip" /> AI-Powered Learning</li>
-                <li><i className="bx bx-brain" /> Skill Assessment</li>
-                <li><i className="bx bx-group" /> Career Matching</li>
+                <li>
+                  <i className="bx bx-chip" /> AI-Powered Learning Paths
+                </li>
+                <li>
+                  <i className="bx bx-brain" /> Proctored Skill Assessments
+                </li>
+                <li>
+                  <i className="bx bx-group" /> Direct Candidate Matching
+                </li>
               </ul>
             </div>
 
@@ -123,76 +132,118 @@ export function LoginPage() {
             </div>
           </aside>
 
-          {/* Login Panel */}
+          {/* Right Panel */}
           <section className={styles.loginPanel}>
-            <span className="section-label">HPC COE Portal</span>
-            <h1 className={styles.loginTitle}>Sign In</h1>
-            <p className={styles.loginIntro}>Sign in with your registered email and password to access the platform.</p>
+            <span className="section-label">Beyon Portal</span>
+            <h1>Sign In</h1>
+            <p className={styles.loginIntro}>
+              Sign in with your registered email and password to access the platform.
+            </p>
 
-            <form className={styles.loginForm} onSubmit={handleSubmit} autoComplete="off" noValidate>
-              {toast.show && (
-                <div className={`${styles.toast} ${toast.isError ? styles.toastError : ''}`} role="status">
-                  <i className={toast.isError ? 'bx bx-x-circle' : 'bx bx-check-circle'} />
-                  <span>{toast.message}</span>
-                </div>
-              )}
-
+            <form
+              className={styles.loginForm}
+              id="loginForm"
+              onSubmit={handleSubmit}
+              autoComplete="off"
+              noValidate
+            >
               <div className={styles.inputGroup}>
-                <label htmlFor="loginEmail">Email</label>
-                <div className={`${styles.inputWrapper} ${errors.email ? styles.inputError : ''}`}>
-                  <i className="bx bx-envelope input-icon" />
+                <label htmlFor="loginUsername">Username / Email</label>
+                <div className={`${styles.inputWrapper} ${errors.email ? styles.error : ''}`}>
+                  <i className={`bx bx-user ${styles.inputIcon}`} />
                   <input
-                    id="loginEmail"
-                    type="email"
+                    id="loginUsername"
+                    type="text"
                     value={email}
-                    onChange={e => { setEmail(e.target.value); setErrors(prev => ({ ...prev, email: '' })); }}
+                    onChange={e => {
+                      setEmail(e.target.value);
+                      setErrors(prev => ({ ...prev, email: '' }));
+                    }}
                     onBlur={validateEmail}
-                    placeholder="Enter your email"
+                    placeholder="Enter your username or email"
                     required
-                    autoComplete="email"
+                    autoComplete="username"
                   />
                 </div>
-                {errors.email && <span className={styles.inputErrorMsg}>{errors.email}</span>}
+                {errors.email && <span className={styles.inputError}>{errors.email}</span>}
               </div>
 
               <div className={styles.inputGroup}>
                 <label htmlFor="loginPassword">Password</label>
-                <div className={`${styles.inputWrapper} ${errors.password ? styles.inputError : ''}`}>
-                  <i className="bx bx-lock-alt input-icon" />
+                <div className={`${styles.inputWrapper} ${errors.password ? styles.error : ''}`}>
+                  <i className={`bx bx-lock-alt ${styles.inputIcon}`} />
                   <input
                     id="loginPassword"
                     type={showPassword ? 'text' : 'password'}
                     value={password}
-                    onChange={e => { setPassword(e.target.value); setErrors(prev => ({ ...prev, password: '' })); }}
+                    onChange={e => {
+                      setPassword(e.target.value);
+                      setErrors(prev => ({ ...prev, password: '' }));
+                    }}
                     onBlur={validatePassword}
                     placeholder="Enter your password"
                     required
                     autoComplete="current-password"
                   />
-                  <button type="button" className={styles.togglePassword} onClick={() => setShowPassword(!showPassword)} aria-label="Toggle password">
+                  <button
+                    type="button"
+                    className={styles.togglePassword}
+                    onClick={() => setShowPassword(!showPassword)}
+                    aria-label="Toggle password visibility"
+                  >
                     <i className={showPassword ? 'bx bx-hide' : 'bx bx-show'} />
                   </button>
                 </div>
-                {errors.password && <span className={styles.inputErrorMsg}>{errors.password}</span>}
+                {errors.password && <span className={styles.inputError}>{errors.password}</span>}
               </div>
 
               <div className={styles.loginOptions}>
                 <label className={styles.rememberMe}>
-                  <input type="checkbox" checked={remember} onChange={e => setRemember(e.target.checked)} />
+                  <input
+                    type="checkbox"
+                    checked={remember}
+                    onChange={e => setRemember(e.target.checked)}
+                  />
                   <span className={styles.checkmark} />
                   Remember me
                 </label>
-                <Link to="/forgot-password" className={styles.forgotLink}>Forgot password?</Link>
+                <Link to="/forgot-password" className={styles.forgotLink}>
+                  Forgot password?
+                </Link>
               </div>
 
               <button type="submit" className={styles.loginBtn} disabled={loading}>
-                {loading ? <i className="bx bx-loader-alt bx-spin" /> : 'Sign In'}
+                {!loading ? (
+                  <span>Sign In</span>
+                ) : (
+                  <i className="bx bx-loader-alt bx-spin" />
+                )}
               </button>
+
+              <div className={styles.switchAuth}>
+                <span>Don't have an account?</span>
+                <Link to="/register" className={styles.switchLink}>
+                  Sign Up
+                </Link>
+              </div>
             </form>
 
             <div className={styles.loginHelp}>
               <i className="bx bx-shield-quarter" />
-              <span>Protected portal access. For account issues, contact support at support@beyon.dev.</span>
+              <span>
+                Protected portal access. For account issues or organization verification, contact support@beyon.dev.
+              </span>
+            </div>
+
+            <div
+              className={`${styles.loginToast} ${toast.show ? styles.show : ''} ${
+                toast.isError ? styles.toastError : ''
+              }`}
+              role="status"
+              aria-live="polite"
+            >
+              <i className={toast.isError ? 'bx bx-x-circle' : 'bx bx-check-circle'} />
+              <span>{toast.message}</span>
             </div>
           </section>
         </div>

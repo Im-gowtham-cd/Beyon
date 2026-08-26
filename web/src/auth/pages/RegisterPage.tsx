@@ -1,181 +1,263 @@
 import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { AuthLayout } from '../components/AuthLayout';
-import { AuthCard } from '../components/AuthCard';
-import { AuthInput } from '../components/AuthInput';
-import { PasswordInput } from '../components/PasswordInput';
-import { AuthButton } from '../components/AuthButton';
-import { RoleCard } from '../components/RoleCard';
+import { useAuth } from '../context/AuthContext';
 import { authApi } from '../services/authApi';
 import { appwriteAuth } from '../services/appwriteAuth';
 import type { ApiError } from '../../services/api/client';
-import type { UserRole } from '../types/auth';
-import styles from './RegisterPage.module.css';
-
-type SelectableRole = Exclude<UserRole, 'ADMIN'>;
-
-const ONBOARDING_ROUTES: Record<SelectableRole, string> = {
-  STUDENT: '/onboarding/student',
-  INSTITUTION: '/onboarding/institution',
-  COMPANY: '/onboarding/company',
-};
+import styles from './LoginPage.module.css';
 
 export function RegisterPage() {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [role, setRole] = useState<SelectableRole | null>(null);
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const [apiError, setApiError] = useState('');
+  const [role, setRole] = useState<'STUDENT' | 'INSTITUTION' | 'COMPANY'>('STUDENT');
+  const [showPassword, setShowPassword] = useState(false);
+  const [agreeTerms, setAgreeTerms] = useState(false);
+  const [errors, setErrors] = useState<{ name?: string; email?: string; password?: string; terms?: string }>({});
+  const [toast, setToast] = useState({ show: false, message: '', isError: false });
   const [loading, setLoading] = useState(false);
 
-  function validate(): boolean {
-    const errs: Record<string, string> = {};
+  function validate() {
+    const nextErrors: typeof errors = {};
+    if (!name.trim()) nextErrors.name = 'Full name is required';
+    if (!email.trim()) nextErrors.email = 'Email is required';
+    if (!password) nextErrors.password = 'Password is required';
+    else if (password.length < 8) nextErrors.password = 'Password must be at least 8 characters';
+    if (!agreeTerms) nextErrors.terms = 'You must agree to the terms';
 
-    if (!name.trim() || name.trim().length < 2) errs.name = 'Name must be at least 2 characters';
-    if (!email.trim()) errs.email = 'Email is required';
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) errs.email = 'Invalid email format';
-    if (password.length < 8) errs.password = 'Password must be at least 8 characters';
-    else {
-      if (!/[A-Z]/.test(password)) errs.password = 'Must contain an uppercase letter';
-      else if (!/[a-z]/.test(password)) errs.password = 'Must contain a lowercase letter';
-      else if (!/[0-9]/.test(password)) errs.password = 'Must contain a number';
-    }
-    if (password !== confirmPassword) errs.confirmPassword = 'Passwords do not match';
-    if (!role) errs.role = 'Please select a role';
+    setErrors(nextErrors);
+    return Object.keys(nextErrors).length === 0;
+  }
 
-    setErrors(errs);
-    return Object.keys(errs).length === 0;
+  function showToast(message: string, isError = false) {
+    setToast({ show: true, message, isError });
+    setTimeout(() => setToast({ show: false, message: '', isError: false }), 4000);
   }
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    setApiError('');
     if (!validate()) return;
 
     setLoading(true);
+
     try {
-      // Register in Appwrite (identity) and backend (profile)
       try {
-        await appwriteAuth.register(name.trim(), email.trim(), password);
+        await appwriteAuth.register(email, password, name);
       } catch {
-        // Appwrite registration is best-effort during migration
+        // Appwrite register fallback
       }
-      await authApi.register({ name: name.trim(), email: email.trim(), password, confirmPassword, role: role! });
-      navigate(ONBOARDING_ROUTES[role!]);
+
+      await authApi.register({ name, email, password, confirmPassword: password, role });
+
+      try {
+        const loginRes = await authApi.login({ email, password });
+        login(loginRes.accessToken, loginRes.user);
+        showToast('Registration successful! Redirecting to setup...');
+        setTimeout(() => {
+          navigate(`/onboarding/${role.toLowerCase()}`);
+        }, 1000);
+      } catch {
+        showToast('Registration successful! Please sign in.');
+        setTimeout(() => {
+          navigate('/login');
+        }, 1000);
+      }
     } catch (err) {
       const apiErr = err as ApiError;
-      setApiError(apiErr.message || 'Registration failed. Please try again.');
+      showToast(apiErr.message || 'Registration failed. Please try again.', true);
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <AuthLayout>
-      <AuthCard
-        title="Create your account"
-        subtitle="Join Beyon and start your skill journey"
-        footer={
-          <span>
-            Already have an account?{' '}
-            <Link to="/login" className={styles.link}>Sign in</Link>
-          </span>
-        }
-      >
-        <form className={styles.form} onSubmit={handleSubmit}>
-          {apiError && <div className={styles.errorBanner} role="alert">{apiError}</div>}
-
-          <AuthInput
-            id="name"
-            label="Full name"
-            type="text"
-            placeholder="Your name"
-            value={name}
-            onChange={e => setName(e.target.value)}
-            error={errors.name}
-            required
-            autoComplete="name"
-          />
-
-          <AuthInput
-            id="email"
-            label="Email"
-            type="email"
-            placeholder="you@example.com"
-            value={email}
-            onChange={e => setEmail(e.target.value)}
-            error={errors.email}
-            required
-            autoComplete="email"
-          />
-
-          <PasswordInput
-            id="password"
-            label="Password"
-            placeholder="Min. 8 characters"
-            value={password}
-            onChange={e => setPassword(e.target.value)}
-            error={errors.password}
-            required
-            autoComplete="new-password"
-          />
-
-          <PasswordInput
-            id="confirmPassword"
-            label="Confirm password"
-            placeholder="Re-enter your password"
-            value={confirmPassword}
-            onChange={e => setConfirmPassword(e.target.value)}
-            error={errors.confirmPassword}
-            required
-            autoComplete="new-password"
-          />
-
-          <div>
-            <div style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-medium)', color: 'var(--color-text-secondary)', marginBottom: 'var(--space-sm)' }}>
-              I am a...
-            </div>
-            {errors.role && (
-              <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-error)', marginBottom: 'var(--space-sm)' }} role="alert">
-                {errors.role}
+    <div className={styles.loginPage}>
+      <main className={styles.loginMain}>
+        <div className={styles.loginCard}>
+          {/* Left Aside - Exact same as Login */}
+          <aside className={styles.loginAside}>
+            <div className={styles.asideBrand}>
+              <span className={styles.asideMark} aria-hidden="true" />
+              <div className={styles.asideBrandText}>
+                <span className={styles.asideName}>Beyon</span>
+                <span className={styles.asideSub}>AI Skill Development &amp; Recruitment</span>
               </div>
-            )}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 'var(--space-sm)' }}>
-              <RoleCard
-                role="STUDENT"
-                icon="🎓"
-                title="Student"
-                description="Build skills and find opportunities"
-                selected={role === 'STUDENT'}
-                onSelect={setRole}
-              />
-              <RoleCard
-                role="INSTITUTION"
-                icon="🏫"
-                title="Institution"
-                description="Manage and track talent readiness"
-                selected={role === 'INSTITUTION'}
-                onSelect={setRole}
-              />
-              <RoleCard
-                role="COMPANY"
-                icon="🏢"
-                title="Company"
-                description="Find and recruit skilled talent"
-                selected={role === 'COMPANY'}
-                onSelect={setRole}
-              />
             </div>
-          </div>
 
-          <AuthButton type="submit" loading={loading}>
-            Create account & start onboarding
-          </AuthButton>
-        </form>
-      </AuthCard>
-    </AuthLayout>
+            <div className={styles.asideBody}>
+              <h2>Learn, Practice, Prove &amp; Get Hired</h2>
+              <p>Create your candidate or organization account to access AI-powered assessments and opportunities.</p>
+              <ul className={styles.asideFeatures}>
+                <li>
+                  <i className="bx bx-chip" /> AI-Powered Learning Paths
+                </li>
+                <li>
+                  <i className="bx bx-brain" /> Proctored Skill Assessments
+                </li>
+                <li>
+                  <i className="bx bx-group" /> Direct Candidate Matching
+                </li>
+              </ul>
+            </div>
+
+            <div className={styles.asideFoot}>
+              <i className="bx bx-envelope" /> support@beyon.dev
+            </div>
+          </aside>
+
+          {/* Right Panel - Register with identical UX */}
+          <section className={styles.loginPanel}>
+            <span className="section-label">Beyon Portal</span>
+            <h1>Create Account</h1>
+            <p className={styles.loginIntro}>
+              Register for portal access to start learning, taking assessments, and discovering career opportunities.
+            </p>
+
+            <form
+              className={styles.loginForm}
+              id="registerForm"
+              onSubmit={handleSubmit}
+              autoComplete="off"
+              noValidate
+            >
+              <div className={styles.inputGroup}>
+                <label htmlFor="regName">Full Name</label>
+                <div className={`${styles.inputWrapper} ${errors.name ? styles.error : ''}`}>
+                  <i className={`bx bx-user ${styles.inputIcon}`} />
+                  <input
+                    id="regName"
+                    type="text"
+                    value={name}
+                    onChange={e => {
+                      setName(e.target.value);
+                      setErrors(prev => ({ ...prev, name: '' }));
+                    }}
+                    placeholder="Enter your full name"
+                    required
+                    autoComplete="name"
+                  />
+                </div>
+                {errors.name && <span className={styles.inputError}>{errors.name}</span>}
+              </div>
+
+              <div className={styles.inputGroup}>
+                <label htmlFor="regEmail">Email Address</label>
+                <div className={`${styles.inputWrapper} ${errors.email ? styles.error : ''}`}>
+                  <i className={`bx bx-envelope ${styles.inputIcon}`} />
+                  <input
+                    id="regEmail"
+                    type="email"
+                    value={email}
+                    onChange={e => {
+                      setEmail(e.target.value);
+                      setErrors(prev => ({ ...prev, email: '' }));
+                    }}
+                    placeholder="Enter your email"
+                    required
+                    autoComplete="email"
+                  />
+                </div>
+                {errors.email && <span className={styles.inputError}>{errors.email}</span>}
+              </div>
+
+              <div className={styles.inputGroup}>
+                <label htmlFor="regRole">Account Role</label>
+                <div className={styles.inputWrapper}>
+                  <i className={`bx bx-badge-check ${styles.inputIcon}`} />
+                  <select
+                    id="regRole"
+                    value={role}
+                    onChange={e => setRole(e.target.value as any)}
+                  >
+                    <option value="STUDENT">Research Scholar / Student</option>
+                    <option value="INSTITUTION">Faculty / Institution</option>
+                    <option value="COMPANY">Industry Partner / Company</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className={styles.inputGroup}>
+                <label htmlFor="regPassword">Password</label>
+                <div className={`${styles.inputWrapper} ${errors.password ? styles.error : ''}`}>
+                  <i className={`bx bx-lock-alt ${styles.inputIcon}`} />
+                  <input
+                    id="regPassword"
+                    type={showPassword ? 'text' : 'password'}
+                    value={password}
+                    onChange={e => {
+                      setPassword(e.target.value);
+                      setErrors(prev => ({ ...prev, password: '' }));
+                    }}
+                    placeholder="Create a strong password"
+                    required
+                    autoComplete="new-password"
+                  />
+                  <button
+                    type="button"
+                    className={styles.togglePassword}
+                    onClick={() => setShowPassword(!showPassword)}
+                    aria-label="Toggle password visibility"
+                  >
+                    <i className={showPassword ? 'bx bx-hide' : 'bx bx-show'} />
+                  </button>
+                </div>
+                {errors.password && <span className={styles.inputError}>{errors.password}</span>}
+              </div>
+
+              <div className={styles.loginOptions}>
+                <label className={styles.rememberMe}>
+                  <input
+                    type="checkbox"
+                    checked={agreeTerms}
+                    onChange={e => {
+                      setAgreeTerms(e.target.checked);
+                      setErrors(prev => ({ ...prev, terms: '' }));
+                    }}
+                  />
+                  <span className={styles.checkmark} />
+                  I agree to the Portal Terms &amp; Privacy Policy
+                </label>
+              </div>
+              {errors.terms && <span className={styles.inputError}>{errors.terms}</span>}
+
+              <button type="submit" className={styles.loginBtn} disabled={loading}>
+                {!loading ? (
+                  <span>Create Account</span>
+                ) : (
+                  <i className="bx bx-loader-alt bx-spin" />
+                )}
+              </button>
+
+              <div className={styles.switchAuth}>
+                <span>Already registered?</span>
+                <Link to="/login" className={styles.switchLink}>
+                  Sign In
+                </Link>
+              </div>
+            </form>
+
+            <div className={styles.loginHelp}>
+              <i className="bx bx-shield-quarter" />
+              <span>
+                Protected portal access. For verification or access requests, contact support@beyon.dev.
+              </span>
+            </div>
+
+            <div
+              className={`${styles.loginToast} ${toast.show ? styles.show : ''} ${
+                toast.isError ? styles.toastError : ''
+              }`}
+              role="status"
+              aria-live="polite"
+            >
+              <i className={toast.isError ? 'bx bx-x-circle' : 'bx bx-check-circle'} />
+              <span>{toast.message}</span>
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
   );
 }

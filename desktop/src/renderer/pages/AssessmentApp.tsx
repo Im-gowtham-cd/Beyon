@@ -51,11 +51,11 @@ interface TimeInfo {
 
 const CHECK_TYPES = ['CAMERA', 'MICROPHONE', 'SCREEN_CAPTURE', 'INTERNET', 'DISPLAY'] as const;
 const CHECK_LABELS: Record<string, string> = {
-  CAMERA: 'Camera',
-  MICROPHONE: 'Microphone',
-  SCREEN_CAPTURE: 'Screen Capture',
-  INTERNET: 'Internet Connection',
-  DISPLAY: 'Display',
+  CAMERA: 'Camera & Video Feed',
+  MICROPHONE: 'Microphone & Audio Input',
+  SCREEN_CAPTURE: 'Screen Capture & Display Security',
+  INTERNET: 'Network Latency & Bandwidth',
+  DISPLAY: 'Single Display Verification',
 };
 
 export function AssessmentApp() {
@@ -69,6 +69,8 @@ export function AssessmentApp() {
   const [results, setResults] = useState<any>(null);
   const [error, setError] = useState('');
   const [proctoringWarnings, setProctoringWarnings] = useState<string[]>([]);
+  const [authEmail, setAuthEmail] = useState('');
+  const [authPassword, setAuthPassword] = useState('');
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const heartbeatRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const launchToken = new URLSearchParams(window.location.search).get('token');
@@ -130,7 +132,10 @@ export function AssessmentApp() {
       setProctoringWarnings(prev => [...prev, 'Attempted to quit']);
       apiFetch('/proctoring/event/suspicious', {
         method: 'POST',
-        body: JSON.stringify({ sessionId: session?.sessionId, description: 'Candidate attempted to quit during assessment' }),
+        body: JSON.stringify({
+          sessionId: session?.sessionId,
+          description: 'Candidate attempted to quit during assessment',
+        }),
       }).catch(() => {});
     };
 
@@ -171,9 +176,18 @@ export function AssessmentApp() {
       const deviceInfo = await window.beyon?.assessment?.getDeviceInfo();
       const data = await apiFetch('/assessment/launch', {
         method: 'POST',
-        body: JSON.stringify({ launchToken, deviceFingerprint: navigator.userAgent, deviceInfo: JSON.stringify(deviceInfo) }),
+        body: JSON.stringify({
+          launchToken,
+          deviceFingerprint: navigator.userAgent,
+          deviceInfo: JSON.stringify(deviceInfo),
+        }),
       });
-      setSession({ sessionId: data.sessionId, status: data.status, totalQuestions: data.totalQuestions, durationMinutes: data.durationMinutes });
+      setSession({
+        sessionId: data.sessionId,
+        status: data.status,
+        totalQuestions: data.totalQuestions,
+        durationMinutes: data.durationMinutes,
+      });
       setStep('verify');
     } catch (err: any) {
       setError(err.message);
@@ -208,19 +222,24 @@ export function AssessmentApp() {
         body: JSON.stringify({ checkType: ct, status: 'PASS' }),
       }).catch(() => {});
     }
-    await apiFetch(`/assessment/session/${session.sessionId}/system-check/complete`, { method: 'POST' }).catch(() => {});
+    await apiFetch(`/assessment/session/${session.sessionId}/system-check/complete`, {
+      method: 'POST',
+    }).catch(() => {});
     setStep('instructions');
   };
 
   const startExam = async () => {
     if (!session) return;
     try {
-      const questionIds = Array.from({ length: session.totalQuestions || 20 }, (_, i) => `q-${i + 1}`);
+      const questionIds = Array.from(
+        { length: session.totalQuestions || 20 },
+        (_, i) => `q-${i + 1}`
+      );
       const data = await apiFetch(`/assessment/session/${session.sessionId}/start`, {
         method: 'POST',
         body: JSON.stringify({ questionIds }),
       });
-      setSession(prev => prev ? { ...prev, status: 'IN_PROGRESS', expiresAt: data.expiresAt } : prev);
+      setSession(prev => (prev ? { ...prev, status: 'IN_PROGRESS', expiresAt: data.expiresAt } : prev));
       setStep('exam');
       startTimer();
     } catch (err: any) {
@@ -250,245 +269,392 @@ export function AssessmentApp() {
     window.beyon?.assessment?.unlockWindow();
     setStep('submitting');
     try {
-      for (const [questionId, answer] of Object.entries(answers)) {
-        await apiFetch(`/assessment/session/${session.sessionId}/answer`, {
-          method: 'POST',
-          body: JSON.stringify({ questionId, selectedOptionId: answer.optionId, timeSpentSeconds: 0, markedForReview: answer.marked }),
-        });
-      }
-      const data = await apiFetch(`/assessment/session/${session.sessionId}/submit`, { method: 'POST' });
-      setResults(data);
+      const res = await apiFetch(`/assessment/session/${session.sessionId}/submit`, {
+        method: 'POST',
+        body: JSON.stringify({ answers }),
+      });
+      setResults(res);
       setStep('results');
     } catch (err: any) {
       setError(err.message);
     }
   };
 
-  const formatTime = (seconds: number) => {
-    const h = Math.floor(seconds / 3600);
-    const m = Math.floor((seconds % 3600) / 60);
-    const s = seconds % 60;
-    return h > 0 ? `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}` : `${m}:${s.toString().padStart(2, '0')}`;
+  const handleDesktopAuth = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!authEmail || !authPassword) return;
+    try {
+      const res = await fetch(`${API_BASE}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: authEmail, password: authPassword }),
+      });
+      if (!res.ok) throw new Error('Login failed');
+      const data = await res.json();
+      setToken(data.accessToken);
+      await window.beyon?.auth?.setToken(data.accessToken);
+      setStep('launch');
+    } catch (err: any) {
+      setError(err.message || 'Invalid credentials');
+    }
   };
 
-  if (error) {
-    return (
-      <div className={styles.container}>
-        <div className={styles.main}>
-          <div className={styles.logoLarge}>B</div>
-          <h2 className={styles.title}>Error</h2>
-          <p className={styles.subtitle}>{error}</p>
-          <button className={styles.btn} onClick={() => { setError(''); window.location.reload(); }}>Retry</button>
-        </div>
-      </div>
-    );
-  }
-
-  if (step === 'auth') {
-    return (
-      <div className={styles.container}>
-        <div className={styles.main}>
-          <div className={styles.logoLarge}>B</div>
-          <h1 className={styles.title}>Beyon Assessment</h1>
-          <p className={styles.subtitle}>Please open this app from the web application to start your assessment.</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (step === 'launch') {
-    return (
-      <div className={styles.container}>
-        <div className={styles.main}>
-          <div className={styles.logoLarge}>B</div>
-          <h1 className={styles.title}>Preparing Assessment...</h1>
-          <p className={styles.subtitle}>Setting up secure environment</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (step === 'verify') {
-    return (
-      <div className={styles.container}>
-        <div className={styles.main}>
-          <div className={styles.logoLarge}>B</div>
-          <h1 className={styles.title}>Identity Verification</h1>
-          <p className={styles.subtitle}>Please look at the camera and verify your identity</p>
-          <div className={styles.cameraPreview}>
-            <div style={{ color: '#6b7280', textAlign: 'center' }}>📷 Camera feed will appear here</div>
-          </div>
-          <button className={styles.btn} onClick={handleVerify} style={{ marginTop: '1.5rem' }}>Verify Identity</button>
-        </div>
-      </div>
-    );
-  }
-
-  if (step === 'system-check') {
-    const allDone = CHECK_TYPES.every(ct => checkStatus[ct] === 'PASS');
-    return (
-      <div className={styles.container}>
-        <div className={styles.main}>
-          <h1 className={styles.title}>System Check</h1>
-          <p className={styles.subtitle}>Verifying your system meets requirements</p>
-          <div className={styles.checkList}>
-            {CHECK_TYPES.map(ct => (
-              <div className={styles.checkItem} key={ct}>
-                <div className={`${styles.checkIcon} ${checkStatus[ct] === 'PASS' ? styles.checkPass : styles.checkPending}`}>
-                  {checkStatus[ct] === 'PASS' ? '✓' : '...'}
-                </div>
-                <div>
-                  <div className={styles.checkLabel}>{CHECK_LABELS[ct]}</div>
-                  <div className={styles.checkStatus}>{checkStatus[ct] === 'PASS' ? 'Passed' : 'Checking...'}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-          {!allDone && <button className={styles.btn} onClick={runSystemChecks}>Run System Checks</button>}
-          {allDone && <button className={styles.btn} onClick={() => setStep('instructions')}>Continue</button>}
-        </div>
-      </div>
-    );
-  }
-
-  if (step === 'instructions') {
-    return (
-      <div className={styles.container}>
-        <div className={styles.main}>
-          <h1 className={styles.title}>Assessment Instructions</h1>
-          <div className={styles.instructions}>
-            <p><strong>Duration:</strong> {session?.durationMinutes || 60} minutes</p>
-            <p><strong>Questions:</strong> {session?.totalQuestions || 20}</p>
-            <p>• Do not switch windows or exit fullscreen</p>
-            <p>• Your camera and screen are being monitored</p>
-            <p>• The timer cannot be paused once started</p>
-            <p>• Auto-submit when time expires</p>
-          </div>
-          <button className={styles.btn} onClick={startExam} style={{ marginTop: '1.5rem' }}>Start Assessment</button>
-        </div>
-      </div>
-    );
-  }
-
-  if (step === 'submitting') {
-    return (
-      <div className={styles.container}>
-        <div className={styles.main}>
-          <div className={styles.logoLarge}>B</div>
-          <h1 className={styles.title}>Submitting...</h1>
-          <p className={styles.subtitle}>Please wait while we save your answers</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (step === 'results' && results) {
-    return (
-      <div className={styles.container}>
-        <div className={styles.main}>
-          <h1 className={styles.title}>Assessment Complete</h1>
-          <div className={styles.resultScore}>{results.accuracy ?? 0}%</div>
-          <p className={styles.subtitle}>Your result has been submitted to the company</p>
-          <div className={styles.resultGrid}>
-            <div className={styles.resultItem}>
-              <div className={styles.resultLabel}>Attempted</div>
-              <div className={styles.resultValue}>{results.questionsAttempted}</div>
-            </div>
-            <div className={styles.resultItem}>
-              <div className={styles.resultLabel}>Correct</div>
-              <div className={styles.resultValue}>{results.questionsCorrect}</div>
-            </div>
-            <div className={styles.resultItem}>
-              <div className={styles.resultLabel}>Time Used</div>
-              <div className={styles.resultValue}>{formatTime(results.timeUsedSeconds)}</div>
-            </div>
-            <div className={styles.resultItem}>
-              <div className={styles.resultLabel}>Integrity</div>
-              <div className={styles.resultValue}>{results.integrityStatus}</div>
-            </div>
-          </div>
-          <button className={styles.btn} onClick={() => window.close()} style={{ marginTop: '1.5rem' }}>Close</button>
-        </div>
-      </div>
-    );
-  }
-
   const totalQ = session?.totalQuestions || 20;
-  const qId = `q-${currentQuestion + 1}`;
+  const currentQId = `q-${currentQuestion + 1}`;
+  const currentAns = answers[currentQId];
 
   return (
     <div className={styles.container}>
-      <div className={styles.assessmentHeader}>
-        <div className={styles.timerSection}>
-          <span className={styles.timerLabel}>TIME</span>
-          <span className={`${styles.timerValue} ${timeInfo && timeInfo.remainingSeconds < 300 ? styles.timerWarning : ''}`}>
-            {timeInfo ? formatTime(timeInfo.remainingSeconds) : '--:--'}
-          </span>
-        </div>
-        <div className={styles.assessmentTitle}>Assessment — Question {currentQuestion + 1}/{totalQ}</div>
-        <div className={styles.warningCount}>
-          {proctoringWarnings.length > 0 && <span className={styles.warningBadge}>⚠ {proctoringWarnings.length}</span>}
-        </div>
-      </div>
-
-      <div className={styles.body}>
-        <div className={styles.palette}>
-          {Array.from({ length: totalQ }, (_, i) => {
-            const qid = `q-${i + 1}`;
-            const a = answers[qid];
-            return (
-              <button
-                key={i}
-                className={`${styles.paletteBtn} ${i === currentQuestion ? styles.paletteActive : a?.marked ? styles.paletteMarked : a?.optionId ? styles.paletteAnswered : ''}`}
-                onClick={() => setCurrentQuestion(i)}
-              >
-                {i + 1}
-              </button>
-            );
-          })}
-        </div>
-
-        <div className={styles.questionArea}>
-          <div className={styles.questionNum}>Question {currentQuestion + 1}</div>
-          <div className={styles.questionText}>Sample question {currentQuestion + 1} for this assessment.</div>
-
-          <div className={styles.options}>
-            {['A', 'B', 'C', 'D'].map((label, idx) => (
-              <div
-                key={label}
-                className={`${styles.option} ${answers[qId]?.optionId === `opt-${idx + 1}` ? styles.optionSelected : ''}`}
-                onClick={() => handleAnswer(qId, `opt-${idx + 1}`)}
-              >
-                <span className={styles.optionMarker}>{label}</span>
-                <span>Option {label}</span>
-              </div>
-            ))}
+      {/* Top Header */}
+      <header className={styles.assessmentHeader}>
+        <div className={styles.brandTitle}>
+          <span className={styles.brandMark} />
+          <div>
+            <span className={styles.brandName}>Beyon</span>
+            <span className={styles.brandSub}>Secure Assessment Environment</span>
           </div>
+        </div>
 
-          <div className={styles.questionActions}>
-            <button className={`${styles.markBtn} ${answers[qId]?.marked ? styles.markedActive : ''}`} onClick={() => handleMarkReview(qId)}>
-              {answers[qId]?.marked ? '★ Marked' : '☆ Mark for Review'}
+        {step === 'exam' && (
+          <div className={styles.timerSection}>
+            <span className={styles.timerLabel}>Time Remaining:</span>
+            <span
+              className={`${styles.timerValue} ${
+                (timeInfo?.remainingSeconds || 3600) < 300 ? styles.timerWarning : ''
+              }`}
+            >
+              {timeInfo
+                ? `${Math.floor(timeInfo.remainingSeconds / 60)}:${String(
+                    timeInfo.remainingSeconds % 60
+                  ).padStart(2, '0')}`
+                : `${session?.durationMinutes || 60}:00`}
+            </span>
+          </div>
+        )}
+
+        {proctoringWarnings.length > 0 && (
+          <span className={styles.warningBadge}>
+            <i className="bx bx-error" /> Warnings: {proctoringWarnings.length}
+          </span>
+        )}
+      </header>
+
+      {/* Auth Step */}
+      {step === 'auth' && (
+        <main className={styles.main}>
+          <div className={styles.authCard}>
+            <div className={styles.authAside}>
+              <span className={styles.asideMark} />
+              <h2>Beyon Proctored Assessment</h2>
+              <p>Secure candidate authentication for proctored examinations and skill assessments.</p>
+              <div className={styles.authNotice}>
+                <i className="bx bx-shield-quarter" />
+                <span>Protected test browser environment</span>
+              </div>
+            </div>
+
+            <div className={styles.authPanel}>
+              <span className="section-label">Beyon Assessment Portal</span>
+              <h1>Candidate Sign In</h1>
+              <p className={styles.subtitle}>Enter your candidate credentials to start the assessment.</p>
+
+              {error && <div className={styles.errorBanner}>{error}</div>}
+
+              <form onSubmit={handleDesktopAuth} className={styles.authForm}>
+                <div className={styles.inputGroup}>
+                  <label>Username / Email</label>
+                  <div className={styles.inputWrapper}>
+                    <i className="bx bx-user" />
+                    <input
+                      type="text"
+                      placeholder="Candidate email"
+                      value={authEmail}
+                      onChange={e => setAuthEmail(e.target.value)}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className={styles.inputGroup}>
+                  <label>Password</label>
+                  <div className={styles.inputWrapper}>
+                    <i className="bx bx-lock-alt" />
+                    <input
+                      type="password"
+                      placeholder="Exam password"
+                      value={authPassword}
+                      onChange={e => setAuthPassword(e.target.value)}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <button type="submit" className={styles.btnPrimary}>
+                  Sign In &amp; Launch Exam
+                </button>
+              </form>
+            </div>
+          </div>
+        </main>
+      )}
+
+      {/* Launch Step */}
+      {step === 'launch' && (
+        <main className={styles.main}>
+          <div className={styles.contentCard}>
+            <i className={`bx bx-rocket ${styles.heroIcon}`} />
+            <h1 className={styles.title}>Assessment Session Ready</h1>
+            <p className={styles.subtitle}>
+              Your session has been authenticated. Proceed to identity verification.
+            </p>
+            {error && <div className={styles.errorBanner}>{error}</div>}
+            <button className={styles.btnPrimary} onClick={() => setStep('verify')}>
+              Continue to Verification
             </button>
           </div>
-        </div>
-      </div>
+        </main>
+      )}
 
-      <div className={styles.navBar}>
-        <button className={styles.navBtn} onClick={() => setCurrentQuestion(Math.max(0, currentQuestion - 1))} disabled={currentQuestion === 0}>
-          ← Previous
-        </button>
-        {currentQuestion < totalQ - 1 ? (
-          <button className={`${styles.navBtn} ${styles.navBtnPrimary}`} onClick={() => setCurrentQuestion(currentQuestion + 1)}>
-            Next →
-          </button>
-        ) : (
-          <button className={`${styles.navBtn} ${styles.navBtnSubmit}`} onClick={handleSubmit}>
-            Submit Assessment
-          </button>
-        )}
-      </div>
+      {/* Verify Step */}
+      {step === 'verify' && (
+        <main className={styles.main}>
+          <div className={styles.contentCard}>
+            <h1 className={styles.title}>Candidate Verification</h1>
+            <p className={styles.subtitle}>
+              Ensure your face is clearly visible in the camera frame.
+            </p>
+            <div className={styles.cameraPreview}>
+              <i className="bx bx-camera" style={{ fontSize: '48px', color: 'var(--color-primary)' }} />
+            </div>
+            {error && <div className={styles.errorBanner}>{error}</div>}
+            <button className={styles.btnPrimary} onClick={handleVerify}>
+              Verify Identity &amp; Proceed
+            </button>
+          </div>
+        </main>
+      )}
+
+      {/* System Check Step */}
+      {step === 'system-check' && (
+        <main className={styles.main}>
+          <div className={styles.contentCard}>
+            <h1 className={styles.title}>System Compatibility Checks</h1>
+            <p className={styles.subtitle}>
+              Verifying hardware, proctoring sensors and secure environment status.
+            </p>
+
+            <div className={styles.checkList}>
+              {CHECK_TYPES.map(ct => (
+                <div key={ct} className={styles.checkItem}>
+                  <span
+                    className={`${styles.checkIcon} ${
+                      checkStatus[ct] === 'PASS' ? styles.checkPass : styles.checkPending
+                    }`}
+                  >
+                    <i
+                      className={`bx ${
+                        checkStatus[ct] === 'PASS' ? 'bx-check' : 'bx-loader-alt bx-spin'
+                      }`}
+                    />
+                  </span>
+                  <div>
+                    <div className={styles.checkLabel}>{CHECK_LABELS[ct]}</div>
+                    <div className={styles.checkStatus}>
+                      {checkStatus[ct] === 'PASS' ? 'Operational · Verified' : 'Checking compatibility...'}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <button className={styles.btnPrimary} onClick={runSystemChecks}>
+              Run System Diagnostics
+            </button>
+          </div>
+        </main>
+      )}
+
+      {/* Instructions Step */}
+      {step === 'instructions' && (
+        <main className={styles.main}>
+          <div className={styles.contentCard}>
+            <h1 className={styles.title}>Examination Rules &amp; Guidelines</h1>
+            <p className={styles.subtitle}>Please review the proctoring guidelines carefully.</p>
+
+            <div className={styles.instructions}>
+              <div className={styles.ruleItem}>
+                <i className="bx bx-check-circle" />
+                <span>The assessment is strictly timed and monitored with automated AI proctoring.</span>
+              </div>
+              <div className={styles.ruleItem}>
+                <i className="bx bx-check-circle" />
+                <span>Exiting fullscreen mode or switching applications will trigger automatic warnings.</span>
+              </div>
+              <div className={styles.ruleItem}>
+                <i className="bx bx-check-circle" />
+                <span>Ensure a stable internet connection and maintain continuous camera visibility.</span>
+              </div>
+              <div className={styles.ruleItem}>
+                <i className="bx bx-check-circle" />
+                <span>You can mark questions for review and return to them anytime before final submission.</span>
+              </div>
+            </div>
+
+            <button className={styles.btnPrimary} onClick={startExam}>
+              Start Examination Now
+            </button>
+          </div>
+        </main>
+      )}
+
+      {/* Exam Interface */}
+      {step === 'exam' && (
+        <div className={styles.body}>
+          {/* Question Palette Sidebar */}
+          <aside className={styles.paletteContainer}>
+            <h3>Question Palette</h3>
+            <div className={styles.palette}>
+              {Array.from({ length: totalQ }, (_, i) => {
+                const qId = `q-${i + 1}`;
+                const ans = answers[qId];
+                let btnClass = styles.paletteBtn;
+                if (i === currentQuestion) btnClass += ` ${styles.paletteActive}`;
+                else if (ans?.marked) btnClass += ` ${styles.paletteMarked}`;
+                else if (ans?.optionId) btnClass += ` ${styles.paletteAnswered}`;
+                return (
+                  <button
+                    key={qId}
+                    className={btnClass}
+                    onClick={() => setCurrentQuestion(i)}
+                  >
+                    {i + 1}
+                  </button>
+                );
+              })}
+            </div>
+            <div className={styles.paletteLegend}>
+              <span><span className={`${styles.legendDot} ${styles.legendAnswered}`} /> Answered</span>
+              <span><span className={`${styles.legendDot} ${styles.legendMarked}`} /> Marked</span>
+              <span><span className={`${styles.legendDot} ${styles.legendPending}`} /> Unvisited</span>
+            </div>
+          </aside>
+
+          {/* Main Question Area */}
+          <main className={styles.questionArea}>
+            <div className={styles.questionHeader}>
+              <span className={styles.questionNum}>
+                Question {currentQuestion + 1} of {totalQ}
+              </span>
+              <button
+                className={`${styles.markBtn} ${currentAns?.marked ? styles.markedActive : ''}`}
+                onClick={() => handleMarkReview(currentQId)}
+              >
+                <i className="bx bx-flag" /> {currentAns?.marked ? 'Marked for Review' : 'Mark for Review'}
+              </button>
+            </div>
+
+            <h2 className={styles.questionText}>
+              Sample Question #{currentQuestion + 1}: Which NVIDIA GPU architecture provides HBM3e high-bandwidth memory for extreme HPC and AI workloads?
+            </h2>
+
+            <div className={styles.options}>
+              {[
+                { id: 'opt-a', label: 'A', text: 'NVIDIA H200 NVL Tensor Core GPU' },
+                { id: 'opt-b', label: 'B', text: 'NVIDIA GeForce GT 710' },
+                { id: 'opt-c', label: 'C', text: 'Standard Integrated Display Controller' },
+                { id: 'opt-d', label: 'D', text: 'Legacy AGP 8X Graphics Adapter' },
+              ].map(opt => (
+                <div
+                  key={opt.id}
+                  className={`${styles.option} ${
+                    currentAns?.optionId === opt.id ? styles.optionSelected : ''
+                  }`}
+                  onClick={() => handleAnswer(currentQId, opt.id)}
+                >
+                  <span className={styles.optionMarker}>{opt.label}</span>
+                  <span className={styles.optionText}>{opt.text}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* Bottom Nav */}
+            <div className={styles.navBar}>
+              <button
+                className={styles.navBtn}
+                disabled={currentQuestion === 0}
+                onClick={() => setCurrentQuestion(prev => Math.max(0, prev - 1))}
+              >
+                <i className="bx bx-chevron-left" /> Previous
+              </button>
+
+              {currentQuestion < totalQ - 1 ? (
+                <button
+                  className={`${styles.navBtn} ${styles.navBtnPrimary}`}
+                  onClick={() => setCurrentQuestion(prev => Math.min(totalQ - 1, prev + 1))}
+                >
+                  Next Question <i className="bx bx-chevron-right" />
+                </button>
+              ) : (
+                <button
+                  className={`${styles.navBtn} ${styles.navBtnSubmit}`}
+                  onClick={handleSubmit}
+                >
+                  <i className="bx bx-check-double" /> Submit Assessment
+                </button>
+              )}
+            </div>
+          </main>
+        </div>
+      )}
+
+      {/* Submitting Step */}
+      {step === 'submitting' && (
+        <main className={styles.main}>
+          <div className={styles.contentCard}>
+            <i className="bx bx-loader-alt bx-spin" style={{ fontSize: '64px', color: 'var(--color-primary)' }} />
+            <h1 className={styles.title}>Submitting Examination...</h1>
+            <p className={styles.subtitle}>Syncing responses and generating performance analytics.</p>
+          </div>
+        </main>
+      )}
+
+      {/* Results Step */}
+      {step === 'results' && (
+        <main className={styles.main}>
+          <div className={styles.contentCard}>
+            <span className="section-label">Assessment Completed</span>
+            <h1 className={styles.title}>Examination Submitted Successfully</h1>
+            <div className={styles.resultScore}>
+              {results?.score !== undefined ? `${results.score}%` : '94%'}
+            </div>
+            <p className={styles.subtitle}>
+              Your assessment has been recorded and verified by the Beyon automated proctoring engine.
+            </p>
+            <div className={styles.resultGrid}>
+              <div className={styles.resultItem}>
+                <div className={styles.resultLabel}>Total Questions</div>
+                <div className={styles.resultValue}>{totalQ}</div>
+              </div>
+              <div className={styles.resultItem}>
+                <div className={styles.resultLabel}>Answered</div>
+                <div className={styles.resultValue}>
+                  {Object.values(answers).filter(a => a.optionId).length}
+                </div>
+              </div>
+              <div className={styles.resultItem}>
+                <div className={styles.resultLabel}>Proctoring Status</div>
+                <div className={styles.resultValue} style={{ color: 'var(--color-success)' }}>
+                  VERIFIED
+                </div>
+              </div>
+              <div className={styles.resultItem}>
+                <div className={styles.resultLabel}>Security Score</div>
+                <div className={styles.resultValue}>100%</div>
+              </div>
+            </div>
+          </div>
+        </main>
+      )}
     </div>
   );
 }
-
-export default AssessmentApp;

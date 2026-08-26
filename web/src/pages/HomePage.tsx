@@ -2,90 +2,207 @@ import { Link } from 'react-router-dom';
 import styles from './HomePage.module.css';
 
 export function HomePage() {
+  const missionCards = [
+    {
+      icon: 'bx bx-chip',
+      title: 'AI-Powered Learning',
+      text: 'Adaptive skill pathways tailored dynamically to each candidate using intelligent diagnostics.',
+    },
+    {
+      icon: 'bx bx-brain',
+      title: 'Proctored Assessment',
+      text: 'Standardized and proctored coding and cognitive assessments with instant analytics.',
+    },
+    {
+      icon: 'bx bx-group',
+      title: 'Talent Discovery',
+      text: 'Direct recruiter-to-candidate pipeline based on proven, verifiable competency proofs.',
+    },
+    {
+      icon: 'bx bx-trophy',
+      title: 'Gamified Practice',
+      text: 'Daily challenges, XP milestones, badges, and competitive global leaderboards.',
+    },
+    {
+      icon: 'bx bx-buildings',
+      title: 'Institutional Insights',
+      text: 'Comprehensive placement analytics, curriculum alignment, and cohort tracking.',
+    },
+  ];
+
+  const features = [
+    {
+      icon: 'bx bx-bot',
+      title: 'Adaptive AI Engine',
+      desc: 'Real-time personalized difficulty adjustment and contextual learning hints.',
+    },
+    {
+      icon: 'bx bx-shield-quarter',
+      title: 'Secure Assessment',
+      desc: 'Lockdown proctoring, multi-sensor integrity verification and cheat detection.',
+    },
+    {
+      icon: 'bx bx-network-chart',
+      title: 'Skill Graph & Roadmap',
+      desc: 'Multi-tiered skill taxonomy mapping competencies to industrial job roles.',
+    },
+    {
+      icon: 'bx bx-badge-check',
+      title: 'Verified Credentials',
+      desc: 'Cryptographically verifiable certificates with public verification portals.',
+    },
+    {
+      icon: 'bx bx-line-chart',
+      title: 'Recruitment Analytics',
+      desc: 'Automated candidate filtering, drive management, and placement pipeline tracking.',
+    },
+    {
+      icon: 'bx bx-conversation',
+      title: 'Collaboration Hub',
+      desc: 'Interactive discussions, peer code reviews, and mentorship opportunities.',
+    },
+  ];
+
+  const objectives = [
+    {
+      icon: 'bx bx-chip',
+      text: 'Establish an AI-driven skill acceleration ecosystem bridging academia and global tech industry requirements.',
+    },
+    {
+      icon: 'bx bx-group',
+      text: 'Empower students through automated skill diagnostics, structured mentorship, and daily hands-on practice.',
+    },
+    {
+      icon: 'bx bx-search-alt-2',
+      text: 'Facilitate transparent, merit-based candidate discovery for enterprise recruitment with zero friction.',
+    },
+    {
+      icon: 'bx bx-bulb',
+      text: 'Reward continuous learning and problem-solving through XP leaderboards, badges, and skill mastery milestones.',
+    },
+    {
+      icon: 'bx bx-buildings',
+      text: 'Provide educational institutions with deep visibility into student readiness and placement metrics.',
+    },
+    {
+      icon: 'bx bx-globe',
+      text: 'Deliver scalable, verifiable credentials ensuring industry credibility and sustainable career growth.',
+    },
+  ];
+
+  const stats = [
+    { number: '97+', label: 'Skills' },
+    { number: '551+', label: 'API Endpoints' },
+    { number: '88+', label: 'Platform Pages' },
+    { number: '220', label: 'Architecture Phases' },
+  ];
+
   return (
     <div className={styles.homePage}>
-      {/* Hero Section */}
-      <section className={styles.hero}>
-        <div className={styles.heroContent}>
-          <span className="section-label">Centre of Excellence · AI Skill Development</span>
-          <h1>Learn, Practice, Prove &amp; Get Hired</h1>
-          <p>Beyon is an AI-powered skill development, assessment and recruitment platform connecting students, companies, and educational institutions through intelligent career matching.</p>
-          <div className={styles.heroActions}>
+      {/* Foam Board Banner */}
+      <div className={styles.foamBoard}>
+        <span />
+        <span />
+        <span />
+        <span />
+        <span />
+        <div className={styles.foamBrand}>
+          <span className={styles.brandMarkLarge} />
+          <h1 className={styles.foamTitle}>BEYON</h1>
+        </div>
+        <ul>
+          <li>Platform for</li>
+          <li>High-Impact Learning</li>
+          <li>&amp;</li>
+          <li>Intelligent Recruitment</li>
+          <li>For</li>
+          <li>Next-Generation Engineers</li>
+          <li>( Beyon AI · CoE )</li>
+        </ul>
+      </div>
+
+      {/* Slider Content */}
+      <div className={styles.slider}>
+        {/* Vision */}
+        <div className={styles.hero}>
+          <span>
+            <p className={styles.heroTitle}>Vision &amp; Mission</p>
+            <p className={styles.heroText}>
+              To empower students, academic institutions, and leading enterprises with an intelligent,
+              data-driven ecosystem for verified skill development, assessment, and career matching.
+            </p>
+          </span>
+        </div>
+
+        {/* Mission Cards */}
+        <div className={styles.versionDownload}>
+          {missionCards.map(card => (
+            <div key={card.title} className={styles.versionDownloadContent}>
+              <p className={styles.missionIcon}>
+                <i className={card.icon} />
+              </p>
+              <h3 className={styles.cardHeading}>{card.title}</h3>
+              <p className={styles.cardDesc}>{card.text}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* Platform Features Section */}
+        <div className={styles.section}>
+          <h2 className={styles.sectionHeaderTitle}>Platform Capabilities</h2>
+          <div className={styles.featuresGrid}>
+            {features.map(f => (
+              <div key={f.title} className={styles.featureBox}>
+                <i className={f.icon} />
+                <h3>{f.title}</h3>
+                <p>{f.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Objectives */}
+        <h2 className={styles.versionTitle}>Strategic Objectives</h2>
+        <div className={styles.instruction}>
+          {objectives.map(obj => (
+            <div key={obj.text} className={styles.objectiveCard}>
+              <span className={styles.objNum}>
+                <i className={obj.icon} />
+              </span>
+              <p>{obj.text}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* Stats Grid */}
+        <div className={styles.statsSection}>
+          <div className={styles.statsGrid}>
+            {stats.map(s => (
+              <div key={s.label} className={styles.statCard}>
+                <span className={styles.statNum}>{s.number}</span>
+                <span className={styles.statLabel}>{s.label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* CTA Banner */}
+        <div className={styles.ctaBanner}>
+          <h2>Ready to Unlock Your Career Potential?</h2>
+          <p>
+            Join Beyon today to experience AI-powered learning paths, proctored assessments,
+            and direct connections to top hiring partners.
+          </p>
+          <div className={styles.ctaActions}>
             <Link to="/register" className="btn-primary">
-              <i className="bx bx-rocket" /> Get Started
+              <i className="bx bx-rocket" /> Get Started Free
             </Link>
-            <Link to="/login" className="btn-secondary">
-              Sign In
+            <Link to="/student/skills" className="btn-secondary">
+              <i className="bx bx-compass" /> Explore Skills
             </Link>
           </div>
         </div>
-      </section>
-
-      {/* Features Section */}
-      <section className={styles.features}>
-        <h2 className={styles.sectionTitle}>Platform Features</h2>
-        <div className={styles.featureGrid}>
-          <div className={styles.featureCard}>
-            <i className="bx bx-chip" />
-            <h3>AI-Powered Learning</h3>
-            <p>Personalized skill development with intelligent recommendations and adaptive learning paths.</p>
-          </div>
-          <div className={styles.featureCard}>
-            <i className="bx bx-brain" />
-            <h3>Skill Assessment</h3>
-            <p>Proctored assessments with real-time monitoring and detailed performance analytics.</p>
-          </div>
-          <div className={styles.featureCard}>
-            <i className="bx bx-group" />
-            <h3>Career Matching</h3>
-            <p>Intelligent candidate discovery connecting talent with opportunities based on verified skills.</p>
-          </div>
-          <div className={styles.featureCard}>
-            <i className="bx bx-trophy" />
-            <h3>Gamification</h3>
-            <p>Earn coins, XP and badges through practice, challenges and achievement milestones.</p>
-          </div>
-          <div className={styles.featureCard}>
-            <i className="bx bx-certificate" />
-            <h3>Certification</h3>
-            <p>Industry-verified certificates with QR codes and public credential verification.</p>
-          </div>
-          <div className={styles.featureCard}>
-            <i className="bx bx-buildings" />
-            <h3>Institution Portal</h3>
-            <p>Track student readiness, placement analytics and industry collaboration metrics.</p>
-          </div>
-        </div>
-      </section>
-
-      {/* Stats Section */}
-      <section className={styles.stats}>
-        <div className={styles.statCard}>
-          <span className={styles.statNumber}>97+</span>
-          <span className={styles.statLabel}>Skills</span>
-        </div>
-        <div className={styles.statCard}>
-          <span className={styles.statNumber}>551+</span>
-          <span className={styles.statLabel}>API Endpoints</span>
-        </div>
-        <div className={styles.statCard}>
-          <span className={styles.statNumber}>88+</span>
-          <span className={styles.statLabel}>Pages</span>
-        </div>
-        <div className={styles.statCard}>
-          <span className={styles.statNumber}>220</span>
-          <span className={styles.statLabel}>Phases</span>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className={styles.cta}>
-        <h2>Ready to Start Your Journey?</h2>
-        <p>Join Beyon today and unlock your career potential with AI-powered skill development and industry connections.</p>
-        <Link to="/register" className="btn-primary">
-          <i className="bx bx-rocket" /> Create Account
-        </Link>
-      </section>
+      </div>
     </div>
   );
 }
