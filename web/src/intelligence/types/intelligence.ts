@@ -186,6 +186,128 @@ export interface GrowthScore {
   improvements: { skillName: string; currentLevel: string; targetLevel: string }[];
 }
 
+// Phase 151-160: Career Intelligence
+export interface SkillTaxonomyNode {
+  id: string;
+  parentId?: string;
+  name: string;
+  slug: string;
+  description?: string;
+  level: string;
+  sortOrder: number;
+  icon?: string;
+  industryDemand: string;
+  avgSalaryRange?: string;
+  growthOutlook?: string;
+  active: boolean;
+}
+
+export interface SkillGraphNode {
+  id: string;
+  skillId: string;
+  skillName: string;
+  proficiencyPct: number;
+  level: string;
+  confidence: number;
+  evidenceCount: number;
+  sources: string[];
+  improvementTrend: string;
+  verified: boolean;
+}
+
+export interface SkillGapAnalysis {
+  careerPath: CareerPath;
+  totalSkills: number;
+  acquiredSkills: number;
+  readinessScore: number;
+  skills: SkillGapDetail[];
+  strongSkills: SkillGapDetail[];
+  improvementNeeded: SkillGapDetail[];
+  criticalGaps: SkillGapDetail[];
+}
+
+export interface SkillGapDetail {
+  skillId: string;
+  skillName: string;
+  requiredLevel: string;
+  currentLevel: string;
+  required: boolean;
+  hasGap: boolean;
+  status: string;
+  proficiencyPct: number;
+  estimatedHours?: number;
+}
+
+export interface AdvisorChatSession {
+  id: string;
+  studentId: string;
+  title: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AdvisorChatMessage {
+  id: string;
+  sessionId: string;
+  role: string;
+  content: string;
+  dataReferences?: string;
+  createdAt: string;
+}
+
+export interface AdaptiveLearningPath {
+  id: string;
+  studentId: string;
+  careerPathId: string;
+  currentStepIndex: number;
+  overallProgress: number;
+  status: string;
+  startedAt: string;
+  completedAt?: string;
+}
+
+export interface AdaptiveLearningStep {
+  id: string;
+  pathId: string;
+  stepOrder: number;
+  skillName: string;
+  concept?: string;
+  state: string;
+  progress: number;
+  learningResources: string[];
+}
+
+export interface PortfolioAnalysisResult {
+  analysis: {
+    overallScore: number;
+    completeness: number;
+    skillCoverage: number;
+    projectStrength: number;
+    certificationStrength: number;
+  };
+  skillCount: number;
+  projectCount: number;
+  certificationCount: number;
+  verifiedCount: number;
+  recommendations: { type: string; priority: string; action: string }[];
+  missingItems: { type: string; message: string }[];
+}
+
+export interface OpportunityMatchResult {
+  match: {
+    overallMatch: number;
+    skillMatch: number;
+    eligibilityMet: boolean;
+    experienceMet: boolean;
+    certificationMet: boolean;
+    coinRequirementMet: boolean;
+  };
+  factors: { skill: string; met: boolean }[];
+  strengths: { type: string; message: string }[];
+  gaps: { type: string; message: string }[];
+}
+
 export interface PersonalizedFeedItem {
   id: string;
   feedType: string;

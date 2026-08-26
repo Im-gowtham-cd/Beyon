@@ -6,7 +6,7 @@ export const intelligenceApi = {
   evaluateSession: async (sessionId: string): Promise<any[]> => api.post(`/evaluation/session/${sessionId}/evaluate`),
   updateSkillIntelligence: async (skillId: string): Promise<void> => { await api.post('/evaluation/skill-intelligence/update', { skillId }); },
 
-  calculateMatch: async (opportunityId: string, requiredSkills: string[], minCgpa?: number): Promise<MatchingScore> => api.post('/matching/calculate', { opportunityId, requiredSkills, minCgpa }),
+  calculateOldMatch: async (opportunityId: string, requiredSkills: string[], minCgpa?: number): Promise<MatchingScore> => api.post('/matching/calculate', { opportunityId, requiredSkills, minCgpa }),
   getRankedCandidates: async (opportunityId: string): Promise<MatchingScore[]> => api.get(`/matching/opportunity/${opportunityId}/ranked`),
   getCareerReadiness: async (careerPathId: string): Promise<CareerReadiness> => api.get(`/matching/career-readiness?careerPathId=${careerPathId}`),
   getSkillGaps: async (careerPathId: string): Promise<SkillGap[]> => api.get(`/matching/skill-gaps?careerPathId=${careerPathId}`),
@@ -50,4 +50,38 @@ export const intelligenceApi = {
 
   getPersonalizedFeed: async (): Promise<PersonalizedFeedItem[]> => api.get('/feed/personalized'),
   dismissFeedItem: async (itemId: string): Promise<void> => api.post(`/feed/${itemId}/dismiss`),
+
+  // Phase 151-160: Career Intelligence
+  getTaxonomyRoots: async (): Promise<any[]> => api.get('/career-intel/taxonomy/roots'),
+  getTaxonomyChildren: async (nodeId: string): Promise<any[]> => api.get(`/career-intel/taxonomy/${nodeId}/children`),
+  getTaxonomyBySlug: async (slug: string): Promise<any> => api.get(`/career-intel/taxonomy/slug/${slug}`),
+  getTaxonomyTree: async (nodeId: string): Promise<any> => api.get(`/career-intel/taxonomy/${nodeId}/tree`),
+  searchTaxonomy: async (q: string): Promise<any[]> => api.get(`/career-intel/taxonomy/search?q=${encodeURIComponent(q)}`),
+
+  getMySkillGraph: async (): Promise<any[]> => api.get('/career-intel/skill-graph'),
+  buildSkillGraph: async (): Promise<any[]> => api.get('/career-intel/skill-graph/build'),
+  getSkillStrengths: async (): Promise<any> => api.get('/career-intel/skill-graph/strengths'),
+
+  analyzeSkillGaps: async (careerPathId: string): Promise<any> => api.get(`/career-intel/skill-gaps/${careerPathId}`),
+  getTopGaps: async (limit: number = 5): Promise<any> => api.get(`/career-intel/skill-gaps/weak?limit=${limit}`),
+
+  createAdvisorSession: async (): Promise<any> => api.post('/career-intel/advisor/sessions', {}),
+  getMyAdvisorSessions: async (): Promise<any[]> => api.get('/career-intel/advisor/sessions'),
+  getAdvisorMessages: async (sessionId: string): Promise<any[]> => api.get(`/career-intel/advisor/sessions/${sessionId}/messages`),
+  askAdvisor: async (sessionId: string, question: string): Promise<any> => api.post(`/career-intel/advisor/sessions/${sessionId}/ask`, { question }),
+
+  getChallengeConfig: async (): Promise<any> => api.get('/career-intel/challenge-config'),
+  updateChallengeConfig: async (config: any): Promise<any> => api.put('/career-intel/challenge-config', config),
+  getChallengeRecommendations: async (): Promise<any> => api.get('/career-intel/challenge-recommendations'),
+
+  getOrCreateAdaptivePath: async (careerPathId: string): Promise<any> => api.post(`/career-intel/adaptive-paths/${careerPathId}`, {}),
+  completeAdaptiveStep: async (stepId: string): Promise<any> => api.post(`/career-intel/adaptive-steps/${stepId}/complete`, {}),
+  getMyAdaptivePaths: async (): Promise<any[]> => api.get('/career-intel/adaptive-paths'),
+
+  analyzePortfolio: async (): Promise<any> => api.get('/career-intel/portfolio/analyze'),
+
+  calculateMatch: async (opportunityId: string): Promise<any> => api.get(`/career-intel/match/${opportunityId}`),
+  getMyMatches: async (): Promise<any[]> => api.get('/career-intel/matches'),
+
+  getCareerDashboard: async (): Promise<any> => api.get('/career-intel/dashboard'),
 };

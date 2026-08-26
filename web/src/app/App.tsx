@@ -57,6 +57,21 @@ import { EventsPage } from '../community/pages/EventsPage';
 import { ChallengesPage } from '../community/pages/ChallengesPage';
 import { LiveProjectsPage } from '../community/pages/LiveProjectsPage';
 import { ResearchPage } from '../community/pages/ResearchPage';
+import { SkillTaxonomyPage } from '../intelligence/pages/SkillTaxonomyPage';
+import { SkillGraphPage } from '../intelligence/pages/SkillGraphPage';
+import { SkillGapAnalysisPage } from '../intelligence/pages/SkillGapAnalysisPage';
+import { CareerAdvisorPage } from '../intelligence/pages/CareerAdvisorPage';
+import { AdaptiveLearningPage } from '../intelligence/pages/AdaptiveLearningPage';
+import { CareerIntelligenceDashboard } from '../intelligence/pages/CareerIntelligenceDashboard';
+import { DriveBuilderPage } from '../recruitment/pages/DriveBuilderPage';
+import { CandidateDiscoveryPage } from '../recruitment/pages/CandidateDiscoveryPage';
+import { PlacementDashboardPage } from '../recruitment/pages/PlacementDashboardPage';
+import { PlacementIntelligencePage } from '../recruitment/pages/PlacementIntelligencePage';
+import { ProfessionalProfilePage } from '../profile/pages/ProfessionalProfilePage';
+import { CredentialVerificationPage } from '../profile/pages/CredentialVerificationPage';
+import { TeamFormationPage } from '../community/pages/TeamFormationPage';
+import { AdminDashboardPage } from '../pages/admin/AdminDashboardPage';
+import { ReportsPage } from '../pages/admin/ReportsPage';
 import { SocialFeedPage } from '../community/pages/SocialFeedPage';
 import { DiscussionsPage } from '../community/pages/DiscussionsPage';
 import { PortfolioPage } from '../community/pages/PortfolioPage';
@@ -144,6 +159,18 @@ export function App() {
           <Route path="/challenges" element={<ChallengesPage />} />
           <Route path="/live-projects" element={<LiveProjectsPage />} />
           <Route path="/research" element={<ResearchPage />} />
+          <Route path="/teams" element={<TeamFormationPage />} />
+          <Route path="/skill-taxonomy" element={<SkillTaxonomyPage />} />
+          <Route path="/skill-graph" element={<SkillGraphPage />} />
+          <Route path="/skill-gaps" element={<SkillGapAnalysisPage />} />
+          <Route path="/career-advisor" element={<CareerAdvisorPage />} />
+          <Route path="/adaptive-learning" element={<AdaptiveLearningPage />} />
+          <Route path="/career-intelligence" element={<CareerIntelligenceDashboard />} />
+          <Route path="/drives" element={<DriveBuilderPage />} />
+          <Route path="/candidates" element={<CandidateDiscoveryPage />} />
+          <Route path="/placement" element={<PlacementDashboardPage />} />
+          <Route path="/placement-intelligence" element={<PlacementIntelligencePage />} />
+          <Route path="/professional-profile" element={<ProfessionalProfilePage />} />
         </Route>
         <Route element={<RoleGuard allowedRoles={['INSTITUTION']} />}>
           <Route path="/institution/home" element={<InstitutionHome />} />
@@ -156,10 +183,14 @@ export function App() {
         </Route>
         <Route element={<RoleGuard allowedRoles={['ADMIN']} />}>
           <Route path="/admin/home" element={<AdminHome />} />
+          <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
           <Route path="/admin/feedback" element={<AdminFeedbackPage />} />
+          <Route path="/admin/reports" element={<ReportsPage />} />
         </Route>
       </Route>
 
+      <Route path="/verify/:certificateNumber" element={<CredentialVerificationPage />} />
+      <Route path="/verify" element={<CredentialVerificationPage />} />
       <Route path="/student/u/:username" element={<PublicProfilePage />} />
 
       <Route element={<MainLayout />}>

@@ -5,10 +5,10 @@ spring:
     active: ${SPRING_PROFILES_ACTIVE:dev}
 
   datasource:
-    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/beyon}
-    username: ${DATABASE_USERNAME:postgres}
+    url: ${DATABASE_URL:jdbc:mysql://127.0.0.1:3306/beyon}
+    username: ${DATABASE_USERNAME:root}
     password: ${DATABASE_PASSWORD:}
-    driver-class-name: org.postgresql.Driver
+    driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
       maximum-pool-size: 20
       minimum-idle: 5
@@ -19,12 +19,14 @@ spring:
     open-in-view: false
     properties:
       hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
         format_sql: true
 
   flyway:
     enabled: true
     locations: classpath:db/migration
     baseline-on-migrate: true
+    baselineVersion: 0
 
   data:
     mongodb:
@@ -62,10 +64,10 @@ beyon:
     url: ${AI_SERVICE_URL:http://localhost:8000}
     connect-timeout: 5000
     read-timeout: 30000
-  supabase:
-    url: ${SUPABASE_URL:}
-    anon-key: ${SUPABASE_ANON_KEY:}
-    service-key: ${SUPABASE_SERVICE_KEY:}
+  appwrite:
+    endpoint: ${APPWRITE_ENDPOINT:https://sgp.cloud.appwrite.io/v1}
+    project-id: ${APPWRITE_PROJECT_ID:6a8ebc22001ff0f8a815}
+    api-key: ${APPWRITE_API_KEY:}
   jwt:
     secret: ${JWT_SECRET:beyon-dev-secret-key-change-in-production-minimum-32-chars}
     access-token-expiration: ${JWT_ACCESS_TOKEN_EXPIRATION:900000}
