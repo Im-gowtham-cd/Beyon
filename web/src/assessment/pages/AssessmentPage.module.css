@@ -1,0 +1,542 @@
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.header {
+  margin-bottom: 2rem;
+}
+
+.title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #0a0a0f;
+  margin-bottom: 0.25rem;
+}
+
+.subtitle {
+  font-size: 0.95rem;
+  color: #6b7280;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 1.5rem;
+  transition: box-shadow 0.2s;
+}
+
+.card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.cardTitle {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #0a0a0f;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.badgeGreen {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.badgeYellow {
+  background: #fef9c3;
+  color: #854d0e;
+}
+
+.badgeRed {
+  background: #fecaca;
+  color: #991b1b;
+}
+
+.badgeBlue {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.badgeGray {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.badgePurple {
+  background: #f3e8ff;
+  color: #7c3aed;
+}
+
+.statsRow {
+  display: flex;
+  gap: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+}
+
+.statLabel {
+  font-size: 0.75rem;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.statValue {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #0a0a0f;
+}
+
+.timer {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 2rem;
+  font-weight: 700;
+  color: #0a0a0f;
+  text-align: center;
+}
+
+.timerWarning {
+  color: #dc2626;
+}
+
+.timerContainer {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 1rem 2rem;
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.timerLabel {
+  font-size: 0.75rem;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.25rem;
+}
+
+.questionPalette {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.paletteItem {
+  width: 100%;
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+  background: #fff;
+  color: #374151;
+}
+
+.paletteItem:hover {
+  border-color: #6366f1;
+}
+
+.paletteItemActive {
+  background: #6366f1;
+  border-color: #6366f1;
+  color: #fff;
+}
+
+.paletteItemAnswered {
+  background: #dcfce7;
+  border-color: #86efac;
+  color: #166534;
+}
+
+.paletteItemMarked {
+  background: #fef3c7;
+  border-color: #fbbf24;
+  color: #92400e;
+}
+
+.paletteItemSkipped {
+  background: #f9fafb;
+  border-color: #e5e7eb;
+  color: #9ca3af;
+}
+
+.questionCard {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 2rem;
+  margin-bottom: 1.5rem;
+}
+
+.questionNumber {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin-bottom: 0.5rem;
+}
+
+.questionText {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #0a0a0f;
+  margin-bottom: 1.5rem;
+  line-height: 1.6;
+}
+
+.optionList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-size: 0.95rem;
+  color: #374151;
+}
+
+.option:hover {
+  border-color: #c7d2fe;
+  background: #f8fafc;
+}
+
+.optionSelected {
+  border-color: #6366f1;
+  background: #eef2ff;
+  color: #312e81;
+}
+
+.optionMarker {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 0.8rem;
+  background: #f3f4f6;
+  color: #6b7280;
+  flex-shrink: 0;
+}
+
+.optionSelected .optionMarker {
+  background: #6366f1;
+  color: #fff;
+}
+
+.navButtons {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.btn {
+  padding: 0.625rem 1.25rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  transition: all 0.15s;
+}
+
+.btnPrimary {
+  background: #6366f1;
+  color: #fff;
+}
+
+.btnPrimary:hover {
+  background: #4f46e5;
+}
+
+.btnSecondary {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.btnSecondary:hover {
+  background: #e5e7eb;
+}
+
+.btnDanger {
+  background: #dc2626;
+  color: #fff;
+}
+
+.btnDanger:hover {
+  background: #b91c1c;
+}
+
+.btnSuccess {
+  background: #16a34a;
+  color: #fff;
+}
+
+.btnSuccess:hover {
+  background: #15803d;
+}
+
+.btnDisabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.markReview {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: #fef3c7;
+  border: 1px solid #fbbf24;
+  border-radius: 8px;
+  color: #92400e;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.markReviewActive {
+  background: #fbbf24;
+  color: #92400e;
+}
+
+.resultCard {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 2rem;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.resultScore {
+  font-size: 3rem;
+  font-weight: 800;
+  color: #6366f1;
+  margin-bottom: 0.5rem;
+}
+
+.resultLabel {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin-bottom: 1rem;
+}
+
+.resultGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 1rem;
+  margin-top: 1.5rem;
+  text-align: left;
+}
+
+.proctoringList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.proctoringItem {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  background: #f9fafb;
+  border-radius: 8px;
+  font-size: 0.875rem;
+}
+
+.proctoringItemTime {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  color: #6b7280;
+  min-width: 60px;
+}
+
+.integrityBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.integrityClean {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.integrityWarning {
+  background: #fef9c3;
+  color: #854d0e;
+}
+
+.integrityFlagged {
+  background: #fed7aa;
+  color: #9a3412;
+}
+
+.integrityReview {
+  background: #fecaca;
+  color: #991b1b;
+}
+
+.emptyState {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: #6b7280;
+}
+
+.emptyStateTitle {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 0.5rem;
+}
+
+.emptyStateText {
+  font-size: 0.9rem;
+  margin-bottom: 1.5rem;
+}
+
+.checkList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.checkItem {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+}
+
+.checkIcon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.875rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.checkPass {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.checkFail {
+  background: #fecaca;
+  color: #991b1b;
+}
+
+.checkPending {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+.checkLabel {
+  font-weight: 500;
+  color: #0a0a0f;
+}
+
+.checkStatus {
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
+.sessionList {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.sessionItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 1.5rem;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  transition: box-shadow 0.2s;
+}
+
+.sessionItem:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.sessionInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.sessionTitle {
+  font-weight: 600;
+  color: #0a0a0f;
+}
+
+.sessionMeta {
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
+.flexRow {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}

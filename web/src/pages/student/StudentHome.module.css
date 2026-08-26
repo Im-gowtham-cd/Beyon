@@ -56,3 +56,16 @@
   font-size: var(--text-sm);
   color: var(--color-text-muted);
 }
+
+.dashboardGrid {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: var(--space-xl);
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .dashboardGrid {
+    grid-template-columns: 1fr;
+  }
+}
