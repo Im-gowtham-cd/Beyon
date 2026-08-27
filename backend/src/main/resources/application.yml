@@ -73,11 +73,6 @@ beyon:
     url: ${AI_SERVICE_URL:http://localhost:8000}
     connect-timeout: 5000
     read-timeout: 30000
-  appwrite:
-    endpoint: ${APPWRITE_ENDPOINT:https://sgp.cloud.appwrite.io/v1}
-    project-id: ${APPWRITE_PROJECT_ID:6a8f0bbf00106d9d9dc0}
-    database-id: ${APPWRITE_DATABASE_ID:6a8f0bbf00106d9d9dc0}
-    api-key: ${APPWRITE_API_KEY:}
   jwt:
     secret: ${JWT_SECRET:beyon-dev-secret-key-change-in-production-minimum-32-chars}
     access-token-expiration: ${JWT_ACCESS_TOKEN_EXPIRATION:900000}

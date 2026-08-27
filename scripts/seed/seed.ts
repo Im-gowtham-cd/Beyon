@@ -16,13 +16,11 @@
 //
 // Options:
 //   --force-production   Override env guard (dangerous)
-//   --skip-appwrite      Skip Appwrite account creation
 //   --students=N         Override student count
 //   --questions=N        Override question count
 // ============================================================
 
 import { assertNotProduction, loadConfig } from "./config.js";
-import { initAppwrite } from "./engine/appwrite.js";
 import { seedSkills } from "./modules/01-skills.js";
 import { seedInstitutions } from "./modules/02-institutions.js";
 import { seedCompanies } from "./modules/03-companies.js";
@@ -44,7 +42,6 @@ import { DOCS_DIR } from "./config.js";
 const args = process.argv.slice(2);
 const mode = args.find(a => !a.startsWith("--")) ?? "full";
 const forceProduction = args.includes("--force-production");
-const skipAppwrite = args.includes("--skip-appwrite");
 
 // Parse --key=value overrides
 function getArg(name: string): string | undefined {
@@ -57,7 +54,6 @@ for (const key of ["students", "questions", "jobs", "applications", "notificatio
   const val = getArg(key);
   if (val) overrides[key] = parseInt(val);
 }
-if (skipAppwrite) process.env.SKIP_APPWRITE = "true";
 
 // ─── Environment Guard ────────────────────────────────────────
 assertNotProduction(forceProduction);
@@ -94,14 +90,7 @@ if (mode === "reset") {
 
   for (const tbl of tables) {
     try {
-      if (tbl === "users") {
-        doltQuery(`DELETE FROM users WHERE email LIKE '%@example.beyon.test' OR email LIKE '%@%.beyon.test'`);
-      } else {
-        // Cascade delete via user reference
-        doltQuery(
-          `DELETE FROM ${tbl} WHERE id LIKE 'beyon-%' OR student_id LIKE 'beyon-%' OR user_id LIKE 'beyon-%' OR company_user_id LIKE 'beyon-%'`
-        );
-      }
+      doltQuery(`DELETE FROM ${tbl}`);
       console.log(`  🗑️  Cleared ${tbl}`);
     } catch (e: any) {
       console.warn(`  ⚠️  Could not clear ${tbl}: ${e.message.slice(0, 80)}`);
@@ -119,7 +108,6 @@ if (mode === "validate") {
 
 // ─── Seed Execution ───────────────────────────────────────────
 async function runBase() {
-  await initAppwrite(cfg);
   await seedSkills();
   await seedInstitutions();
   await seedCompanies();

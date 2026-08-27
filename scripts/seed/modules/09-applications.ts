@@ -1,4 +1,4 @@
-import { doltBatch, esc, escNum, doltQuery } from "../engine/dolt.js";
+import { doltBatch, esc, escNum, doltQuery, toUUID } from "../engine/dolt.js";
 import { studentUserIds } from "./04-users.js";
 import { opportunityIds } from "./08-opportunities.js";
 import { SeededRandom } from "../utils/faker.js";
@@ -6,11 +6,11 @@ import type { SeedConfig } from "../config.js";
 
 async function ensureAppRefs(): Promise<void> {
   if (studentUserIds.length === 0) {
-    const srows = doltQuery("SELECT id FROM users WHERE role='STUDENT' AND email LIKE '%beyon.test'");
+    const srows = doltQuery("SELECT id FROM users WHERE role='STUDENT'");
     for (const r of srows) studentUserIds.push(r.id);
   }
   if (opportunityIds.length === 0) {
-    const orows = doltQuery("SELECT id FROM company_opportunities WHERE id LIKE 'beyon-opty-%'");
+    const orows = doltQuery("SELECT id FROM company_opportunities");
     for (const r of orows) opportunityIds.push(r.id);
   }
 }
@@ -58,7 +58,7 @@ export async function seedApplicationsAndCoins(cfg: SeedConfig): Promise<void> {
 
     const status = rng.pick(APP_STATUSES);
     const coinsSpent = rng.pick([0, 100, 250, 500]);
-    const id = `beyon-app-${i}`;
+    const id = toUUID(`beyon-app-${i}`);
 
     appStmts.push(
       `INSERT IGNORE INTO opportunity_applications
@@ -84,7 +84,7 @@ export async function seedApplicationsAndCoins(cfg: SeedConfig): Promise<void> {
       if (isEarn) {
         const earn = rng.pick(COIN_EARN_REASONS);
         balance += earn.amount;
-        const id = `beyon-ctx-earn-${studentId}-${t}`;
+        const id = toUUID(`beyon-ctx-earn-${studentId}-${t}`);
         coinStmts.push(
           `INSERT IGNORE INTO coin_transactions (id, student_id, amount, type, reason, balance_after, created_at)
            VALUES (${esc(id)}, ${esc(studentId)}, ${earn.amount}, 'EARN', ${esc(earn.reason)}, ${balance}, NOW());`
@@ -93,7 +93,7 @@ export async function seedApplicationsAndCoins(cfg: SeedConfig): Promise<void> {
         const spendAmount = rng.pick([100, 250, 500]);
         if (balance >= spendAmount) {
           balance -= spendAmount;
-          const id = `beyon-ctx-spend-${studentId}-${t}`;
+          const id = toUUID(`beyon-ctx-spend-${studentId}-${t}`);
           coinStmts.push(
             `INSERT IGNORE INTO coin_transactions (id, student_id, amount, type, reason, balance_after, created_at)
              VALUES (${esc(id)}, ${esc(studentId)}, ${spendAmount}, 'SPEND', 'COMPANY_ASSESSMENT', ${balance}, NOW());`

@@ -1,9 +1,4 @@
-// ============================================================
-// Module 07 — Assessments Seeder
-// Creates tests (assessment fixtures) with questions
-// ============================================================
-
-import { doltBatch, doltExec, esc, escNum, doltQuery } from "../engine/dolt.js";
+import { doltBatch, doltExec, esc, escNum, doltQuery, toUUID } from "../engine/dolt.js";
 import { skillIds, skillTopicIds } from "./01-skills.js";
 import { questionIds } from "./06-questions.js";
 import { companyUserIds } from "./03-companies.js";
@@ -16,15 +11,14 @@ export const assessmentSessionIds: string[] = [];
 /** Ensure skillIds and companyUserIds are populated from DB if running standalone */
 async function ensureRefsLoaded(): Promise<void> {
   if (Object.keys(skillIds).length === 0) {
-    const rows = doltQuery("SELECT id, slug FROM skills WHERE id LIKE 'beyon-skill-%'");
+    const rows = doltQuery("SELECT id, slug FROM skills");
     for (const row of rows) {
-      // Map slug back to key form
       const key = "SKILL_" + row.slug.replace(/-/g, "_").toUpperCase();
       (skillIds as any)[key] = row.id;
     }
   }
   if (Object.keys(companyUserIds).length === 0) {
-    const rows = doltQuery("SELECT id FROM users WHERE role='COMPANY_ADMIN' AND id LIKE 'beyon-comp-user-%'");
+    const rows = doltQuery("SELECT id FROM users WHERE role='COMPANY'");
     let i = 0;
     for (const row of rows) {
       (companyUserIds as any)[`COMP_${String(i + 1).padStart(4, "0")}`] = row.id;
@@ -32,7 +26,7 @@ async function ensureRefsLoaded(): Promise<void> {
     }
   }
   if (questionIds.length === 0) {
-    const rows = doltQuery("SELECT id FROM questions WHERE id LIKE 'beyon-q-%' LIMIT 500");
+    const rows = doltQuery("SELECT id FROM questions LIMIT 500");
     for (const row of rows) questionIds.push(row.id);
   }
 }
@@ -47,7 +41,7 @@ export async function seedAssessments(cfg: SeedConfig): Promise<void> {
   const testQStmts: string[] = [];
 
   // ─── Fixed Assessment Fixture ───
-  const fixtureId = "beyon-test-java-backend-001";
+  const fixtureId = toUUID("beyon-test-java-backend-001");
   testIds.push(fixtureId);
   const compUserId = companyUserIds["COMP_0001"] ?? null;
 
@@ -61,16 +55,13 @@ export async function seedAssessments(cfg: SeedConfig): Promise<void> {
      );`
   );
 
-  // Attach questions to fixture (10 Java MCQ + 5 SQL + 3 Coding + 10 fill)
-  const javaQIds = questionIds.filter(q => q.includes("java") || q.includes("JAVA")).slice(0, 10);
-  const sqlQIds = questionIds.filter(q => q.includes("sql") || q.includes("SQL")).slice(0, 5);
-  const codingQIds = questionIds.filter(q => q.includes("coding")).slice(0, 3);
-  const fillQIds = questionIds.filter(q => q.includes("gen")).slice(0, 10);
-  const allFixtureQIds = [...javaQIds, ...sqlQIds, ...codingQIds, ...fillQIds];
+  // Attach questions to fixture
+  const sampleCount = Math.min(28, questionIds.length);
+  const allFixtureQIds = rng.pickN(questionIds, sampleCount);
 
   for (let i = 0; i < allFixtureQIds.length; i++) {
     const qId = allFixtureQIds[i];
-    const tqId = `beyon-tq-fixture-${i}`;
+    const tqId = toUUID(`beyon-tq-fixture-${i}`);
     testQStmts.push(
       `INSERT IGNORE INTO test_questions (id, test_id, question_id, display_order, marks)
        VALUES (${esc(tqId)}, ${esc(fixtureId)}, ${esc(qId)}, ${i + 1}, ${i < 20 ? 2 : 5});`
@@ -80,11 +71,11 @@ export async function seedAssessments(cfg: SeedConfig): Promise<void> {
   // ─── Daily Challenges (per-student, per-date) ───
   const dailyChallengeStmts: string[] = [];
   const today = new Date();
-  // Only seed for the fixed exam candidates to keep volume manageable
+  // Seed for fixed exam candidates
   const challengeStudents = [
-    "beyon-student-strong-0001",
-    "beyon-student-placement-0001",
-    "beyon-exam-candidate-0001",
+    toUUID("beyon-student-strong-0001"),
+    toUUID("beyon-student-placement-0001"),
+    toUUID("beyon-exam-candidate-0001"),
   ];
   for (const studentId of challengeStudents) {
     for (let d = 0; d < 7; d++) {
@@ -92,7 +83,7 @@ export async function seedAssessments(cfg: SeedConfig): Promise<void> {
       date.setDate(today.getDate() - d);
       const dateStr = date.toISOString().split("T")[0];
       const qId = rng.pick(questionIds);
-      const id = `beyon-daily-${studentId.slice(-8)}-${dateStr}`;
+      const id = toUUID(`beyon-daily-${studentId}-${dateStr}`);
       dailyChallengeStmts.push(
         `INSERT IGNORE INTO daily_challenges (id, student_id, challenge_date, question_id, status, created_at)
          VALUES (${esc(id)}, ${esc(studentId)}, ${esc(dateStr)}, ${esc(qId)}, 'ACTIVE', NOW());`
@@ -105,7 +96,7 @@ export async function seedAssessments(cfg: SeedConfig): Promise<void> {
   for (let i = 0; i < COMP_KEYS.length; i++) {
     const compKey = COMP_KEYS[i];
     const cUserId = companyUserIds[compKey];
-    const testId = `beyon-test-comp-${i}`;
+    const testId = toUUID(`beyon-test-comp-${i}`);
     testIds.push(testId);
     const diff = rng.pick(["EASY", "MEDIUM", "MEDIUM", "HARD"]);
     const qCount = rng.int(10, 30);
@@ -123,7 +114,7 @@ export async function seedAssessments(cfg: SeedConfig): Promise<void> {
     // Attach random questions
     const qSample = rng.pickN(questionIds, Math.min(qCount, questionIds.length));
     for (let qi = 0; qi < qSample.length; qi++) {
-      const tqId = `beyon-tq-comp-${i}-${qi}`;
+      const tqId = toUUID(`beyon-tq-comp-${i}-${qi}`);
       testQStmts.push(
         `INSERT IGNORE INTO test_questions (id, test_id, question_id, display_order, marks)
          VALUES (${esc(tqId)}, ${esc(testId)}, ${esc(qSample[qi])}, ${qi + 1}, 2);`

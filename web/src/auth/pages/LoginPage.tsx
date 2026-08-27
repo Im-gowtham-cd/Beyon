@@ -2,7 +2,6 @@ import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { authApi } from '../services/authApi';
-import { appwriteAuth } from '../services/appwriteAuth';
 import type { ApiError } from '../../services/api/client';
 import styles from './LoginPage.module.css';
 
@@ -49,12 +48,6 @@ export function LoginPage() {
     setLoading(true);
 
     try {
-      try {
-        await appwriteAuth.login(email, password);
-      } catch {
-        // Appwrite login fallback
-      }
-
       const response = await authApi.login({ email, password });
       login(response.accessToken, response.user);
 

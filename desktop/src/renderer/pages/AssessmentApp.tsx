@@ -33,7 +33,7 @@ declare global {
 
 type Step = 'auth' | 'launch' | 'verify' | 'system-check' | 'instructions' | 'exam' | 'submitting' | 'results';
 
-const API_BASE = 'http://localhost:8080/api/v1';
+const API_BASE = 'http://localhost:8085/api/v1';
 
 interface Session {
   sessionId: string;
@@ -57,6 +57,12 @@ const CHECK_LABELS: Record<string, string> = {
   INTERNET: 'Network Latency & Bandwidth',
   DISPLAY: 'Single Display Verification',
 };
+
+function formatTime(seconds: number): string {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${m}:${String(s).padStart(2, '0')}`;
+}
 
 export function AssessmentApp() {
   const [step, setStep] = useState<Step>('auth');
@@ -289,10 +295,11 @@ export function AssessmentApp() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: authEmail, password: authPassword }),
       });
-      if (!res.ok) throw new Error('Login failed');
-      const data = await res.json();
-      setToken(data.accessToken);
-      await window.beyon?.auth?.setToken(data.accessToken);
+      const json = await res.json();
+      const token = json.data?.accessToken || json.accessToken;
+      if (!token) throw new Error('Access token not received');
+      setToken(token);
+      await window.beyon?.auth?.setToken(token);
       setStep('launch');
     } catch (err: any) {
       setError(err.message || 'Invalid credentials');
@@ -310,24 +317,16 @@ export function AssessmentApp() {
         <div className={styles.brandTitle}>
           <span className={styles.brandMark} />
           <div>
-            <span className={styles.brandName}>Beyon</span>
-            <span className={styles.brandSub}>Secure Assessment Environment</span>
+            <span className={styles.brandName}>HPC COE</span>
+            <span className={styles.brandSub}>Centre of Excellence &middot; Secure Assessment</span>
           </div>
         </div>
 
         {step === 'exam' && (
           <div className={styles.timerSection}>
             <span className={styles.timerLabel}>Time Remaining:</span>
-            <span
-              className={`${styles.timerValue} ${
-                (timeInfo?.remainingSeconds || 3600) < 300 ? styles.timerWarning : ''
-              }`}
-            >
-              {timeInfo
-                ? `${Math.floor(timeInfo.remainingSeconds / 60)}:${String(
-                    timeInfo.remainingSeconds % 60
-                  ).padStart(2, '0')}`
-                : `${session?.durationMinutes || 60}:00`}
+            <span className={`${styles.timerValue} ${(timeInfo?.remainingSeconds || 0) < 300 ? styles.timerWarning : ''}`}>
+              {formatTime(timeInfo?.remainingSeconds || 0)}
             </span>
           </div>
         )}
@@ -345,16 +344,16 @@ export function AssessmentApp() {
           <div className={styles.authCard}>
             <div className={styles.authAside}>
               <span className={styles.asideMark} />
-              <h2>Beyon Proctored Assessment</h2>
+              <h2>High Performance Computing Assessment Portal</h2>
               <p>Secure candidate authentication for proctored examinations and skill assessments.</p>
               <div className={styles.authNotice}>
                 <i className="bx bx-shield-quarter" />
-                <span>Protected test browser environment</span>
+                <span>Protected test environment &middot; NVIDIA H200 Verified</span>
               </div>
             </div>
 
             <div className={styles.authPanel}>
-              <span className="section-label">Beyon Assessment Portal</span>
+              <span className="section-label">HPC COE Portal</span>
               <h1>Candidate Sign In</h1>
               <p className={styles.subtitle}>Enter your candidate credentials to start the assessment.</p>
 

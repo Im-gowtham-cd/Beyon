@@ -2,7 +2,6 @@ import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { authApi } from '../services/authApi';
-import { appwriteAuth } from '../services/appwriteAuth';
 import type { ApiError } from '../../services/api/client';
 import styles from './LoginPage.module.css';
 
@@ -43,12 +42,6 @@ export function RegisterPage() {
     setLoading(true);
 
     try {
-      try {
-        await appwriteAuth.register(email, password, name);
-      } catch {
-        // Appwrite register fallback
-      }
-
       await authApi.register({ name, email, password, confirmPassword: password, role });
 
       try {
@@ -81,29 +74,29 @@ export function RegisterPage() {
             <div className={styles.asideBrand}>
               <span className={styles.asideMark} aria-hidden="true" />
               <div className={styles.asideBrandText}>
-                <span className={styles.asideName}>Beyon</span>
-                <span className={styles.asideSub}>AI Skill Development &amp; Recruitment</span>
+                <span className={styles.asideName}>HPC COE</span>
+                <span className={styles.asideSub}>Centre of Excellence &middot; HPC</span>
               </div>
             </div>
 
             <div className={styles.asideBody}>
-              <h2>Learn, Practice, Prove &amp; Get Hired</h2>
-              <p>Create your candidate or organization account to access AI-powered assessments and opportunities.</p>
+              <h2>High Performance Computing for Innovative Intelligent Solutions</h2>
+              <p>Create your candidate or organization account to access AI-powered assessments and research opportunities.</p>
               <ul className={styles.asideFeatures}>
                 <li>
-                  <i className="bx bx-chip" /> AI-Powered Learning Paths
+                  <i className="bx bx-chip" /> NVIDIA H200 GPUs
                 </li>
                 <li>
-                  <i className="bx bx-brain" /> Proctored Skill Assessments
+                  <i className="bx bx-brain" /> AI Research &amp; Innovation
                 </li>
                 <li>
-                  <i className="bx bx-group" /> Direct Candidate Matching
+                  <i className="bx bx-group" /> Innovation Hub
                 </li>
               </ul>
             </div>
 
             <div className={styles.asideFoot}>
-              <i className="bx bx-envelope" /> support@beyon.dev
+              <i className="bx bx-envelope" /> support@hpc.edu.in
             </div>
           </aside>
 

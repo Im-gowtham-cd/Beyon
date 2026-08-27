@@ -1,9 +1,4 @@
-// ============================================================
-// Module 08 — Opportunities Seeder
-// Creates job/internship opportunities from company users
-// ============================================================
-
-import { doltBatch, esc, escNum, doltQuery } from "../engine/dolt.js";
+import { doltBatch, esc, escNum, doltQuery, toUUID } from "../engine/dolt.js";
 import { COMPANIES } from "../data/companies.js";
 import { companyUserIds } from "./03-companies.js";
 import { testIds } from "./07-assessments.js";
@@ -15,14 +10,14 @@ export const driveIds: string[] = [];
 
 async function ensureCompanyIds(): Promise<void> {
   if (Object.keys(companyUserIds).length > 0) return;
-  const rows = doltQuery("SELECT id FROM users WHERE role='COMPANY_ADMIN' AND id LIKE 'beyon-comp-user-%'");
+  const rows = doltQuery("SELECT id FROM users WHERE role='COMPANY'");
   let i = 0;
   for (const row of rows) {
     (companyUserIds as any)[`COMP_${String(i + 1).padStart(4, "0")}`] = row.id;
     i++;
   }
   if (testIds.length === 0) {
-    const trows = doltQuery("SELECT id FROM tests WHERE id LIKE 'beyon-test-%' LIMIT 20");
+    const trows = doltQuery("SELECT id FROM tests LIMIT 20");
     for (const r of trows) testIds.push(r.id);
   }
 }
@@ -49,14 +44,13 @@ export async function seedOpportunities(cfg: SeedConfig): Promise<void> {
   const driveStmts: string[] = [];
 
   const compKeys = Object.keys(companyUserIds);
-  const instKeys = Object.keys(companyUserIds); // reused as placeholder
 
   // ─── Company Opportunities ───
   for (let i = 0; i < cfg.counts.jobs; i++) {
     const compKey = compKeys[i % compKeys.length];
     const compUserId = companyUserIds[compKey];
     const comp = COMPANIES.find(c => c.key === compKey);
-    const id = `beyon-opty-${i}`;
+    const id = toUUID(`beyon-opty-${i}`);
     opportunityIds.push(id);
 
     const title = rng.pick(JOB_TITLES);
@@ -64,12 +58,13 @@ export async function seedOpportunities(cfg: SeedConfig): Promise<void> {
     const status = rng.pick(STATUSES);
     const minCgpa = rng.float(6.0, 8.0);
     const coinCost = rng.pick([0, 50, 100, 150, 250, 500]);
-    const testId = rng.bool(0.6) ? rng.pick(testIds) : null;
+    const testId = rng.bool(0.6) && testIds.length > 0 ? rng.pick(testIds) : null;
     const skills = comp ? rng.pickN(comp.hiringSkills, 2).join(",") : "SKILL_JAVA,SKILL_SQL";
+    const isRemote = rng.bool(0.4) ? 1 : 0;
 
     optyStmts.push(
       `INSERT IGNORE INTO company_opportunities
-        (id, company_user_id, title, description, opportunity_type, location, is_remote,
+        (id, company_user_id, title, description, opportunity_type, location, is_remote, remote,
          min_cgpa, required_skills, min_beyon_coins, assessment_id, status, created_at, updated_at)
        VALUES (
          ${esc(id)}, ${esc(compUserId)},
@@ -77,7 +72,8 @@ export async function seedOpportunities(cfg: SeedConfig): Promise<void> {
          ${esc(`${title} position at a leading technology company. Strong problem-solving and communication skills required.`)},
          ${esc(optyType)},
          ${esc(comp?.city ?? "Bangalore")},
-         ${rng.bool(0.4) ? 1 : 0},
+         ${isRemote},
+         ${isRemote},
          ${escNum(Math.round(minCgpa * 100) / 100)},
          ${esc(skills)},
          ${coinCost},
@@ -89,14 +85,12 @@ export async function seedOpportunities(cfg: SeedConfig): Promise<void> {
   }
 
   // ─── Placement Drives ───
-  // Need institution_id from institution_profiles table
   for (let i = 0; i < 20; i++) {
     const compKey = compKeys[i % compKeys.length];
     const compUserId = companyUserIds[compKey];
     const optyId = opportunityIds[i % opportunityIds.length];
-    // Use a stable institution user id
-    const instUserId = `beyon-inst-user-beyon-inst-inst_${String(i % 25 + 1).padStart(4, "0")}`;
-    const driveId = `beyon-drive-${i}`;
+    const instUserId = toUUID(`beyon-inst-user-beyon-inst-inst_${String(i % 25 + 1).padStart(4, "0")}`);
+    const driveId = toUUID(`beyon-drive-${i}`);
     driveIds.push(driveId);
 
     const driveDate = new Date();

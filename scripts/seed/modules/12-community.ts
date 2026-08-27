@@ -1,4 +1,4 @@
-import { doltBatch, esc, doltQuery } from "../engine/dolt.js";
+import { doltBatch, esc, doltQuery, toUUID } from "../engine/dolt.js";
 import { studentUserIds } from "./04-users.js";
 import { companyUserIds } from "./03-companies.js";
 import { SeededRandom } from "../utils/faker.js";
@@ -6,11 +6,11 @@ import type { SeedConfig } from "../config.js";
 
 async function ensureCommunityRefs(): Promise<void> {
   if (studentUserIds.length === 0) {
-    const srows = doltQuery("SELECT id FROM users WHERE role='STUDENT' AND email LIKE '%beyon.test'");
+    const srows = doltQuery("SELECT id FROM users WHERE role='STUDENT'");
     for (const r of srows) studentUserIds.push(r.id);
   }
   if (Object.keys(companyUserIds).length === 0) {
-    const crows = doltQuery("SELECT id FROM users WHERE role='COMPANY_ADMIN' AND id LIKE 'beyon-comp-user-%'");
+    const crows = doltQuery("SELECT id FROM users WHERE role='COMPANY'");
     let i = 0;
     for (const r of crows) {
       (companyUserIds as any)[`COMP_${String(i + 1).padStart(4, "0")}`] = r.id;
@@ -37,7 +37,6 @@ export async function seedCommunity(cfg: SeedConfig): Promise<void> {
 
   const rng = new SeededRandom(cfg.seed + 8000);
   const followStmts: string[] = [];
-  const notifStmts: string[] = [];
 
   // ─── Follow relationships (student → company) ───
   const compUserIdList = Object.values(companyUserIds);
@@ -51,7 +50,7 @@ export async function seedCommunity(cfg: SeedConfig): Promise<void> {
       const key = `${studentId}::${compId}`;
       if (followUsed.has(key)) continue;
       followUsed.add(key);
-      const id = `beyon-follow-${followCount}`;
+      const id = toUUID(`beyon-follow-${followCount}`);
       followStmts.push(
         `INSERT IGNORE INTO follows (id, follower_id, following_id, follow_type, created_at)
          VALUES (${esc(id)}, ${esc(studentId)}, ${esc(compId)}, 'COMPANY', NOW());`

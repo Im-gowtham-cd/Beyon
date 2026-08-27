@@ -1,52 +1,52 @@
 # BEYON TEST DATA SEED REPORT
-Generated: 2026-08-27T02:07:10.946Z
+Generated: 2026-08-27T16:19:02.033Z
 
 ========================================
 ENVIRONMENT  : development
 SEED VALUE   : 20260826
-ELAPSED      : 23.5s
-OVERALL      : FAIL
+ELAPSED      : 31.3s
+OVERALL      : PASS
 ========================================
 
 RECORDS CREATED
 ───────────────
 Users               : 125
-Students            : 60
-Institutions        : 50
-Companies           : 60
+Students            : 61
+Institutions        : 25
+Companies           : 30
 Skills              : 109
 Questions           : 300
 Assessments/Tests   : 11
 Opportunities       : 30
-Applications        : 187
-Coin Transactions   : 16
-Notifications       : 475
-Follows             : 181
+Applications        : 184
+Coin Transactions   : 653
+Notifications       : 457
+Follows             : 186
 Daily Challenges    : 21
 
 ========================================
 VALIDATION RESULTS
 ══════════════════
 PASS  | Users                                  | 125 records
-PASS  | Student Profiles                       | 120 records
-PASS  | Institution Profiles                   | 50 records
-PASS  | Company Profiles                       | 60 records
+PASS  | Student Profiles                       | 61 records
+PASS  | Institution Profiles                   | 25 records
+PASS  | Company Profiles                       | 30 records
 PASS  | Skills                                 | 109 records
 PASS  | Questions                              | 300 records
 PASS  | Tests                                  | 11 records
 PASS  | Opportunities                          | 30 records
-PASS  | Applications                           | 187 records
-PASS  | Coin Wallets                           | 116 records
-PASS  | Coin Transactions                      | 16 records
-PASS  | Notifications                          | 475 records
-PASS  | Follows                                | 181 records
+PASS  | Applications                           | 184 records
+PASS  | Coin Wallets                           | 61 records
+PASS  | Coin Transactions                      | 653 records
+PASS  | Notifications                          | 457 records
+PASS  | Follows                                | 186 records
 PASS  | Daily Challenges                       | 21 records
-WARN  | Coin Ledger Reconciliation             | 5 wallets have minor balance drift (may be due to seeding order)
-FAIL  | Application Referential Integrity      | 187 orphan applications
+PASS  | Coin Ledger Reconciliation             | All wallet balances reconcile with transactions
+PASS  | Application Referential Integrity      | All applications reference valid students
 
 ========================================
-Integrity Checks    : FAIL
-Coin Reconciliation : WARN
+Integrity Checks    : PASS
+Coin Reconciliation : PASS
 ========================================
 
 KNOWN NOTES

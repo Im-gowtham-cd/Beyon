@@ -78,13 +78,29 @@ export async function seedStudentProfiles(cfg: SeedConfig): Promise<void> {
     }
   }
 
+  const projectStmts: string[] = [];
+  const certStmts: string[] = [];
+  const achieveStmts: string[] = [];
+
+  for (const userId of studentUserIds) {
+    projectStmts.push(...buildProjectsSql(userId, rng));
+    certStmts.push(...buildCertsSql(userId, rng));
+    achieveStmts.push(...buildAchievementsSql(userId, rng));
+  }
+
   doltBatch(profileStmts, 100);
   doltBatch(walletStmts, 200);
   doltBatch(skillStmts, 200);
+  doltBatch(projectStmts, 200);
+  doltBatch(certStmts, 200);
+  doltBatch(achieveStmts, 200);
 
   console.log(`  ✅ ${profileStmts.length} student profiles`);
   console.log(`  ✅ ${walletStmts.length} coin wallets`);
   console.log(`  ✅ ${skillStmts.length} student skill records`);
+  console.log(`  ✅ ${projectStmts.length} student projects`);
+  console.log(`  ✅ ${certStmts.length} student certifications`);
+  console.log(`  ✅ ${achieveStmts.length} student achievements`);
 }
 
 function buildStudentProfileSql(
@@ -132,5 +148,42 @@ function buildSkillsSql(studentId: string, rng: SeededRandom, persona: string): 
     const id = toUUID(`beyon-ss-${studentId}-${i}`);
     return `INSERT IGNORE INTO student_skills (id, user_id, skill_name, category, proficiency, source, verified, created_at, updated_at)
      VALUES (${esc(id)}, ${esc(studentId)}, ${esc(skillName)}, 'PROGRAMMING', ${esc(proficiency)}, 'SELF_REPORTED', 0, NOW(), NOW());`;
+  });
+}
+
+function buildProjectsSql(studentId: string, rng: SeededRandom): string[] {
+  const sampleProjects = [
+    { name: "Distributed Cache Engine", desc: "High-throughput in-memory key-value store built in Java with LRU eviction and replication.", role: "Lead Developer", tech: "Java, Netty, Redis, Docker" },
+    { name: "AI Code Analysis Tool", desc: "Automated static analysis and code review assistant leveraging LLM fine-tuning.", role: "Full Stack Engineer", tech: "Python, FastAPI, React, TypeScript" },
+    { name: "Decentralized Auth Gateway", desc: "Zero-trust identity verification service with JWT and hardware tokens.", role: "Backend Developer", tech: "Spring Boot, PostgreSQL, Docker" },
+  ];
+  return sampleProjects.map((p, idx) => {
+    const id = toUUID(`beyon-proj-${studentId}-${idx}`);
+    return `INSERT IGNORE INTO student_projects (id, user_id, name, description, role, technologies, github_url, live_url, is_featured, featured, created_at, updated_at)
+      VALUES (${esc(id)}, ${esc(studentId)}, ${esc(p.name)}, ${esc(p.desc)}, ${esc(p.role)}, ${esc(p.tech)}, 'https://github.com/example/project', 'https://project.example.dev', ${idx === 0 ? 1 : 0}, ${idx === 0 ? 1 : 0}, NOW(), NOW());`;
+  });
+}
+
+function buildCertsSql(studentId: string, rng: SeededRandom): string[] {
+  const sampleCerts = [
+    { name: "AWS Certified Developer - Associate", org: "Amazon Web Services", cid: "AWS-DEV-982314" },
+    { name: "Oracle Certified Professional: Java SE 17 Developer", org: "Oracle", cid: "OCP-JAVA-54819" },
+  ];
+  return sampleCerts.map((c, idx) => {
+    const id = toUUID(`beyon-cert-${studentId}-${idx}`);
+    return `INSERT IGNORE INTO student_certifications (id, user_id, name, issuing_org, issue_date, credential_id, credential_url, status, created_at, updated_at)
+      VALUES (${esc(id)}, ${esc(studentId)}, ${esc(c.name)}, ${esc(c.org)}, '2025-06-15', ${esc(c.cid)}, 'https://aws.amazon.com/verification', 'VERIFIED', NOW(), NOW());`;
+  });
+}
+
+function buildAchievementsSql(studentId: string, rng: SeededRandom): string[] {
+  const sampleAchievements = [
+    { title: "Smart India Hackathon Finalist", desc: "Top 5 nationwide in AI/ML category for automated assessment systems.", cat: "HACKATHON", org: "Ministry of Education" },
+    { title: "Dean's Honor List", desc: "Maintained top 5% academic performance throughout all semesters.", cat: "ACADEMIC", org: "University Academic Council" },
+  ];
+  return sampleAchievements.map((a, idx) => {
+    const id = toUUID(`beyon-ach-${studentId}-${idx}`);
+    return `INSERT IGNORE INTO student_achievements (id, user_id, title, description, category, organization, achievement_date, created_at, updated_at)
+      VALUES (${esc(id)}, ${esc(studentId)}, ${esc(a.title)}, ${esc(a.desc)}, ${esc(a.cat)}, ${esc(a.org)}, '2025-11-20', NOW(), NOW());`;
   });
 }

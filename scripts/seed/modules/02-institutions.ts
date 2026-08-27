@@ -28,7 +28,7 @@ export async function seedInstitutions(): Promise<void> {
     // Insert institution user
     userStmts.push(
       `INSERT IGNORE INTO users (id, email, password_hash, display_name, role, status, email_verified, profile_status, created_at, updated_at)
-       VALUES (${esc(userId)}, ${esc(adminEmail)}, 'SEEDED_NO_AUTH', ${esc(inst.name)}, 'INSTITUTION_ADMIN', 'ACTIVE', 1, 'COMPLETED', NOW(), NOW());`
+       VALUES (${esc(userId)}, ${esc(adminEmail)}, 'SEEDED_NO_AUTH', ${esc(inst.name)}, 'INSTITUTION', 'ACTIVE', 1, 'COMPLETED', NOW(), NOW());`
     );
 
     // Insert institution profile

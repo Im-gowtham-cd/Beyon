@@ -23,7 +23,7 @@ export const FIXED_ACCOUNTS: TestAccount[] = [
     email: "superadmin@example.beyon.test",
     password: "BeyonTest!2026#Super",
     name: "Super Administrator",
-    role: "SUPER_ADMIN",
+    role: "ADMIN",
     status: "ACTIVE",
     emailVerified: true,
   },
@@ -41,7 +41,7 @@ export const FIXED_ACCOUNTS: TestAccount[] = [
     email: "moderator@example.beyon.test",
     password: "BeyonTest!2026#Moderator",
     name: "Content Moderator",
-    role: "MODERATOR",
+    role: "ADMIN",
     status: "ACTIVE",
     emailVerified: true,
   },
@@ -173,7 +173,7 @@ export const FIXED_ACCOUNTS: TestAccount[] = [
     email: "recruiter@example.beyon.test",
     password: "BeyonTest!2026#Recruiter",
     name: "Rajesh Mehta",
-    role: "COMPANY_RECRUITER",
+    role: "COMPANY",
     status: "ACTIVE",
     emailVerified: true,
     companyKey: "COMP_0001",
@@ -183,7 +183,7 @@ export const FIXED_ACCOUNTS: TestAccount[] = [
     email: "company.admin@example.beyon.test",
     password: "BeyonTest!2026#Company",
     name: "Company Administrator",
-    role: "COMPANY_ADMIN",
+    role: "COMPANY",
     status: "ACTIVE",
     emailVerified: true,
     companyKey: "COMP_0001",
@@ -194,7 +194,7 @@ export const FIXED_ACCOUNTS: TestAccount[] = [
     email: "institution.admin@example.beyon.test",
     password: "BeyonTest!2026#Institution",
     name: "Institution Admin",
-    role: "INSTITUTION_ADMIN",
+    role: "INSTITUTION",
     status: "ACTIVE",
     emailVerified: true,
     institutionKey: "INST_0001",
@@ -204,7 +204,7 @@ export const FIXED_ACCOUNTS: TestAccount[] = [
     email: "placement@example.beyon.test",
     password: "BeyonTest!2026#Placement",
     name: "Placement Officer",
-    role: "PLACEMENT_OFFICER",
+    role: "INSTITUTION",
     status: "ACTIVE",
     emailVerified: true,
     institutionKey: "INST_0001",
@@ -214,7 +214,7 @@ export const FIXED_ACCOUNTS: TestAccount[] = [
     email: "faculty@example.beyon.test",
     password: "BeyonTest!2026#Faculty",
     name: "Dr. Kavitha Iyer",
-    role: "FACULTY",
+    role: "INSTITUTION",
     status: "ACTIVE",
     emailVerified: true,
     institutionKey: "INST_0001",
@@ -225,7 +225,7 @@ export const FIXED_ACCOUNTS: TestAccount[] = [
     email: "mentor@example.beyon.test",
     password: "BeyonTest!2026#Mentor",
     name: "Siddharth Varma",
-    role: "MENTOR",
+    role: "COMPANY",
     status: "ACTIVE",
     emailVerified: true,
   },
@@ -234,7 +234,7 @@ export const FIXED_ACCOUNTS: TestAccount[] = [
     email: "alumni@example.beyon.test",
     password: "BeyonTest!2026#Alumni",
     name: "Karthik Murthy",
-    role: "ALUMNI",
+    role: "STUDENT",
     status: "ACTIVE",
     emailVerified: true,
     institutionKey: "INST_0001",
@@ -245,7 +245,7 @@ export const FIXED_ACCOUNTS: TestAccount[] = [
 export const STUDENT_ROLES = ["STUDENT"];
 
 // Roles that need institution_id
-export const INSTITUTION_ROLES = ["INSTITUTION_ADMIN", "PLACEMENT_OFFICER", "FACULTY", "STUDENT", "ALUMNI"];
+export const INSTITUTION_ROLES = ["INSTITUTION", "STUDENT"];
 
 // Roles that need company_id
-export const COMPANY_ROLES = ["COMPANY_RECRUITER", "COMPANY_ADMIN"];
+export const COMPANY_ROLES = ["COMPANY"];

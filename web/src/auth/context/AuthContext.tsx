@@ -1,7 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 import type { AuthState, UserInfo, AccountStatus } from '../types/auth';
 import { authApi } from '../services/authApi';
-import { appwriteAuth } from '../services/appwriteAuth';
 
 interface AuthContextValue extends AuthState {
   profileStatus: AccountStatus;
@@ -71,8 +70,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = async () => {
-    // Logout from both Appwrite and legacy JWT
-    await appwriteAuth.logout().catch(() => {});
     localStorage.removeItem(TOKEN_KEY);
     setState({ user: null, token: null, loading: false, authenticated: false });
     setProfileStatus('INCOMPLETE');

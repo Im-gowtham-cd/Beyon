@@ -3,7 +3,7 @@
 // Creates MCQ, SQL, and coding questions
 // ============================================================
 
-import { doltBatch, esc, escNum, doltQuery } from "../engine/dolt.js";
+import { doltBatch, esc, escNum, doltQuery, toUUID } from "../engine/dolt.js";
 import { skillIds, skillTopicIds } from "./01-skills.js";
 import { SeededRandom } from "../utils/faker.js";
 import type { SeedConfig } from "../config.js";
@@ -13,7 +13,7 @@ export const questionIds: string[] = [];
 /** Load skill IDs from DB if not already populated (for standalone modes) */
 async function ensureSkillIds(): Promise<void> {
   if (Object.keys(skillIds).length > 0) return;
-  const rows = doltQuery("SELECT id, slug FROM skills WHERE id LIKE 'beyon-skill-%'");
+  const rows = doltQuery("SELECT id, slug FROM skills");
   for (const row of rows) {
     const key = "SKILL_" + row.slug.replace(/-/g, "_").toUpperCase();
     (skillIds as any)[key] = row.id;
@@ -115,7 +115,8 @@ export async function seedQuestions(cfg: SeedConfig): Promise<void> {
     const skillId = skillIds[skillKey];
     if (!skillId) continue;
     for (const tmpl of templates) {
-      const id = `beyon-q-mcq-${skillKey}-${mcqCount}`;
+      const rawId = `beyon-q-mcq-${skillKey}-${mcqCount}`;
+      const id = toUUID(rawId);
       questionIds.push(id);
       stmts.push(
         `INSERT IGNORE INTO questions (id, skill_id, title, description, question_type, difficulty, evaluation_method, status, created_at, updated_at)
@@ -123,7 +124,7 @@ export async function seedQuestions(cfg: SeedConfig): Promise<void> {
       );
       // Options
       for (let oi = 0; oi < tmpl.opts.length; oi++) {
-        const optId = `beyon-opt-${id}-${oi}`;
+        const optId = toUUID(`beyon-opt-${rawId}-${oi}`);
         const isCorrect = oi === tmpl.correct ? 1 : 0;
         optionStmts.push(
           `INSERT IGNORE INTO question_options (id, question_id, option_text, is_correct, display_order)
@@ -138,7 +139,7 @@ export async function seedQuestions(cfg: SeedConfig): Promise<void> {
   let sqlCount = 0;
   const sqlSkillId = skillIds["SKILL_SQL"];
   for (const sq of SQL_QUESTIONS) {
-    const id = `beyon-q-sql-${sqlCount}`;
+    const id = toUUID(`beyon-q-sql-${sqlCount}`);
     questionIds.push(id);
     stmts.push(
       `INSERT IGNORE INTO questions (id, skill_id, title, description, question_type, difficulty, expected_output, evaluation_method, status, created_at, updated_at)
@@ -152,7 +153,7 @@ export async function seedQuestions(cfg: SeedConfig): Promise<void> {
   for (const cq of CODING_QUESTIONS) {
     const skillId = skillIds[cq.skillKey];
     if (!skillId) continue;
-    const id = `beyon-q-coding-${codingCount}`;
+    const id = toUUID(`beyon-q-coding-${codingCount}`);
     questionIds.push(id);
     stmts.push(
       `INSERT IGNORE INTO questions (id, skill_id, title, description, question_type, difficulty, evaluation_method, status, created_at, updated_at)
@@ -170,7 +171,8 @@ export async function seedQuestions(cfg: SeedConfig): Promise<void> {
     const skillId = skillIds[skillKey];
     if (!skillId) continue;
     const diff = rng.pick(["EASY", "EASY", "MEDIUM", "MEDIUM", "HARD"]);
-    const id = `beyon-q-gen-${i}`;
+    const rawId = `beyon-q-gen-${i}`;
+    const id = toUUID(rawId);
     questionIds.push(id);
     const qText = `Practice question ${i + 1}: Which of the following best describes a concept in ${skillKey.replace("SKILL_", "")}?`;
     stmts.push(
@@ -178,7 +180,7 @@ export async function seedQuestions(cfg: SeedConfig): Promise<void> {
        VALUES (${esc(id)}, ${esc(skillId)}, ${esc(qText)}, ${esc(qText)}, 'MCQ', ${esc(diff)}, 'EXACT_MATCH', 'ACTIVE', NOW(), NOW());`
     );
     for (let oi = 0; oi < 4; oi++) {
-      const optId = `beyon-opt-${id}-${oi}`;
+      const optId = toUUID(`beyon-opt-${rawId}-${oi}`);
       optionStmts.push(
         `INSERT IGNORE INTO question_options (id, question_id, option_text, is_correct, display_order)
          VALUES (${esc(optId)}, ${esc(id)}, ${esc(`Option ${String.fromCharCode(65 + oi)}`)}, ${oi === 0 ? 1 : 0}, ${oi + 1});`

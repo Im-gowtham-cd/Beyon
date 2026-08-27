@@ -11,8 +11,8 @@
     "build": "bun run build:renderer && bun run build:main && bun run build:preload",
     "build:renderer": "vite build --config vite.renderer.config.ts",
     "build:main": "tsc -p tsconfig.main.json",
-    "build:preload": "tsc -p tsconfig.preload.json",
-    "typecheck": "tsc --noEmit -p tsconfig.main.json && tsc --noEmit -p tsconfig.preload.json"
+    "build:preload": "bun build src/preload/preload.ts --outfile dist/preload/preload.cjs --target node --format cjs --external electron",
+    "typecheck": "tsc --noEmit -p tsconfig.main.json"
   },
   "dependencies": {
     "electron": "^43.4.1",

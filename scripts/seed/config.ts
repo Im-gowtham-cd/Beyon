@@ -61,25 +61,10 @@ export interface SeedConfig {
     createAssessments: boolean;
     createRecruitment: boolean;
     createCommunity: boolean;
-    skipAppwrite: boolean; // for offline testing
-  };
-  appwrite: {
-    endpoint: string;
-    projectId: string;
-    apiKey: string;
   };
 }
 
 export function loadConfig(overrides: Partial<SeedConfig["counts"]> = {}): SeedConfig {
-  // Read Appwrite config from backend application.yml via env vars
-  const appwriteEndpoint =
-    process.env.APPWRITE_ENDPOINT || "https://sgp.cloud.appwrite.io/v1";
-  const appwriteProjectId =
-    process.env.APPWRITE_PROJECT_ID || "6a8f0bbf00106d9d9dc0";
-  const appwriteDatabaseId =
-    process.env.APPWRITE_DATABASE_ID || "6a8f0bbf00106d9d9dc0";
-  const appwriteApiKey = process.env.APPWRITE_API_KEY || "";
-
   return {
     seed: 20260826,
     environment:
@@ -101,12 +86,6 @@ export function loadConfig(overrides: Partial<SeedConfig["counts"]> = {}): SeedC
       createAssessments: true,
       createRecruitment: true,
       createCommunity: true,
-      skipAppwrite: !appwriteApiKey || process.env.SKIP_APPWRITE === "true",
-    },
-    appwrite: {
-      endpoint: appwriteEndpoint,
-      projectId: appwriteProjectId,
-      apiKey: appwriteApiKey,
     },
   };
 }

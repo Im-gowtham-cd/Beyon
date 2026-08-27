@@ -42,7 +42,7 @@ public class StudentProject {
 
     private LocalDate endDate;
 
-    @Column(nullable = false)
+    @Column(name = "is_featured", nullable = false)
     private boolean featured = false;
 
     @Column(nullable = false, updatable = false)

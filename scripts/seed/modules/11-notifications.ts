@@ -1,11 +1,11 @@
-import { doltBatch, esc, doltQuery } from "../engine/dolt.js";
+import { doltBatch, esc, doltQuery, toUUID } from "../engine/dolt.js";
 import { studentUserIds } from "./04-users.js";
 import { SeededRandom } from "../utils/faker.js";
 import type { SeedConfig } from "../config.js";
 
 async function ensureStudentIds(): Promise<void> {
   if (studentUserIds.length === 0) {
-    const srows = doltQuery("SELECT id FROM users WHERE role='STUDENT' AND email LIKE '%beyon.test'");
+    const srows = doltQuery("SELECT id FROM users WHERE role='STUDENT'");
     for (const r of srows) studentUserIds.push(r.id);
   }
 }
@@ -33,11 +33,11 @@ export async function seedNotifications(cfg: SeedConfig): Promise<void> {
   let count = 0;
 
   for (const userId of studentUserIds) {
-    const notifCount = rng.int(3, Math.min(20, cfg.counts.notifications / studentUserIds.length + 5));
+    const notifCount = rng.int(3, Math.min(20, Math.floor(cfg.counts.notifications / studentUserIds.length) + 5));
     for (let i = 0; i < notifCount && count < cfg.counts.notifications; i++) {
       const tmpl = rng.pick(NOTIFICATION_TEMPLATES);
       const isRead = rng.bool(0.6);
-      const id = `beyon-notif-${count}`;
+      const id = toUUID(`beyon-notif-${count}`);
       stmts.push(
         `INSERT IGNORE INTO notifications
           (id, user_id, title, message, notification_type, is_read, channel, created_at)

@@ -39,22 +39,22 @@ export function StudentProfilePage() {
       setError('');
       const [p, s, pr, c, a, l, ls, cp] = await Promise.all([
         studentProfileApi.getProfile(),
-        studentProfileApi.getSkills(),
-        studentProfileApi.getProjects(),
-        studentProfileApi.getCertifications(),
-        studentProfileApi.getAchievements(),
-        studentProfileApi.getLinks(),
-        studentProfileApi.getLearningSkills(),
-        studentProfileApi.getCareerPreferences(),
+        studentProfileApi.getSkills().catch(() => []),
+        studentProfileApi.getProjects().catch(() => []),
+        studentProfileApi.getCertifications().catch(() => []),
+        studentProfileApi.getAchievements().catch(() => []),
+        studentProfileApi.getLinks().catch(() => []),
+        studentProfileApi.getLearningSkills().catch(() => []),
+        studentProfileApi.getCareerPreferences().catch(() => null),
       ]);
       setProfile(p);
-      setSkills(s);
-      setProjects(pr);
-      setCerts(c);
-      setAchievements(a);
-      setLinks(l);
-      setLearningSkills(ls);
-      setCareerPrefs(cp);
+      setSkills(s ?? []);
+      setProjects(pr ?? []);
+      setCerts(c ?? []);
+      setAchievements(a ?? []);
+      setLinks(l ?? []);
+      setLearningSkills(ls ?? []);
+      setCareerPrefs(cp ?? null);
     } catch (err) {
       setError('Unable to load your profile. Please try again.');
       console.error(err);

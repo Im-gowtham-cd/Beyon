@@ -4,11 +4,6 @@
 // ============================================================
 
 import { doltBatch, doltExec, esc, doltQuery, toUUID } from "../engine/dolt.js";
-import {
-  createAppwriteUser,
-  verifyAppwriteUser,
-  isAppwriteConnected,
-} from "../engine/appwrite.js";
 import bcrypt from "bcryptjs";
 import { FIXED_ACCOUNTS, INSTITUTION_ROLES, COMPANY_ROLES } from "../data/personas.js";
 import { getInstitutionUserId } from "./02-institutions.js";
@@ -69,14 +64,6 @@ async function seedOneUser(
   emailVerified: boolean,
   cfg: SeedConfig
 ): Promise<void> {
-  // Appwrite
-  if (isAppwriteConnected() && password !== "SEEDED_NO_AUTH") {
-    const appwriteId = await createAppwriteUser(id, email, password, name);
-    if (appwriteId && emailVerified) {
-      await verifyAppwriteUser(appwriteId);
-    }
-  }
-
   // Dolt
   const passwordHash = password === "SEEDED_NO_AUTH" ? "SEEDED_NO_AUTH" : bcrypt.hashSync(password, 10);
   doltExec(
