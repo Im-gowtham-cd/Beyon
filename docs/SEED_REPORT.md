@@ -1,10 +1,10 @@
 # BEYON TEST DATA SEED REPORT
-Generated: 2026-08-27T16:19:02.033Z
+Generated: 2026-08-27T16:55:44.688Z
 
 ========================================
 ENVIRONMENT  : development
 SEED VALUE   : 20260826
-ELAPSED      : 31.3s
+ELAPSED      : 49.1s
 OVERALL      : PASS
 ========================================
 
@@ -14,7 +14,7 @@ Users               : 125
 Students            : 61
 Institutions        : 25
 Companies           : 30
-Skills              : 109
+Skills              : 47
 Questions           : 300
 Assessments/Tests   : 11
 Opportunities       : 30
@@ -31,7 +31,7 @@ PASS  | Users                                  | 125 records
 PASS  | Student Profiles                       | 61 records
 PASS  | Institution Profiles                   | 25 records
 PASS  | Company Profiles                       | 30 records
-PASS  | Skills                                 | 109 records
+PASS  | Skills                                 | 47 records
 PASS  | Questions                              | 300 records
 PASS  | Tests                                  | 11 records
 PASS  | Opportunities                          | 30 records

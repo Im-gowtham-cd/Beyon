@@ -80,11 +80,19 @@ if (mode === "reset") {
   console.log("   Only beyon@example.beyon.test domain records will be removed.\n");
 
   const tables = [
-    "follows", "notifications", "opportunity_applications",
-    "placement_drives", "company_opportunities", "daily_challenges",
-    "test_questions", "tests", "question_options", "questions",
-    "coin_transactions", "coin_wallets", "student_skills",
-    "student_profiles", "company_profiles", "institution_profiles",
+    "follows", "notifications", "opportunity_applications", "opportunity_assessments",
+    "placement_drives", "placement_records", "company_opportunities", "daily_challenges",
+    "test_attempts", "test_questions", "tests", "question_test_cases", "question_options",
+    "student_question_attempts", "student_saved_questions", "questions",
+    "assessment_answers", "assessment_results", "assessment_skill_scores", "assessment_question_order",
+    "assessment_sessions", "assessment_configurations", "assessment_policies", "proctoring_events",
+    "coin_transactions", "coin_wallets",
+    "student_projects", "student_certifications", "student_achievements", "student_links",
+    "student_learning_topics", "student_learning_skills", "student_career_preferences",
+    "student_skills", "student_streaks", "student_practice_stats", "student_profiles",
+    "institution_students", "institution_representatives", "institution_rating_snapshots", "institution_profiles",
+    "company_representatives", "company_skills", "company_hiring_preferences", "company_profiles",
+    "topic_relationships", "skill_relationships", "skill_subtopics", "skill_topics", "skills", "skill_categories",
     "users",
   ];
 

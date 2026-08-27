@@ -28,7 +28,7 @@ public class Skill {
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    @Column(nullable = false)
+    @Column(name = "is_active", nullable = false)
     private boolean active = true;
 
     @Column(nullable = false, updatable = false)

@@ -32,6 +32,7 @@ public class DailyChallenge {
 
     private Integer timeSpentSeconds;
 
+    @Column(name = "is_correct")
     private Boolean correct;
 
     @Column(nullable = false, updatable = false)
