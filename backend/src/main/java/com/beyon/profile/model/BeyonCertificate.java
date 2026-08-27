@@ -27,7 +27,7 @@ public class BeyonCertificate {
     @Column(name = "verification_url", length = 500) private String verificationUrl;
     @Column(name = "qr_data", columnDefinition = "text") private String qrData;
     @Column(name = "verification_status", nullable = false, length = 30) private String verificationStatus = "VERIFIED";
-    @Column(columnDefinition = "jsonb") private String metadata = "{}";
+    @Column(columnDefinition = "text") private String metadata = "{}";
     @Column(name = "created_at", nullable = false) private OffsetDateTime createdAt = OffsetDateTime.now();
     @Column(name = "updated_at", nullable = false) private OffsetDateTime updatedAt = OffsetDateTime.now();
 

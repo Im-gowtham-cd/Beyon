@@ -14,7 +14,7 @@ public class CollaborationProgram {
     @Column(nullable = false, length = 300) private String title;
     @Column(columnDefinition = "text") private String description;
     @Column(length = 200) private String topic;
-    @Column(name = "target_skills", columnDefinition = "jsonb") private String targetSkills = "[]";
+    @Column(name = "target_skills", columnDefinition = "text") private String targetSkills = "[]";
     @Column(name = "target_audience", length = 30) private String targetAudience;
     @Column(name = "target_institution_ids", columnDefinition = "UUID[]") private UUID[] targetInstitutionIds;
     @Column(name = "target_departments", columnDefinition = "text") private String targetDepartments;

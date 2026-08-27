@@ -15,7 +15,7 @@ public class UserFeedback {
     @Column(length = 50) private String module;
     @Column(length = 20) private String severity = "NORMAL";
     @Column(length = 20) private String status = "OPEN";
-    @Column(columnDefinition = "jsonb") private String metadata;
+    @Column(columnDefinition = "text") private String metadata;
     @Column(name = "created_at", nullable = false) private OffsetDateTime createdAt = OffsetDateTime.now();
     @Column(name = "updated_at", nullable = false) private OffsetDateTime updatedAt = OffsetDateTime.now();
 

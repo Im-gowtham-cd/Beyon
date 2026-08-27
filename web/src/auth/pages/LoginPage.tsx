@@ -106,29 +106,29 @@ export function LoginPage() {
             <div className={styles.asideBrand}>
               <span className={styles.asideMark} aria-hidden="true" />
               <div className={styles.asideBrandText}>
-                <span className={styles.asideName}>Beyon</span>
-                <span className={styles.asideSub}>AI Skill Development &amp; Recruitment</span>
+                <span className={styles.asideName}>HPC COE</span>
+                <span className={styles.asideSub}>Centre of Excellence &middot; HPC</span>
               </div>
             </div>
 
             <div className={styles.asideBody}>
-              <h2>Learn, Practice, Prove &amp; Get Hired</h2>
-              <p>Secure portal access for candidates, educational institutions, and hiring enterprise partners.</p>
+              <h2>High Performance Computing for Innovative Intelligent Solutions</h2>
+              <p>Secure portal access for faculty, staff and research scholars of the HPC Centre of Excellence.</p>
               <ul className={styles.asideFeatures}>
                 <li>
-                  <i className="bx bx-chip" /> AI-Powered Learning Paths
+                  <i className="bx bx-chip" /> NVIDIA H200 GPUs
                 </li>
                 <li>
-                  <i className="bx bx-brain" /> Proctored Skill Assessments
+                  <i className="bx bx-brain" /> AI Research &amp; Innovation
                 </li>
                 <li>
-                  <i className="bx bx-group" /> Direct Candidate Matching
+                  <i className="bx bx-group" /> Innovation Hub
                 </li>
               </ul>
             </div>
 
             <div className={styles.asideFoot}>
-              <i className="bx bx-envelope" /> support@beyon.dev
+              <i className="bx bx-envelope" /> support@hpc.edu.in
             </div>
           </aside>
 

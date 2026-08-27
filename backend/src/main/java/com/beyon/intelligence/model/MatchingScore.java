@@ -16,7 +16,7 @@ public class MatchingScore {
     @Column(name = "academic_score", precision = 5, scale = 2) private BigDecimal academicScore = BigDecimal.ZERO;
     @Column(name = "assessment_score", precision = 5, scale = 2) private BigDecimal assessmentScore = BigDecimal.ZERO;
     @Column(name = "experience_score", precision = 5, scale = 2) private BigDecimal experienceScore = BigDecimal.ZERO;
-    @Column(columnDefinition = "jsonb") private String matchFactors;
+    @Column(columnDefinition = "text") private String matchFactors;
     @Column(name = "matched_at", nullable = false) private OffsetDateTime matchedAt = OffsetDateTime.now();
     @Column(name = "updated_at", nullable = false) private OffsetDateTime updatedAt = OffsetDateTime.now();
 

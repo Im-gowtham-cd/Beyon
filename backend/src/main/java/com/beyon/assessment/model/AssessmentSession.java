@@ -39,7 +39,7 @@ public class AssessmentSession {
     @Column(name = "device_fingerprint", length = 512)
     private String deviceFingerprint;
 
-    @Column(name = "device_info", columnDefinition = "jsonb")
+    @Column(name = "device_info", columnDefinition = "text")
     private String deviceInfo;
 
     @Column(name = "ip_address", length = 45)
@@ -99,13 +99,13 @@ public class AssessmentSession {
     @Column(name = "time_used_seconds")
     private Integer timeUsedSeconds = 0;
 
-    @Column(name = "skill_performance", columnDefinition = "jsonb")
+    @Column(name = "skill_performance", columnDefinition = "text")
     private String skillPerformance;
 
-    @Column(name = "topic_performance", columnDefinition = "jsonb")
+    @Column(name = "topic_performance", columnDefinition = "text")
     private String topicPerformance;
 
-    @Column(name = "proctoring_summary", columnDefinition = "jsonb")
+    @Column(name = "proctoring_summary", columnDefinition = "text")
     private String proctoringSummary;
 
     @Column(name = "integrity_status", length = 30)

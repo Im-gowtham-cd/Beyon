@@ -3,6 +3,8 @@ spring:
     name: beyon-backend
   profiles:
     active: ${SPRING_PROFILES_ACTIVE:dev}
+  main:
+    allow-bean-definition-overriding: true
 
   datasource:
     url: ${DATABASE_URL:jdbc:mysql://127.0.0.1:3306/beyon}
@@ -15,15 +17,17 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: validate
+      ddl-auto: ${HIBERNATE_DDL_AUTO:none}
     open-in-view: false
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQLDialect
+        type:
+          preferred_uuid_jdbc_type: VARCHAR
         format_sql: true
 
   flyway:
-    enabled: true
+    enabled: ${FLYWAY_ENABLED:false}
     locations: classpath:db/migration
     baseline-on-migrate: true
     baselineVersion: 0
@@ -43,7 +47,7 @@ spring:
     default-property-inclusion: non_null
 
 server:
-  port: ${SERVER_PORT:8080}
+  port: ${SERVER_PORT:8085}
   error:
     include-stacktrace: never
     include-message: never
@@ -55,7 +59,12 @@ management:
         include: health,info
   endpoint:
     health:
-      show-details: when-authorized
+      show-details: always
+  health:
+    redis:
+      enabled: false
+    mongo:
+      enabled: false
 
 beyon:
   cors:
@@ -66,7 +75,8 @@ beyon:
     read-timeout: 30000
   appwrite:
     endpoint: ${APPWRITE_ENDPOINT:https://sgp.cloud.appwrite.io/v1}
-    project-id: ${APPWRITE_PROJECT_ID:6a8ebc22001ff0f8a815}
+    project-id: ${APPWRITE_PROJECT_ID:6a8f0bbf00106d9d9dc0}
+    database-id: ${APPWRITE_DATABASE_ID:6a8f0bbf00106d9d9dc0}
     api-key: ${APPWRITE_API_KEY:}
   jwt:
     secret: ${JWT_SECRET:beyon-dev-secret-key-change-in-production-minimum-32-chars}

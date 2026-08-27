@@ -23,8 +23,8 @@ public class StudentSkillIntelligence {
     @Column(name = "improvement_trend", length = 20) private String improvementTrend = "STABLE";
     @Column(name = "last_assessed_at") private OffsetDateTime lastAssessedAt;
     @Column(nullable = false) private Boolean verified = false;
-    @Column(name = "evidence_summary", columnDefinition = "jsonb") private String evidenceSummary;
-    @Column(name = "score_history", columnDefinition = "jsonb") private String scoreHistory;
+    @Column(name = "evidence_summary", columnDefinition = "text") private String evidenceSummary;
+    @Column(name = "score_history", columnDefinition = "text") private String scoreHistory;
     @Column(name = "created_at", nullable = false) private OffsetDateTime createdAt = OffsetDateTime.now();
     @Column(name = "updated_at", nullable = false) private OffsetDateTime updatedAt = OffsetDateTime.now();
 

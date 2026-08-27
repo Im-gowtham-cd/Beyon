@@ -17,9 +17,9 @@ public class OpportunityMatchDetail {
     @Column(name = "experience_met", nullable = false) private Boolean experienceMet = false;
     @Column(name = "certification_met", nullable = false) private Boolean certificationMet = false;
     @Column(name = "coin_requirement_met", nullable = false) private Boolean coinRequirementMet = false;
-    @Column(nullable = false, columnDefinition = "jsonb") private String matchFactors = "[]";
-    @Column(name = "strength_items", nullable = false, columnDefinition = "jsonb") private String strengthItems = "[]";
-    @Column(name = "gap_items", nullable = false, columnDefinition = "jsonb") private String gapItems = "[]";
+    @Column(nullable = false, columnDefinition = "text") private String matchFactors = "[]";
+    @Column(name = "strength_items", nullable = false, columnDefinition = "text") private String strengthItems = "[]";
+    @Column(name = "gap_items", nullable = false, columnDefinition = "text") private String gapItems = "[]";
     @Column(name = "calculated_at", nullable = false) private OffsetDateTime calculatedAt = OffsetDateTime.now();
     @Column(name = "created_at", nullable = false) private OffsetDateTime createdAt = OffsetDateTime.now();
 

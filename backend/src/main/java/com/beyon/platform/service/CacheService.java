@@ -74,20 +74,32 @@ public class CacheService {
     }
 
     public boolean acquireLock(String lockKey, Duration timeout) {
-        Boolean acquired = redis.opsForValue().setIfAbsent(lockKey, "1", timeout);
-        return Boolean.TRUE.equals(acquired);
+        try {
+            Boolean acquired = redis.opsForValue().setIfAbsent(lockKey, "1", timeout);
+            return Boolean.TRUE.equals(acquired);
+        } catch (Exception e) {
+            return true;
+        }
     }
 
     public void releaseLock(String lockKey) {
-        redis.delete(lockKey);
+        try {
+            redis.delete(lockKey);
+        } catch (Exception ignored) {}
     }
 
     public long increment(String key) {
-        Long val = redis.opsForValue().increment(key);
-        return val != null ? val : 0;
+        try {
+            Long val = redis.opsForValue().increment(key);
+            return val != null ? val : 0;
+        } catch (Exception e) {
+            return 0;
+        }
     }
 
     public void setWithExpiry(String key, String value, long ttlSeconds) {
-        redis.opsForValue().set(key, value, ttlSeconds, TimeUnit.SECONDS);
+        try {
+            redis.opsForValue().set(key, value, ttlSeconds, TimeUnit.SECONDS);
+        } catch (Exception ignored) {}
     }
 }

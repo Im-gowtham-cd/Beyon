@@ -21,7 +21,7 @@ public class SystemCheckResult {
     @Column(nullable = false, length = 20)
     private String status;
 
-    @Column(columnDefinition = "jsonb")
+    @Column(columnDefinition = "text")
     private String details;
 
     @Column(name = "checked_at", nullable = false)

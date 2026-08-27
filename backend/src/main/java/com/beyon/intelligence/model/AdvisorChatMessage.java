@@ -11,7 +11,7 @@ public class AdvisorChatMessage {
     @Column(name = "session_id", nullable = false) private UUID sessionId;
     @Column(nullable = false, length = 10) private String role;
     @Column(nullable = false, columnDefinition = "text") private String content;
-    @Column(columnDefinition = "jsonb") private String dataReferences;
+    @Column(columnDefinition = "text") private String dataReferences;
     @Column(name = "created_at", nullable = false) private OffsetDateTime createdAt = OffsetDateTime.now();
 
     public AdvisorChatMessage() {}

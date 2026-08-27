@@ -24,7 +24,7 @@ public class PlatformDailyStats {
     @Column(name = "new_posts", nullable = false) private Integer newPosts = 0;
     @Column(name = "new_feedback_reports", nullable = false) private Integer newFeedbackReports = 0;
     @Column(name = "resolved_feedback_reports", nullable = false) private Integer resolvedFeedbackReports = 0;
-    @Column(columnDefinition = "jsonb") private String metadata = "{}";
+    @Column(columnDefinition = "text") private String metadata = "{}";
     @Column(name = "created_at", nullable = false) private OffsetDateTime createdAt = OffsetDateTime.now();
 
     public PlatformDailyStats() {}

@@ -11,7 +11,7 @@ public class CompanyOpportunity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(columnDefinition = "uuid")
+    @Column(columnDefinition = "varchar(36)")
     private UUID id;
 
     @Column(nullable = false)
@@ -49,7 +49,7 @@ public class CompanyOpportunity {
     @Column(nullable = false)
     private int minBeyonCoins = 0;
 
-    @Column(columnDefinition = "uuid")
+    @Column(columnDefinition = "varchar(36)")
     private UUID assessmentId;
 
     @Column(nullable = false)

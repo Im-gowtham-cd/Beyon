@@ -23,9 +23,9 @@ public class InstitutionPlacementStats {
     @Column(name = "average_package", precision = 12, scale = 2) private BigDecimal averagePackage = BigDecimal.ZERO;
     @Column(name = "highest_package", precision = 12, scale = 2) private BigDecimal highestPackage = BigDecimal.ZERO;
     @Column(name = "companies_visited") private Integer companiesVisited = 0;
-    @Column(name = "department_stats", columnDefinition = "jsonb") private String departmentStats = "{}";
-    @Column(name = "skill_demand", columnDefinition = "jsonb") private String skillDemand = "{}";
-    @Column(name = "company_tier_distribution", columnDefinition = "jsonb") private String companyTierDistribution = "{}";
+    @Column(name = "department_stats", columnDefinition = "text") private String departmentStats = "{}";
+    @Column(name = "skill_demand", columnDefinition = "text") private String skillDemand = "{}";
+    @Column(name = "company_tier_distribution", columnDefinition = "text") private String companyTierDistribution = "{}";
     @Column(name = "updated_at", nullable = false) private OffsetDateTime updatedAt = OffsetDateTime.now();
 
     public InstitutionPlacementStats() {}

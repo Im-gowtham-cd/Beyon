@@ -1,0 +1,21 @@
+{
+  "name": "@beyon/seed",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "seed": "bun run seed.ts",
+    "seed:base": "bun run seed.ts base",
+    "seed:full": "bun run seed.ts full",
+    "seed:assessment": "bun run seed.ts assessment",
+    "seed:recruitment": "bun run seed.ts recruitment",
+    "seed:community": "bun run seed.ts community",
+    "seed:validate": "bun run seed.ts validate",
+    "seed:reset": "bun run seed.ts reset"
+  },
+  "dependencies": {
+    "@types/bcryptjs": "^3.0.0",
+    "bcryptjs": "^3.0.3",
+    "node-appwrite": "^15.0.0"
+  }
+}

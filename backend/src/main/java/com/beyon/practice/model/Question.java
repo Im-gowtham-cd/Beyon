@@ -10,16 +10,16 @@ public class Question {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(columnDefinition = "uuid")
+    @Column(columnDefinition = "varchar(36)")
     private UUID id;
 
-    @Column(columnDefinition = "uuid")
+    @Column(columnDefinition = "varchar(36)")
     private UUID skillId;
 
-    @Column(columnDefinition = "uuid")
+    @Column(columnDefinition = "varchar(36)")
     private UUID topicId;
 
-    @Column(columnDefinition = "uuid")
+    @Column(columnDefinition = "varchar(36)")
     private UUID subtopicId;
 
     @Column(nullable = false, length = 500)
@@ -62,7 +62,7 @@ public class Question {
     @Column(nullable = false)
     private int version = 1;
 
-    @Column(columnDefinition = "uuid")
+    @Column(columnDefinition = "varchar(36)")
     private UUID createdBy;
 
     @Column(nullable = false, updatable = false)

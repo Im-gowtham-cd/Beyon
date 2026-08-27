@@ -22,7 +22,7 @@ public class PortfolioProject {
     @Column(name = "verification_source", length = 50) private String verificationSource;
     @Column(name = "sort_order", nullable = false) private Integer sortOrder = 0;
     @Column(name = "is_featured", nullable = false) private Boolean isFeatured = false;
-    @Column(columnDefinition = "jsonb") private String metadata = "{}";
+    @Column(columnDefinition = "text") private String metadata = "{}";
     @Column(name = "created_at", nullable = false) private OffsetDateTime createdAt = OffsetDateTime.now();
     @Column(name = "updated_at", nullable = false) private OffsetDateTime updatedAt = OffsetDateTime.now();
 

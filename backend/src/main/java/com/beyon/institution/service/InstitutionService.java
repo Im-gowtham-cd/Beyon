@@ -22,14 +22,14 @@ import java.util.stream.Collectors;
 public class InstitutionService {
 
     private final InstitutionStudentRepository institutionStudentRepository;
-    private final PlacementRecordRepository placementRecordRepository;
+    private final InstitutionPlacementRecordRepository placementRecordRepository;
     private final InstitutionRatingSnapshotRepository ratingRepository;
     private final PlacementDriveRepository placementDriveRepository;
     private final UserRepository userRepository;
     private final StudentProfileRepository studentProfileRepository;
 
     public InstitutionService(InstitutionStudentRepository institutionStudentRepository,
-                              PlacementRecordRepository placementRecordRepository,
+                              InstitutionPlacementRecordRepository placementRecordRepository,
                               InstitutionRatingSnapshotRepository ratingRepository,
                               PlacementDriveRepository placementDriveRepository,
                               UserRepository userRepository,

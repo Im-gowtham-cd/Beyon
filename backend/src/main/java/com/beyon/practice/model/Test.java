@@ -10,7 +10,7 @@ public class Test {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(columnDefinition = "uuid")
+    @Column(columnDefinition = "varchar(36)")
     private UUID id;
 
     @Column(nullable = false, length = 200)
@@ -41,7 +41,7 @@ public class Test {
     @Column(nullable = false, length = 20)
     private String status = "DRAFT";
 
-    @Column(columnDefinition = "uuid")
+    @Column(columnDefinition = "varchar(36)")
     private UUID createdBy;
 
     @Column(nullable = false, updatable = false)

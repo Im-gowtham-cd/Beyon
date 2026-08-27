@@ -11,7 +11,7 @@ public class AdvisorChatSession {
     @Column(name = "student_id", nullable = false) private UUID studentId;
     @Column(length = 300) private String title = "Career Advice";
     @Column(nullable = false, length = 20) private String status = "ACTIVE";
-    @Column(columnDefinition = "jsonb") private String contextSnapshot;
+    @Column(columnDefinition = "text") private String contextSnapshot;
     @Column(name = "created_at", nullable = false) private OffsetDateTime createdAt = OffsetDateTime.now();
     @Column(name = "updated_at", nullable = false) private OffsetDateTime updatedAt = OffsetDateTime.now();
 

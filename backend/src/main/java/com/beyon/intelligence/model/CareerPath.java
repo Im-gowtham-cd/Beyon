@@ -12,8 +12,8 @@ public class CareerPath {
     @Column(nullable = false, unique = true, length = 200) private String slug;
     @Column(columnDefinition = "text") private String description;
     @Column(length = 100) private String category;
-    @Column(name = "required_skills", columnDefinition = "jsonb", nullable = false) private String requiredSkills = "[]";
-    @Column(name = "optional_skills", columnDefinition = "jsonb") private String optionalSkills = "[]";
+    @Column(name = "required_skills", columnDefinition = "text", nullable = false) private String requiredSkills = "[]";
+    @Column(name = "optional_skills", columnDefinition = "text") private String optionalSkills = "[]";
     @Column(name = "typical_education", length = 200) private String typicalEducation;
     @Column(name = "salary_range", length = 100) private String salaryRange;
     @Column(name = "growth_outlook", length = 100) private String growthOutlook;

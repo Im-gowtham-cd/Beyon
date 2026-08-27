@@ -13,12 +13,12 @@ public class CompanyRequirement {
     @Column(name = "company_id", nullable = false) private UUID companyId;
     @Column(nullable = false, length = 300) private String title;
     @Column(columnDefinition = "text") private String description;
-    @Column(name = "required_skills", columnDefinition = "jsonb", nullable = false) private String requiredSkills = "[]";
-    @Column(name = "preferred_skills", columnDefinition = "jsonb", nullable = false) private String preferredSkills = "[]";
+    @Column(name = "required_skills", columnDefinition = "text", nullable = false) private String requiredSkills = "[]";
+    @Column(name = "preferred_skills", columnDefinition = "text", nullable = false) private String preferredSkills = "[]";
     @Column(name = "min_cgpa", precision = 4, scale = 2) private BigDecimal minCgpa;
     @Column(name = "min_experience_years") private Integer minExperienceYears = 0;
-    @Column(name = "department_filter", columnDefinition = "jsonb") private String departmentFilter;
-    @Column(name = "graduation_year_filter", columnDefinition = "jsonb") private String graduationYearFilter;
+    @Column(name = "department_filter", columnDefinition = "text") private String departmentFilter;
+    @Column(name = "graduation_year_filter", columnDefinition = "text") private String graduationYearFilter;
     @Column(name = "assessment_id") private UUID assessmentId;
     @Column(name = "coin_cost", nullable = false) private Integer coinCost = 0;
     @Column(nullable = false, length = 20) private String status = "DRAFT";

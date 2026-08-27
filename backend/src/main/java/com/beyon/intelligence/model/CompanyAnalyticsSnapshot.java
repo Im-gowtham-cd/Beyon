@@ -20,9 +20,9 @@ public class CompanyAnalyticsSnapshot {
     @Column(name = "conversion_rate", precision = 5, scale = 2) private BigDecimal conversionRate = BigDecimal.ZERO;
     @Column(name = "avg_assessment_score", precision = 5, scale = 2) private BigDecimal avgAssessmentScore = BigDecimal.ZERO;
     @Column(name = "avg_time_to_hire_days") private Integer avgTimeToHireDays = 0;
-    @Column(name = "institution_performance", columnDefinition = "jsonb") private String institutionPerformance;
-    @Column(name = "skill_distribution", columnDefinition = "jsonb") private String skillDistribution;
-    @Column(name = "funnel_data", columnDefinition = "jsonb") private String funnelData;
+    @Column(name = "institution_performance", columnDefinition = "text") private String institutionPerformance;
+    @Column(name = "skill_distribution", columnDefinition = "text") private String skillDistribution;
+    @Column(name = "funnel_data", columnDefinition = "text") private String funnelData;
     @Column(name = "created_at", nullable = false) private OffsetDateTime createdAt = OffsetDateTime.now();
 
     public CompanyAnalyticsSnapshot() {}

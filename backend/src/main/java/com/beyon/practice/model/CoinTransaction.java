@@ -10,7 +10,7 @@ public class CoinTransaction {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(columnDefinition = "uuid")
+    @Column(columnDefinition = "varchar(36)")
     private UUID id;
 
     @Column(nullable = false)
@@ -28,7 +28,7 @@ public class CoinTransaction {
     @Column(length = 50)
     private String referenceType;
 
-    @Column(columnDefinition = "uuid")
+    @Column(columnDefinition = "varchar(36)")
     private UUID referenceId;
 
     @Column(nullable = false)

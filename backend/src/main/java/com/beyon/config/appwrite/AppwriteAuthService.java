@@ -6,7 +6,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.*;
-import org.springframework.stereotype.Service;
+
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
@@ -14,9 +14,8 @@ import java.util.Map;
 
 /**
  * Service to interact with Appwrite Auth REST API.
- * Replaces the PostgreSQL-based auth system.
+ * Configured as a @Bean in AppwriteConfig.
  */
-@Service
 public class AppwriteAuthService {
 
     private static final Logger log = LoggerFactory.getLogger(AppwriteAuthService.class);

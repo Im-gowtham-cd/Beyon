@@ -14,9 +14,9 @@ public interface PlacementRecordRepository extends JpaRepository<PlacementRecord
     long countByInstitutionIdAndPlacementYearAndStatus(UUID institutionId, Integer year, String status);
     long countByInstitutionIdAndPlacementYear(UUID institutionId, Integer year);
 
-    @Query("SELECT COALESCE(AVG(p.ctcAmount), 0) FROM PlacementRecord p WHERE p.institutionId = ?1 AND p.placementYear = ?2 AND p.status = 'PLACED' AND p.verified = true")
+    @Query("SELECT COALESCE(AVG(p.ctcAmount), 0) FROM RecruitmentPlacementRecord p WHERE p.institutionId = ?1 AND p.placementYear = ?2 AND p.status = 'PLACED' AND p.verified = true")
     BigDecimal averagePackageByInstitutionAndYear(UUID institutionId, Integer year);
 
-    @Query("SELECT COALESCE(MAX(p.ctcAmount), 0) FROM PlacementRecord p WHERE p.institutionId = ?1 AND p.placementYear = ?2 AND p.status = 'PLACED' AND p.verified = true")
+    @Query("SELECT COALESCE(MAX(p.ctcAmount), 0) FROM RecruitmentPlacementRecord p WHERE p.institutionId = ?1 AND p.placementYear = ?2 AND p.status = 'PLACED' AND p.verified = true")
     BigDecimal highestPackageByInstitutionAndYear(UUID institutionId, Integer year);
 }

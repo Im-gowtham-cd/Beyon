@@ -17,8 +17,11 @@ public class AppwriteConfig {
     @Value("${beyon.appwrite.endpoint:https://sgp.cloud.appwrite.io/v1}")
     private String endpoint;
 
-    @Value("${beyon.appwrite.project-id:6a8ebc22001ff0f8a815}")
+    @Value("${beyon.appwrite.project-id:6a8f0bbf00106d9d9dc0}")
     private String projectId;
+
+    @Value("${beyon.appwrite.database-id:6a8f0bbf00106d9d9dc0}")
+    private String databaseId;
 
     @Value("${beyon.appwrite.api-key:}")
     private String apiKey;
@@ -38,7 +41,7 @@ public class AppwriteConfig {
 
     @Bean
     public AppwriteProfileService appwriteProfileService(RestTemplate appwriteRestTemplate) {
-        return new AppwriteProfileService(appwriteRestTemplate, endpoint, projectId, apiKey);
+        return new AppwriteProfileService(appwriteRestTemplate, endpoint, projectId, databaseId, apiKey);
     }
 
     @Bean

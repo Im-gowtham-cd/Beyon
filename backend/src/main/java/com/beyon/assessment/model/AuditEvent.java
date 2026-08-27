@@ -4,8 +4,8 @@ import jakarta.persistence.*;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
-@Entity
-@Table(name = "audit_events")
+@Entity(name = "AssessmentAuditEvent")
+@Table(name = "assessment_audit_events")
 public class AuditEvent {
 
     @Id
@@ -24,7 +24,7 @@ public class AuditEvent {
     @Column(nullable = false, length = 200)
     private String action;
 
-    @Column(columnDefinition = "jsonb")
+    @Column(columnDefinition = "text")
     private String details;
 
     @Column(name = "ip_address", length = 45)

@@ -21,7 +21,7 @@ public class ContentResource {
     @Column(name = "view_count", nullable = false) private Integer viewCount = 0;
     @Column(name = "bookmark_count", nullable = false) private Integer bookmarkCount = 0;
     @Column(precision = 2, scale = 1) private BigDecimal rating;
-    @Column(columnDefinition = "jsonb") private String tags = "[]";
+    @Column(columnDefinition = "text") private String tags = "[]";
     @Column(nullable = false, length = 20) private String status = "PUBLISHED";
     @Column(name = "created_at", nullable = false) private OffsetDateTime createdAt = OffsetDateTime.now();
     @Column(name = "updated_at", nullable = false) private OffsetDateTime updatedAt = OffsetDateTime.now();

@@ -11,7 +11,7 @@ public class RecruitmentApplication {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(columnDefinition = "uuid")
+    @Column(columnDefinition = "varchar(36)")
     private UUID id;
 
     @Column(nullable = false)
@@ -20,10 +20,10 @@ public class RecruitmentApplication {
     @Column(nullable = false)
     private UUID opportunityId;
 
-    @Column(columnDefinition = "uuid")
+    @Column(columnDefinition = "varchar(36)")
     private UUID driveId;
 
-    @Column(columnDefinition = "uuid")
+    @Column(columnDefinition = "varchar(36)")
     private UUID institutionId;
 
     @Column(nullable = false, length = 30)

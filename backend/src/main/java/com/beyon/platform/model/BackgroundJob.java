@@ -9,12 +9,12 @@ import java.util.UUID;
 public class BackgroundJob {
     @Id @GeneratedValue(strategy = GenerationType.UUID) private UUID id;
     @Column(name = "job_type", nullable = false, length = 50) private String jobType;
-    @Column(columnDefinition = "jsonb") private String payload;
+    @Column(columnDefinition = "text") private String payload;
     @Column(nullable = false, length = 20) private String status = "PENDING";
     @Column(nullable = false) private Integer priority = 0;
     @Column(name = "max_retries", nullable = false) private Integer maxRetries = 3;
     @Column(name = "retry_count", nullable = false) private Integer retryCount = 0;
-    @Column(columnDefinition = "jsonb") private String result;
+    @Column(columnDefinition = "text") private String result;
     @Column(name = "error_message", columnDefinition = "text") private String errorMessage;
     @Column(name = "created_at", nullable = false) private OffsetDateTime createdAt = OffsetDateTime.now();
     @Column(name = "started_at") private OffsetDateTime startedAt;

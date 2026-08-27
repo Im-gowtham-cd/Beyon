@@ -12,7 +12,7 @@ public class PlatformMetric {
     @Column(name = "metric_name", nullable = false, length = 100) private String metricName;
     @Column(name = "metric_value", nullable = false) private BigDecimal metricValue;
     @Column(name = "metric_type", nullable = false, length = 20) private String metricType = "COUNTER";
-    @Column(columnDefinition = "jsonb") private String tags;
+    @Column(columnDefinition = "text") private String tags;
     @Column(name = "recorded_at", nullable = false) private OffsetDateTime recordedAt = OffsetDateTime.now();
 
     public PlatformMetric() {}

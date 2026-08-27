@@ -40,7 +40,7 @@ public class IdentityVerification {
     @Column(name = "verified_at")
     private OffsetDateTime verifiedAt;
 
-    @Column(columnDefinition = "jsonb")
+    @Column(columnDefinition = "text")
     private String metadata;
 
     @Column(name = "created_at", nullable = false)
