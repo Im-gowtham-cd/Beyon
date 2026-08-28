@@ -37,43 +37,36 @@ function clearToken() {
 ipcMain.handle('auth:get-token', () => readToken());
 ipcMain.handle('auth:set-token', (_event, token: string) => writeToken(token));
 ipcMain.handle('auth:clear-token', () => clearToken());
+ipcMain.handle('app:exit', () => {
+  isWindowLocked = false;
+  app.exit(0);
+});
+
+ipcMain.handle('app:force-fullscreen', () => {
+  if (mainWindow) {
+    mainWindow.setFullScreen(true);
+    mainWindow.focus();
+  }
+  return true;
+});
 
 ipcMain.handle('assessment:enter-fullscreen', async () => {
   if (mainWindow) {
-    // On Windows, setFullScreen can cause a minimize flash.
-    // Use maximize + focus instead for a stable lockdown experience.
-    if (process.platform === 'win32') {
-      mainWindow.maximize();
-      mainWindow.focus();
-      mainWindow.setMenuBarVisibility(false);
-    } else {
-      if (!mainWindow.isFullScreen()) {
-        mainWindow.setFullScreen(true);
-        mainWindow.setMenuBarVisibility(false);
-      }
-    }
+    mainWindow.setFullScreen(true);
+    mainWindow.focus();
+    mainWindow.setMenuBarVisibility(false);
   }
   return true;
 });
 
 ipcMain.handle('assessment:exit-fullscreen', async () => {
-  if (mainWindow) {
-    if (process.platform === 'win32') {
-      mainWindow.unmaximize();
-      mainWindow.setMenuBarVisibility(true);
-    } else {
-      if (mainWindow.isFullScreen()) {
-        mainWindow.setFullScreen(false);
-      }
-    }
+  if (mainWindow && mainWindow.isFullScreen()) {
+    mainWindow.setFullScreen(false);
   }
   return true;
 });
 
 ipcMain.handle('assessment:is-fullscreen', () => {
-  if (process.platform === 'win32') {
-    return mainWindow?.isMaximized() ?? false;
-  }
   return mainWindow?.isFullScreen() ?? false;
 });
 
@@ -82,8 +75,7 @@ ipcMain.handle('assessment:lock-window', () => {
   if (mainWindow) {
     mainWindow.setResizable(false);
     mainWindow.setMovable(false);
-    // Do NOT call setAlwaysOnTop(true) — on Windows it causes an immediate
-    // minimize/focus-steal flash. Window protection is via minimize auto-restore.
+    mainWindow.setFullScreen(true);
     mainWindow.focus();
   }
   return true;
@@ -134,19 +126,20 @@ ipcMain.handle('assessment:device-info', () => {
 
 function createWindow() {
   mainWindow = new BrowserWindow({
-    width: 1280,
-    height: 800,
-    minWidth: 1024,
-    minHeight: 600,
-    title: 'Beyon — Secure Lockdown Assessment Client',
-    backgroundColor: '#f4f6fb',
+    fullscreen: true,
+    minimizable: false,
     autoHideMenuBar: true,
+    backgroundColor: '#f4f6fb',
+    title: 'Beyon — Secure Lockdown Assessment Client',
     webPreferences: {
       preload: path.join(__dirname, '../preload/preload.cjs'),
       contextIsolation: true,
       nodeIntegration: false,
     },
   });
+
+  mainWindow.setFullScreen(true);
+  mainWindow.setMenuBarVisibility(false);
 
   // ── Grant camera, microphone, and display permissions ──────────────────────
   // Electron blocks getUserMedia by default; we must explicitly allow it.
@@ -210,21 +203,16 @@ function createWindow() {
     mainWindow?.webContents.send('proctoring:focus-change', false);
   });
 
-  // ── Minimize detection: notify renderer + auto-restore if window is locked ──
+  // ── Minimize prevention: notify renderer + immediately restore to fullscreen ──
   mainWindow.on('minimize', () => {
     mainWindow?.webContents.send('proctoring:minimize');
-    if (isWindowLocked) {
-      // Restore the window immediately — candidate cannot minimize during exam
-      setTimeout(() => {
-        if (mainWindow && isWindowLocked) {
-          mainWindow.restore();
-          mainWindow.focus();
-          if (process.platform === 'win32') {
-            mainWindow.maximize();
-          }
-        }
-      }, 200);
-    }
+    setTimeout(() => {
+      if (mainWindow) {
+        mainWindow.restore();
+        mainWindow.setFullScreen(true);
+        mainWindow.focus();
+      }
+    }, 50);
   });
 
   mainWindow.on('restore', () => {

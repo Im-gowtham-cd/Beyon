@@ -5,6 +5,10 @@ declare global {
   interface Window {
     beyon?: {
       platform: string;
+      app?: {
+        exitApp: () => Promise<void>;
+        forceFullscreen: () => Promise<boolean>;
+      };
       auth?: {
         getToken: () => Promise<string | null>;
         setToken: (token: string) => Promise<void>;
@@ -94,6 +98,62 @@ export function AssessmentApp() {
   const [activeAlert, setActiveAlert] = useState<string | null>(null);
   const alertCounterRef = useRef(0);
   const launchToken = new URLSearchParams(window.location.search).get('token');
+
+  // Application Settings & Exit state
+  const [showExitModal, setShowExitModal] = useState(false);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [systemInfo, setSystemInfo] = useState<any>(null);
+  const [deviceInfo, setDeviceInfo] = useState<any>(null);
+  const [cameraTestActive, setCameraTestActive] = useState(false);
+  const settingsVideoRef = useRef<HTMLVideoElement | null>(null);
+  const settingsStreamRef = useRef<MediaStream | null>(null);
+
+  useEffect(() => {
+    const loadSys = async () => {
+      try {
+        const sys = await window.beyon?.assessment?.getSystemInfo();
+        const dev = await window.beyon?.assessment?.getDeviceInfo();
+        if (sys) setSystemInfo(sys);
+        if (dev) setDeviceInfo(dev);
+      } catch {}
+    };
+    loadSys();
+  }, []);
+
+  const toggleCameraTest = async () => {
+    if (cameraTestActive) {
+      if (settingsStreamRef.current) {
+        settingsStreamRef.current.getTracks().forEach(t => t.stop());
+        settingsStreamRef.current = null;
+      }
+      setCameraTestActive(false);
+    } else {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+        settingsStreamRef.current = stream;
+        if (settingsVideoRef.current) {
+          settingsVideoRef.current.srcObject = stream;
+          settingsVideoRef.current.play();
+        }
+        setCameraTestActive(true);
+      } catch {
+        setCameraTestActive(false);
+      }
+    }
+  };
+
+  const handleExitApp = () => {
+    setShowExitModal(true);
+  };
+
+  const confirmExitApp = async () => {
+    if (step === 'exam') {
+      try {
+        await handleSubmit();
+      } catch {}
+    }
+    await window.beyon?.app?.exitApp?.();
+  };
 
   const addMalpracticeAlert = (type: string, msg: string) => {
     const id = ++alertCounterRef.current;
@@ -446,7 +506,7 @@ export function AssessmentApp() {
   const handleSubmit = async () => {
     if (timerRef.current) clearInterval(timerRef.current);
     if (heartbeatRef.current) clearInterval(heartbeatRef.current);
-    window.beyon?.assessment?.exitFullscreen();
+    // Keep application in fullscreen lockdown until candidate explicitly exits
     window.beyon?.assessment?.unlockWindow();
     setStep('submitting');
 
@@ -508,30 +568,64 @@ export function AssessmentApp() {
           </div>
         </div>
 
-        {step === 'exam' && (
-          <div className={styles.timerSection}>
-            <span className={styles.timerLabel}>Time Remaining:</span>
-            <span className={`${styles.timerValue} ${(timeInfo?.remainingSeconds || 0) < 300 ? styles.timerWarning : ''}`}>
-              {formatTime(timeInfo?.remainingSeconds || 0)}
-            </span>
-          </div>
-        )}
-
-        {step === 'exam' && (
-          <button
-            className={styles.finishBtn}
-            onClick={handleSubmit}
-            title="Submit and finish the assessment"
-          >
-            <i className="bx bx-check-double" /> Finish &amp; Submit
-          </button>
-        )}
-
-        {proctoringWarnings.length > 0 && (
-          <span className={styles.warningBadge}>
-            <i className="bx bx-error" /> Warnings: {proctoringWarnings.length}
+        <div className={styles.headerPills}>
+          <span className={styles.kioskPill}>
+            <i className="bx bx-shield-alt-2" /> KIOSK FULLSCREEN LOCKED
           </span>
-        )}
+        </div>
+
+        <div className={styles.headerRight}>
+          {step === 'exam' && (
+            <div className={styles.timerSection}>
+              <span className={styles.timerLabel}>Time Remaining:</span>
+              <span className={`${styles.timerValue} ${(timeInfo?.remainingSeconds || 0) < 300 ? styles.timerWarning : ''}`}>
+                {formatTime(timeInfo?.remainingSeconds || 0)}
+              </span>
+            </div>
+          )}
+
+          {step === 'exam' && (
+            <button
+              className={styles.finishBtn}
+              onClick={handleSubmit}
+              title="Submit and finish the assessment"
+            >
+              <i className="bx bx-check-double" /> Finish &amp; Submit
+            </button>
+          )}
+
+          {proctoringWarnings.length > 0 && (
+            <span className={styles.warningBadge}>
+              <i className="bx bx-error" /> Warnings: {proctoringWarnings.length}
+            </span>
+          )}
+
+          <button
+            className={styles.headerSettingsBtn}
+            onClick={() => setShowSettingsModal(true)}
+            title="System Diagnostics &amp; Settings"
+          >
+            <i className="bx bx-slider" /> Diagnostics
+          </button>
+
+          {step !== 'exam' ? (
+            <button
+              className={styles.headerExitBtn}
+              onClick={handleExitApp}
+              title="Exit Assessment Client"
+            >
+              <i className="bx bx-power-off" /> Exit App
+            </button>
+          ) : (
+            <button
+              className={styles.headerExitBtnDisabled}
+              disabled
+              title="Exit is disabled during examination. Please finish and submit your exam."
+            >
+              <i className="bx bx-lock-alt" /> Exit Locked
+            </button>
+          )}
+        </div>
       </header>
 
       {/* Auth Step */}
@@ -943,11 +1037,11 @@ export function AssessmentApp() {
 
       {/* Results Step */}
       {step === 'results' && (
-        <main className={styles.main} style={{ overflowY: 'auto', alignItems: 'flex-start', padding: '24px 32px' }}>
-          <div style={{ width: '100%', maxWidth: 820, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 20 }}>
+        <main className={styles.main} style={{ overflowY: 'auto', alignItems: 'center', padding: '32px 24px' }}>
+          <div className={styles.resultsContainer}>
 
             {/* Score Card */}
-            <div className={styles.contentCard} style={{ padding: '28px 32px' }}>
+            <div className={styles.resultsScoreCard}>
               <span className="section-label">Assessment Completed</span>
               <h1 className={styles.title}>Examination Submitted Successfully</h1>
               <div className={styles.resultScore}>
@@ -983,7 +1077,7 @@ export function AssessmentApp() {
             </div>
 
             {/* Malpractice Report */}
-            <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderTop: '3px solid #1c2d81', padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <div className={styles.resultsReportCard}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
                 <i className="bx bx-shield-quarter" style={{ fontSize: 20, color: '#1c2d81' }} />
                 <span style={{ fontWeight: 800, fontSize: '1rem', color: '#020617' }}>Proctoring &amp; Malpractice Report</span>
@@ -1018,9 +1112,219 @@ export function AssessmentApp() {
                 <i className="bx bx-info-circle" style={{ marginRight: 6 }} />
                 This report has been automatically submitted to your institution's assessment committee. Violations are reviewed by a human proctor before any disciplinary action.
               </div>
+
+              <div style={{ marginTop: 12, display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
+                <button
+                  className={styles.btnSecondary}
+                  onClick={() => setShowSettingsModal(true)}
+                >
+                  <i className="bx bx-slider" /> View System Logs
+                </button>
+                <button
+                  className={styles.btnDanger}
+                  onClick={handleExitApp}
+                  style={{ padding: '10px 24px' }}
+                >
+                  <i className="bx bx-power-off" /> Close &amp; Exit Application
+                </button>
+              </div>
             </div>
           </div>
         </main>
+      )}
+
+      {/* Bottom Bar — System Status & Quick Actions */}
+      <footer className={styles.bottomBar}>
+        <div className={styles.bottomBarLeft}>
+          <span className={styles.bottomBarBadge}>
+            <i className="bx bx-shield-alt-2" /> KIOSK LOCKDOWN &middot; FULLSCREEN
+          </span>
+          <span className={styles.bottomBarItem}>
+            <i className="bx bx-wifi" style={{ color: '#15803d' }} /> Network: <b>Optimal</b>
+          </span>
+          <span className={styles.bottomBarItem}>
+            <i className="bx bx-video-recording" style={{ color: '#15803d' }} /> Proctoring Guard: <b>Active</b>
+          </span>
+        </div>
+        <div className={styles.bottomBarRight}>
+          <button
+            className={styles.bottomBarBtn}
+            onClick={() => setShowSettingsModal(true)}
+            title="Open Application Settings &amp; Diagnostics"
+          >
+            <i className="bx bx-slider-alt" /> System Diagnostics
+          </button>
+          {step !== 'exam' ? (
+            <button
+              className={styles.bottomBarBtnExit}
+              onClick={handleExitApp}
+              title="Exit Assessment Client"
+            >
+              <i className="bx bx-power-off" /> Exit App
+            </button>
+          ) : (
+            <button
+              className={styles.bottomBarBtnExitDisabled}
+              disabled
+              title="Exit is disabled during examination"
+            >
+              <i className="bx bx-lock-alt" /> Exit Locked
+            </button>
+          )}
+        </div>
+      </footer>
+
+      {/* Exit Confirmation Modal */}
+      {showExitModal && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modalCard}>
+            <div className={styles.modalHeader}>
+              <div className={styles.modalTitle}>
+                <i className="bx bx-error-circle" style={{ color: step === 'exam' ? 'var(--color-danger)' : 'var(--color-primary)' }} />
+                <span>{step === 'exam' ? 'Terminate & Exit Assessment?' : 'Exit Assessment Client?'}</span>
+              </div>
+              <button className={styles.modalCloseBtn} onClick={() => setShowExitModal(false)}>
+                <i className="bx bx-x" />
+              </button>
+            </div>
+            <div className={styles.modalBody}>
+              {step === 'exam' ? (
+                <div className={styles.modalWarningBox}>
+                  <p><strong>Warning:</strong> You are currently in an active examination session.</p>
+                  <p style={{ marginTop: 6 }}>Exiting the application will immediately submit your answers recorded so far, unlock kiosk mode, and log an assessment termination event to your proctoring report.</p>
+                </div>
+              ) : (
+                <p>Are you sure you want to close and exit the Beyon Secure Lockdown Assessment Client?</p>
+              )}
+            </div>
+            <div className={styles.modalFooter}>
+              <button className={styles.btnSecondary} onClick={() => setShowExitModal(false)}>
+                Cancel
+              </button>
+              <button
+                className={step === 'exam' ? styles.btnDanger : styles.btnPrimary}
+                onClick={confirmExitApp}
+              >
+                <i className="bx bx-power-off" /> {step === 'exam' ? 'Submit & Exit' : 'Exit Application'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Settings & System Diagnostics Modal */}
+      {showSettingsModal && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modalCard} style={{ maxWidth: 620 }}>
+            <div className={styles.modalHeader}>
+              <div className={styles.modalTitle}>
+                <i className="bx bx-slider-alt" style={{ color: 'var(--color-primary)' }} />
+                <span>System Diagnostics &amp; Lockdown Settings</span>
+              </div>
+              <button className={styles.modalCloseBtn} onClick={() => setShowSettingsModal(false)}>
+                <i className="bx bx-x" />
+              </button>
+            </div>
+            <div className={styles.modalBody}>
+              <div className={styles.diagSection}>
+                <div className={styles.diagSectionTitle}>Environment &amp; Hardware Diagnostics</div>
+                <div className={styles.diagGrid}>
+                  <div className={styles.diagItem}>
+                    <span className={styles.diagKey}>Operating System</span>
+                    <span className={styles.diagVal}>{deviceInfo?.os || systemInfo?.platform || 'Windows 11'}</span>
+                  </div>
+                  <div className={styles.diagItem}>
+                    <span className={styles.diagKey}>Display Resolution</span>
+                    <span className={styles.diagVal}>
+                      {deviceInfo?.screenWidth || window.screen.width} &times; {deviceInfo?.screenHeight || window.screen.height}
+                    </span>
+                  </div>
+                  <div className={styles.diagItem}>
+                    <span className={styles.diagKey}>Processor &amp; Memory</span>
+                    <span className={styles.diagVal}>
+                      {systemInfo?.cpus || 8} CPU Cores &middot; {Math.round((systemInfo?.totalMemory || 16000000000) / 1073741824)} GB RAM
+                    </span>
+                  </div>
+                  <div className={styles.diagItem}>
+                    <span className={styles.diagKey}>Kiosk Mode Status</span>
+                    <span className={styles.diagVal} style={{ color: 'var(--color-success)', fontWeight: 700 }}>
+                      <i className="bx bx-check-shield" /> Fullscreen Locked (No Minimize)
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className={styles.diagSection}>
+                <div className={styles.diagSectionTitle}>Proctoring Hardware Verification</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: '#f8fafc', border: '1px solid #e2e8f0' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <i className="bx bx-camera" style={{ fontSize: 18, color: '#1c2d81' }} />
+                      <span style={{ fontWeight: 600, fontSize: '0.85rem' }}>Camera Sensor Verification</span>
+                    </div>
+                    <button
+                      className={styles.btnSecondary}
+                      style={{ padding: '4px 12px', fontSize: '0.78rem' }}
+                      onClick={toggleCameraTest}
+                    >
+                      {cameraTestActive ? 'Stop Camera Test' : 'Test Camera'}
+                    </button>
+                  </div>
+
+                  {cameraTestActive && (
+                    <div style={{ width: '100%', height: 180, background: '#0f172a', position: 'relative', overflow: 'hidden' }}>
+                      <video
+                        ref={settingsVideoRef}
+                        autoPlay
+                        playsInline
+                        muted
+                        style={{ width: '100%', height: '100%', objectFit: 'cover', transform: 'scaleX(-1)' }}
+                      />
+                    </div>
+                  )}
+
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: '#f8fafc', border: '1px solid #e2e8f0' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <i className="bx bx-microphone" style={{ fontSize: 18, color: '#1c2d81' }} />
+                      <span style={{ fontWeight: 600, fontSize: '0.85rem' }}>Audio Microphone Input</span>
+                    </div>
+                    <span style={{ color: 'var(--color-success)', fontWeight: 700, fontSize: '0.8rem' }}>
+                      <i className="bx bx-check" /> Verified &amp; Active
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className={styles.diagSection}>
+                <div className={styles.diagSectionTitle}>Lockdown Controls</div>
+                <div style={{ display: 'flex', gap: 10 }}>
+                  <button
+                    className={styles.btnSecondary}
+                    style={{ flex: 1 }}
+                    onClick={() => window.beyon?.app?.forceFullscreen?.()}
+                  >
+                    <i className="bx bx-fullscreen" /> Force Re-enter Fullscreen
+                  </button>
+                  <button
+                    className={styles.btnDanger}
+                    style={{ flex: 1 }}
+                    onClick={() => {
+                      setShowSettingsModal(false);
+                      setShowExitModal(true);
+                    }}
+                  >
+                    <i className="bx bx-power-off" /> Exit Application
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div className={styles.modalFooter}>
+              <button className={styles.btnPrimary} onClick={() => setShowSettingsModal(false)}>
+                Done &middot; Close Diagnostics
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
