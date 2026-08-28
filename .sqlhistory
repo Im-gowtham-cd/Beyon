@@ -1,1 +1,9 @@
 SHOW TABLES;
+USE beyon ;
+SHOW DATABASES;
+USE beyon ;
+SHOW TABLES;
+SELECT * FROM users;
+USE BEYON;
+SELECT * FROM users;
+QUIT ;
