@@ -1,27 +1,33 @@
 .section {
-  margin-bottom: var(--space-2xl);
+  margin-bottom: 28px;
+  background: #f8fafc;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  padding: 24px;
 }
 
 .sectionHeader {
-  margin-bottom: var(--space-lg);
+  margin-bottom: 20px;
 }
 
 .sectionTitle {
-  font-family: var(--font-heading);
-  font-size: var(--text-xl);
-  font-weight: var(--font-semibold);
-  color: var(--color-text);
-  margin: 0 0 var(--space-xs);
+  font-family: var(--font-heading, Montserrat);
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #1c2d81;
+  margin: 0 0 4px;
+  letter-spacing: -0.01em;
 }
 
 .sectionSubtitle {
-  font-size: var(--text-sm);
-  color: var(--color-text-muted);
+  font-size: 0.84rem;
+  color: #64748b;
   margin: 0;
+  line-height: 1.4;
 }
 
 .divider {
   border: none;
-  border-top: 1px solid var(--color-border);
-  margin-top: var(--space-lg);
+  border-top: 1px solid #e2e8f0;
+  margin-top: 20px;
 }

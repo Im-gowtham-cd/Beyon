@@ -1,6 +1,6 @@
 .layout {
   min-height: 100vh;
-  background: var(--color-bg);
+  background-color: var(--color-bg, #f4f6fb);
   display: flex;
   flex-direction: column;
 }
@@ -9,66 +9,102 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 var(--space-xl);
-  height: var(--header-height);
-  border-bottom: 1px solid var(--color-border);
-  background: var(--color-surface);
+  padding: 0 32px;
+  height: 64px;
+  border-bottom: 1px solid var(--color-border-light, #e2e8f0);
+  background: #ffffff;
   position: sticky;
   top: 0;
   z-index: 100;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
 }
 
-.headerLeft {
+.brandLink {
   display: flex;
   align-items: center;
-  gap: var(--space-sm);
+  gap: 10px;
+  text-decoration: none;
 }
 
-.logoIcon {
-  width: 32px;
-  height: 32px;
-  background: var(--color-primary);
-  color: var(--color-black);
-  border-radius: var(--radius-sm);
+.brandLogo {
+  width: 34px;
+  height: 34px;
+  background: linear-gradient(135deg, #1c2d81 0%, #253cac 100%);
+  color: #fed601;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: var(--font-heading);
-  font-weight: var(--font-bold);
-  font-size: var(--text-sm);
+  font-family: var(--font-heading, Montserrat);
+  font-weight: 900;
+  font-size: 1rem;
+  box-shadow: 0 2px 6px rgba(28, 45, 129, 0.2);
 }
 
-.logoText {
-  font-family: var(--font-heading);
-  font-weight: var(--font-bold);
-  font-size: var(--text-lg);
-  color: var(--color-text);
+.brandTextGroup {
+  display: flex;
+  flex-direction: column;
 }
 
-.stepLabel {
-  font-size: var(--text-sm);
-  color: var(--color-text-muted);
+.brandName {
+  font-family: var(--font-heading, Montserrat);
+  font-weight: 900;
+  font-size: 1.05rem;
+  color: #1c2d81;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
 }
 
-.stepLabel span {
-  color: var(--color-text-secondary);
-  font-weight: var(--font-medium);
+.brandTag {
+  font-size: 0.68rem;
+  color: #64748b;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.stepBadge {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #64748b;
+  background: #f1f5f9;
+  padding: 5px 12px;
+  border-radius: 20px;
+  border: 1px solid #e2e8f0;
+}
+
+.stepHighlight {
+  color: #1c2d81;
+  font-weight: 800;
 }
 
 .content {
   flex: 1;
   width: 100%;
-  max-width: 1500px;
+  max-width: 860px;
   margin: 0 auto;
-  padding: var(--space-2xl) var(--space-xl);
+  padding: 36px 20px 60px;
+}
+
+.contentCard {
+  background: #ffffff;
+  border-radius: 16px;
+  border: 1px solid var(--color-border-light, #e2e8f0);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
+  padding: 36px 32px;
 }
 
 @media (max-width: 768px) {
-  .content {
-    padding: var(--space-lg) var(--space-md);
+  .header {
+    padding: 0 16px;
   }
 
-  .header {
-    padding: 0 var(--space-md);
+  .content {
+    padding: 20px 12px 40px;
+  }
+
+  .contentCard {
+    padding: 24px 16px;
+    border-radius: 12px;
   }
 }

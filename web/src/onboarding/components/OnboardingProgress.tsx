@@ -11,20 +11,34 @@ interface Props {
 
 export function OnboardingProgress({ steps, currentStepIndex }: Props) {
   return (
-    <div className={styles.progress}>
-      {steps.map((step, i) => (
-        <div key={i}>
-          <div className={`${styles.step} ${i === currentStepIndex ? styles.active : ''} ${i < currentStepIndex ? styles.completed : ''}`}>
-            <div className={styles.stepCircle}>
-              {i < currentStepIndex ? '✓' : i + 1}
+    <div className={styles.progressContainer}>
+      <div className={styles.stepper}>
+        {steps.map((step, i) => {
+          const isCompleted = i < currentStepIndex;
+          const isActive = i === currentStepIndex;
+          return (
+            <div key={i} className={styles.stepItem}>
+              <div className={styles.stepHeader}>
+                <div
+                  className={`${styles.stepCircle} ${isActive ? styles.circleActive : ''} ${isCompleted ? styles.circleCompleted : ''}`}
+                >
+                  {isCompleted ? '✓' : i + 1}
+                </div>
+                {i < steps.length - 1 && (
+                  <div
+                    className={`${styles.connector} ${isCompleted ? styles.connectorCompleted : ''}`}
+                  />
+                )}
+              </div>
+              <span
+                className={`${styles.stepLabel} ${isActive ? styles.labelActive : ''} ${isCompleted ? styles.labelCompleted : ''}`}
+              >
+                {step.label}
+              </span>
             </div>
-            <span className={styles.stepLabel}>{step.label}</span>
-          </div>
-          {i < steps.length - 1 && (
-            <div className={`${styles.connector} ${i < currentStepIndex ? styles.completed : ''}`} />
-          )}
-        </div>
-      ))}
+          );
+        })}
+      </div>
     </div>
   );
 }

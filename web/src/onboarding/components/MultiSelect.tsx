@@ -31,43 +31,54 @@ export function MultiSelect({ id, label, options, selected, onChange, required, 
     }
   }
 
+  // Combine standard options and custom selected options
+  const allDisplayOptions = Array.from(new Set([...options, ...selected]));
+
   return (
-    <div className={styles.field}>
+    <div className={styles.field} id={id}>
       <label className={styles.label}>
         {label}
         {required && <span className={styles.required}>*</span>}
       </label>
-      <div className={styles.options} id={id}>
-        {options.map(opt => (
-          <button key={opt} type="button" className={`${styles.option} ${selected.includes(opt) ? styles.selected : ''}`} onClick={() => toggle(opt)}>
-            {opt}
-          </button>
-        ))}
+
+      <div className={styles.chipsContainer}>
+        {allDisplayOptions.map(opt => {
+          const isSelected = selected.includes(opt);
+          return (
+            <button
+              key={opt}
+              type="button"
+              className={`${styles.chip} ${isSelected ? styles.chipSelected : ''}`}
+              onClick={() => toggle(opt)}
+            >
+              <span className={styles.chipCheck}>{isSelected ? '✓' : '+'}</span>
+              <span>{opt}</span>
+            </button>
+          );
+        })}
       </div>
+
       {allowCustom && (
-        <div style={{ display: 'flex', gap: 'var(--space-sm)', marginTop: 'var(--space-sm)' }}>
+        <div className={styles.customRow}>
           <input
             type="text"
+            className={styles.customInput}
             value={customValue}
             onChange={e => setCustomValue(e.target.value)}
-            onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addCustom(); } }}
-            placeholder="Add custom..."
-            style={{ flex: 1, padding: '8px 12px', background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-sm)', color: 'var(--color-text)', fontSize: 'var(--text-sm)' }}
+            onKeyDown={e => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                addCustom();
+              }
+            }}
+            placeholder="Type other role / industry and press Add..."
           />
-          <button type="button" onClick={addCustom} style={{ padding: '8px 16px', background: 'var(--color-surface-2)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-sm)', color: 'var(--color-text)', cursor: 'pointer', fontSize: 'var(--text-sm)' }}>
-            Add
+          <button type="button" className={styles.addCustomBtn} onClick={addCustom}>
+            + Add Option
           </button>
         </div>
       )}
-      {selected.length > 0 && (
-        <div className={styles.options}>
-          {selected.map(val => (
-            <button key={val} type="button" className={`${styles.option} ${styles.selected}`} onClick={() => toggle(val)}>
-              {val} ✕
-            </button>
-          ))}
-        </div>
-      )}
+
       {error && <span className={styles.errorText} role="alert">{error}</span>}
     </div>
   );
