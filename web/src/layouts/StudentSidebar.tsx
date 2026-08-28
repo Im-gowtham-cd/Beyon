@@ -6,11 +6,17 @@ import styles from './StudentSidebar.module.css';
 interface StudentSidebarProps {
   mobileOpen?: boolean;
   onCloseMobile?: () => void;
+  collapsed?: boolean;
+  onToggleCollapse?: () => void;
 }
 
-export function StudentSidebar({ mobileOpen = false, onCloseMobile }: StudentSidebarProps) {
+export function StudentSidebar({
+  mobileOpen = false,
+  onCloseMobile,
+  collapsed = false,
+  onToggleCollapse,
+}: StudentSidebarProps) {
   const { user } = useAuth();
-  const [collapsed, setCollapsed] = useState(false);
   const [coins, setCoins] = useState<number>(250);
   const [streak, setStreak] = useState<number>(18);
 
@@ -159,17 +165,19 @@ export function StudentSidebar({ mobileOpen = false, onCloseMobile }: StudentSid
         </div>
 
         {/* Sidebar Footer */}
-        <div className={styles.sidebarFooter}>
-          <button
-            type="button"
-            className={styles.toggleBtn}
-            onClick={() => setCollapsed(!collapsed)}
-            title={collapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
-          >
-            <i className={`bx ${collapsed ? 'bx-chevron-right' : 'bx-chevron-left'}`} />
-            {!collapsed && <span>Collapse Sidebar</span>}
-          </button>
-        </div>
+        {onToggleCollapse && (
+          <div className={styles.sidebarFooter}>
+            <button
+              type="button"
+              className={styles.toggleBtn}
+              onClick={onToggleCollapse}
+              title={collapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
+            >
+              <i className={`bx ${collapsed ? 'bx-chevron-right' : 'bx-chevron-left'}`} />
+              {!collapsed && <span>Collapse Sidebar</span>}
+            </button>
+          </div>
+        )}
       </aside>
     </>
   );

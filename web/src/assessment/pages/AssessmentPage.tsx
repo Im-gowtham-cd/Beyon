@@ -168,7 +168,7 @@ export function AssessmentPage() {
       async function loadHub() {
         setHubLoading(true);
         try {
-          const token = localStorage.getItem('beyon_access_token');
+          const token = localStorage.getItem('beyon_token') || localStorage.getItem('beyon_access_token');
           const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
           const [tRes, aRes] = await Promise.all([
             fetch('/api/v1/tests', { headers }).then(r => r.json()).catch(() => ({ data: [] })),

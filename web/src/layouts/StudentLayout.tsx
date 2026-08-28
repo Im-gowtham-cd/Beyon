@@ -8,6 +8,7 @@ export function StudentLayout() {
   const { logout } = useAuth();
   const navigate = useNavigate();
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   return (
     <div className={styles.layout}>
@@ -30,14 +31,18 @@ export function StudentLayout() {
       </div>
 
       <div className={styles.bodyWrapper}>
-        {/* Full-Height Left Sidebar */}
+        {/* Full-Height Fixed Left Sidebar */}
         <StudentSidebar
           mobileOpen={mobileSidebarOpen}
           onCloseMobile={() => setMobileSidebarOpen(false)}
+          collapsed={sidebarCollapsed}
+          onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
         />
 
-        {/* Primary Main Workspace Canvas */}
-        <main className={styles.mainContent}>
+        {/* Primary Main Workspace Canvas (Offset from fixed sidebar) */}
+        <main
+          className={`${styles.mainContent} ${sidebarCollapsed ? styles.mainContentCollapsed : ''}`}
+        >
           {/* Subtle Top Utility Bar */}
           <header className={styles.topUtilityBar}>
             <div className={styles.utilityLeft}>

@@ -11,7 +11,7 @@ export function StudentHome() {
   useEffect(() => {
     async function loadData() {
       try {
-        const token = localStorage.getItem('beyon_access_token');
+        const token = localStorage.getItem('beyon_token') || localStorage.getItem('beyon_access_token');
         if (token) {
           const res = await fetch('/api/v1/student/profile', {
             headers: { Authorization: `Bearer ${token}` },
