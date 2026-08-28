@@ -1,5 +1,17 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../auth/context/AuthContext';
+import {
+  Briefcase,
+  MapPin,
+  Globe,
+  Users,
+  Info,
+  Target,
+  Cpu,
+  Mail,
+  ShieldCheck,
+  UserCheck,
+} from 'lucide-react';
 import styles from './CompanyProfilePage.module.css';
 
 export function CompanyProfilePage() {
@@ -51,7 +63,8 @@ export function CompanyProfilePage() {
           <div className={styles.badgeRow}>
             <span className={styles.tierBadge}>Tier 1 Corporate Partner</span>
             <span className={styles.verifiedBadge}>
-              <i className="bx bx-check-shield" /> Verified Enterprise
+              <ShieldCheck size={13} />
+              <span>Verified Enterprise</span>
             </span>
           </div>
 
@@ -59,16 +72,16 @@ export function CompanyProfilePage() {
 
           <div className={styles.companyMeta}>
             <span className={styles.metaItem}>
-              <i className="bx bx-briefcase" /> {profile?.industry || 'Technology & Software'}
+              <Briefcase size={14} /> {profile?.industry || 'Technology & Software'}
             </span>
             <span className={styles.metaItem}>
-              <i className="bx bx-map-pin" /> {profile?.headquarters || 'Bangalore, India'}
+              <MapPin size={14} /> {profile?.headquarters || 'Bangalore, India'}
             </span>
             <span className={styles.metaItem}>
-              <i className="bx bx-globe" /> {profile?.website || 'https://company.beyon.io'}
+              <Globe size={14} /> {profile?.website || 'https://company.beyon.io'}
             </span>
             <span className={styles.metaItem}>
-              <i className="bx bx-group" /> {profile?.companySize || '5,000+ Employees'}
+              <Users size={14} /> {profile?.companySize || '5,000+ Employees'}
             </span>
           </div>
         </div>
@@ -80,7 +93,8 @@ export function CompanyProfilePage() {
           {/* About Company */}
           <div className={styles.card}>
             <h3 className={styles.cardTitle}>
-              <i className="bx bx-info-circle" /> Company Overview
+              <Info size={18} style={{ color: '#1c2d81' }} />
+              <span>Company Overview</span>
             </h3>
             <p className={styles.cardText}>
               {profile?.about ||
@@ -91,7 +105,8 @@ export function CompanyProfilePage() {
           {/* Hiring Preferences */}
           <div className={styles.card}>
             <h3 className={styles.cardTitle}>
-              <i className="bx bx-target-lock" /> Campus Hiring Policies &amp; Preferences
+              <Target size={18} style={{ color: '#1c2d81' }} />
+              <span>Campus Hiring Policies &amp; Preferences</span>
             </h3>
             <div className={styles.infoGrid}>
               <div className={styles.infoItem}>
@@ -116,7 +131,8 @@ export function CompanyProfilePage() {
           {/* Required Technology Matrix */}
           <div className={styles.card}>
             <h3 className={styles.cardTitle}>
-              <i className="bx bx-chip" /> Core Tech Stack &amp; Skill Taxonomy
+              <Cpu size={18} style={{ color: '#1c2d81' }} />
+              <span>Core Tech Stack &amp; Skill Taxonomy</span>
             </h3>
             <div className={styles.skillsList}>
               {companySkills.length > 0 ? (
@@ -140,7 +156,8 @@ export function CompanyProfilePage() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
           <div className={styles.card}>
             <h3 className={styles.cardTitle}>
-              <i className="bx bx-envelope" /> Official Contact Info
+              <Mail size={18} style={{ color: '#1c2d81' }} />
+              <span>Official Contact Info</span>
             </h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <div className={styles.infoItem}>
@@ -160,7 +177,8 @@ export function CompanyProfilePage() {
 
           <div className={styles.card}>
             <h3 className={styles.cardTitle}>
-              <i className="bx bx-user-check" /> Lead Recruitment Representatives
+              <UserCheck size={18} style={{ color: '#1c2d81' }} />
+              <span>Lead Recruitment Representatives</span>
             </h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               {representatives.length > 0 ? (

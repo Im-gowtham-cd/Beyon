@@ -1,6 +1,26 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { NavLink, Link } from 'react-router-dom';
 import { useAuth } from '../auth/context/AuthContext';
+import {
+  LayoutDashboard,
+  User,
+  Cpu,
+  Code2,
+  Target,
+  ShieldCheck,
+  Timer,
+  Briefcase,
+  FileText,
+  LineChart,
+  Trophy,
+  BarChart2,
+  Award,
+  Bell,
+  Flame,
+  Coins,
+  ChevronLeft,
+  ChevronRight,
+} from 'lucide-react';
 import styles from './StudentSidebar.module.css';
 
 interface StudentSidebarProps {
@@ -46,35 +66,35 @@ export function StudentSidebar({
     {
       title: 'Workspace',
       items: [
-        { to: '/student/home', icon: 'bx bx-home-alt-2', label: 'Dashboard' },
-        { to: '/student/profile', icon: 'bx bx-user-pin', label: 'Portfolio & Profile' },
-        { to: '/student/skills', icon: 'bx bx-chip', label: 'Skill Taxonomy', badge: '109', badgeType: 'primary' },
+        { to: '/student/home', icon: LayoutDashboard, label: 'Dashboard' },
+        { to: '/student/profile', icon: User, label: 'Portfolio & Profile' },
+        { to: '/student/skills', icon: Cpu, label: 'Skill Taxonomy', badge: '109', badgeType: 'primary' },
       ],
     },
     {
       title: 'Practice & Tests',
       items: [
-        { to: '/practice', icon: 'bx bx-code-block', label: 'Practice Arena', badge: '300+ Qs', badgeType: 'primary' },
-        { to: '/daily-challenge', icon: 'bx bx-target-lock', label: 'Daily Challenge', badge: '+50 🪙', badgeType: 'gold' },
-        { to: '/assessment', icon: 'bx bx-shield-quarter', label: 'Proctored Assessments', badge: '16 Tests', badgeType: 'primary' },
-        { to: '/weekly-tests', icon: 'bx bx-timer', label: 'Benchmark Tests' },
+        { to: '/practice', icon: Code2, label: 'Practice Arena', badge: '300+ Qs', badgeType: 'primary' },
+        { to: '/daily-challenge', icon: Target, label: 'Daily Challenge', badge: '+50 Coins', badgeType: 'gold' },
+        { to: '/assessment', icon: ShieldCheck, label: 'Proctored Assessments', badge: '16 Tests', badgeType: 'primary' },
+        { to: '/weekly-tests', icon: Timer, label: 'Benchmark Tests' },
       ],
     },
     {
       title: 'Career & Drives',
       items: [
-        { to: '/opportunities', icon: 'bx bx-briefcase-alt-2', label: 'Opportunities & Drives', badge: '35 Open', badgeType: 'primary' },
-        { to: '/my-applications', icon: 'bx bx-file', label: 'My Applications' },
-        { to: '/placement', icon: 'bx bx-line-chart', label: 'Placement Intel' },
+        { to: '/opportunities', icon: Briefcase, label: 'Opportunities & Drives', badge: '35 Open', badgeType: 'primary' },
+        { to: '/my-applications', icon: FileText, label: 'My Applications' },
+        { to: '/placement', icon: LineChart, label: 'Placement Intel' },
       ],
     },
     {
       title: 'Progress & Social',
       items: [
-        { to: '/leaderboard', icon: 'bx bx-trophy', label: 'Leaderboard' },
-        { to: '/stats', icon: 'bx bx-bar-chart-alt-2', label: 'Analytics & Stats' },
-        { to: '/achievements', icon: 'bx bx-medal', label: 'Achievements' },
-        { to: '/notifications', icon: 'bx bx-bell', label: 'Notifications' },
+        { to: '/leaderboard', icon: Trophy, label: 'Leaderboard' },
+        { to: '/stats', icon: BarChart2, label: 'Analytics & Stats' },
+        { to: '/achievements', icon: Award, label: 'Achievements' },
+        { to: '/notifications', icon: Bell, label: 'Notifications' },
       ],
     },
   ];
@@ -108,11 +128,14 @@ export function StudentSidebar({
           </Link>
         </div>
 
+        {/* Sidebar Scrollable Body */}
         <div className={styles.sidebarScroll}>
-          {/* User Mini Card */}
+          {/* User Card */}
           <div className={`${styles.userCard} ${collapsed ? styles.userCardCollapsed : ''}`}>
             <div className={styles.userInfo}>
-              <div className={styles.avatar}>{initials}</div>
+              <div className={styles.avatar}>
+                <span>{initials}</span>
+              </div>
               {!collapsed && (
                 <div className={styles.userMeta}>
                   <span className={styles.userName}>{displayName}</span>
@@ -122,62 +145,70 @@ export function StudentSidebar({
             </div>
 
             {!collapsed && (
-              <div className={styles.walletBar}>
-                <div className={styles.coinTag} title="Beyon Coins Balance">
-                  <span>🪙</span>
+              <div className={styles.userStatsBar}>
+                <div className={styles.userStatItem}>
+                  <Coins size={14} className={styles.goldIcon} />
                   <span>{coins} Coins</span>
                 </div>
-                <div className={styles.streakTag} title="Active Daily Streak">
-                  <span>🔥</span>
+                <div className={styles.statDivider} />
+                <div className={styles.userStatItem}>
+                  <Flame size={14} className={styles.fireIcon} />
                   <span>{streak}d Streak</span>
                 </div>
               </div>
             )}
           </div>
 
-          {/* Navigation Links */}
-          {navSections.map((sec, idx) => (
-            <div key={idx} className={styles.navSection}>
-              {!collapsed && <span className={styles.sectionTitle}>{sec.title}</span>}
-              {sec.items.map(item => (
-                <NavLink
-                  key={item.to}
-                  to={item.to}
-                  onClick={onCloseMobile}
-                  className={({ isActive }) =>
-                    `${styles.navItem} ${isActive ? styles.navItemActive : ''}`
-                  }
-                  title={collapsed ? item.label : undefined}
-                >
-                  <i className={`${item.icon} ${styles.navIcon}`} />
-                  {!collapsed && <span>{item.label}</span>}
-                  {!collapsed && item.badge && (
-                    <span
-                      className={`${styles.navBadge} ${item.badgeType === 'gold' ? styles.navBadgeGold : styles.navBadgePrimary}`}
-                    >
-                      {item.badge}
-                    </span>
-                  )}
-                </NavLink>
-              ))}
+          {/* Navigation Sections */}
+          {navSections.map((section) => (
+            <div key={section.title} className={styles.navSection}>
+              {!collapsed && <span className={styles.sectionTitle}>{section.title}</span>}
+              {section.items.map((item) => {
+                const IconComponent = item.icon;
+                return (
+                  <NavLink
+                    key={item.to}
+                    to={item.to}
+                    end={item.to === '/student/home'}
+                    className={({ isActive }) =>
+                      `${styles.navItem} ${isActive ? styles.navItemActive : ''}`
+                    }
+                    onClick={onCloseMobile}
+                    title={collapsed ? item.label : undefined}
+                  >
+                    {({ isActive }) => (
+                      <>
+                        {isActive && <span className={styles.activeIndicator} />}
+                        <IconComponent size={18} className={styles.navIcon} />
+                        {!collapsed && <span className={styles.navLabel}>{item.label}</span>}
+                        {!collapsed && item.badge && (
+                          <span className={`${styles.badge} ${styles[`badge_${item.badgeType || 'primary'}`]}`}>
+                            {item.badge}
+                          </span>
+                        )}
+                      </>
+                    )}
+                  </NavLink>
+                );
+              })}
             </div>
           ))}
         </div>
 
-        {/* Sidebar Footer */}
-        {onToggleCollapse && (
-          <div className={styles.sidebarFooter}>
+        {/* Footer Utility Actions */}
+        <div className={styles.footerSection}>
+          {onToggleCollapse && (
             <button
               type="button"
-              className={styles.toggleBtn}
+              className={styles.collapseBtn}
               onClick={onToggleCollapse}
               title={collapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
             >
-              <i className={`bx ${collapsed ? 'bx-chevron-right' : 'bx-chevron-left'}`} />
+              {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
               {!collapsed && <span>Collapse Sidebar</span>}
             </button>
-          </div>
-        )}
+          )}
+        </div>
       </aside>
     </>
   );

@@ -1,7 +1,24 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../auth/context/AuthContext';
 import { LearningWidget } from '../../student/components/LearningWidget';
+import {
+  UserCheck,
+  Cpu,
+  Code2,
+  Target,
+  ShieldCheck,
+  Briefcase,
+  Trophy,
+  BarChart2,
+  Sparkles,
+  CheckCircle2,
+  Coins,
+  Flame,
+  ArrowRight,
+  BookOpen,
+  Radio,
+} from 'lucide-react';
 import styles from './StudentHome.module.css';
 
 export function StudentHome() {
@@ -40,7 +57,7 @@ export function StudentHome() {
   const quickNavs = [
     {
       to: '/student/profile',
-      icon: 'bx bx-user-pin',
+      icon: UserCheck,
       title: 'Portfolio & Profile',
       desc: 'Showcase projects, verified certifications & skills',
       tag: 'Verified',
@@ -48,7 +65,7 @@ export function StudentHome() {
     },
     {
       to: '/student/skills',
-      icon: 'bx bx-chip',
+      icon: Cpu,
       title: 'Skill Taxonomy',
       desc: 'Explore GPU & AI engineering curriculum matrix',
       tag: '109 Skills',
@@ -56,7 +73,7 @@ export function StudentHome() {
     },
     {
       to: '/practice',
-      icon: 'bx bx-code-block',
+      icon: Code2,
       title: 'Practice Arena',
       desc: 'Solve 300+ MCQ, SQL & algorithmic challenges',
       tag: 'Active',
@@ -64,7 +81,7 @@ export function StudentHome() {
     },
     {
       to: '/daily-challenge',
-      icon: 'bx bx-target-lock',
+      icon: Target,
       title: 'Daily Challenge',
       desc: 'Solve today’s problem & earn bonus Beyon Coins',
       tag: '+50 Coins',
@@ -72,7 +89,7 @@ export function StudentHome() {
     },
     {
       to: '/assessment',
-      icon: 'bx bx-shield-quarter',
+      icon: ShieldCheck,
       title: 'Proctored Assessment',
       desc: 'Schedule or launch lockdown test browser session',
       tag: 'Proctored',
@@ -80,7 +97,7 @@ export function StudentHome() {
     },
     {
       to: '/opportunities',
-      icon: 'bx bx-briefcase-alt-2',
+      icon: Briefcase,
       title: 'Career Opportunities',
       desc: 'Explore enterprise placements and internships',
       tag: 'Drives',
@@ -88,7 +105,7 @@ export function StudentHome() {
     },
     {
       to: '/leaderboard',
-      icon: 'bx bx-trophy',
+      icon: Trophy,
       title: 'Global Leaderboard',
       desc: 'Track cohort rankings, XP milestones & badges',
       tag: 'Live Rank',
@@ -96,9 +113,9 @@ export function StudentHome() {
     },
     {
       to: '/stats',
-      icon: 'bx bx-bar-chart-alt-2',
+      icon: BarChart2,
       title: 'Performance Stats',
-      desc: 'View skill mastery charts & test history',
+      desc: 'Analyze accuracy distributions & mastery metrics',
       tag: 'Analytics',
       tagType: 'primary',
     },
@@ -111,126 +128,148 @@ export function StudentHome() {
         <div className={styles.welcomeInfo}>
           <div className={styles.badgeRow}>
             <span className={styles.portalBadge}>
-              <i className="bx bx-brain" /> Beyon Candidate Portal
+              <Sparkles size={13} style={{ color: '#1c2d81' }} />
+              <span>Beyon Candidate Workspace</span>
             </span>
             <span className={styles.verifiedBadge}>
-              <i className="bx bx-check-shield" /> Verified Beyon Scholar
+              <CheckCircle2 size={13} style={{ color: '#15803d' }} />
+              <span>Verified Scholar</span>
             </span>
           </div>
           <h1 className={styles.welcomeTitle}>
             Welcome back, <span className={styles.highlightName}>{firstName}</span>
           </h1>
           <p className={styles.welcomeSub}>
-            AI Engineering &amp; Skill Development Track &middot; Accelerating Verified Competencies
+            Ready to solve today’s GPU &amp; AI challenges and climb the cohort ranks?
           </p>
         </div>
 
         <div className={styles.statsSummary}>
           <div className={styles.statMetric}>
-            <span className={styles.statMetricLabel}>Academic CGPA</span>
-            <span className={styles.statMetricValue}>{profileData?.cgpa ? Number(profileData.cgpa).toFixed(2) : '9.10'}</span>
-          </div>
-          <div className={styles.statDivider} />
-          <div className={styles.statMetric}>
             <span className={styles.statMetricLabel}>Beyon Coins</span>
             <span className={`${styles.statMetricValue} ${styles.goldVal}`}>
-              <i className="bx bx-coin-stack" /> {profileData?.coins ?? '2,450'}
+              <Coins size={16} style={{ color: '#b45309' }} /> {profileData?.beyonCoins || 250}
             </span>
           </div>
           <div className={styles.statDivider} />
           <div className={styles.statMetric}>
-            <span className={styles.statMetricLabel}>Status</span>
-            <span className={styles.statMetricValue} style={{ color: '#15803d', fontSize: '1rem', fontWeight: 800 }}>ACTIVE</span>
+            <span className={styles.statMetricLabel}>Daily Streak</span>
+            <span className={styles.statMetricValue}>
+              <Flame size={16} style={{ color: '#ea580c', display: 'inline' }} /> 18 Days
+            </span>
+          </div>
+          <div className={styles.statDivider} />
+          <div className={styles.statMetric}>
+            <span className={styles.statMetricLabel}>Accuracy</span>
+            <span className={styles.statMetricValue}>87.4%</span>
           </div>
         </div>
       </section>
 
-      {/* Main Grid Area */}
+      {/* Main Grid: Modules & Side Widgets */}
       <div className={styles.dashboardGrid}>
-        <main className={styles.mainContent}>
+        <div className={styles.mainContent}>
           {/* Daily Challenge Spotlight Banner */}
           <div className={styles.spotlightBanner}>
             <div className={styles.spotlightIcon}>
-              <i className="bx bx-flame" />
+              <Target size={24} style={{ color: '#fed601' }} />
             </div>
             <div className={styles.spotlightBody}>
-              <span className={styles.spotlightTag}>Daily Challenge Active</span>
-              <h3>{dailyChallenge?.question?.title || dailyChallenge?.title || 'Interactive Technical Daily Challenge'}</h3>
-              <p>Solve today's algorithmic puzzle within 30 minutes to claim 50 Beyon Coins and 100 XP.</p>
+              <span className={styles.spotlightTag}>
+                Today&apos;s Featured Challenge &middot; +50 Coins
+              </span>
+              <h3>
+                {dailyChallenge?.question?.title ||
+                  'CUDA Kernel Memory Divergence & Shared Memory Bank Optimization'}
+              </h3>
+              <p>
+                {dailyChallenge?.question?.description?.slice(0, 120) ||
+                  'Analyze warp scheduling bottlenecks, optimize memory coalescing, and earn verified competence badges.'}
+                ...
+              </p>
             </div>
             <Link to="/daily-challenge" className={styles.spotlightAction}>
-              <span>Start Challenge</span>
-              <i className="bx bx-right-arrow-alt" />
+              <span>Solve Challenge</span>
+              <ArrowRight size={14} />
             </Link>
           </div>
 
-          {/* Quick Hub Cards */}
+          {/* Core Modules Grid */}
           <div className={styles.sectionHeader}>
             <h2 className={styles.sectionTitle}>
-              <i className="bx bx-grid-alt" /> Core Portals &amp; Tools
+              <Sparkles size={18} style={{ color: '#1c2d81' }} /> Workspace Modules
             </h2>
-            <span className={styles.sectionMeta}>8 Active Modules</span>
+            <span className={styles.sectionMeta}>8 Core Areas</span>
           </div>
 
           <div className={styles.cardsGrid}>
-            {quickNavs.map(nav => (
-              <Link key={nav.to} to={nav.to} className={styles.card}>
-                <div className={styles.cardHeader}>
-                  <div className={styles.cardIconBox}>
-                    <i className={nav.icon} />
+            {quickNavs.map((item) => {
+              const IconComp = item.icon;
+              return (
+                <Link key={item.to} to={item.to} className={styles.card}>
+                  <div className={styles.cardHeader}>
+                    <div className={styles.cardIconBox}>
+                      <IconComp size={20} />
+                    </div>
+                    <span className={`${styles.cardTag} ${styles[`tag_${item.tagType}`]}`}>
+                      {item.tag}
+                    </span>
                   </div>
-                  <span className={`${styles.cardTag} ${styles[`tag_${nav.tagType}`]}`}>
-                    {nav.tag}
-                  </span>
-                </div>
-                <h3 className={styles.cardTitle}>{nav.title}</h3>
-                <p className={styles.cardDesc}>{nav.desc}</p>
-                <div className={styles.cardFoot}>
-                  <span>Access Module</span>
-                  <i className="bx bx-chevron-right" />
-                </div>
-              </Link>
-            ))}
+                  <h3 className={styles.cardTitle}>{item.title}</h3>
+                  <p className={styles.cardDesc}>{item.desc}</p>
+                  <div className={styles.cardFoot}>
+                    <span>Launch Module</span>
+                    <ArrowRight size={14} />
+                  </div>
+                </Link>
+              );
+            })}
           </div>
-        </main>
+        </div>
 
-        {/* Aside Sidebar */}
-        <aside className={styles.sideCol}>
+        {/* Sidebar Column */}
+        <div className={styles.sideCol}>
+          {/* Active Learning Widget */}
           <LearningWidget />
 
-          {/* Proctored Exam Quick Launch */}
+          {/* Quick Benchmark Test Card */}
           <div className={styles.sideCard}>
             <div className={styles.sideCardHeader}>
-              <i className="bx bx-laptop" />
-              <h4>Secure Test Client</h4>
+              <ShieldCheck size={18} style={{ color: '#1c2d81' }} />
+              <h4>Proctored Benchmark Test</h4>
             </div>
             <p className={styles.sideCardText}>
-              Launch the lockdown desktop proctoring client for verified skill assessments.
+              2026 Batch Campus Assessment &middot; 60 mins lockdown proctored technical evaluation.
             </p>
             <Link to="/assessment" className={styles.sideCardBtn}>
-              <i className="bx bx-play-circle" /> Launch Assessment
+              <ShieldCheck size={14} />
+              <span>Launch Test Browser</span>
             </Link>
           </div>
 
-          {/* Academic & Department Info */}
+          {/* Cohort Enrollment Card */}
           <div className={styles.sideCard}>
             <div className={styles.sideCardHeader}>
-              <i className="bx bx-buildings" />
-              <h4>Institution Enrollment</h4>
+              <BookOpen size={18} style={{ color: '#1c2d81' }} />
+              <h4>Cohort Enrollment</h4>
             </div>
             <div className={styles.enrollmentMeta}>
               <div>
-                <strong>Department:</strong> {profileData?.department || 'Computer Science & Engineering'}
+                <strong>Track:</strong> Advanced Parallel &amp; GPU Systems
               </div>
               <div>
-                <strong>Batch:</strong> Class of {profileData?.graduationYear || '2026'}
+                <strong>Institution:</strong> Premier Engineering Consortium
               </div>
               <div>
-                <strong>Status:</strong> <span className={styles.statusLive}>Enrolled &middot; Good Standing</span>
+                <strong>Status:</strong>{' '}
+                <span className={styles.statusLive}>
+                  <Radio size={12} style={{ display: 'inline', marginRight: '4px' }} />
+                  Active Scholar
+                </span>
               </div>
             </div>
           </div>
-        </aside>
+        </div>
       </div>
     </div>
   );

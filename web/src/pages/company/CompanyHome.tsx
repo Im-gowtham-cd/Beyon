@@ -1,6 +1,24 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../auth/context/AuthContext';
+import {
+  Building2,
+  ShieldCheck,
+  Briefcase,
+  Users,
+  UserCheck,
+  TrendingUp,
+  Check,
+  Calendar,
+  Award,
+  Rocket,
+  PlusCircle,
+  Search,
+  GitCommit,
+  ListChecks,
+  ArrowRight,
+  Brain,
+} from 'lucide-react';
 import styles from './CompanyHome.module.css';
 
 export function CompanyHome() {
@@ -39,7 +57,6 @@ export function CompanyHome() {
   const companyName = profileData?.companyName || user?.name || 'Enterprise Recruiter';
   const recruiterName = user?.name?.split(' ')[0] || 'Recruiter';
 
-  // Sample real-time candidate applicants for corporate demonstration
   const recentApplicants = [
     {
       id: 'c-01',
@@ -105,10 +122,12 @@ export function CompanyHome() {
         <div className={styles.welcomeInfo}>
           <div className={styles.badgeRow}>
             <span className={styles.portalBadge}>
-              <i className="bx bx-buildings" /> Beyon Corporate Recruitment Portal
+              <Building2 size={13} />
+              <span>Beyon Corporate Recruitment Portal</span>
             </span>
             <span className={styles.verifiedBadge}>
-              <i className="bx bx-check-shield" /> Verified Enterprise Partner
+              <ShieldCheck size={13} style={{ color: '#15803d' }} />
+              <span>Verified Enterprise Partner</span>
             </span>
           </div>
           <h1 className={styles.welcomeTitle}>
@@ -144,37 +163,53 @@ export function CompanyHome() {
         <div className={styles.kpiCard}>
           <div className={styles.kpiHeader}>
             <span className={styles.kpiLabel}>Active Job Openings</span>
-            <div className={styles.kpiIcon}><i className="bx bx-briefcase" /></div>
+            <div className={styles.kpiIcon}>
+              <Briefcase size={16} />
+            </div>
           </div>
           <div className={styles.kpiValue}>{opportunities.length || 32}</div>
-          <span className={styles.kpiSub}><i className="bx bx-trending-up" /> +4 posted this week</span>
+          <span className={styles.kpiSub}>
+            <TrendingUp size={14} /> +4 posted this week
+          </span>
         </div>
 
         <div className={styles.kpiCard} style={{ borderTopColor: '#0284c7' }}>
           <div className={styles.kpiHeader}>
             <span className={styles.kpiLabel}>Total Pipeline Candidates</span>
-            <div className={styles.kpiIcon} style={{ background: '#f0f9ff', color: '#0284c7' }}><i className="bx bx-group" /></div>
+            <div className={styles.kpiIcon} style={{ background: '#f0f9ff', color: '#0284c7' }}>
+              <Users size={16} />
+            </div>
           </div>
           <div className={styles.kpiValue}>148</div>
-          <span className={styles.kpiSub}><i className="bx bx-check" /> 100% Verified Scholars</span>
+          <span className={styles.kpiSub}>
+            <Check size={14} /> 100% Verified Scholars
+          </span>
         </div>
 
         <div className={styles.kpiCard} style={{ borderTopColor: '#15803d' }}>
           <div className={styles.kpiHeader}>
             <span className={styles.kpiLabel}>Shortlisted for Tech Interview</span>
-            <div className={styles.kpiIcon} style={{ background: '#f0fdf4', color: '#15803d' }}><i className="bx bx-user-check" /></div>
+            <div className={styles.kpiIcon} style={{ background: '#f0fdf4', color: '#15803d' }}>
+              <UserCheck size={16} />
+            </div>
           </div>
           <div className={styles.kpiValue}>36</div>
-          <span className={styles.kpiSub}><i className="bx bx-calendar-event" /> 12 scheduled today</span>
+          <span className={styles.kpiSub}>
+            <Calendar size={14} /> 12 scheduled today
+          </span>
         </div>
 
         <div className={styles.kpiCard} style={{ borderTopColor: '#d97706' }}>
           <div className={styles.kpiHeader}>
             <span className={styles.kpiLabel}>Avg Assessment Score</span>
-            <div className={styles.kpiIcon} style={{ background: '#fef3c7', color: '#d97706' }}><i className="bx bx-shield-quarter" /></div>
+            <div className={styles.kpiIcon} style={{ background: '#fef3c7', color: '#d97706' }}>
+              <Award size={16} />
+            </div>
           </div>
           <div className={styles.kpiValue}>84.2%</div>
-          <span className={styles.kpiSub}><i className="bx bx-badge-check" /> 100% Proctored Integrity</span>
+          <span className={styles.kpiSub}>
+            <ShieldCheck size={14} /> 100% Proctored Integrity
+          </span>
         </div>
       </div>
 
@@ -182,7 +217,7 @@ export function CompanyHome() {
       <div className={styles.actionBanner}>
         <div className={styles.actionBannerLeft}>
           <div className={styles.actionBannerIcon}>
-            <i className="bx bx-rocket" />
+            <Rocket size={24} style={{ color: '#fed601' }} />
           </div>
           <div className={styles.actionBannerText}>
             <h3>Ready to scale your technical hiring?</h3>
@@ -191,15 +226,15 @@ export function CompanyHome() {
         </div>
         <div className={styles.actionBannerButtons}>
           <Link to="/company/opportunities/create" className={styles.btnGold}>
-            <i className="bx bx-plus-circle" />
+            <PlusCircle size={15} />
             <span>Post New Drive</span>
           </Link>
           <Link to="/company/candidates" className={styles.btnOutlineWhite}>
-            <i className="bx bx-search-alt-2" />
+            <Search size={15} />
             <span>Discover Candidates</span>
           </Link>
           <Link to="/company/pipeline" className={styles.btnOutlineWhite}>
-            <i className="bx bx-git-commit" />
+            <GitCommit size={15} />
             <span>View Pipeline</span>
           </Link>
         </div>
@@ -211,7 +246,7 @@ export function CompanyHome() {
           {/* Applications Table Header */}
           <div className={styles.sectionHeader}>
             <h2 className={styles.sectionTitle}>
-              <i className="bx bx-list-check" /> Live Candidate Application Stream
+              <ListChecks size={18} style={{ color: '#1c2d81' }} /> Live Candidate Application Stream
             </h2>
             <span className={styles.sectionMeta}>{recentApplicants.length} Recent Applicants</span>
           </div>
@@ -271,7 +306,7 @@ export function CompanyHome() {
           {/* Active Campus Drives Card */}
           <div className={styles.sideCard}>
             <div className={styles.sideCardHeader}>
-              <i className="bx bx-briefcase-alt-2" />
+              <Briefcase size={18} style={{ color: '#1c2d81' }} />
               <h4>Active Campus Drives</h4>
             </div>
             <div className={styles.drivesList}>
@@ -302,14 +337,14 @@ export function CompanyHome() {
               style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '0.78rem', color: '#1c2d81', fontWeight: 600, marginTop: '12px', textDecoration: 'none' }}
             >
               <span>Manage All Drives</span>
-              <i className="bx bx-right-arrow-alt" />
+              <ArrowRight size={14} />
             </Link>
           </div>
 
           {/* AI Recommended Talent Card */}
           <div className={styles.sideCard}>
             <div className={styles.sideCardHeader}>
-              <i className="bx bx-brain" />
+              <Brain size={18} style={{ color: '#1c2d81' }} />
               <h4>AI Matched Scholars</h4>
             </div>
             <div className={styles.talentList}>
@@ -340,7 +375,7 @@ export function CompanyHome() {
               style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '0.78rem', color: '#1c2d81', fontWeight: 600, marginTop: '12px', textDecoration: 'none' }}
             >
               <span>Search All 100+ Candidates</span>
-              <i className="bx bx-right-arrow-alt" />
+              <ArrowRight size={14} />
             </Link>
           </div>
         </div>

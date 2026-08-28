@@ -1,6 +1,22 @@
 ﻿import { useState, useEffect } from 'react';
 import { NavLink, Link } from 'react-router-dom';
 import { useAuth } from '../auth/context/AuthContext';
+import {
+  LayoutDashboard,
+  Briefcase,
+  PlusCircle,
+  UserCheck,
+  GitCommit,
+  Brain,
+  ShieldCheck,
+  FileEdit,
+  Video,
+  LineChart,
+  Building2,
+  MessageSquare,
+  ChevronLeft,
+  ChevronRight,
+} from 'lucide-react';
 import styles from './CompanySidebar.module.css';
 
 interface CompanySidebarProps {
@@ -50,33 +66,33 @@ export function CompanySidebar({
     {
       title: 'Recruitment Command',
       items: [
-        { to: '/company/home', icon: 'bx bx-home-alt-2', label: 'Executive Dashboard' },
-        { to: '/company/opportunities', icon: 'bx bx-briefcase-alt-2', label: 'Job & Campus Drives', badge: activeJobsCount ? `${activeJobsCount} Active` : undefined, badgeType: 'primary' },
-        { to: '/company/opportunities/create', icon: 'bx bx-plus-circle', label: 'Post New Drive / Job' },
+        { to: '/company/home', icon: LayoutDashboard, label: 'Executive Dashboard' },
+        { to: '/company/opportunities', icon: Briefcase, label: 'Job & Campus Drives', badge: activeJobsCount ? `${activeJobsCount} Active` : undefined, badgeType: 'primary' },
+        { to: '/company/opportunities/create', icon: PlusCircle, label: 'Post New Drive / Job' },
       ],
     },
     {
       title: 'Talent & AI Screening',
       items: [
-        { to: '/company/candidates', icon: 'bx bx-user-check', label: 'AI Candidate Discovery', badge: '100+ Verified', badgeType: 'gold' },
-        { to: '/company/pipeline', icon: 'bx bx-git-commit', label: 'Recruitment Pipeline' },
-        { to: '/company/candidate-intelligence', icon: 'bx bx-brain', label: 'Candidate Intelligence' },
+        { to: '/company/candidates', icon: UserCheck, label: 'AI Candidate Discovery', badge: '100+ Verified', badgeType: 'gold' },
+        { to: '/company/pipeline', icon: GitCommit, label: 'Recruitment Pipeline' },
+        { to: '/company/candidate-intelligence', icon: Brain, label: 'Candidate Intelligence' },
       ],
     },
     {
       title: 'Assessments & Interviews',
       items: [
-        { to: '/company/assessments', icon: 'bx bx-shield-quarter', label: 'Benchmark Tests' },
-        { to: '/company/assessment-builder', icon: 'bx bx-edit', label: 'Assessment Builder' },
-        { to: '/company/interview-management', icon: 'bx bx-video', label: 'Interview Scheduler' },
+        { to: '/company/assessments', icon: ShieldCheck, label: 'Benchmark Tests' },
+        { to: '/company/assessment-builder', icon: FileEdit, label: 'Assessment Builder' },
+        { to: '/company/interview-management', icon: Video, label: 'Interview Scheduler' },
       ],
     },
     {
       title: 'Analytics & Settings',
       items: [
-        { to: '/company/analytics', icon: 'bx bx-line-chart', label: 'Hiring Analytics' },
-        { to: '/company/profile', icon: 'bx bx-buildings', label: 'Company Profile' },
-        { to: '/company/messages', icon: 'bx bx-chat', label: 'Direct Messaging' },
+        { to: '/company/analytics', icon: LineChart, label: 'Hiring Analytics' },
+        { to: '/company/profile', icon: Building2, label: 'Company Profile' },
+        { to: '/company/messages', icon: MessageSquare, label: 'Direct Messaging' },
       ],
     },
   ];
@@ -127,7 +143,7 @@ export function CompanySidebar({
           {!collapsed && (
             <div className={styles.companyStatsBar}>
               <span className={styles.statsTag}>
-                <i className="bx bx-briefcase" />
+                <Briefcase size={13} style={{ display: 'inline', marginRight: '4px' }} />
                 <span>Openings</span>
               </span>
               <span className={styles.highlightTag}>{activeJobsCount || '30+'} Drives</span>
@@ -139,31 +155,34 @@ export function CompanySidebar({
         {navSections.map((section) => (
           <div key={section.title} className={styles.navSection}>
             {!collapsed && <span className={styles.sectionTitle}>{section.title}</span>}
-            {section.items.map((item) => (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                end={item.to === '/company/home'}
-                className={({ isActive }) =>
-                  `${styles.navItem} ${isActive ? styles.navItemActive : ''}`
-                }
-                onClick={onCloseMobile}
-                title={collapsed ? item.label : undefined}
-              >
-                {({ isActive }) => (
-                  <>
-                    {isActive && <span className={styles.activeIndicator} />}
-                    <i className={`${item.icon} ${styles.navIcon}`} />
-                    {!collapsed && <span className={styles.navLabel}>{item.label}</span>}
-                    {!collapsed && item.badge && (
-                      <span className={`${styles.badge} ${styles[`badge_${item.badgeType || 'primary'}`]}`}>
-                        {item.badge}
-                      </span>
-                    )}
-                  </>
-                )}
-              </NavLink>
-            ))}
+            {section.items.map((item) => {
+              const IconComp = item.icon;
+              return (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  end={item.to === '/company/home'}
+                  className={({ isActive }) =>
+                    `${styles.navItem} ${isActive ? styles.navItemActive : ''}`
+                  }
+                  onClick={onCloseMobile}
+                  title={collapsed ? item.label : undefined}
+                >
+                  {({ isActive }) => (
+                    <>
+                      {isActive && <span className={styles.activeIndicator} />}
+                      <IconComp size={18} className={styles.navIcon} />
+                      {!collapsed && <span className={styles.navLabel}>{item.label}</span>}
+                      {!collapsed && item.badge && (
+                        <span className={`${styles.badge} ${styles[`badge_${item.badgeType || 'primary'}`]}`}>
+                          {item.badge}
+                        </span>
+                      )}
+                    </>
+                  )}
+                </NavLink>
+              );
+            })}
           </div>
         ))}
       </div>
@@ -177,7 +196,7 @@ export function CompanySidebar({
             onClick={onToggleCollapse}
             title={collapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
           >
-            <i className={collapsed ? 'bx bx-chevrons-right' : 'bx bx-chevrons-left'} />
+            {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
             {!collapsed && <span>Collapse Sidebar</span>}
           </button>
         )}

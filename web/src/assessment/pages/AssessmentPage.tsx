@@ -1,6 +1,19 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { assessmentApi } from '../services/assessmentApi';
 import type { AssessmentSession, AssessmentResult, RemainingTime, SystemCheckResult } from '../types/assessment';
+import {
+  ShieldCheck,
+  Download,
+  Clock,
+  HelpCircle,
+  Target,
+  ArrowRight,
+  ArrowLeft,
+  Copy,
+  Camera,
+  User,
+  CheckCheck,
+} from 'lucide-react';
 import styles from './AssessmentPage.module.css';
 
 const CHECK_TYPES = ['CAMERA', 'MICROPHONE', 'SCREEN_CAPTURE', 'INTERNET', 'DISPLAY'] as const;
@@ -232,7 +245,7 @@ export function AssessmentPage() {
         <div style={{ background: '#1c2d81', color: '#ffffff', borderRadius: '0px', border: '1px solid #1c2d81', padding: '20px 24px', marginBottom: '24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '20px', flexWrap: 'wrap', boxShadow: '0 2px 8px rgba(28,45,129,0.15)' }}>
           <div>
             <span style={{ fontSize: '0.72rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#fed601', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-              <i className="bx bx-shield-quarter" /> Lockdown Client Ready
+              <ShieldCheck size={14} /> Lockdown Client Ready
             </span>
             <h3 style={{ margin: '4px 0 0', fontSize: '1.15rem', fontWeight: 800, color: '#ffffff' }}>Standardized Proctored Testing Suite</h3>
             <p style={{ margin: '6px 0 0', fontSize: '0.85rem', color: '#e2e8f0', maxWidth: '600px' }}>
@@ -256,7 +269,7 @@ export function AssessmentPage() {
                 gap: '6px',
               }}
             >
-              <i className="bx bx-download" /> Download Client
+              <Download size={14} /> Download Client
             </button>
           </div>
         </div>
@@ -352,13 +365,13 @@ export function AssessmentPage() {
                     }}
                   >
                     <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontWeight: 600 }}>
-                      <i className="bx bx-time" style={{ color: '#1c2d81', fontSize: '0.95rem' }} /> {t.durationMinutes || 60} mins
+                      <Clock size={13} style={{ color: '#1c2d81' }} /> {t.durationMinutes || 60} mins
                     </span>
                     <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontWeight: 600 }}>
-                      <i className="bx bx-help-circle" style={{ color: '#1c2d81', fontSize: '0.95rem' }} /> {t.totalQuestions || 20} questions
+                      <HelpCircle size={13} style={{ color: '#1c2d81' }} /> {t.totalQuestions || 20} questions
                     </span>
                     <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontWeight: 600 }}>
-                      <i className="bx bx-target-lock" style={{ color: '#1c2d81', fontSize: '0.95rem' }} /> Passing: {t.passingScore ? `${t.passingScore}%` : '60%'}
+                      <Target size={13} style={{ color: '#1c2d81' }} /> Passing: {t.passingScore ? `${t.passingScore}%` : '60%'}
                     </span>
                   </div>
 
@@ -383,7 +396,7 @@ export function AssessmentPage() {
                       onClick={() => handleStartWebTest(t)}
                     >
                       <span>Start Web Test</span>
-                      <i className="bx bx-right-arrow-alt" />
+                      <ArrowRight size={14} />
                     </button>
                     <button
                       style={{
@@ -393,11 +406,11 @@ export function AssessmentPage() {
                         justifyContent: 'center',
                         gap: '6px',
                         padding: '0 14px',
-                        background: '#ffffff',
-                        color: '#334155',
+                        background: '#f8fafc',
+                        color: '#1c2d81',
                         border: '1px solid #cbd5e1',
                         borderRadius: '0px',
-                        fontSize: '0.84rem',
+                        fontSize: '0.8rem',
                         fontWeight: 700,
                         cursor: 'pointer',
                         transition: 'all 0.15s ease',
@@ -406,9 +419,9 @@ export function AssessmentPage() {
                         navigator.clipboard?.writeText(t.id);
                         alert(`Session Token copied: ${t.id}\nPaste into Desktop Lockdown Client to begin.`);
                       }}
-                      title="Copy Token for Desktop Client"
+                      title="Copy Lockdown Desktop Client Launch Token"
                     >
-                      <i className="bx bx-copy" /> Token
+                      <Copy size={13} /> Token
                     </button>
                   </div>
                 </div>
@@ -433,14 +446,18 @@ export function AssessmentPage() {
           </p>
           <div className={styles.checkList}>
             <div className={styles.checkItem}>
-              <div className={`${styles.checkIcon} ${styles.checkPass}`}>
-                <i className="bx bx-camera" style={{ fontSize: '1.2rem' }} />
+              <div className={styles.checkIcon}>
+                <Camera size={18} />
               </div>
-              <div><div className={styles.checkLabel}>Camera Access</div><div className={styles.checkStatus}>Ready</div></div>
+              <div className={styles.checkContent}>
+                <div className={styles.checkTitle}>Webcam Hardware &amp; Facial Recognition</div>
+                <div className={styles.checkDesc}>Continuous biometric frame detection and multi-person tracking</div>
+              </div>
             </div>
+
             <div className={styles.checkItem}>
-              <div className={`${styles.checkIcon} ${styles.checkPass}`}>
-                <i className="bx bx-user" style={{ fontSize: '1.2rem' }} />
+              <div className={styles.checkIcon}>
+                <User size={18} />
               </div>
               <div><div className={styles.checkLabel}>Face Detection</div><div className={styles.checkStatus}>Processing</div></div>
             </div>
@@ -617,21 +634,20 @@ export function AssessmentPage() {
           className={`${styles.btn} ${styles.btnSecondary}`}
           onClick={() => setCurrentQuestion(Math.max(0, currentQuestion - 1))}
           disabled={currentQuestion === 0}
-          style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
         >
-          <i className="bx bx-left-arrow-alt" />
+          <ArrowLeft size={14} />
           <span>Previous</span>
         </button>
         <div className={styles.flexRow}>
           {currentQuestion < totalQuestions - 1 && (
-            <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={() => setCurrentQuestion(currentQuestion + 1)} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+            <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={() => setCurrentQuestion(currentQuestion + 1)}>
               <span>Next</span>
-              <i className="bx bx-right-arrow-alt" />
+              <ArrowRight size={14} />
             </button>
           )}
           {currentQuestion === totalQuestions - 1 && (
-            <button className={`${styles.btn} ${styles.btnSuccess}`} onClick={handleSubmit} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-              <i className="bx bx-check-double" />
+            <button className={`${styles.btn} ${styles.btnSuccess}`} onClick={handleSubmit}>
+              <CheckCheck size={14} />
               <span>Submit Assessment</span>
             </button>
           )}

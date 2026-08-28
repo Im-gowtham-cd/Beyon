@@ -1,5 +1,15 @@
 ﻿import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import {
+  PlusCircle,
+  Search,
+  Layers,
+  MapPin,
+  GraduationCap,
+  Coins,
+  Users,
+  ArrowRight,
+} from 'lucide-react';
 import styles from './CompanyOpportunitiesPage.module.css';
 
 export function CompanyOpportunitiesPage() {
@@ -58,7 +68,7 @@ export function CompanyOpportunitiesPage() {
           </p>
         </div>
         <Link to="/company/opportunities/create" className={styles.btnCreate}>
-          <i className="bx bx-plus-circle" />
+          <PlusCircle size={15} />
           <span>Post New Drive / Opening</span>
         </Link>
       </div>
@@ -97,13 +107,17 @@ export function CompanyOpportunitiesPage() {
           ))}
         </div>
 
-        <input
-          type="text"
-          className={styles.searchInput}
-          placeholder="Search by role or location..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
+        <div style={{ position: 'relative' }}>
+          <Search size={15} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+          <input
+            type="text"
+            className={styles.searchInput}
+            style={{ paddingLeft: '34px' }}
+            placeholder="Search by role or location..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
       </div>
 
       {/* Grid */}
@@ -131,29 +145,29 @@ export function CompanyOpportunitiesPage() {
 
                 <div className={styles.cardMeta} style={{ margin: '12px 0' }}>
                   <span className={styles.metaItem}>
-                    <i className="bx bx-layer" style={{ color: '#1c2d81' }} />
+                    <Layers size={13} style={{ color: '#1c2d81' }} />
                     <span>{opp.opportunityType.replace('_', ' ')}</span>
                   </span>
                   {opp.location && (
                     <span className={styles.metaItem}>
-                      <i className="bx bx-map-pin" style={{ color: '#0284c7' }} />
+                      <MapPin size={13} style={{ color: '#0284c7' }} />
                       <span>{opp.location}</span>
                     </span>
                   )}
                   {opp.minCgpa && (
                     <span className={styles.metaItem}>
-                      <i className="bx bx-graduation" style={{ color: '#1c2d81' }} />
+                      <GraduationCap size={13} style={{ color: '#1c2d81' }} />
                       <span>Min {opp.minCgpa} CGPA</span>
                     </span>
                   )}
                   {opp.minBeyonCoins > 0 ? (
                     <span className={styles.metaItem} style={{ color: '#854d0e', background: '#fef9c3', borderColor: '#fde047' }}>
-                      <i className="bx bx-coin-stack" style={{ color: '#eab308' }} />
+                      <Coins size={13} style={{ color: '#eab308' }} />
                       <span>{opp.minBeyonCoins} Coins</span>
                     </span>
                   ) : (
                     <span className={styles.metaItem} style={{ color: '#15803d', background: '#f0fdf4', borderColor: '#bbf7d0' }}>
-                      <i className="bx bx-coin-stack" />
+                      <Coins size={13} />
                       <span>Free Entry</span>
                     </span>
                   )}
@@ -172,14 +186,15 @@ export function CompanyOpportunitiesPage() {
 
               <div className={styles.cardFoot}>
                 <span className={styles.applicantsCount}>
-                  <i className="bx bx-group" />
-                  <span>{opp.applicationCount || Math.floor(Math.random() * 20 + 12)} Applicants</span>
+                  <Users size={14} />
+                  <span>{opp.applicationCount || 24} Applicants</span>
                 </span>
                 <button
                   className={styles.actionBtn}
                   onClick={() => navigate('/company/pipeline')}
                 >
-                  Manage Pipeline &rarr;
+                  <span>Manage Pipeline</span>
+                  <ArrowRight size={13} />
                 </button>
               </div>
             </div>

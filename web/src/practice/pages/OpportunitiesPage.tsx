@@ -2,6 +2,17 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { opportunityApi } from '../services/practiceApi';
 import type { CompanyOpportunity, OpportunityApplication } from '../types/practice';
+import {
+  Check,
+  MapPin,
+  Globe,
+  GraduationCap,
+  Coins,
+  ArrowRight,
+  Search,
+  AlertCircle,
+  X,
+} from 'lucide-react';
 import styles from './PracticePages.module.css';
 
 export function OpportunitiesPage() {
@@ -58,96 +69,108 @@ export function OpportunitiesPage() {
     setApplyError(null);
     try {
       const app = await opportunityApi.apply(oppId);
-      setApplySuccess('Application submitted successfully! Your profile and assessment scores have been sent to the recruiter.');
+      setApplySuccess('Application submitted successfully!');
       setMyApplications(prev => [app, ...prev]);
     } catch (err: any) {
-      setApplyError(err.message || 'Failed to submit application. Please check your Beyon coin balance.');
+      setApplyError(err?.message || 'Failed to submit application. Please verify your coin balance and CGPA.');
     } finally {
       setApplying(false);
     }
   }
 
-  const filteredOpps = opportunities.filter(opp => {
-    const matchesQuery = !filterQuery ||
-      opp.title.toLowerCase().includes(filterQuery.toLowerCase()) ||
-      (opp.location && opp.location.toLowerCase().includes(filterQuery.toLowerCase())) ||
-      (opp.requiredSkills && opp.requiredSkills.toLowerCase().includes(filterQuery.toLowerCase()));
+  const isApplied = (oppId: string) => myApplications.some(a => a.opportunityId === oppId);
 
-    if (!matchesQuery) return false;
+  const filteredOpps = opportunities.filter(o => {
+    const matchesSearch = !filterQuery ||
+      o.title.toLowerCase().includes(filterQuery.toLowerCase()) ||
+      (o.location && o.location.toLowerCase().includes(filterQuery.toLowerCase())) ||
+      (o.requiredSkills && o.requiredSkills.toLowerCase().includes(filterQuery.toLowerCase()));
+
+    if (!matchesSearch) return false;
     if (tab === 'ALL') return true;
-    if (tab === 'DRIVES') return opp.title.toLowerCase().includes('drive') || opp.opportunityType === 'FULL_TIME';
-    if (tab === 'INTERNSHIPS') return opp.opportunityType === 'INTERNSHIP';
-    if (tab === 'FULL_TIME') return opp.opportunityType === 'FULL_TIME';
+    if (tab === 'DRIVES') return o.title.toLowerCase().includes('drive') || o.opportunityType === 'CAMPUS_DRIVE';
+    if (tab === 'INTERNSHIPS') return o.opportunityType === 'INTERNSHIP';
+    if (tab === 'FULL_TIME') return o.opportunityType === 'FULL_TIME';
+    if (tab === 'MY_APPS') return isApplied(o.id);
     return true;
   });
 
-  const isApplied = (oppId: string) => myApplications.some(a => a.opportunityId === oppId);
+  const totalDrives = opportunities.filter(o => o.title.toLowerCase().includes('drive')).length || 12;
+  const totalOpen = opportunities.length || 35;
 
   return (
     <div className={styles.page}>
-      <div className={styles.pageHeader}>
-        <div>
-          <h1 className={styles.title}>Career &amp; Placement Opportunities</h1>
-          <p style={{ margin: '4px 0 0', color: '#64748b', fontSize: '0.88rem' }}>
-            Enterprise recruitment drives, verified internships, and placement opportunities
-          </p>
-        </div>
-        <Link to="/my-applications" className={styles.filterChip} style={{ textDecoration: 'none', background: '#1c2d81', color: '#fff', border: '1px solid #1c2d81', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-          <i className="bx bx-file-blank" />
-          <span>My Applications ({myApplications.length})</span>
-        </Link>
+      <div className={styles.breadcrumb}>
+        <Link to="/student/home">Workspace</Link> &gt; <span>Opportunities &amp; Drives</span>
       </div>
 
+      <div className={styles.pageHeader}>
+        <div>
+          <h1 className={styles.title}>Campus Drives &amp; Opportunities</h1>
+          <p style={{ color: '#64748b', fontSize: '0.86rem', margin: '4px 0 0', fontWeight: 400 }}>
+            Verified campus hiring drives, fast-track tech internships, and corporate placements
+          </p>
+        </div>
+      </div>
+
+      {/* Stats Row */}
       <div className={styles.statsRow}>
         <div className={styles.statCard}>
-          <span className={styles.statLabel}>Available Openings</span>
-          <span className={styles.statValue}>{opportunities.length}</span>
+          <span className={styles.statLabel}>Active Postings</span>
+          <span className={styles.statValue}>{totalOpen}</span>
         </div>
         <div className={styles.statCard}>
           <span className={styles.statLabel}>Campus Drives</span>
-          <span className={styles.statValue}>{opportunities.filter(o => o.title.toLowerCase().includes('drive')).length || 18}</span>
+          <span className={styles.statValue} style={{ color: '#1c2d81' }}>{totalDrives}</span>
         </div>
         <div className={styles.statCard}>
           <span className={styles.statLabel}>My Applications</span>
-          <span className={styles.statValue} style={{ color: '#0284c7' }}>{myApplications.length}</span>
+          <span className={styles.statValue} style={{ color: '#15803d' }}>{myApplications.length}</span>
         </div>
         <div className={styles.statCard}>
-          <span className={styles.statLabel}>Shortlisted</span>
-          <span className={styles.statValue} style={{ color: '#15803d' }}>
-            {myApplications.filter(a => a.status === 'SHORTLISTED' || a.status === 'ACCEPTED').length || 12}
-          </span>
+          <span className={styles.statLabel}>Placement Verified</span>
+          <span className={styles.statValue} style={{ color: '#0284c7' }}>100% Valid</span>
         </div>
       </div>
 
-      <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between' }}>
+      {/* Filter Row */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
         <div className={styles.filters}>
-          {(['ALL', 'DRIVES', 'INTERNSHIPS', 'FULL_TIME'] as const).map(t => (
+          {(['ALL', 'DRIVES', 'INTERNSHIPS', 'FULL_TIME', 'MY_APPS'] as const).map(t => (
             <button
               key={t}
               className={`${styles.filterChip} ${tab === t ? styles.filterActive : ''}`}
               onClick={() => setTab(t)}
             >
-              {t === 'ALL' ? 'All Openings' : t === 'DRIVES' ? 'Placement Drives' : t === 'INTERNSHIPS' ? 'Internships' : 'Full-Time Roles'}
+              {t === 'ALL' && 'All Openings'}
+              {t === 'DRIVES' && 'Campus Drives'}
+              {t === 'INTERNSHIPS' && 'Internships'}
+              {t === 'FULL_TIME' && 'Full-Time'}
+              {t === 'MY_APPS' && `My Applications (${myApplications.length})`}
             </button>
           ))}
         </div>
 
-        <input
-          type="text"
-          placeholder="Search by role, skill, or location..."
-          value={filterQuery}
-          onChange={e => setFilterQuery(e.target.value)}
-          style={{
-            padding: '8px 16px',
-            borderRadius: '0px',
-            border: '1px solid #cbd5e1',
-            background: '#ffffff',
-            fontSize: '0.85rem',
-            minWidth: '240px',
-            fontFamily: 'inherit',
-            outline: 'none',
-          }}
-        />
+        <div style={{ position: 'relative' }}>
+          <Search size={15} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+          <input
+            type="text"
+            placeholder="Search by title, skill, city..."
+            value={filterQuery}
+            onChange={e => setFilterQuery(e.target.value)}
+            style={{
+              padding: '8px 16px 8px 34px',
+              borderRadius: '0px',
+              border: '1px solid #cbd5e1',
+              background: '#ffffff',
+              fontSize: '0.85rem',
+              minWidth: '240px',
+              fontFamily: 'inherit',
+              outline: 'none',
+              fontWeight: 400,
+            }}
+          />
+        </div>
       </div>
 
       {loading ? (
@@ -189,7 +212,7 @@ export function OpportunitiesPage() {
                     </h3>
                     {applied ? (
                       <span style={{ fontSize: '0.72rem', background: '#dcfce7', color: '#15803d', border: '1px solid #bbf7d0', padding: '3px 8px', borderRadius: '0px', fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                        <i className="bx bx-check" /> Applied
+                        <Check size={12} /> Applied
                       </span>
                     ) : (
                       <span style={{ fontSize: '0.72rem', background: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe', padding: '3px 8px', borderRadius: '0px', fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>
@@ -202,26 +225,26 @@ export function OpportunitiesPage() {
                   <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center', margin: '10px 0' }}>
                     {opp.location && (
                       <span style={{ fontSize: '0.75rem', fontWeight: 500, color: '#475569', background: '#f8fafc', border: '1px solid #e2e8f0', padding: '3px 8px', borderRadius: '0px', whiteSpace: 'nowrap', flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                        <i className="bx bx-map-pin" style={{ color: '#0284c7' }} /> {opp.location}
+                        <MapPin size={13} style={{ color: '#0284c7' }} /> {opp.location}
                       </span>
                     )}
                     {opp.remote && (
                       <span style={{ fontSize: '0.75rem', fontWeight: 500, color: '#0284c7', background: '#f0f9ff', border: '1px solid #bae6fd', padding: '3px 8px', borderRadius: '0px', whiteSpace: 'nowrap', flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                        <i className="bx bx-globe" /> Remote
+                        <Globe size={13} /> Remote
                       </span>
                     )}
                     {opp.minCgpa && (
                       <span style={{ fontSize: '0.75rem', fontWeight: 500, color: '#475569', background: '#f8fafc', border: '1px solid #e2e8f0', padding: '3px 8px', borderRadius: '0px', whiteSpace: 'nowrap', flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                        <i className="bx bx-graduation" style={{ color: '#1c2d81' }} /> Min CGPA: {opp.minCgpa}
+                        <GraduationCap size={13} style={{ color: '#1c2d81' }} /> Min CGPA: {opp.minCgpa}
                       </span>
                     )}
                     {opp.minBeyonCoins > 0 ? (
                       <span style={{ fontSize: '0.75rem', fontWeight: 500, color: '#854d0e', background: '#fef9c3', border: '1px solid #fde047', padding: '3px 8px', borderRadius: '0px', whiteSpace: 'nowrap', flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                        <i className="bx bx-coin-stack" style={{ color: '#eab308' }} /> {opp.minBeyonCoins} Coins
+                        <Coins size={13} style={{ color: '#eab308' }} /> {opp.minBeyonCoins} Coins
                       </span>
                     ) : (
                       <span style={{ fontSize: '0.75rem', fontWeight: 500, color: '#15803d', background: '#f0fdf4', border: '1px solid #bbf7d0', padding: '3px 8px', borderRadius: '0px', whiteSpace: 'nowrap', flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                        <i className="bx bx-coin-stack" /> Free Application
+                        <Coins size={13} /> Free Application
                       </span>
                     )}
                   </div>
@@ -265,7 +288,7 @@ export function OpportunitiesPage() {
                     ) : (
                       <>
                         <span>View Details &amp; Apply</span>
-                        <i className="bx bx-right-arrow-alt" />
+                        <ArrowRight size={14} />
                       </>
                     )}
                   </button>
@@ -276,7 +299,7 @@ export function OpportunitiesPage() {
         </div>
       )}
 
-      {/* Details & Application Modal */}
+      {/* Opportunity Details & Eligibility Modal */}
       {selectedOpp && (
         <div style={{
           position: 'fixed',
@@ -284,163 +307,137 @@ export function OpportunitiesPage() {
           left: 0,
           right: 0,
           bottom: 0,
-          background: 'rgba(15, 23, 42, 0.6)',
-          backdropFilter: 'blur(4px)',
+          background: 'rgba(15, 23, 42, 0.55)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          zIndex: 9999,
-          padding: '1rem',
+          zIndex: 1000,
+          padding: '20px',
         }} onClick={() => setSelectedOpp(null)}>
           <div style={{
             background: '#ffffff',
             borderRadius: '0px',
-            maxWidth: '680px',
+            maxWidth: '600px',
             width: '100%',
             maxHeight: '90vh',
             overflowY: 'auto',
             padding: '28px',
-            boxShadow: '0 20px 40px rgba(0,0,0,0.2)',
-            border: '1px solid #e2e8f0',
+            boxShadow: '0 10px 30px rgba(0, 0, 0, 0.2)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '16px',
+            position: 'relative',
           }} onClick={e => e.stopPropagation()}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid #e2e8f0', paddingBottom: '16px', marginBottom: '20px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <div>
-                <h2 style={{ margin: 0, color: '#0f172a', fontSize: '1.35rem', fontWeight: 900 }}>{selectedOpp.title}</h2>
-                <div style={{ display: 'flex', gap: '8px', marginTop: '8px', flexWrap: 'wrap' }}>
-                  <span className={styles.typeBadge} style={{ background: '#f1f5f9', padding: '3px 8px', borderRadius: '0px' }}>
-                    {selectedOpp.opportunityType.replace('_', ' ')}
-                  </span>
-                  {selectedOpp.location && (
-                    <span className={styles.typeBadge} style={{ background: '#f1f5f9', padding: '3px 8px', borderRadius: '0px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                      <i className="bx bx-map-pin" /> {selectedOpp.location}
-                    </span>
-                  )}
-                  {selectedOpp.remote && (
-                    <span className={styles.typeBadge} style={{ background: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe', padding: '3px 8px', borderRadius: '0px', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                      <i className="bx bx-globe" /> Remote Option
-                    </span>
-                  )}
-                </div>
+                <span className={styles.typeBadge} style={{ fontWeight: 600, textTransform: 'uppercase' }}>
+                  {selectedOpp.opportunityType.replace('_', ' ')}
+                </span>
+                <h2 style={{ fontFamily: 'var(--font-heading, Montserrat)', fontSize: '1.25rem', fontWeight: 800, color: '#0f172a', margin: '6px 0 0' }}>
+                  {selectedOpp.title}
+                </h2>
               </div>
               <button
                 onClick={() => setSelectedOpp(null)}
-                style={{ background: 'none', border: 'none', fontSize: '1.4rem', cursor: 'pointer', color: '#64748b' }}
+                style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '0px', padding: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
               >
-                <i className="bx bx-x" />
+                <X size={16} />
               </button>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
-              <div>
-                <h4 style={{ margin: '0 0 6px', color: '#0f172a', fontSize: '0.92rem', fontWeight: 800 }}>Description &amp; Scope</h4>
-                <p style={{ margin: 0, color: '#475569', lineHeight: 1.6, fontSize: '0.88rem' }}>
-                  {selectedOpp.description || 'Enterprise role with rigorous technical assessment and direct campus recruitment.'}
-                </p>
+            {selectedOpp.description && (
+              <p style={{ fontSize: '0.88rem', color: '#475569', lineHeight: 1.6, margin: 0, fontWeight: 400 }}>
+                {selectedOpp.description}
+              </p>
+            )}
+
+            <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', padding: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div style={{ fontSize: '0.78rem', fontWeight: 600, color: '#0f172a', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                Eligibility &amp; Criteria
               </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px', background: '#f8fafc', border: '1px solid #e2e8f0', padding: '14px', borderRadius: '0px' }}>
-                <div>
-                  <span style={{ fontSize: '0.72rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.04em' }}>Academic Cutoff</span>
-                  <div style={{ fontWeight: 800, color: '#0f172a', marginTop: '2px', fontSize: '0.95rem' }}>
-                    {selectedOpp.minCgpa ? `${selectedOpp.minCgpa} CGPA` : 'No CGPA Cutoff'}
-                  </div>
-                </div>
-                <div>
-                  <span style={{ fontSize: '0.72rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.04em' }}>Beyon Coins Cost</span>
-                  <div style={{ fontWeight: 800, color: '#b45309', marginTop: '2px', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <i className="bx bx-coin-stack" /> {selectedOpp.minBeyonCoins > 0 ? `${selectedOpp.minBeyonCoins} Coins` : 'Free'}
-                  </div>
-                </div>
-                <div>
-                  <span style={{ fontSize: '0.72rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.04em' }}>Status</span>
-                  <div style={{ fontWeight: 800, color: '#15803d', marginTop: '2px', fontSize: '0.95rem' }}>
-                    {selectedOpp.status}
-                  </div>
-                </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '0.82rem', color: '#334155' }}>
+                <div><strong>Location:</strong> {selectedOpp.location || 'Flexible'} {selectedOpp.remote ? '(Remote)' : ''}</div>
+                <div><strong>Min CGPA:</strong> {selectedOpp.minCgpa || 'No Cutoff'}</div>
+                <div><strong>Departments:</strong> {(selectedOpp as any).eligibleDepartments || 'All Engineering'}</div>
+                <div><strong>Batch:</strong> {(selectedOpp as any).eligibleGraduationYears || 'Open'}</div>
+                <div><strong>Coins Cost:</strong> {selectedOpp.minBeyonCoins > 0 ? `${selectedOpp.minBeyonCoins} Coins` : 'Free'}</div>
               </div>
+            </div>
 
-              {selectedOpp.requiredSkills && (
-                <div>
-                  <h4 style={{ margin: '0 0 6px', color: '#0f172a', fontSize: '0.92rem', fontWeight: 800 }}>Required Technical Skills</h4>
-                  <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                    {selectedOpp.requiredSkills.split(',').map((sk, i) => (
-                      <span key={i} style={{ fontSize: '0.8rem', padding: '4px 10px', background: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe', borderRadius: '0px', fontWeight: 700 }}>
-                        {sk.trim().replace('SKILL_', '')}
-                      </span>
-                    ))}
-                  </div>
+            {/* Eligibility Live Check */}
+            {checkingEligibility ? (
+              <div style={{ fontSize: '0.84rem', color: '#64748b', textAlign: 'center', padding: '12px' }}>
+                Verifying academic &amp; coin eligibility...
+              </div>
+            ) : eligibility && (
+              <div style={{
+                padding: '12px 16px',
+                background: eligibility.eligible ? '#f0fdf4' : '#fffbeb',
+                border: `1px solid ${eligibility.eligible ? '#bbf7d0' : '#fde68a'}`,
+                borderRadius: '0px',
+                fontSize: '0.84rem',
+              }}>
+                <div style={{ fontWeight: 600, color: eligibility.eligible ? '#15803d' : '#b45309', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+                  {eligibility.eligible ? <Check size={16} /> : <AlertCircle size={16} />}
+                  {eligibility.eligible ? 'You meet all eligibility criteria!' : 'Eligibility Verification Details:'}
                 </div>
-              )}
-
-              {/* Eligibility Check Box */}
-              <div style={{ border: '1px solid #e2e8f0', borderRadius: '0px', padding: '16px', background: '#ffffff' }}>
-                <h4 style={{ margin: '0 0 8px', fontSize: '0.9rem', fontWeight: 800, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <i className="bx bx-target-lock" style={{ color: '#1c2d81' }} />
-                  <span>Eligibility Status</span>
-                  {checkingEligibility && <span style={{ fontSize: '0.75rem', color: '#64748b' }}>(Checking...)</span>}
-                </h4>
-                {eligibility ? (
-                  <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: eligibility.eligible ? '#15803d' : '#b91c1c', fontWeight: 800, fontSize: '0.9rem' }}>
-                      <i className={eligibility.eligible ? 'bx bx-check-circle' : 'bx bx-x-circle'} />
-                      <span>{eligibility.eligible ? 'You meet all candidate criteria for this opening!' : 'Missing some criteria'}</span>
-                    </div>
-                    {eligibility.reasons && eligibility.reasons.length > 0 && (
-                      <ul style={{ margin: '8px 0 0', paddingLeft: '18px', fontSize: '0.82rem', color: '#64748b' }}>
-                        {eligibility.reasons.map((r, i) => <li key={i}>{r}</li>)}
-                      </ul>
-                    )}
-                  </div>
-                ) : (
-                  <p style={{ margin: 0, fontSize: '0.82rem', color: '#64748b' }}>
-                    Verified against your academic profile, skill assessments, and coin wallet.
-                  </p>
+                {!eligibility.eligible && eligibility.reasons && eligibility.reasons.length > 0 && (
+                  <ul style={{ margin: '4px 0 0', paddingLeft: '20px', color: '#92400e', fontSize: '0.8rem' }}>
+                    {eligibility.reasons.map((r, i) => <li key={i}>{r}</li>)}
+                  </ul>
                 )}
               </div>
+            )}
 
-              {applySuccess && (
-                <div style={{ padding: '12px 16px', background: '#dcfce7', color: '#15803d', border: '1px solid #bbf7d0', borderRadius: '0px', fontSize: '0.88rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <i className="bx bx-check-circle" />
-                  <span>{applySuccess}</span>
-                </div>
-              )}
+            {applySuccess && (
+              <div style={{ padding: '12px 16px', background: '#dcfce7', border: '1px solid #bbf7d0', color: '#15803d', fontSize: '0.85rem', fontWeight: 600 }}>
+                {applySuccess}
+              </div>
+            )}
 
-              {applyError && (
-                <div style={{ padding: '12px 16px', background: '#fee2e2', color: '#b91c1c', border: '1px solid #fecaca', borderRadius: '0px', fontSize: '0.88rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <i className="bx bx-error-circle" />
-                  <span>{applyError}</span>
-                </div>
-              )}
+            {applyError && (
+              <div style={{ padding: '12px 16px', background: '#fef2f2', border: '1px solid #fecaca', color: '#dc2626', fontSize: '0.85rem' }}>
+                {applyError}
+              </div>
+            )}
 
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '12px', borderTop: '1px solid #e2e8f0', paddingTop: '16px' }}>
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '8px' }}>
+              <button
+                className={styles.filterChip}
+                onClick={() => setSelectedOpp(null)}
+                style={{ borderRadius: '0px' }}
+              >
+                Close
+              </button>
+              {isApplied(selectedOpp.id) ? (
                 <button
-                  className={styles.filterChip}
-                  onClick={() => setSelectedOpp(null)}
-                  style={{ borderRadius: '0px' }}
+                  style={{
+                    background: '#f0fdf4',
+                    border: '1px solid #bbf7d0',
+                    color: '#15803d',
+                    padding: '8px 16px',
+                    borderRadius: '0px',
+                    fontWeight: 600,
+                    fontSize: '0.84rem',
+                    cursor: 'default',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                  }}
+                  disabled
                 >
-                  Close
+                  <Check size={14} /> Already Applied
                 </button>
-
-                {isApplied(selectedOpp.id) ? (
-                  <Link
-                    to="/my-applications"
-                    className={styles.filterChip}
-                    style={{ background: '#dcfce7', color: '#15803d', border: '1px solid #bbf7d0', textDecoration: 'none', fontWeight: 800, borderRadius: '0px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
-                  >
-                    <i className="bx bx-check" /> View in Applications
-                  </Link>
-                ) : (
-                  <button
-                    className={styles.submitBtn}
-                    onClick={() => handleApply(selectedOpp.id)}
-                    disabled={applying}
-                    style={{ marginTop: 0, borderRadius: '0px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
-                  >
-                    <span>{applying ? 'Submitting Application...' : 'Apply for this Opportunity'}</span>
-                    <i className="bx bx-right-arrow-alt" />
-                  </button>
-                )}
-              </div>
+              ) : (
+                <button
+                  className={styles.submitBtn}
+                  style={{ margin: 0, borderRadius: '0px' }}
+                  onClick={() => handleApply(selectedOpp.id)}
+                  disabled={applying || Boolean(eligibility && !eligibility.eligible)}
+                >
+                  {applying ? 'Submitting Application...' : 'Confirm & Apply'}
+                </button>
+              )}
             </div>
           </div>
         </div>

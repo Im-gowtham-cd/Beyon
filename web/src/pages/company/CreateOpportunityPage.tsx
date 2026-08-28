@@ -1,5 +1,13 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import {
+  ArrowLeft,
+  Plus,
+  List,
+  AlertCircle,
+  Send,
+  Check,
+} from 'lucide-react';
 import styles from '../../practice/pages/CreateQuestionPage.module.css';
 
 export function CreateOpportunityPage() {
@@ -58,7 +66,7 @@ export function CreateOpportunityPage() {
       <div className={styles.container}>
         <div className={styles.successCard}>
           <div className={styles.successIcon}>
-            <i className="bx bx-check" />
+            <Check size={28} />
           </div>
           <h2 className={styles.successTitle}>Placement Drive Published Successfully</h2>
           <p className={styles.successDesc}>
@@ -85,10 +93,12 @@ export function CreateOpportunityPage() {
                 });
               }}
             >
-              <i className="bx bx-plus" /> Post Another Drive
+              <Plus size={15} />
+              <span>Post Another Drive</span>
             </button>
             <Link to="/company/opportunities" className={styles.btnSecondary}>
-              <i className="bx bx-list-ul" /> View All Postings
+              <List size={15} />
+              <span>View All Postings</span>
             </Link>
           </div>
         </div>
@@ -101,7 +111,8 @@ export function CreateOpportunityPage() {
       <div className={styles.headerRow}>
         <div>
           <Link to="/company/opportunities" className={styles.backLink}>
-            <i className="bx bx-arrow-back" /> Back to Drives
+            <ArrowLeft size={15} />
+            <span>Back to Drives</span>
           </Link>
           <h1 className={styles.pageTitle}>Post New Campus Placement Drive / Job</h1>
           <p className={styles.pageSubtitle}>
@@ -112,7 +123,7 @@ export function CreateOpportunityPage() {
 
       {error && (
         <div className={styles.errorBanner}>
-          <i className="bx bx-error-circle" />
+          <AlertCircle size={16} />
           <span>{error}</span>
         </div>
       )}
@@ -260,7 +271,7 @@ export function CreateOpportunityPage() {
         {/* Submit Actions */}
         <div className={styles.formFooter}>
           <button type="submit" className={styles.btnPrimary} disabled={submitting}>
-            <i className="bx bx-paper-plane" />
+            <Send size={15} />
             <span>{submitting ? 'Publishing Drive...' : 'Publish Campus Drive'}</span>
           </button>
           <Link to="/company/opportunities" className={styles.btnSecondary}>

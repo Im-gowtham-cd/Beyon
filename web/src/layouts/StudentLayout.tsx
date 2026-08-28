@@ -1,7 +1,8 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/context/AuthContext';
 import { StudentSidebar } from './StudentSidebar';
+import { Menu, Bell, User, LogOut, Sparkles } from 'lucide-react';
 import styles from './StudentLayout.module.css';
 
 export function StudentLayout() {
@@ -19,11 +20,11 @@ export function StudentLayout() {
           className={styles.mobileMenuBtn}
           onClick={() => setMobileSidebarOpen(!mobileSidebarOpen)}
         >
-          <i className="bx bx-menu-alt-left" style={{ fontSize: '1.3rem' }} />
+          <Menu size={18} />
           <span>Menu</span>
         </button>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <div style={{ width: '28px', height: '28px', background: '#1c2d81', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fed601', fontWeight: 900, fontSize: '0.9rem' }}>
+          <div style={{ width: '28px', height: '28px', background: '#1c2d81', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fed601', fontWeight: 900, fontSize: '0.9rem' }}>
             B
           </div>
           <span style={{ fontWeight: 800, color: '#1c2d81', fontSize: '1rem', letterSpacing: '-0.02em' }}>BEYON</span>
@@ -39,14 +40,17 @@ export function StudentLayout() {
           onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
         />
 
-        {/* Primary Main Workspace Canvas (Offset from fixed sidebar) */}
+        {/* Primary Main Workspace Canvas */}
         <main
           className={`${styles.mainContent} ${sidebarCollapsed ? styles.mainContentCollapsed : ''}`}
         >
-          {/* Subtle Top Utility Bar */}
+          {/* Top Utility Bar */}
           <header className={styles.topUtilityBar}>
             <div className={styles.utilityLeft}>
-              <span className={styles.portalTag}>🚀 Enterprise Student Workspace</span>
+              <span className={styles.portalTag}>
+                <Sparkles size={14} style={{ color: '#1c2d81' }} />
+                <span>Enterprise Student Workspace</span>
+              </span>
             </div>
             <div className={styles.utilityRight}>
               <button
@@ -55,7 +59,7 @@ export function StudentLayout() {
                 onClick={() => navigate('/notifications')}
                 title="Notifications"
               >
-                <i className="bx bx-bell" />
+                <Bell size={16} />
                 <span className={styles.dotBadge} />
               </button>
               <button
@@ -64,7 +68,7 @@ export function StudentLayout() {
                 onClick={() => navigate('/student/profile')}
                 title="Profile & Settings"
               >
-                <i className="bx bx-user" />
+                <User size={16} />
               </button>
               <button
                 type="button"
@@ -72,7 +76,7 @@ export function StudentLayout() {
                 onClick={() => { logout(); navigate('/login'); }}
                 title="Sign out"
               >
-                <i className="bx bx-log-out" />
+                <LogOut size={14} />
                 <span>Logout</span>
               </button>
             </div>

@@ -2,6 +2,7 @@
 import { Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/context/AuthContext';
 import { CompanySidebar } from './CompanySidebar';
+import { Menu, Building2, MessageSquare, Bell, LogOut } from 'lucide-react';
 import styles from './CompanyLayout.module.css';
 
 export function CompanyLayout() {
@@ -19,7 +20,7 @@ export function CompanyLayout() {
           className={styles.mobileMenuBtn}
           onClick={() => setMobileSidebarOpen(!mobileSidebarOpen)}
         >
-          <i className="bx bx-menu-alt-left" style={{ fontSize: '1.3rem' }} />
+          <Menu size={18} />
           <span>Menu</span>
         </button>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -47,7 +48,8 @@ export function CompanyLayout() {
           <header className={styles.topUtilityBar}>
             <div className={styles.utilityLeft}>
               <span className={styles.portalTag}>
-                <i className="bx bx-buildings" /> Enterprise Corporate Workspace
+                <Building2 size={14} />
+                <span>Enterprise Corporate Workspace</span>
               </span>
             </div>
             <div className={styles.utilityRight}>
@@ -57,7 +59,7 @@ export function CompanyLayout() {
                 onClick={() => navigate('/company/messages')}
                 title="Direct Outreach"
               >
-                <i className="bx bx-chat" />
+                <MessageSquare size={16} />
               </button>
               <button
                 type="button"
@@ -65,7 +67,7 @@ export function CompanyLayout() {
                 onClick={() => navigate('/notifications')}
                 title="Notifications"
               >
-                <i className="bx bx-bell" />
+                <Bell size={16} />
                 <span className={styles.dotBadge} />
               </button>
               <button
@@ -74,7 +76,7 @@ export function CompanyLayout() {
                 onClick={() => navigate('/company/profile')}
                 title="Company Profile"
               >
-                <i className="bx bx-buildings" />
+                <Building2 size={16} />
               </button>
               <button
                 type="button"
@@ -82,7 +84,7 @@ export function CompanyLayout() {
                 onClick={() => { logout(); navigate('/login'); }}
                 title="Sign out"
               >
-                <i className="bx bx-log-out" />
+                <LogOut size={14} />
                 <span>Logout</span>
               </button>
             </div>
