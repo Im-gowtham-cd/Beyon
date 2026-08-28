@@ -4,10 +4,10 @@ import type { FeedbackReport } from '../types/feedback';
 import styles from './Community.module.css';
 
 const REPORT_TYPES = [
-  { value: 'BUG', label: '🐛 Report a Bug', desc: 'Something is broken or not working' },
-  { value: 'IMPROVEMENT', label: '💡 Suggest Improvement', desc: 'Something could work better' },
-  { value: 'ASSESSMENT', label: '📋 Assessment Issue', desc: 'Problem with assessment or proctoring' },
-  { value: 'PERFORMANCE', label: '⚡ Performance', desc: 'Something is slow or unresponsive' },
+  { value: 'BUG', icon: 'bx bx-bug', label: 'Report a Bug', desc: 'Something is broken or not working' },
+  { value: 'IMPROVEMENT', icon: 'bx bx-bulb', label: 'Suggest Improvement', desc: 'Feature or workflow enhancement' },
+  { value: 'ASSESSMENT', icon: 'bx bx-shield-quarter', label: 'Assessment Issue', desc: 'Problem with assessment or proctoring' },
+  { value: 'PERFORMANCE', icon: 'bx bx-tachometer', label: 'Performance Issue', desc: 'Something is slow or unresponsive' },
 ];
 
 const CATEGORIES = ['Account', 'Profile', 'Practice', 'Coins', 'Opportunity', 'Application', 'Assessment', 'Proctoring', 'Portfolio', 'Community', 'Institution', 'Company', 'Notification', 'Performance', 'Other'];
@@ -74,11 +74,18 @@ export function FeedbackPage() {
           <button className={styles.createBtn} onClick={() => { setView('form'); setError(''); }}>+ Report Issue</button>
         )}
         {view !== 'list' && (
-          <button className={styles.backBtn} onClick={() => { setView('list'); setSelectedReport(null); }}>← Back to Reports</button>
+          <button className={styles.backBtn} onClick={() => { setView('list'); setSelectedReport(null); }} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+            <i className="bx bx-arrow-back" /> Back to Reports
+          </button>
         )}
       </div>
 
-      {submitted && <div className={styles.successBanner}>✓ Your report has been submitted. We'll review it shortly.</div>}
+      {submitted && (
+        <div className={styles.successBanner} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <i className="bx bx-check-circle" style={{ fontSize: '1.2rem' }} />
+          <span>Your report has been submitted. We'll review it shortly.</span>
+        </div>
+      )}
       {error && <div className={styles.errorBanner}>{error} <button onClick={handleSubmit} className={styles.retryBtn}>Try Again</button></div>}
 
       {view === 'form' && (
@@ -87,7 +94,10 @@ export function FeedbackPage() {
             {REPORT_TYPES.map(rt => (
               <button key={rt.value} className={`${styles.feedbackTypeCard} ${form.reportType === rt.value ? styles.feedbackTypeActive : ''}`}
                 onClick={() => setForm({ ...form, reportType: rt.value })}>
-                <div className={styles.feedbackTypeLabel}>{rt.label}</div>
+                <div className={styles.feedbackTypeLabel} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <i className={rt.icon} />
+                  <span>{rt.label}</span>
+                </div>
                 <div className={styles.feedbackTypeDesc}>{rt.desc}</div>
               </button>
             ))}
@@ -167,7 +177,7 @@ export function FeedbackPage() {
                 <div className={styles.feedbackTitle}>{r.title}</div>
                 <div className={styles.feedbackMeta}>
                   <span className={styles.categoryBadge}>{r.category}</span>
-                  <span>🕐 {new Date(r.createdAt).toLocaleDateString()}</span>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><i className="bx bx-time" /> {new Date(r.createdAt).toLocaleDateString()}</span>
                   {r.updatedAt !== r.createdAt && <span>Updated {new Date(r.updatedAt).toLocaleDateString()}</span>}
                 </div>
               </div>

@@ -1,0 +1,11 @@
+.container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+.header { margin-bottom: 2rem; }
+.title { font-size: 1.75rem; font-weight: 700; color: #0a0a0f; margin-bottom: 0.25rem; }
+.subtitle { font-size: 0.95rem; color: #6b7280; }
+.empty { text-align: center; padding: 3rem; color: #6b7280; }
+.statsGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+.statCard { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 1.25rem; text-align: center; }
+.statValue { font-size: 1.75rem; font-weight: 800; color: #6366f1; margin-bottom: 0.25rem; }
+.statLabel { font-size: 0.75rem; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em; }
+.sectionCard { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; }
+.sectionTitle { font-size: 1.1rem; font-weight: 600; color: #0a0a0f; margin-bottom: 1rem; }

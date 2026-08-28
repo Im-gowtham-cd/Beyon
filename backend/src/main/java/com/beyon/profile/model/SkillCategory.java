@@ -10,7 +10,7 @@ public class SkillCategory {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(columnDefinition = "uuid")
+    @Column(columnDefinition = "varchar(36)")
     private UUID id;
 
     @Column(nullable = false, unique = true, length = 100)
@@ -25,7 +25,7 @@ public class SkillCategory {
     @Column(nullable = false)
     private int displayOrder = 0;
 
-    @Column(nullable = false)
+    @Column(name = "is_active", nullable = false)
     private boolean active = true;
 
     @Column(nullable = false, updatable = false)

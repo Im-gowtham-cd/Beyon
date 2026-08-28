@@ -43,7 +43,7 @@ public class DailyChallengeService {
     DailyChallenge generateChallenge(UUID studentId, LocalDate date) {
         List<Question> unsolved = questionRepository.findUnsolvedForStudent(studentId, PageRequest.of(0, 20));
         if (unsolved.isEmpty()) {
-            unsolved = questionRepository.findByStatusOrderByCreatedAtDesc("PUBLISHED", PageRequest.of(0, 20));
+            unsolved = questionRepository.findByStatusInOrderByCreatedAtDesc(List.of("PUBLISHED", "ACTIVE"), PageRequest.of(0, 20));
         }
         if (unsolved.isEmpty()) return null;
 

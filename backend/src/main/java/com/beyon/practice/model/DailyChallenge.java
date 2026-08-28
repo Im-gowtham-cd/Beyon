@@ -11,7 +11,7 @@ public class DailyChallenge {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(columnDefinition = "uuid")
+    @Column(columnDefinition = "varchar(36)")
     private UUID id;
 
     @Column(nullable = false)
@@ -32,6 +32,7 @@ public class DailyChallenge {
 
     private Integer timeSpentSeconds;
 
+    @Column(name = "is_correct")
     private Boolean correct;
 
     @Column(nullable = false, updatable = false)

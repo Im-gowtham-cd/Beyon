@@ -20,7 +20,7 @@ public class AssessmentSessionService {
     private final AssessmentAnswerRepository answerRepository;
     private final AssessmentQuestionOrderRepository questionOrderRepository;
     private final ProctoringEventRepository proctoringEventRepository;
-    private final AuditEventRepository auditEventRepository;
+    private final AssessmentAuditEventRepository auditEventRepository;
     private final IdentityVerificationRepository identityVerificationRepository;
     private final SystemCheckResultRepository systemCheckResultRepository;
     private final SecureRandom secureRandom = new SecureRandom();
@@ -31,7 +31,7 @@ public class AssessmentSessionService {
             AssessmentAnswerRepository answerRepository,
             AssessmentQuestionOrderRepository questionOrderRepository,
             ProctoringEventRepository proctoringEventRepository,
-            AuditEventRepository auditEventRepository,
+            AssessmentAuditEventRepository auditEventRepository,
             IdentityVerificationRepository identityVerificationRepository,
             SystemCheckResultRepository systemCheckResultRepository) {
         this.sessionRepository = sessionRepository;

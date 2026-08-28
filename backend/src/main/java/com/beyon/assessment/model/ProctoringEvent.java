@@ -27,7 +27,7 @@ public class ProctoringEvent {
     @Column
     private String description;
 
-    @Column(columnDefinition = "jsonb")
+    @Column(columnDefinition = "text")
     private String metadata;
 
     @Column(precision = 3, scale = 2)

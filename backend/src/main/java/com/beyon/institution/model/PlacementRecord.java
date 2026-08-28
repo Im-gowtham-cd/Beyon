@@ -6,19 +6,19 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.util.UUID;
 
-@Entity
+@Entity(name = "InstitutionPlacementRecord")
 @Table(name = "placement_records")
 public class PlacementRecord {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(columnDefinition = "uuid")
+    @Column(columnDefinition = "varchar(36)")
     private UUID id;
 
     @Column(nullable = false)
     private UUID studentId;
 
-    @Column(columnDefinition = "uuid")
+    @Column(columnDefinition = "varchar(36)")
     private UUID institutionId;
 
     @Column(nullable = false, length = 200)

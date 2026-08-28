@@ -31,25 +31,25 @@ export function RoleSelectPage() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)', marginBottom: 'var(--space-xl)' }}>
           <RoleCard
             role="STUDENT"
-            icon="🎓"
+            icon="bx bx-graduation"
             title="Student"
-            description="Build skills. Earn Coins. Unlock opportunities."
+            description="Build verified skills, earn Beyon Coins, and unlock enterprise career drives."
             selected={role === 'STUDENT'}
             onSelect={setRole}
           />
           <RoleCard
             role="INSTITUTION"
-            icon="🏫"
+            icon="bx bx-buildings"
             title="Institution"
-            description="Develop talent. Track readiness. Connect with industry."
+            description="Develop talent ecosystems, track student readiness metrics, and connect with recruiters."
             selected={role === 'INSTITUTION'}
             onSelect={setRole}
           />
           <RoleCard
             role="COMPANY"
-            icon="🏢"
+            icon="bx bx-briefcase-alt-2"
             title="Company"
-            description="Find skilled talent. Assess. Recruit."
+            description="Find pre-assessed engineering talent and run proctored recruitment drives."
             selected={role === 'COMPANY'}
             onSelect={setRole}
           />

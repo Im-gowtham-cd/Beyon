@@ -15,7 +15,7 @@ public class FileDocument {
     @Column(name = "mime_type", length = 100) private String mimeType;
     @Column(name = "file_size", nullable = false) private Long fileSize = 0L;
     @Column(name = "is_public", nullable = false) private Boolean isPublic = false;
-    @Column(columnDefinition = "jsonb") private String metadata;
+    @Column(columnDefinition = "text") private String metadata;
     @Column(name = "created_at", nullable = false) private OffsetDateTime createdAt = OffsetDateTime.now();
 
     public FileDocument() {}

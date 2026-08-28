@@ -1,8 +1,5 @@
 import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { AuthInput } from '../components/AuthInput';
-import { PasswordInput } from '../components/PasswordInput';
-import { AuthButton } from '../components/AuthButton';
 import { useAuth } from '../context/AuthContext';
 import { authApi } from '../services/authApi';
 import type { ApiError } from '../../services/api/client';
@@ -13,12 +10,41 @@ export function LoginPage() {
   const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [remember, setRemember] = useState(false);
+  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+  const [toast, setToast] = useState({ show: false, message: '', isError: false });
   const [loading, setLoading] = useState(false);
+
+  function validateEmail() {
+    if (!email.trim()) {
+      setErrors(prev => ({ ...prev, email: 'Username or email is required' }));
+      return false;
+    }
+    setErrors(prev => ({ ...prev, email: '' }));
+    return true;
+  }
+
+  function validatePassword() {
+    if (!password) {
+      setErrors(prev => ({ ...prev, password: 'Password is required' }));
+      return false;
+    }
+    setErrors(prev => ({ ...prev, password: '' }));
+    return true;
+  }
+
+  function showToast(message: string, isError = false) {
+    setToast({ show: true, message, isError });
+    setTimeout(() => setToast({ show: false, message: '', isError: false }), 4000);
+  }
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    setError('');
+    const emailValid = validateEmail();
+    const passValid = validatePassword();
+    if (!emailValid || !passValid) return;
+
     setLoading(true);
 
     try {
@@ -38,83 +64,183 @@ export function LoginPage() {
         return;
       }
 
-      if (profileStatus === 'PENDING_INSTITUTION_VERIFICATION' || profileStatus === 'PENDING_COMPANY_VERIFICATION') {
+      if (
+        profileStatus === 'PENDING_INSTITUTION_VERIFICATION' ||
+        profileStatus === 'PENDING_COMPANY_VERIFICATION'
+      ) {
         navigate('/verification-pending');
         return;
       }
 
-      const roleRoutes: Record<string, string> = {
-        STUDENT: '/student/home',
-        INSTITUTION: '/institution/home',
-        COMPANY: '/company/home',
-        ADMIN: '/admin/home',
-      };
-      navigate(roleRoutes[response.user.role] || '/student/home');
+      showToast('Login successful! Redirecting...');
+      setTimeout(() => {
+        const roleRoutes: Record<string, string> = {
+          STUDENT: '/student/home',
+          INSTITUTION: '/institution/home',
+          COMPANY: '/company/home',
+          ADMIN: '/admin/home',
+        };
+        navigate(roleRoutes[response.user.role] || '/student/home');
+      }, 1000);
     } catch (err) {
       const apiErr = err as ApiError;
-      setError(apiErr.message || 'Unable to sign in. Please check your credentials and try again.');
+      showToast(apiErr.message || 'Invalid credentials. Please try again.', true);
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <div className={styles.page}>
-      <div className={styles.left}>
-        <div className={styles.leftContent}>
-          <Link to="/" className={styles.logo}>
-            <span className={styles.logoIcon}>B</span>
-            <span className={styles.logoText}>Beyon</span>
-          </Link>
-          <h1 className={styles.headline}>Welcome back</h1>
-          <p className={styles.sub}>Continue building your skills and opportunities.</p>
+    <div className={styles.loginPage}>
+      <main className={styles.loginMain}>
+        <div className={styles.loginCard}>
+          {/* Left Aside */}
+          <aside className={styles.loginAside}>
+            <div className={styles.asideBrand}>
+              <span className={styles.asideMark} aria-hidden="true" />
+              <div className={styles.asideBrandText}>
+                <span className={styles.asideName}>Beyon</span>
+                <span className={styles.asideSub}>Next-Gen Skills &amp; Career Architecture</span>
+              </div>
+            </div>
+
+            <div className={styles.asideBody}>
+              <h2>Intelligent Talent Assessment &amp; Career Growth Platform</h2>
+              <p>Secure portal access for candidates, educational institutions, and enterprise hiring partners.</p>
+              <ul className={styles.asideFeatures}>
+                <li>
+                  <i className="bx bx-shield-quarter" /> Proctored Skill Assessments
+                </li>
+                <li>
+                  <i className="bx bx-brain" /> AI-Powered Career Intelligence
+                </li>
+                <li>
+                  <i className="bx bx-briefcase-alt-2" /> Direct Enterprise Placements
+                </li>
+              </ul>
+            </div>
+
+            <div className={styles.asideFoot}>
+              <i className="bx bx-envelope" /> support@beyon.app
+            </div>
+          </aside>
+
+          {/* Right Panel */}
+          <section className={styles.loginPanel}>
+            <span className="section-label">Beyon Portal</span>
+            <h1>Sign In</h1>
+            <p className={styles.loginIntro}>
+              Sign in with your registered email and password to access the platform.
+            </p>
+
+            <form
+              className={styles.loginForm}
+              id="loginForm"
+              onSubmit={handleSubmit}
+              autoComplete="off"
+              noValidate
+            >
+              <div className={styles.inputGroup}>
+                <label htmlFor="loginUsername">Username / Email</label>
+                <div className={`${styles.inputWrapper} ${errors.email ? styles.error : ''}`}>
+                  <i className={`bx bx-user ${styles.inputIcon}`} />
+                  <input
+                    id="loginUsername"
+                    type="text"
+                    value={email}
+                    onChange={e => {
+                      setEmail(e.target.value);
+                      setErrors(prev => ({ ...prev, email: '' }));
+                    }}
+                    onBlur={validateEmail}
+                    placeholder="Enter your username or email"
+                    required
+                    autoComplete="username"
+                  />
+                </div>
+                {errors.email && <span className={styles.inputError}>{errors.email}</span>}
+              </div>
+
+              <div className={styles.inputGroup}>
+                <label htmlFor="loginPassword">Password</label>
+                <div className={`${styles.inputWrapper} ${errors.password ? styles.error : ''}`}>
+                  <i className={`bx bx-lock-alt ${styles.inputIcon}`} />
+                  <input
+                    id="loginPassword"
+                    type={showPassword ? 'text' : 'password'}
+                    value={password}
+                    onChange={e => {
+                      setPassword(e.target.value);
+                      setErrors(prev => ({ ...prev, password: '' }));
+                    }}
+                    onBlur={validatePassword}
+                    placeholder="Enter your password"
+                    required
+                    autoComplete="current-password"
+                  />
+                  <button
+                    type="button"
+                    className={styles.togglePassword}
+                    onClick={() => setShowPassword(!showPassword)}
+                    aria-label="Toggle password visibility"
+                  >
+                    <i className={showPassword ? 'bx bx-hide' : 'bx bx-show'} />
+                  </button>
+                </div>
+                {errors.password && <span className={styles.inputError}>{errors.password}</span>}
+              </div>
+
+              <div className={styles.loginOptions}>
+                <label className={styles.rememberMe}>
+                  <input
+                    type="checkbox"
+                    checked={remember}
+                    onChange={e => setRemember(e.target.checked)}
+                  />
+                  <span className={styles.checkmark} />
+                  Remember me
+                </label>
+                <Link to="/forgot-password" className={styles.forgotLink}>
+                  Forgot password?
+                </Link>
+              </div>
+
+              <button type="submit" className={styles.loginBtn} disabled={loading}>
+                {!loading ? (
+                  <span>Sign In</span>
+                ) : (
+                  <i className="bx bx-loader-alt bx-spin" />
+                )}
+              </button>
+
+              <div className={styles.switchAuth}>
+                <span>Don't have an account?</span>
+                <Link to="/register" className={styles.switchLink}>
+                  Sign Up
+                </Link>
+              </div>
+            </form>
+
+            <div className={styles.loginHelp}>
+              <i className="bx bx-shield-quarter" />
+              <span>
+                Protected portal access. For account issues or organization verification, contact support@beyon.dev.
+              </span>
+            </div>
+
+            <div
+              className={`${styles.loginToast} ${toast.show ? styles.show : ''} ${
+                toast.isError ? styles.toastError : ''
+              }`}
+              role="status"
+              aria-live="polite"
+            >
+              <i className={toast.isError ? 'bx bx-x-circle' : 'bx bx-check-circle'} />
+              <span>{toast.message}</span>
+            </div>
+          </section>
         </div>
-      </div>
-
-      <div className={styles.right}>
-        <div className={styles.formContainer}>
-          <h2 className={styles.formTitle}>Sign in</h2>
-          <p className={styles.formSubtitle}>Enter your credentials to access your account</p>
-
-          <form className={styles.form} onSubmit={handleSubmit}>
-            {error && <div className={styles.errorBanner} role="alert">{error}</div>}
-
-            <AuthInput
-              id="email"
-              label="Email"
-              type="email"
-              placeholder="you@example.com"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              required
-              autoComplete="email"
-            />
-
-            <PasswordInput
-              id="password"
-              label="Password"
-              placeholder="Enter your password"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              required
-              autoComplete="current-password"
-            />
-
-            <Link to="/forgot-password" className={styles.forgotLink}>
-              Forgot password?
-            </Link>
-
-            <AuthButton type="submit" loading={loading}>
-              Sign in
-            </AuthButton>
-          </form>
-
-          <p className={styles.footer}>
-            Don't have an account?{' '}
-            <Link to="/register" className={styles.link}>Create one</Link>
-          </p>
-        </div>
-      </div>
+      </main>
     </div>
   );
 }

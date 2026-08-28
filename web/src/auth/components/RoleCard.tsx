@@ -11,6 +11,7 @@ interface RoleCardProps {
 }
 
 export function RoleCard({ role, icon, title, description, selected, onSelect }: RoleCardProps) {
+  const isIconClass = icon.includes('bx') || icon.includes('fa-');
   return (
     <button
       type="button"
@@ -18,7 +19,9 @@ export function RoleCard({ role, icon, title, description, selected, onSelect }:
       onClick={() => onSelect(role)}
       aria-pressed={selected}
     >
-      <div className={styles.icon}>{icon}</div>
+      <div className={styles.icon}>
+        {isIconClass ? <i className={icon} style={{ fontSize: '1.5rem', color: '#1c2d81' }} /> : icon}
+      </div>
       <h3 className={styles.title}>{title}</h3>
       <p className={styles.description}>{description}</p>
     </button>

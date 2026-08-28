@@ -11,7 +11,7 @@ public class StudentProject {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(columnDefinition = "uuid")
+    @Column(columnDefinition = "varchar(36)")
     private UUID id;
 
     @Column(nullable = false)
@@ -42,7 +42,7 @@ public class StudentProject {
 
     private LocalDate endDate;
 
-    @Column(nullable = false)
+    @Column(name = "is_featured", nullable = false)
     private boolean featured = false;
 
     @Column(nullable = false, updatable = false)

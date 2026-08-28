@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { taxonomyApi } from '../services/taxonomyApi';
 import type { SkillCategory, TaxonomySkill } from '../types/taxonomy';
+import { Search, BookOpen } from 'lucide-react';
 import styles from './SkillExplorer.module.css';
 
 export function SkillExplorer() {
@@ -16,7 +17,7 @@ export function SkillExplorer() {
     try {
       const cats = await taxonomyApi.getCategories();
       setCategories(cats);
-    } catch { /* */ }
+    } catch { /* fallback */ }
   }, []);
 
   const loadSkills = useCallback(async () => {
@@ -30,7 +31,7 @@ export function SkillExplorer() {
       if (search.length >= 2) params.search = search;
       const result = await taxonomyApi.getSkills(params);
       setSkills(result);
-    } catch { /* */ }
+    } catch { /* fallback */ }
     setLoading(false);
   }, [activeCategory, categories, search]);
 
@@ -50,12 +51,17 @@ export function SkillExplorer() {
   return (
     <div className={styles.page}>
       <div className={styles.pageHeader}>
-        <h1 className={styles.title}>Skills</h1>
+        <div>
+          <h1 className={styles.title}>Skill Taxonomy &amp; Engineering Matrix</h1>
+          <p style={{ color: '#64748b', fontSize: '0.86rem', margin: '4px 0 0', fontWeight: 400 }}>
+            Master core technologies verified across platform coding challenges and proctored benchmark assessments
+          </p>
+        </div>
         <div className={styles.searchBox}>
-          <span className={styles.searchIcon}>⌕</span>
+          <Search size={16} className={styles.searchIcon} />
           <input
             className={styles.searchInput}
-            placeholder="Search skills..."
+            placeholder="Search skills (e.g. CUDA, Spring, React)..."
             value={search}
             onChange={e => setSearch(e.target.value)}
           />
@@ -67,7 +73,7 @@ export function SkillExplorer() {
           className={`${styles.categoryChip} ${!activeCategory ? styles.categoryChipActive : ''}`}
           onClick={() => handleCategoryClick('')}
         >
-          All
+          All Skills
         </button>
         {categories.map(cat => (
           <button
@@ -82,28 +88,33 @@ export function SkillExplorer() {
 
       {loading ? (
         <div className={styles.loadingContainer}>
-          <div className={styles.skeleton} style={{ width: '100%', height: 60 }} />
-          <div className={styles.skeleton} style={{ width: '100%', height: 60 }} />
-          <div className={styles.skeleton} style={{ width: '100%', height: 60 }} />
+          {[1, 2, 3, 4, 5, 6].map(i => (
+            <div key={i} className={styles.skeleton} style={{ height: 100, borderRadius: '0px' }} />
+          ))}
         </div>
       ) : skills.length === 0 ? (
         <div className={styles.emptyState}>
-          <p className={styles.emptyText}>No skills found</p>
+          <p className={styles.emptyText}>No skills found matching your query.</p>
         </div>
       ) : (
         <div className={styles.skillsGrid}>
           {skills.map(skill => (
-            <Link
-              key={skill.id}
-              to={`/student/skills/${skill.slug}`}
-              className={styles.skillCard}
-            >
-              <span className={styles.skillCategory}>{skill.category || 'Skill'}</span>
-              <h3 className={styles.skillName}>{skill.name}</h3>
-              {skill.description && <p className={styles.skillDescription}>{skill.description}</p>}
-              {skill.topicCount !== undefined && skill.topicCount > 0 && (
-                <span className={styles.topicCount}>{skill.topicCount} Topics</span>
+            <Link key={skill.id} to={`/student/skills/${skill.slug}`} className={styles.skillCard}>
+              <div className={styles.skillHeader}>
+                <h3 className={styles.skillName}>{skill.name}</h3>
+                {skill.category && (
+                  <span className={styles.skillCategory}>
+                    {typeof skill.category === 'object' ? (skill.category as any).name : skill.category}
+                  </span>
+                )}
+              </div>
+              {skill.description && (
+                <p className={styles.skillDescription}>{skill.description}</p>
               )}
+              <div className={styles.topicCount}>
+                <BookOpen size={13} style={{ color: '#1c2d81' }} />
+                <span>{skill.topicCount || 0} Topics &amp; Practice Tracks</span>
+              </div>
             </Link>
           ))}
         </div>

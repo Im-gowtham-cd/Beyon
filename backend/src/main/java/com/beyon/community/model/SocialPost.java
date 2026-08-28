@@ -13,7 +13,7 @@ public class SocialPost {
     @Column(name = "post_type", nullable = false, length = 30) private String postType = "TEXT";
     @Column(length = 300) private String title;
     @Column(columnDefinition = "text", nullable = false) private String content;
-    @Column(name = "media_urls", columnDefinition = "jsonb") private String mediaUrls = "[]";
+    @Column(name = "media_urls", columnDefinition = "text") private String mediaUrls = "[]";
     @Column(name = "reference_type", length = 50) private String referenceType;
     @Column(name = "reference_id") private UUID referenceId;
     @Column(name = "like_count", nullable = false) private Integer likeCount = 0;
@@ -21,7 +21,7 @@ public class SocialPost {
     @Column(name = "share_count", nullable = false) private Integer shareCount = 0;
     @Column(nullable = false, length = 20) private String visibility = "PUBLIC";
     @Column(name = "is_pinned", nullable = false) private Boolean isPinned = false;
-    @Column(columnDefinition = "jsonb") private String tags = "[]";
+    @Column(columnDefinition = "text") private String tags = "[]";
     @Column(name = "created_at", nullable = false) private OffsetDateTime createdAt = OffsetDateTime.now();
     @Column(name = "updated_at", nullable = false) private OffsetDateTime updatedAt = OffsetDateTime.now();
 

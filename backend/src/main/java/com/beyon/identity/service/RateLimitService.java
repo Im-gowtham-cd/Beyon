@@ -15,22 +15,30 @@ public class RateLimitService {
     }
 
     public boolean isRateLimited(String key, int maxAttempts, Duration window) {
-        String count = redisTemplate.opsForValue().get(key);
-        if (count == null) {
-            redisTemplate.opsForValue().set(key, "1", window);
+        try {
+            String count = redisTemplate.opsForValue().get(key);
+            if (count == null) {
+                redisTemplate.opsForValue().set(key, "1", window);
+                return false;
+            }
+
+            int current = Integer.parseInt(count);
+            if (current >= maxAttempts) {
+                return true;
+            }
+
+            redisTemplate.opsForValue().increment(key);
+            return false;
+        } catch (Exception e) {
+            // Gracefully pass through when Redis is offline in dev
             return false;
         }
-
-        int current = Integer.parseInt(count);
-        if (current >= maxAttempts) {
-            return true;
-        }
-
-        redisTemplate.opsForValue().increment(key);
-        return false;
     }
 
     public void reset(String key) {
-        redisTemplate.delete(key);
+        try {
+            redisTemplate.delete(key);
+        } catch (Exception ignored) {
+        }
     }
 }

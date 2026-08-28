@@ -77,6 +77,27 @@ public class QuestionBankService {
     }
 
     @Transactional
+    public Question createFullQuestion(Question question, List<QuestionOption> options, List<QuestionTestCase> testCases) {
+        if (question.getStatus() == null) question.setStatus("ACTIVE");
+        Question saved = questionRepository.save(question);
+        if (options != null) {
+            int order = 1;
+            for (QuestionOption opt : options) {
+                opt.setQuestionId(saved.getId());
+                opt.setDisplayOrder(order++);
+                optionRepository.save(opt);
+            }
+        }
+        if (testCases != null) {
+            for (QuestionTestCase tc : testCases) {
+                tc.setQuestionId(saved.getId());
+                testCaseRepository.save(tc);
+            }
+        }
+        return saved;
+    }
+
+    @Transactional
     public Question updateQuestion(UUID id, Question update, UUID userId) {
         Question question = getQuestion(id);
         if (question.getCreatedBy() != null && !question.getCreatedBy().equals(userId)) {

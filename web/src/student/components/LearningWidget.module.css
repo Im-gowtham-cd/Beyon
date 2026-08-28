@@ -1,19 +1,23 @@
 .widget {
   background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  padding: var(--space-xl);
+  border: 1px solid var(--color-border-light);
+  border-top: 4px solid var(--color-accent);
+  border-radius: var(--radius-xs);
+  padding: 20px;
   display: flex;
   flex-direction: column;
   gap: var(--space-md);
+  box-shadow: var(--shadow-sm);
 }
 
 .widgetTitle {
   font-family: var(--font-heading);
-  font-size: var(--text-base);
-  font-weight: var(--font-semibold);
-  color: var(--color-text);
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--color-primary);
   margin: 0;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--color-border-light);
 }
 
 .empty {
@@ -23,16 +27,17 @@
 }
 
 .emptyText {
-  font-size: var(--text-sm);
-  color: var(--color-text-muted);
+  font-size: 0.82rem;
+  color: var(--color-text-secondary);
   margin: 0;
+  line-height: 1.4;
 }
 
 .link {
-  font-size: var(--text-sm);
+  font-size: 0.8rem;
   color: var(--color-primary);
   text-decoration: none;
-  font-weight: var(--font-medium);
+  font-weight: 700;
 }
 
 .link:hover {
@@ -42,12 +47,12 @@
 .list {
   display: flex;
   flex-direction: column;
-  gap: var(--space-sm);
+  gap: 8px;
 }
 
 .item {
-  padding: var(--space-sm) 0;
-  border-bottom: 1px solid var(--color-border);
+  padding: 8px 0;
+  border-bottom: 1px solid var(--color-border-light);
 }
 
 .item:last-of-type {
@@ -61,10 +66,10 @@
 }
 
 .itemName {
-  font-size: var(--text-sm);
-  color: var(--color-text);
+  font-size: 0.82rem;
+  color: var(--color-text-primary);
   text-decoration: none;
-  font-weight: var(--font-medium);
+  font-weight: 600;
 }
 
 .itemName:hover {
@@ -72,20 +77,27 @@
 }
 
 .itemStatus {
-  font-size: var(--text-xs);
-  color: var(--color-primary);
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--color-success);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .viewAll {
-  font-size: var(--text-sm);
-  color: var(--color-text-muted);
+  font-size: 0.78rem;
+  color: var(--color-primary);
   text-decoration: none;
   text-align: center;
-  padding: var(--space-sm);
+  padding: 8px;
+  font-weight: 700;
+  background: rgba(37, 60, 172, 0.04);
+  border-radius: var(--radius-xs);
+  transition: var(--transition);
 }
 
 .viewAll:hover {
-  color: var(--color-primary);
+  background: rgba(37, 60, 172, 0.08);
 }
 
 .skeleton {

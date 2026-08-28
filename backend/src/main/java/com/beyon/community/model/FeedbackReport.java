@@ -27,7 +27,7 @@ public class FeedbackReport {
     @Column(name = "request_id", length = 100) private String requestId;
     @Column(name = "desktop_app_version", length = 20) private String desktopAppVersion;
     @Column(name = "assessment_session_id") private UUID assessmentSessionId;
-    @Column(columnDefinition = "jsonb") private String metadata;
+    @Column(columnDefinition = "text") private String metadata;
     @Column(name = "created_at", nullable = false) private OffsetDateTime createdAt = OffsetDateTime.now();
     @Column(name = "updated_at", nullable = false) private OffsetDateTime updatedAt = OffsetDateTime.now();
     @Column(name = "resolved_at") private OffsetDateTime resolvedAt;

@@ -14,13 +14,13 @@ public class ProctoringService {
 
     private final ProctoringEventRepository eventRepository;
     private final AssessmentSessionRepository sessionRepository;
-    private final AuditEventRepository auditEventRepository;
+    private final AssessmentAuditEventRepository auditEventRepository;
     private final AssessmentPolicyRepository policyRepository;
 
     public ProctoringService(
             ProctoringEventRepository eventRepository,
             AssessmentSessionRepository sessionRepository,
-            AuditEventRepository auditEventRepository,
+            AssessmentAuditEventRepository auditEventRepository,
             AssessmentPolicyRepository policyRepository) {
         this.eventRepository = eventRepository;
         this.sessionRepository = sessionRepository;

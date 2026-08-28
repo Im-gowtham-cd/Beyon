@@ -21,8 +21,8 @@ public class VerifiedAchievement {
     @Column(name = "verification_status", nullable = false, length = 30) private String verificationStatus = "PENDING";
     @Column(name = "verified_by") private UUID verifiedBy;
     @Column(name = "verified_at") private OffsetDateTime verifiedAt;
-    @Column(name = "evidence_urls", columnDefinition = "jsonb") private String evidenceUrls = "[]";
-    @Column(columnDefinition = "jsonb") private String metadata;
+    @Column(name = "evidence_urls", columnDefinition = "text") private String evidenceUrls = "[]";
+    @Column(columnDefinition = "text") private String metadata;
     @Column(name = "created_at", nullable = false) private OffsetDateTime createdAt = OffsetDateTime.now();
     @Column(name = "updated_at", nullable = false) private OffsetDateTime updatedAt = OffsetDateTime.now();
 

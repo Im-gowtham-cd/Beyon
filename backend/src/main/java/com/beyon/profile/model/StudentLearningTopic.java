@@ -10,7 +10,7 @@ public class StudentLearningTopic {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(columnDefinition = "uuid")
+    @Column(columnDefinition = "varchar(36)")
     private UUID id;
 
     @Column(nullable = false)
@@ -19,7 +19,7 @@ public class StudentLearningTopic {
     @Column(nullable = false)
     private UUID topicId;
 
-    @Column(columnDefinition = "uuid")
+    @Column(columnDefinition = "varchar(36)")
     private UUID subtopicId;
 
     @Column(nullable = false, length = 20)

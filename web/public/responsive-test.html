@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Responsive Test Harness</title>
+<style>
+  body { margin: 0; font-family: sans-serif; background: #222; }
+  #toolbar { position: sticky; top: 0; z-index: 9999; display: flex; flex-wrap: wrap; gap: 6px; padding: 8px; background: #111; }
+  #toolbar button { font: 12px sans-serif; padding: 4px 8px; cursor: pointer; border: 1px solid #555; background: #333; color: #eee; }
+  #toolbar .info { color: #0f0; font: 12px monospace; align-self: center; margin-left: 8px; }
+  #frameWrap { padding: 8px; }
+  iframe { display: block; width: 1280px; height: calc(100vh - 60px); border: 1px solid #444; background: #fff; margin: 0 auto; }
+</style>
+</head>
+<body>
+  <div id="toolbar">
+    <button onclick="setW(320)">320</button>
+    <button onclick="setW(360)">360</button>
+    <button onclick="setW(375)">375</button>
+    <button onclick="setW(390)">390</button>
+    <button onclick="setW(430)">430</button>
+    <button onclick="setW(480)">480</button>
+    <button onclick="setW(600)">600</button>
+    <button onclick="setW(691)">691</button>
+    <button onclick="setW(768)">768</button>
+    <button onclick="setW(820)">820</button>
+    <button onclick="setW(1024)">1024</button>
+    <button onclick="setW(1179)">1179</button>
+    <button onclick="setW(1280)">1280</button>
+    <button onclick="setW(1440)">1440</button>
+    <button onclick="setW(1600)">1600</button>
+    <button onclick="setW(1920)">1920</button>
+    <span class="info" id="info"></span>
+  </div>
+  <div id="frameWrap">
+    <iframe id="appFrame" src="/" title="app"></iframe>
+  </div>
+  <script>
+    const frame = document.getElementById('appFrame');
+    const info = document.getElementById('info');
+    function setW(w) {
+      frame.style.width = w + 'px';
+      info.textContent = 'width: ' + w + 'px';
+    }
+  </script>
+</body>
+</html>

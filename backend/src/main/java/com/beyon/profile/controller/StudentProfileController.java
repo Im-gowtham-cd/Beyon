@@ -153,19 +153,19 @@ public class StudentProfileController {
         return ResponseEntity.ok(ApiResponse.ok(null));
     }
 
-    @GetMapping("/learning")
+    @GetMapping("/learning-skills")
     public ResponseEntity<ApiResponse<List<StudentLearningSkill>>> getLearningSkills(Authentication auth) {
         UUID userId = extractUserId(auth);
         return ResponseEntity.ok(ApiResponse.ok(studentProfileService.getLearningSkills(userId)));
     }
 
-    @PostMapping("/learning")
+    @PostMapping("/learning-skills")
     public ResponseEntity<ApiResponse<StudentLearningSkill>> addLearningSkill(Authentication auth, @RequestBody StudentLearningSkillRequest req) {
         UUID userId = extractUserId(auth);
         return ResponseEntity.ok(ApiResponse.ok(studentProfileService.addLearningSkill(userId, req)));
     }
 
-    @DeleteMapping("/learning/{learningId}")
+    @DeleteMapping("/learning-skills/{learningId}")
     public ResponseEntity<ApiResponse<Void>> removeLearningSkill(Authentication auth, @PathVariable UUID learningId) {
         UUID userId = extractUserId(auth);
         studentProfileService.removeLearningSkill(userId, learningId);

@@ -60,7 +60,7 @@ export function DiscussionsPage() {
             <div className={styles.threadCard} key={t.id} onClick={() => selectThread(t)}>
               <div className={styles.threadHeader}>
                 <span className={styles.threadTitle}>{t.title}</span>
-                {t.solved && <span className={styles.solvedBadge}>✓ Solved</span>}
+                {t.solved && <span className={styles.solvedBadge} style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><i className="bx bx-check" /> Solved</span>}
               </div>
               <div className={styles.threadMeta}>{t.replyCount} replies · {t.viewCount} views</div>
             </div>
@@ -68,7 +68,9 @@ export function DiscussionsPage() {
         </div>
       ) : (
         <div>
-          <button className={styles.backBtn} onClick={() => setSelectedThread(null)}>← Back to threads</button>
+          <button className={styles.backBtn} onClick={() => setSelectedThread(null)} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+            <i className="bx bx-arrow-back" /> Back to threads
+          </button>
           <div className={styles.threadDetail}>
             <h2>{selectedThread.title}</h2>
             <p className={styles.threadContent}>{selectedThread.content}</p>

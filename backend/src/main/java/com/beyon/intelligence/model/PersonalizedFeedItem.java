@@ -16,7 +16,7 @@ public class PersonalizedFeedItem {
     @Column(columnDefinition = "text") private String description;
     @Column(name = "action_url", length = 500) private String actionUrl;
     @Column(name = "action_label", length = 100) private String actionLabel;
-    @Column(columnDefinition = "jsonb") private String metadata;
+    @Column(columnDefinition = "text") private String metadata;
     @Column(name = "relevance_score", nullable = false) private BigDecimal relevanceScore = BigDecimal.ZERO;
     @Column(nullable = false) private Boolean dismissed = false;
     @Column(name = "created_at") private OffsetDateTime createdAt;

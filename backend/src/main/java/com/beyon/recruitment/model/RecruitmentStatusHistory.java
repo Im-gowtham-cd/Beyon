@@ -10,7 +10,7 @@ public class RecruitmentStatusHistory {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(columnDefinition = "uuid")
+    @Column(columnDefinition = "varchar(36)")
     private UUID id;
 
     @Column(nullable = false)
@@ -22,7 +22,7 @@ public class RecruitmentStatusHistory {
     @Column(nullable = false, length = 30)
     private String toStatus;
 
-    @Column(columnDefinition = "uuid")
+    @Column(columnDefinition = "varchar(36)")
     private UUID changedBy;
 
     @Column(columnDefinition = "TEXT")
