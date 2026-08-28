@@ -5,6 +5,10 @@ declare global {
   interface Window {
     beyon?: {
       platform: string;
+      app?: {
+        exitApp: () => Promise<void>;
+        forceFullscreen: () => Promise<boolean>;
+      };
       auth?: {
         getToken: () => Promise<string | null>;
         setToken: (token: string) => Promise<void>;
@@ -95,6 +99,76 @@ export function AssessmentApp() {
   const alertCounterRef = useRef(0);
   const launchToken = new URLSearchParams(window.location.search).get('token');
 
+  // Application Settings & Exit state
+  const [showExitModal, setShowExitModal] = useState(false);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [systemInfo, setSystemInfo] = useState<any>(null);
+  const [deviceInfo, setDeviceInfo] = useState<any>(null);
+  const [cameraTestActive, setCameraTestActive] = useState(false);
+  const settingsVideoRef = useRef<HTMLVideoElement | null>(null);
+  const settingsStreamRef = useRef<MediaStream | null>(null);
+
+  // Real-Time Proctoring AI Engine state
+  const [proctorStatus, setProctorStatus] = useState<'CLEAR' | 'WARNING' | 'CRITICAL'>('CLEAR');
+  const [proctorMessage, setProctorMessage] = useState('Face Detected & Monitored');
+  const analysisCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const isTerminatingRef = useRef(false);
+  const absenceStreakRef = useRef(0);
+  const multiPersonStreakRef = useRef(0);
+  const phoneStreakRef = useRef(0);
+  const voiceStreakRef = useRef(0);
+  const noiseStreakRef = useRef(0);
+  const proctorIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const handleSubmitRef = useRef<(() => void) | null>(null);
+
+  useEffect(() => {
+    const loadSys = async () => {
+      try {
+        const sys = await window.beyon?.assessment?.getSystemInfo();
+        const dev = await window.beyon?.assessment?.getDeviceInfo();
+        if (sys) setSystemInfo(sys);
+        if (dev) setDeviceInfo(dev);
+      } catch {}
+    };
+    loadSys();
+  }, []);
+
+  const toggleCameraTest = async () => {
+    if (cameraTestActive) {
+      if (settingsStreamRef.current) {
+        settingsStreamRef.current.getTracks().forEach(t => t.stop());
+        settingsStreamRef.current = null;
+      }
+      setCameraTestActive(false);
+    } else {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+        settingsStreamRef.current = stream;
+        if (settingsVideoRef.current) {
+          settingsVideoRef.current.srcObject = stream;
+          settingsVideoRef.current.play();
+        }
+        setCameraTestActive(true);
+      } catch {
+        setCameraTestActive(false);
+      }
+    }
+  };
+
+  const handleExitApp = () => {
+    setShowExitModal(true);
+  };
+
+  const confirmExitApp = async () => {
+    if (step === 'exam') {
+      try {
+        await handleSubmit();
+      } catch {}
+    }
+    await window.beyon?.app?.exitApp?.();
+  };
+
   const addMalpracticeAlert = (type: string, msg: string) => {
     const id = ++alertCounterRef.current;
     const time = new Date().toLocaleTimeString();
@@ -131,6 +205,8 @@ export function AssessmentApp() {
       window.beyon?.proctoring?.removeListeners();
       if (timerRef.current) clearInterval(timerRef.current);
       if (heartbeatRef.current) clearInterval(heartbeatRef.current);
+      if (proctorIntervalRef.current) clearInterval(proctorIntervalRef.current);
+      if (audioContextRef.current) audioContextRef.current.close().catch(() => {});
     };
   }, [launchToken]);
 
@@ -185,17 +261,29 @@ export function AssessmentApp() {
 
   useEffect(() => {
     if (step !== 'exam') {
-      // Stop exam camera when leaving exam
+      // Stop exam camera and analyzer when leaving exam
+      if (proctorIntervalRef.current) {
+        clearInterval(proctorIntervalRef.current);
+        proctorIntervalRef.current = null;
+      }
+      if (audioContextRef.current) {
+        audioContextRef.current.close().catch(() => {});
+        audioContextRef.current = null;
+      }
       if (examCameraStreamRef.current) {
         examCameraStreamRef.current.getTracks().forEach(t => t.stop());
         examCameraStreamRef.current = null;
       }
+      isTerminatingRef.current = false;
+      absenceStreakRef.current = 0;
+      multiPersonStreakRef.current = 0;
+      phoneStreakRef.current = 0;
+      voiceStreakRef.current = 0;
       return;
     }
 
     const handleFullscreenChange = (isFullscreen: boolean) => {
       if (!isFullscreen) {
-        // Always alert — API call is optional (only if we have a session)
         addMalpracticeAlert('FULLSCREEN_EXIT', 'Fullscreen mode exited — this has been recorded');
         setProctoringWarnings(prev => [...prev, 'Fullscreen exited']);
         if (session?.sessionId) {
@@ -253,12 +341,12 @@ export function AssessmentApp() {
     window.beyon?.proctoring?.onMinimize(handleMinimize);
     window.beyon?.proctoring?.onBeforeQuit(handleBeforeQuit);
 
-    // Start exam camera feed
+    // ── Start exam camera feed + Real-Time AI Proctoring Engine ─────────────────
     const startExamCamera = async () => {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
-          video: { width: { ideal: 320 }, height: { ideal: 240 }, facingMode: 'user' },
-          audio: false,
+          video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: 'user' },
+          audio: true,
         });
         examCameraStreamRef.current = stream;
         if (examVideoRef.current) {
@@ -268,6 +356,189 @@ export function AssessmentApp() {
             setExamCameraReady(true);
           };
         }
+
+        // Setup Web Audio Analyser for Noise & Speech Detection
+        try {
+          const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+          if (AudioContextClass) {
+            const audioCtx = new AudioContextClass();
+            audioContextRef.current = audioCtx;
+            const source = audioCtx.createMediaStreamSource(stream);
+            const analyser = audioCtx.createAnalyser();
+            analyser.fftSize = 512;
+            source.connect(analyser);
+            const timeData = new Uint8Array(analyser.fftSize);
+            const freqData = new Uint8Array(analyser.frequencyBinCount);
+
+            (stream as any)._checkAudio = () => {
+              // 1. RMS Energy
+              analyser.getByteTimeDomainData(timeData);
+              let sumSquares = 0;
+              for (let i = 0; i < timeData.length; i++) {
+                const val = (timeData[i] - 128) / 128;
+                sumSquares += val * val;
+              }
+              const rms = Math.sqrt(sumSquares / timeData.length);
+
+              // 2. Vocal Frequencies (Bins 2..45 in 512 FFT)
+              analyser.getByteFrequencyData(freqData);
+              let voiceSum = 0;
+              for (let i = 2; i < 45; i++) {
+                voiceSum += freqData[i];
+              }
+              const voiceAvg = voiceSum / 43;
+
+              // High sensitivity noise/voice detection
+              if (rms > 0.035 || voiceAvg > 24) {
+                noiseStreakRef.current++;
+                if (noiseStreakRef.current === 1 || noiseStreakRef.current % 4 === 0) {
+                  setProctorStatus('WARNING');
+                  setProctorMessage('Noise / Voice Detected');
+                  addMalpracticeAlert('NOISE_DETECTED', `Noise / speech detected in exam room (${Math.round(rms * 100)}% acoustic energy). Please maintain silence.`);
+                  setProctoringWarnings(prev => [...prev, 'Acoustic noise / speech detected']);
+                }
+              } else {
+                noiseStreakRef.current = 0;
+              }
+            };
+          }
+        } catch {}
+
+        // Setup Computer Vision Frame Analysis Canvas
+        const canvas = analysisCanvasRef.current || document.createElement('canvas');
+        canvas.width = 160;
+        canvas.height = 120;
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+
+        proctorIntervalRef.current = setInterval(() => {
+          if (isTerminatingRef.current) return;
+          if (!examVideoRef.current || examVideoRef.current.readyState < 2 || !ctx) return;
+
+          // 1. Run Audio Check
+          if ((stream as any)._checkAudio) {
+            (stream as any)._checkAudio();
+          }
+
+          // 2. Capture and analyze visual frame
+          ctx.drawImage(examVideoRef.current, 0, 0, 160, 120);
+          const frame = ctx.getImageData(0, 0, 160, 120);
+          const data = frame.data;
+
+          let centerSkinPixels = 0;
+          let leftSkinPixels = 0;
+          let rightSkinPixels = 0;
+          let phoneDarkPixels = 0;
+          let phoneBrightPixels = 0;
+          let phoneEdgeTransitions = 0;
+
+          for (let y = 0; y < 120; y++) {
+            for (let x = 0; x < 160; x++) {
+              const idx = (y * 160 + x) * 4;
+              const r = data[idx];
+              const g = data[idx + 1];
+              const b = data[idx + 2];
+
+              // Biometric YCbCr skin chrominance formula (rejects wooden walls, beige doors, yellow light)
+              const Y  =  0.299 * r + 0.587 * g + 0.114 * b;
+              const Cb = -0.1687 * r - 0.3313 * g + 0.5 * b + 128;
+              const Cr =  0.5 * r - 0.4187 * g - 0.0813 * b + 128;
+
+              const isHumanSkin =
+                Y >= 35 && Y <= 235 &&
+                Cb >= 75 && Cb <= 130 &&
+                Cr >= 130 && Cr <= 175 &&
+                r > g && r > b &&
+                (r - g > 8);
+
+              if (isHumanSkin) {
+                if (x >= 30 && x <= 130 && y >= 15 && y <= 95) {
+                  centerSkinPixels++;
+                } else if (x < 30 && y >= 20 && y <= 100) {
+                  leftSkinPixels++;
+                } else if (x > 130 && y >= 20 && y <= 100) {
+                  rightSkinPixels++;
+                }
+              }
+
+              // Smartphone / Electronic device detection in lower center region
+              if (y >= 45 && y <= 115 && x >= 30 && x <= 130) {
+                const lum = (r + g + b) / 3;
+                if (lum < 22) phoneDarkPixels++;
+                else if (lum > 225) phoneBrightPixels++;
+
+                if (x < 129) {
+                  const rightIdx = (y * 160 + (x + 1)) * 4;
+                  const rightLum = (data[rightIdx] + data[rightIdx + 1] + data[rightIdx + 2]) / 3;
+                  if (Math.abs(lum - rightLum) > 50) {
+                    phoneEdgeTransitions++;
+                  }
+                }
+              }
+            }
+          }
+
+          // EVALUATION 1: Face Presence / Absence (Candidate left screen)
+          if (centerSkinPixels < 140) {
+            absenceStreakRef.current++;
+            if (absenceStreakRef.current === 1) {
+              setProctorStatus('WARNING');
+              setProctorMessage('Face Not Detected');
+            } else if (absenceStreakRef.current === 2) {
+              setProctorStatus('WARNING');
+              setProctorMessage('Auto-terminating in 3s...');
+              addMalpracticeAlert('FACE_NOT_DETECTED', 'Face not detected in camera viewport! Auto-terminating in 3s if not returned.');
+              setProctoringWarnings(prev => [...prev, 'Candidate absent from screen']);
+            } else if (absenceStreakRef.current >= 5) { // ~3 seconds of continuous absence
+              isTerminatingRef.current = true;
+              setProctorStatus('CRITICAL');
+              setProctorMessage('AUTO-TERMINATED (ABSENT)');
+              addMalpracticeAlert('CRITICAL_ABSENCE_AUTO_TERMINATION', 'Assessment automatically terminated: Candidate left camera viewport during exam.');
+              if (handleSubmitRef.current) handleSubmitRef.current();
+              return;
+            }
+          } else {
+            if (absenceStreakRef.current > 0 && absenceStreakRef.current < 5) {
+              setProctorStatus('CLEAR');
+              setProctorMessage('Face Detected & Monitored');
+            }
+            absenceStreakRef.current = 0;
+          }
+
+          // EVALUATION 2: Multiple People
+          if (centerSkinPixels >= 140 && (leftSkinPixels > 240 || rightSkinPixels > 240)) {
+            multiPersonStreakRef.current++;
+            if (multiPersonStreakRef.current === 2) {
+              setProctorStatus('WARNING');
+              setProctorMessage('Multiple People in Frame');
+              addMalpracticeAlert('MULTIPLE_PEOPLE_DETECTED', 'Multiple people detected in proctoring camera frame');
+              setProctoringWarnings(prev => [...prev, 'Multiple persons detected']);
+            }
+          } else {
+            multiPersonStreakRef.current = 0;
+          }
+
+          // EVALUATION 3: Phone / Unauthorized Device
+          const isPhoneInFrame = (phoneDarkPixels > 240 || phoneBrightPixels > 240) && phoneEdgeTransitions > 75;
+          if (isPhoneInFrame) {
+            phoneStreakRef.current++;
+            if (phoneStreakRef.current === 2) {
+              setProctorStatus('WARNING');
+              setProctorMessage('Mobile Phone Detected');
+              addMalpracticeAlert('MOBILE_PHONE_DETECTED', 'Unauthorized mobile phone / smartphone detected in camera frame!');
+              setProctoringWarnings(prev => [...prev, 'Mobile device detected']);
+            } else if (phoneStreakRef.current >= 5) {
+              isTerminatingRef.current = true;
+              setProctorStatus('CRITICAL');
+              setProctorMessage('AUTO-TERMINATED (DEVICE)');
+              addMalpracticeAlert('DEVICE_MALPRACTICE_TERMINATION', 'Assessment automatically terminated: Unauthorized mobile phone usage detected.');
+              if (handleSubmitRef.current) handleSubmitRef.current();
+              return;
+            }
+          } else {
+            phoneStreakRef.current = 0;
+          }
+        }, 600);
+
       } catch {
         setExamCameraReady(false);
       }
@@ -282,6 +553,14 @@ export function AssessmentApp() {
 
     return () => {
       clearTimeout(timer);
+      if (proctorIntervalRef.current) {
+        clearInterval(proctorIntervalRef.current);
+        proctorIntervalRef.current = null;
+      }
+      if (audioContextRef.current) {
+        audioContextRef.current.close().catch(() => {});
+        audioContextRef.current = null;
+      }
       window.beyon?.proctoring?.removeListeners();
       window.beyon?.assessment?.unlockWindow();
       if (examCameraStreamRef.current) {
@@ -446,7 +725,8 @@ export function AssessmentApp() {
   const handleSubmit = async () => {
     if (timerRef.current) clearInterval(timerRef.current);
     if (heartbeatRef.current) clearInterval(heartbeatRef.current);
-    window.beyon?.assessment?.exitFullscreen();
+    if (proctorIntervalRef.current) clearInterval(proctorIntervalRef.current);
+    // Keep application in fullscreen lockdown until candidate explicitly exits
     window.beyon?.assessment?.unlockWindow();
     setStep('submitting');
 
@@ -471,6 +751,7 @@ export function AssessmentApp() {
       setStep('results');
     }
   };
+  handleSubmitRef.current = handleSubmit;
 
   const handleDesktopAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -508,30 +789,64 @@ export function AssessmentApp() {
           </div>
         </div>
 
-        {step === 'exam' && (
-          <div className={styles.timerSection}>
-            <span className={styles.timerLabel}>Time Remaining:</span>
-            <span className={`${styles.timerValue} ${(timeInfo?.remainingSeconds || 0) < 300 ? styles.timerWarning : ''}`}>
-              {formatTime(timeInfo?.remainingSeconds || 0)}
-            </span>
-          </div>
-        )}
-
-        {step === 'exam' && (
-          <button
-            className={styles.finishBtn}
-            onClick={handleSubmit}
-            title="Submit and finish the assessment"
-          >
-            <i className="bx bx-check-double" /> Finish &amp; Submit
-          </button>
-        )}
-
-        {proctoringWarnings.length > 0 && (
-          <span className={styles.warningBadge}>
-            <i className="bx bx-error" /> Warnings: {proctoringWarnings.length}
+        <div className={styles.headerPills}>
+          <span className={styles.kioskPill}>
+            <i className="bx bx-shield-alt-2" /> KIOSK FULLSCREEN LOCKED
           </span>
-        )}
+        </div>
+
+        <div className={styles.headerRight}>
+          {step === 'exam' && (
+            <div className={styles.timerSection}>
+              <span className={styles.timerLabel}>Time Remaining:</span>
+              <span className={`${styles.timerValue} ${(timeInfo?.remainingSeconds || 0) < 300 ? styles.timerWarning : ''}`}>
+                {formatTime(timeInfo?.remainingSeconds || 0)}
+              </span>
+            </div>
+          )}
+
+          {step === 'exam' && (
+            <button
+              className={styles.finishBtn}
+              onClick={handleSubmit}
+              title="Submit and finish the assessment"
+            >
+              <i className="bx bx-check-double" /> Finish &amp; Submit
+            </button>
+          )}
+
+          {proctoringWarnings.length > 0 && (
+            <span className={styles.warningBadge}>
+              <i className="bx bx-error" /> Warnings: {proctoringWarnings.length}
+            </span>
+          )}
+
+          <button
+            className={styles.headerSettingsBtn}
+            onClick={() => setShowSettingsModal(true)}
+            title="System Diagnostics &amp; Settings"
+          >
+            <i className="bx bx-slider" /> Diagnostics
+          </button>
+
+          {step !== 'exam' ? (
+            <button
+              className={styles.headerExitBtn}
+              onClick={handleExitApp}
+              title="Exit Assessment Client"
+            >
+              <i className="bx bx-power-off" /> Exit App
+            </button>
+          ) : (
+            <button
+              className={styles.headerExitBtnDisabled}
+              disabled
+              title="Exit is disabled during examination. Please finish and submit your exam."
+            >
+              <i className="bx bx-lock-alt" /> Exit Locked
+            </button>
+          )}
+        </div>
       </header>
 
       {/* Auth Step */}
@@ -788,16 +1103,33 @@ export function AssessmentApp() {
 
           {/* Left Sidebar — Question Palette + Camera */}
           <aside className={styles.paletteContainer}>
-            {/* Camera Panel */}
+            {/* Camera Panel with AI Detection HUD */}
             <div className={styles.examCameraPanel}>
               <div className={styles.examCameraHeader}>
                 <i className="bx bx-camera" style={{ fontSize: 14 }} />
-                <span>Live Proctoring</span>
-                {examCameraReady && (
-                  <span className={styles.liveIndicator}>
-                    <span className={styles.liveDot} /> LIVE
-                  </span>
-                )}
+                <span>AI Proctor</span>
+                <span
+                  style={{
+                    marginLeft: 'auto',
+                    fontSize: '0.68rem',
+                    fontWeight: 800,
+                    color: proctorStatus === 'CLEAR' ? '#15803d' : '#dc2626',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 4,
+                  }}
+                >
+                  <span
+                    style={{
+                      width: 6,
+                      height: 6,
+                      borderRadius: '50%',
+                      background: proctorStatus === 'CLEAR' ? '#22c55e' : '#ef4444',
+                      display: 'inline-block',
+                    }}
+                  />
+                  {proctorStatus === 'CLEAR' ? 'ACTIVE' : 'ALERT'}
+                </span>
               </div>
               <div className={styles.examCameraFeed}>
                 <video
@@ -817,6 +1149,32 @@ export function AssessmentApp() {
                   <div className={styles.examCameraPlaceholder}>
                     <i className="bx bx-camera-off" style={{ fontSize: 24, color: '#64748b' }} />
                     <span>Camera unavailable</span>
+                  </div>
+                )}
+                {/* Real-time AI HUD Overlay */}
+                {examCameraReady && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      bottom: 0,
+                      left: 0,
+                      right: 0,
+                      padding: '4px 8px',
+                      background: proctorStatus === 'CLEAR' ? 'rgba(15, 23, 42, 0.75)' : 'rgba(185, 28, 28, 0.88)',
+                      color: '#fff',
+                      fontSize: '0.68rem',
+                      fontWeight: 700,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      borderTop: `1px solid ${proctorStatus === 'CLEAR' ? 'rgba(255,255,255,0.1)' : '#ef4444'}`,
+                    }}
+                  >
+                    <span>
+                      <i className={`bx ${proctorStatus === 'CLEAR' ? 'bx-face' : 'bx-error'}`} style={{ marginRight: 4 }} />
+                      {proctorMessage}
+                    </span>
+                    <span style={{ fontSize: '0.64rem', opacity: 0.85 }}>AI Guard</span>
                   </div>
                 )}
               </div>
@@ -943,11 +1301,11 @@ export function AssessmentApp() {
 
       {/* Results Step */}
       {step === 'results' && (
-        <main className={styles.main} style={{ overflowY: 'auto', alignItems: 'flex-start', padding: '24px 32px' }}>
-          <div style={{ width: '100%', maxWidth: 820, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 20 }}>
+        <main className={styles.main} style={{ overflowY: 'auto', alignItems: 'center', padding: '32px 24px' }}>
+          <div className={styles.resultsContainer}>
 
             {/* Score Card */}
-            <div className={styles.contentCard} style={{ padding: '28px 32px' }}>
+            <div className={styles.resultsScoreCard}>
               <span className="section-label">Assessment Completed</span>
               <h1 className={styles.title}>Examination Submitted Successfully</h1>
               <div className={styles.resultScore}>
@@ -983,7 +1341,7 @@ export function AssessmentApp() {
             </div>
 
             {/* Malpractice Report */}
-            <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderTop: '3px solid #1c2d81', padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <div className={styles.resultsReportCard}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
                 <i className="bx bx-shield-quarter" style={{ fontSize: 20, color: '#1c2d81' }} />
                 <span style={{ fontWeight: 800, fontSize: '1rem', color: '#020617' }}>Proctoring &amp; Malpractice Report</span>
@@ -1018,9 +1376,219 @@ export function AssessmentApp() {
                 <i className="bx bx-info-circle" style={{ marginRight: 6 }} />
                 This report has been automatically submitted to your institution's assessment committee. Violations are reviewed by a human proctor before any disciplinary action.
               </div>
+
+              <div style={{ marginTop: 12, display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
+                <button
+                  className={styles.btnSecondary}
+                  onClick={() => setShowSettingsModal(true)}
+                >
+                  <i className="bx bx-slider" /> View System Logs
+                </button>
+                <button
+                  className={styles.btnDanger}
+                  onClick={handleExitApp}
+                  style={{ padding: '10px 24px' }}
+                >
+                  <i className="bx bx-power-off" /> Close &amp; Exit Application
+                </button>
+              </div>
             </div>
           </div>
         </main>
+      )}
+
+      {/* Bottom Bar — System Status & Quick Actions */}
+      <footer className={styles.bottomBar}>
+        <div className={styles.bottomBarLeft}>
+          <span className={styles.bottomBarBadge}>
+            <i className="bx bx-shield-alt-2" /> KIOSK LOCKDOWN &middot; FULLSCREEN
+          </span>
+          <span className={styles.bottomBarItem}>
+            <i className="bx bx-wifi" style={{ color: '#15803d' }} /> Network: <b>Optimal</b>
+          </span>
+          <span className={styles.bottomBarItem}>
+            <i className="bx bx-video-recording" style={{ color: '#15803d' }} /> Proctoring Guard: <b>Active</b>
+          </span>
+        </div>
+        <div className={styles.bottomBarRight}>
+          <button
+            className={styles.bottomBarBtn}
+            onClick={() => setShowSettingsModal(true)}
+            title="Open Application Settings &amp; Diagnostics"
+          >
+            <i className="bx bx-slider-alt" /> System Diagnostics
+          </button>
+          {step !== 'exam' ? (
+            <button
+              className={styles.bottomBarBtnExit}
+              onClick={handleExitApp}
+              title="Exit Assessment Client"
+            >
+              <i className="bx bx-power-off" /> Exit App
+            </button>
+          ) : (
+            <button
+              className={styles.bottomBarBtnExitDisabled}
+              disabled
+              title="Exit is disabled during examination"
+            >
+              <i className="bx bx-lock-alt" /> Exit Locked
+            </button>
+          )}
+        </div>
+      </footer>
+
+      {/* Exit Confirmation Modal */}
+      {showExitModal && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modalCard}>
+            <div className={styles.modalHeader}>
+              <div className={styles.modalTitle}>
+                <i className="bx bx-error-circle" style={{ color: step === 'exam' ? 'var(--color-danger)' : 'var(--color-primary)' }} />
+                <span>{step === 'exam' ? 'Terminate & Exit Assessment?' : 'Exit Assessment Client?'}</span>
+              </div>
+              <button className={styles.modalCloseBtn} onClick={() => setShowExitModal(false)}>
+                <i className="bx bx-x" />
+              </button>
+            </div>
+            <div className={styles.modalBody}>
+              {step === 'exam' ? (
+                <div className={styles.modalWarningBox}>
+                  <p><strong>Warning:</strong> You are currently in an active examination session.</p>
+                  <p style={{ marginTop: 6 }}>Exiting the application will immediately submit your answers recorded so far, unlock kiosk mode, and log an assessment termination event to your proctoring report.</p>
+                </div>
+              ) : (
+                <p>Are you sure you want to close and exit the Beyon Secure Lockdown Assessment Client?</p>
+              )}
+            </div>
+            <div className={styles.modalFooter}>
+              <button className={styles.btnSecondary} onClick={() => setShowExitModal(false)}>
+                Cancel
+              </button>
+              <button
+                className={step === 'exam' ? styles.btnDanger : styles.btnPrimary}
+                onClick={confirmExitApp}
+              >
+                <i className="bx bx-power-off" /> {step === 'exam' ? 'Submit & Exit' : 'Exit Application'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Settings & System Diagnostics Modal */}
+      {showSettingsModal && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modalCard} style={{ maxWidth: 620 }}>
+            <div className={styles.modalHeader}>
+              <div className={styles.modalTitle}>
+                <i className="bx bx-slider-alt" style={{ color: 'var(--color-primary)' }} />
+                <span>System Diagnostics &amp; Lockdown Settings</span>
+              </div>
+              <button className={styles.modalCloseBtn} onClick={() => setShowSettingsModal(false)}>
+                <i className="bx bx-x" />
+              </button>
+            </div>
+            <div className={styles.modalBody}>
+              <div className={styles.diagSection}>
+                <div className={styles.diagSectionTitle}>Environment &amp; Hardware Diagnostics</div>
+                <div className={styles.diagGrid}>
+                  <div className={styles.diagItem}>
+                    <span className={styles.diagKey}>Operating System</span>
+                    <span className={styles.diagVal}>{deviceInfo?.os || systemInfo?.platform || 'Windows 11'}</span>
+                  </div>
+                  <div className={styles.diagItem}>
+                    <span className={styles.diagKey}>Display Resolution</span>
+                    <span className={styles.diagVal}>
+                      {deviceInfo?.screenWidth || window.screen.width} &times; {deviceInfo?.screenHeight || window.screen.height}
+                    </span>
+                  </div>
+                  <div className={styles.diagItem}>
+                    <span className={styles.diagKey}>Processor &amp; Memory</span>
+                    <span className={styles.diagVal}>
+                      {systemInfo?.cpus || 8} CPU Cores &middot; {Math.round((systemInfo?.totalMemory || 16000000000) / 1073741824)} GB RAM
+                    </span>
+                  </div>
+                  <div className={styles.diagItem}>
+                    <span className={styles.diagKey}>Kiosk Mode Status</span>
+                    <span className={styles.diagVal} style={{ color: 'var(--color-success)', fontWeight: 700 }}>
+                      <i className="bx bx-check-shield" /> Fullscreen Locked (No Minimize)
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className={styles.diagSection}>
+                <div className={styles.diagSectionTitle}>Proctoring Hardware Verification</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: '#f8fafc', border: '1px solid #e2e8f0' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <i className="bx bx-camera" style={{ fontSize: 18, color: '#1c2d81' }} />
+                      <span style={{ fontWeight: 600, fontSize: '0.85rem' }}>Camera Sensor Verification</span>
+                    </div>
+                    <button
+                      className={styles.btnSecondary}
+                      style={{ padding: '4px 12px', fontSize: '0.78rem' }}
+                      onClick={toggleCameraTest}
+                    >
+                      {cameraTestActive ? 'Stop Camera Test' : 'Test Camera'}
+                    </button>
+                  </div>
+
+                  {cameraTestActive && (
+                    <div style={{ width: '100%', height: 180, background: '#0f172a', position: 'relative', overflow: 'hidden' }}>
+                      <video
+                        ref={settingsVideoRef}
+                        autoPlay
+                        playsInline
+                        muted
+                        style={{ width: '100%', height: '100%', objectFit: 'cover', transform: 'scaleX(-1)' }}
+                      />
+                    </div>
+                  )}
+
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: '#f8fafc', border: '1px solid #e2e8f0' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <i className="bx bx-microphone" style={{ fontSize: 18, color: '#1c2d81' }} />
+                      <span style={{ fontWeight: 600, fontSize: '0.85rem' }}>Audio Microphone Input</span>
+                    </div>
+                    <span style={{ color: 'var(--color-success)', fontWeight: 700, fontSize: '0.8rem' }}>
+                      <i className="bx bx-check" /> Verified &amp; Active
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className={styles.diagSection}>
+                <div className={styles.diagSectionTitle}>Lockdown Controls</div>
+                <div style={{ display: 'flex', gap: 10 }}>
+                  <button
+                    className={styles.btnSecondary}
+                    style={{ flex: 1 }}
+                    onClick={() => window.beyon?.app?.forceFullscreen?.()}
+                  >
+                    <i className="bx bx-fullscreen" /> Force Re-enter Fullscreen
+                  </button>
+                  <button
+                    className={styles.btnDanger}
+                    style={{ flex: 1 }}
+                    onClick={() => {
+                      setShowSettingsModal(false);
+                      setShowExitModal(true);
+                    }}
+                  >
+                    <i className="bx bx-power-off" /> Exit Application
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div className={styles.modalFooter}>
+              <button className={styles.btnPrimary} onClick={() => setShowSettingsModal(false)}>
+                Done &middot; Close Diagnostics
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

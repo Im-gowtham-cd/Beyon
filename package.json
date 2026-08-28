@@ -4,11 +4,13 @@
   "workspaces": [
     "web",
     "desktop",
+    "mobile",
     "packages/*"
   ],
   "scripts": {
     "dev:web": "bun run --filter @beyon/web dev",
     "dev:desktop": "bun run --filter @beyon/desktop dev",
+    "dev:mobile": "bun run --filter @beyon/mobile start",
     "dev:backend": "cd backend && ./mvnw spring-boot:run \"-Dspring-boot.run.profiles=dev\"",
     "start": "bun run dev:all",
     "dev:dolt": "dolt sql-server --host=127.0.0.1 --port=3306 2>&1",
@@ -17,7 +19,7 @@
     "build:web": "bun run --filter @beyon/web build",
     "build:desktop": "bun run --filter @beyon/desktop build:renderer",
     "build:all": "bun run build:web && bun run build:desktop",
-    "typecheck:all": "bun run --filter @beyon/web typecheck && bun run --filter @beyon/desktop typecheck",
+    "typecheck:all": "bun run --filter @beyon/web typecheck && bun run --filter @beyon/desktop typecheck && bun run --filter @beyon/mobile typecheck",
     "seed": "cd scripts/seed && bun run seed.ts full",
     "seed:base": "cd scripts/seed && bun run seed.ts base",
     "seed:full": "cd scripts/seed && bun run seed.ts full",

@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Beyon</string>
+    <string name="default_backend_url">http://10.0.2.2:8085/api/v1</string>
+    <string name="default_portal_url">http://10.0.2.2:5173</string>
+</resources>

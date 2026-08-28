@@ -2,6 +2,10 @@ import { contextBridge, ipcRenderer } from 'electron';
 
 contextBridge.exposeInMainWorld('beyon', {
   platform: process.platform,
+  app: {
+    exitApp: () => ipcRenderer.invoke('app:exit'),
+    forceFullscreen: () => ipcRenderer.invoke('app:force-fullscreen'),
+  },
   auth: {
     getToken: () => ipcRenderer.invoke('auth:get-token'),
     setToken: (token: string) => ipcRenderer.invoke('auth:set-token', token),
