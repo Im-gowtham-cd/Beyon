@@ -17,25 +17,32 @@ html {
 }
 
 body {
-  font-family: var(--font-body);
-  font-size: var(--fs-base);
-  color: var(--text-primary);
-  background-color: var(--color-background);
+  font-family: var(--font-body, 'ClashDisplay', sans-serif);
+  font-size: var(--fs-base, 0.95rem);
+  font-weight: 500;
+  color: var(--text-primary, #020617);
+  background-color: var(--color-background, #f4f6fb);
   line-height: 1.6;
   overflow-x: hidden;
   width: 100%;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 /* ── Typography ── */
 h1, h2, h3, h4, h5, h6 {
-  font-family: var(--font-heading);
-  color: var(--color-primary);
+  font-family: var(--font-heading, 'ClashDisplay', sans-serif);
+  font-weight: 700;
+  color: var(--color-primary, #1c2d81);
   overflow-wrap: break-word;
+  letter-spacing: -0.01em;
 }
 
 p, a, button, td, th, li, label, span, input, textarea {
   overflow-wrap: break-word;
   overflow-wrap: anywhere;
+  font-weight: 500;
 }
 
 /* ── Links ── */
@@ -52,11 +59,64 @@ img {
   display: block;
 }
 
+/* ── Form Controls & Typography Mapping ── */
+input,
+select,
+textarea,
+button,
+optgroup,
+option,
+label,
+fieldset,
+legend {
+  font-family: var(--font-body, 'ClashDisplay', sans-serif);
+  font-size: inherit;
+  color: inherit;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="search"],
+input[type="tel"],
+input[type="url"],
+input[type="date"],
+input[type="datetime-local"],
+select,
+textarea {
+  font-family: var(--font-body, 'ClashDisplay', sans-serif);
+  border-radius: 0px;
+}
+
+select {
+  font-family: var(--font-body, 'ClashDisplay', sans-serif) !important;
+  cursor: pointer;
+}
+
+select option,
+select optgroup {
+  font-family: var(--font-body, 'ClashDisplay', sans-serif) !important;
+  background-color: var(--color-surface, #ffffff);
+  color: var(--text-primary, #0f172a);
+}
+
+/* Custom Sharp Checkbox & Radio Alignment */
+input[type="checkbox"],
+input[type="radio"] {
+  accent-color: var(--color-primary, #1c2d81);
+  cursor: pointer;
+  border-radius: 0px !important;
+  vertical-align: middle;
+  width: 16px;
+  height: 16px;
+}
+
 /* ── Buttons ── */
 button {
   cursor: pointer;
   border: none;
-  font-family: inherit;
+  font-family: var(--font-body, 'ClashDisplay', sans-serif);
   background: none;
 }
 

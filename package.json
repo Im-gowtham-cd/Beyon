@@ -9,12 +9,22 @@
   "scripts": {
     "dev:web": "bun run --filter @beyon/web dev",
     "dev:desktop": "bun run --filter @beyon/desktop dev",
-    "dev:backend": "cd backend && ./mvnw spring-boot:run -Dspring-boot.run.profiles=dev",
+    "dev:backend": "cd backend && ./mvnw spring-boot:run \"-Dspring-boot.run.profiles=dev\"",
+    "start": "bun run dev:all",
+    "dev:dolt": "dolt sql-server --host=127.0.0.1 --port=3306 2>&1",
     "dev:ai": "cd ai-service && uvicorn app.main:app --reload --port 8001",
     "dev:all": "bun run dev:web & bun run dev:backend & bun run dev:ai",
     "build:web": "bun run --filter @beyon/web build",
     "build:desktop": "bun run --filter @beyon/desktop build:renderer",
     "build:all": "bun run build:web && bun run build:desktop",
-    "typecheck:all": "bun run --filter @beyon/web typecheck && bun run --filter @beyon/desktop typecheck"
+    "typecheck:all": "bun run --filter @beyon/web typecheck && bun run --filter @beyon/desktop typecheck",
+    "seed": "cd scripts/seed && bun run seed.ts full",
+    "seed:base": "cd scripts/seed && bun run seed.ts base",
+    "seed:full": "cd scripts/seed && bun run seed.ts full",
+    "seed:assessment": "cd scripts/seed && bun run seed.ts assessment",
+    "seed:recruitment": "cd scripts/seed && bun run seed.ts recruitment",
+    "seed:community": "cd scripts/seed && bun run seed.ts community",
+    "seed:validate": "cd scripts/seed && bun run seed.ts validate",
+    "seed:reset": "cd scripts/seed && bun run seed.ts reset"
   }
 }

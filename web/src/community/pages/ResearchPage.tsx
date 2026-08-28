@@ -54,7 +54,7 @@ export function ResearchPage() {
 
       {proposals.length === 0 ? (
         <div className={styles.emptyState}>
-          <div className={styles.emptyIcon}>🔬</div>
+          <div className={styles.emptyIcon}><i className="bx bx-test-tube" style={{ fontSize: '2.5rem', color: '#1c2d81' }} /></div>
           <h3 className={styles.emptyTitle}>No research proposals</h3>
           <p className={styles.emptyText}>Institutions and faculty post research and consultancy projects here.</p>
         </div>
@@ -64,7 +64,10 @@ export function ResearchPage() {
             <div key={p.id} className={styles.postCard}>
               <div className={styles.postHeader}>
                 <div>
-                  <h3 className={styles.postTitle}>🔬 {p.title}</h3>
+                  <h3 className={styles.postTitle} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <i className="bx bx-test-tube" style={{ color: '#1c2d81' }} />
+                    <span>{p.title}</span>
+                  </h3>
                   <span className={styles.postMeta}>{p.domain || 'Research'} · {p.durationWeeks || '?'} weeks</span>
                 </div>
                 <span className={styles.tagBadge}>{p.status}</span>
@@ -72,8 +75,8 @@ export function ResearchPage() {
               {p.description && <p className={styles.postContent}>{p.description}</p>}
               {p.expectedOutcome && <p className={styles.postContent}>Expected: {p.expectedOutcome}</p>}
               <div className={styles.postMeta}>
-                {p.budgetAmount && <span>💰 Budget: ₹{p.budgetAmount.toLocaleString()}</span>}
-                <span>👥 Max {p.maxParticipants} participants</span>
+                {p.budgetAmount && <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><i className="bx bx-wallet" /> Budget: ₹{p.budgetAmount.toLocaleString()}</span>}
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><i className="bx bx-group" /> Max {p.maxParticipants} participants</span>
               </div>
               {p.requiredSkills && (
                 <div className={styles.tagsRow}>

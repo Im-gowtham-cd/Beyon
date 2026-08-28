@@ -11,7 +11,7 @@ public class StudentQuestionAttempt {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(columnDefinition = "uuid")
+    @Column(columnDefinition = "varchar(36)")
     private UUID id;
 
     @Column(nullable = false)
@@ -26,6 +26,7 @@ public class StudentQuestionAttempt {
     @Column(columnDefinition = "TEXT")
     private String userAnswer;
 
+    @Column(name = "is_correct")
     private Boolean correct;
 
     private Integer timeSpentSeconds;

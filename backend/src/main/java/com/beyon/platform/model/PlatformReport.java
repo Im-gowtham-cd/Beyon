@@ -11,7 +11,7 @@ public class PlatformReport {
     @Column(name = "user_id", nullable = false) private UUID userId;
     @Column(name = "report_type", nullable = false, length = 50) private String reportType;
     @Column(nullable = false, length = 300) private String title;
-    @Column(nullable = false, columnDefinition = "jsonb") private String parameters = "{}";
+    @Column(nullable = false, columnDefinition = "text") private String parameters = "{}";
     @Column(name = "file_url", length = 500) private String fileUrl;
     @Column(name = "generation_status", nullable = false, length = 30) private String generationStatus = "PENDING";
     @Column(nullable = false, length = 10) private String format = "PDF";

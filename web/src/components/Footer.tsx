@@ -5,7 +5,7 @@ export function Footer() {
   const brand = {
     heading: 'Beyon',
     description:
-      'AI-powered skill development, adaptive learning, proctored assessments, and intelligent candidate matching connecting students, institutions, and enterprise recruitment.',
+      'AI-Powered Talent Assessment & Skill Intelligence Platform. Empowering candidates, institutions, and enterprise hiring partners with verified competency benchmarking and career opportunities.',
   };
 
   const social = [
@@ -128,7 +128,7 @@ export function Footer() {
       </div>
 
       <div className={styles.footerBottom}>
-        <span>&copy; 2026 Beyon. All rights reserved.</span>
+        <span>&copy; 2026 Beyon Platform. All rights reserved.</span>
         <div className={styles.footerBottomLinks}>
           {bottomLinks.map(link => (
             <a key={link.text} href={link.href}>

@@ -15,8 +15,8 @@ public class PortfolioAnalysis {
     @Column(name = "skill_coverage", nullable = false, precision = 5, scale = 2) private BigDecimal skillCoverage = BigDecimal.ZERO;
     @Column(name = "project_strength", nullable = false, precision = 5, scale = 2) private BigDecimal projectStrength = BigDecimal.ZERO;
     @Column(name = "certification_strength", nullable = false, precision = 5, scale = 2) private BigDecimal certificationStrength = BigDecimal.ZERO;
-    @Column(nullable = false, columnDefinition = "jsonb") private String recommendations = "[]";
-    @Column(name = "missing_items", nullable = false, columnDefinition = "jsonb") private String missingItems = "[]";
+    @Column(nullable = false, columnDefinition = "text") private String recommendations = "[]";
+    @Column(name = "missing_items", nullable = false, columnDefinition = "text") private String missingItems = "[]";
     @Column(name = "analyzed_at", nullable = false) private OffsetDateTime analyzedAt = OffsetDateTime.now();
     @Column(name = "created_at", nullable = false) private OffsetDateTime createdAt = OffsetDateTime.now();
     @Column(name = "updated_at", nullable = false) private OffsetDateTime updatedAt = OffsetDateTime.now();

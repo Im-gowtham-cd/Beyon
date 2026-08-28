@@ -18,7 +18,7 @@ public class StudentPortfolioItem {
     @Column(name = "credential_url", length = 500) private String credentialUrl;
     @Column(nullable = false) private Boolean verified = false;
     @Column(name = "verified_by") private UUID verifiedBy;
-    @Column(columnDefinition = "jsonb") private String metadata;
+    @Column(columnDefinition = "text") private String metadata;
     @Column(name = "created_at", nullable = false) private OffsetDateTime createdAt = OffsetDateTime.now();
     @Column(name = "updated_at", nullable = false) private OffsetDateTime updatedAt = OffsetDateTime.now();
 

@@ -108,16 +108,16 @@ export function HomePage() {
         <span />
         <div className={styles.foamBrand}>
           <span className={styles.brandMarkLarge} />
-          <h1 className={styles.foamTitle}>BEYON</h1>
+          <h1 className={styles.foamTitle}>Beyon</h1>
         </div>
         <ul>
           <li>Platform for</li>
-          <li>High-Impact Learning</li>
+          <li>Intelligent Skill Matrix</li>
           <li>&amp;</li>
-          <li>Intelligent Recruitment</li>
+          <li>Verified Assessments</li>
           <li>For</li>
-          <li>Next-Generation Engineers</li>
-          <li>( Beyon AI · CoE )</li>
+          <li>Next-Generation Leaders</li>
+          <li>( AI-Powered Career Ecosystem )</li>
         </ul>
       </div>
 

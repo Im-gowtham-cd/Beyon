@@ -12,7 +12,7 @@ public class DiscussionThread {
     @Column(name = "author_id", nullable = false) private UUID authorId;
     @Column(nullable = false, length = 300) private String title;
     @Column(columnDefinition = "text", nullable = false) private String content;
-    @Column(columnDefinition = "jsonb") private String tags = "[]";
+    @Column(columnDefinition = "text") private String tags = "[]";
     @Column(name = "reply_count", nullable = false) private Integer replyCount = 0;
     @Column(name = "view_count", nullable = false) private Integer viewCount = 0;
     @Column(name = "like_count", nullable = false) private Integer likeCount = 0;

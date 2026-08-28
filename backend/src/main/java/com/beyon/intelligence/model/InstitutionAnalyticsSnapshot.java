@@ -21,11 +21,11 @@ public class InstitutionAnalyticsSnapshot {
     @Column(name = "tier1_count") private Integer tier1Count = 0;
     @Column(name = "tier2_count") private Integer tier2Count = 0;
     @Column(name = "companies_visited") private Integer companiesVisited = 0;
-    @Column(name = "department_stats", columnDefinition = "jsonb") private String departmentStats;
-    @Column(name = "skill_demand", columnDefinition = "jsonb") private String skillDemand;
-    @Column(name = "assessment_performance", columnDefinition = "jsonb") private String assessmentPerformance;
-    @Column(name = "salary_distribution", columnDefinition = "jsonb") private String salaryDistribution;
-    @Column(name = "placement_trend", columnDefinition = "jsonb") private String placementTrend;
+    @Column(name = "department_stats", columnDefinition = "text") private String departmentStats;
+    @Column(name = "skill_demand", columnDefinition = "text") private String skillDemand;
+    @Column(name = "assessment_performance", columnDefinition = "text") private String assessmentPerformance;
+    @Column(name = "salary_distribution", columnDefinition = "text") private String salaryDistribution;
+    @Column(name = "placement_trend", columnDefinition = "text") private String placementTrend;
     @Column(name = "created_at", nullable = false) private OffsetDateTime createdAt = OffsetDateTime.now();
 
     public InstitutionAnalyticsSnapshot() {}

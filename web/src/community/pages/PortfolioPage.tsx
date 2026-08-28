@@ -5,7 +5,18 @@ import styles from './Community.module.css';
 
 const ACHIEVEMENT_TYPES = ['CERTIFICATION', 'HACKATHON', 'COMPETITION', 'PUBLICATION', 'PATENT', 'OPEN_SOURCE', 'LEADERSHIP', 'COMMUNITY', 'SPORTS', 'ARTS'];
 const STATUS_COLORS: Record<string, string> = { PENDING: '#ca8a04', VERIFIED: '#16a34a', REJECTED: '#dc2626', EXPIRED: '#6b7280' };
-const TYPE_ICONS: Record<string, string> = { CERTIFICATION: '🏆', HACKATHON: '🎯', COMPETITION: '🏅', PUBLICATION: '📄', PATENT: '📜', OPEN_SOURCE: '💻', LEADERSHIP: '👑', COMMUNITY: '🤝', SPORTS: '⚽', ARTS: '🎨' };
+const TYPE_ICONS: Record<string, string> = {
+  CERTIFICATION: 'bx bx-award',
+  HACKATHON: 'bx bx-code-alt',
+  COMPETITION: 'bx bx-trophy',
+  PUBLICATION: 'bx bx-book-open',
+  PATENT: 'bx bx-file',
+  OPEN_SOURCE: 'bx bx-git-repo-forked',
+  LEADERSHIP: 'bx bx-crown',
+  COMMUNITY: 'bx bx-group',
+  SPORTS: 'bx bx-run',
+  ARTS: 'bx bx-palette',
+};
 
 export function PortfolioPage() {
   const [achievements, setAchievements] = useState<VerifiedAchievement[]>([]);
@@ -36,7 +47,7 @@ export function PortfolioPage() {
           <p className={styles.subtitle}>{verifiedCount} verified · {pendingCount} pending · {achievements.length} total</p>
         </div>
         <button className={styles.createBtn} onClick={() => setActiveTab(activeTab === 'submit' ? 'achievements' : 'submit')}>
-          {activeTab === 'submit' ? '← Back' : '+ Add Achievement'}
+          {activeTab === 'submit' ? 'Back' : '+ Add Achievement'}
         </button>
       </div>
 
@@ -50,7 +61,7 @@ export function PortfolioPage() {
           <div className={styles.formGroup}>
             <label className={styles.formLabel}>Type</label>
             <select value={form.achievementType} onChange={e => setForm({ ...form, achievementType: e.target.value })} className={styles.formSelect}>
-              {ACHIEVEMENT_TYPES.map(t => <option key={t} value={t}>{TYPE_ICONS[t]} {t}</option>)}
+              {ACHIEVEMENT_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
             </select>
           </div>
           <div className={styles.formGroup}>
@@ -81,16 +92,19 @@ export function PortfolioPage() {
             achievements.map(a => (
               <div className={styles.achievementCard} key={a.id}>
                 <div className={styles.achievementHeader}>
-                  <span className={styles.achievementType}>{TYPE_ICONS[a.achievementType] || '📌'} {a.achievementType}</span>
+                  <span className={styles.achievementType} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                    <i className={TYPE_ICONS[a.achievementType] || 'bx bx-badge'} />
+                    <span>{a.achievementType}</span>
+                  </span>
                   <span className={styles.statusBadge} style={{ background: STATUS_COLORS[a.verificationStatus] }}>{a.verificationStatus}</span>
                 </div>
                 <div className={styles.achievementTitle}>{a.title}</div>
                 {a.description && <div className={styles.achievementDesc}>{a.description}</div>}
                 <div className={styles.achievementMeta}>
-                  {a.issuingOrganization && <span>🏢 {a.issuingOrganization}</span>}
-                  {a.issueDate && <span>📅 {a.issueDate}</span>}
+                  {a.issuingOrganization && <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><i className="bx bx-buildings" /> {a.issuingOrganization}</span>}
+                  {a.issueDate && <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><i className="bx bx-calendar" /> {a.issueDate}</span>}
                 </div>
-                {a.credentialUrl && <a className={styles.credentialLink} href={a.credentialUrl} target="_blank" rel="noopener noreferrer">View Credential →</a>}
+                {a.credentialUrl && <a className={styles.credentialLink} href={a.credentialUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><span>View Credential</span> <i className="bx bx-right-arrow-alt" /></a>}
               </div>
             ))
           )}

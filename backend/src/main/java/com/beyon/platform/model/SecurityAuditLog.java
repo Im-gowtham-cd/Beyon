@@ -14,7 +14,7 @@ public class SecurityAuditLog {
     @Column(name = "resource_id") private UUID resourceId;
     @Column(name = "ip_address", length = 45) private String ipAddress;
     @Column(name = "user_agent", columnDefinition = "text") private String userAgent;
-    @Column(columnDefinition = "jsonb") private String details;
+    @Column(columnDefinition = "text") private String details;
     @Column(name = "created_at", nullable = false) private OffsetDateTime createdAt = OffsetDateTime.now();
 
     public SecurityAuditLog() {}

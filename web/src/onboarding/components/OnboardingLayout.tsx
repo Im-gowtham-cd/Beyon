@@ -12,15 +12,22 @@ export function OnboardingLayout({ currentStep, totalSteps, children }: Props) {
   return (
     <div className={styles.layout}>
       <header className={styles.header}>
-        <Link to="/" className={styles.headerLeft}>
-          <span className={styles.logoIcon}>B</span>
-          <span className={styles.logoText}>Beyon</span>
+        <Link to="/" className={styles.brandLink}>
+          <div className={styles.brandLogo}>B</div>
+          <div className={styles.brandTextGroup}>
+            <span className={styles.brandName}>BEYON</span>
+            <span className={styles.brandTag}>Profile Setup</span>
+          </div>
         </Link>
-        <div className={styles.stepLabel}>
-          <span>Step {currentStep}</span> of {totalSteps}
+        <div className={styles.stepBadge}>
+          <span className={styles.stepHighlight}>Step {currentStep}</span> of {totalSteps}
         </div>
       </header>
-      <main className={styles.content}>{children}</main>
+      <main className={styles.content}>
+        <div className={styles.contentCard}>
+          {children}
+        </div>
+      </main>
     </div>
   );
 }

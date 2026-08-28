@@ -2,7 +2,6 @@ import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { authApi } from '../services/authApi';
-import { appwriteAuth } from '../services/appwriteAuth';
 import type { ApiError } from '../../services/api/client';
 import styles from './LoginPage.module.css';
 
@@ -43,12 +42,6 @@ export function RegisterPage() {
     setLoading(true);
 
     try {
-      try {
-        await appwriteAuth.register(email, password, name);
-      } catch {
-        // Appwrite register fallback
-      }
-
       await authApi.register({ name, email, password, confirmPassword: password, role });
 
       try {
@@ -82,28 +75,28 @@ export function RegisterPage() {
               <span className={styles.asideMark} aria-hidden="true" />
               <div className={styles.asideBrandText}>
                 <span className={styles.asideName}>Beyon</span>
-                <span className={styles.asideSub}>AI Skill Development &amp; Recruitment</span>
+                <span className={styles.asideSub}>Next-Gen Skills &amp; Career Architecture</span>
               </div>
             </div>
 
             <div className={styles.asideBody}>
-              <h2>Learn, Practice, Prove &amp; Get Hired</h2>
-              <p>Create your candidate or organization account to access AI-powered assessments and opportunities.</p>
+              <h2>Intelligent Talent Assessment &amp; Career Growth Platform</h2>
+              <p>Create your candidate or organization account to access AI-powered skill assessments and career opportunities.</p>
               <ul className={styles.asideFeatures}>
                 <li>
-                  <i className="bx bx-chip" /> AI-Powered Learning Paths
+                  <i className="bx bx-shield-quarter" /> Proctored Skill Assessments
                 </li>
                 <li>
-                  <i className="bx bx-brain" /> Proctored Skill Assessments
+                  <i className="bx bx-brain" /> AI-Powered Career Intelligence
                 </li>
                 <li>
-                  <i className="bx bx-group" /> Direct Candidate Matching
+                  <i className="bx bx-briefcase-alt-2" /> Direct Enterprise Placements
                 </li>
               </ul>
             </div>
 
             <div className={styles.asideFoot}>
-              <i className="bx bx-envelope" /> support@beyon.dev
+              <i className="bx bx-envelope" /> support@beyon.app
             </div>
           </aside>
 

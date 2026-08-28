@@ -46,7 +46,7 @@ public class PracticeService {
         if (difficulty != null) {
             return questionRepository.findByDifficultyPublished(difficulty, org.springframework.data.domain.PageRequest.of(page, size));
         }
-        return questionRepository.findByStatusOrderByCreatedAtDesc("PUBLISHED", org.springframework.data.domain.PageRequest.of(page, size));
+        return questionRepository.findByStatusInOrderByCreatedAtDesc(List.of("PUBLISHED", "ACTIVE"), org.springframework.data.domain.PageRequest.of(page, size));
     }
 
     public Question getQuestion(UUID questionId) {

@@ -1,42 +1,53 @@
 .container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 2rem;
+  width: 100%;
+  max-width: 100%;
+  padding: 28px 36px 60px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  box-sizing: border-box;
 }
 
 .header {
-  margin-bottom: 2rem;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--color-border, #e2e8f0);
 }
 
 .title {
-  font-size: 1.75rem;
-  font-weight: 700;
-  color: #0a0a0f;
-  margin-bottom: 0.25rem;
+  font-family: var(--font-heading, Montserrat);
+  font-size: clamp(1.5rem, 2.5vw, 2rem);
+  font-weight: 900;
+  color: #0f172a;
+  margin-bottom: 4px;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
 }
 
 .subtitle {
-  font-size: 0.95rem;
-  color: #6b7280;
+  font-size: 0.88rem;
+  color: #64748b;
 }
 
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 1rem;
-  margin-bottom: 2rem;
+  gap: 16px;
+  width: 100%;
 }
 
 .card {
-  background: #fff;
-  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
   border-radius: 12px;
-  padding: 1.5rem;
-  transition: box-shadow 0.2s;
+  padding: 24px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
+  transition: all 0.2s ease;
 }
 
 .card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(28, 45, 129, 0.08);
+  border-color: #cbd5e1;
 }
 
 .cardHeader {
@@ -44,12 +55,15 @@
   align-items: center;
   justify-content: space-between;
   margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--color-border-light);
 }
 
 .cardTitle {
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: #0a0a0f;
+  font-family: var(--font-heading);
+  font-size: var(--fs-xl);
+  font-weight: 800;
+  color: var(--color-primary);
 }
 
 .badge {
@@ -274,31 +288,36 @@
 }
 
 .btn {
-  padding: 0.625rem 1.25rem;
-  border-radius: 8px;
-  font-size: 0.875rem;
-  font-weight: 500;
+  padding: 0.625rem 1.35rem;
+  border-radius: var(--radius-xs);
+  font-size: 0.85rem;
+  font-weight: 700;
   cursor: pointer;
   border: none;
-  transition: all 0.15s;
+  transition: var(--transition);
+  font-family: var(--font-body);
+  letter-spacing: 0.04em;
 }
 
 .btnPrimary {
-  background: #6366f1;
+  background: var(--color-primary);
   color: #fff;
 }
 
 .btnPrimary:hover {
-  background: #4f46e5;
+  background: var(--color-primary-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(37, 60, 172, 0.25);
 }
 
 .btnSecondary {
-  background: #f3f4f6;
-  color: #374151;
+  background: var(--color-surface-2);
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-border);
 }
 
 .btnSecondary:hover {
-  background: #e5e7eb;
+  background: var(--color-surface-3);
 }
 
 .btnDanger {

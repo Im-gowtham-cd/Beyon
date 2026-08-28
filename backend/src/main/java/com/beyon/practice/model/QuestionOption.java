@@ -10,7 +10,7 @@ public class QuestionOption {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(columnDefinition = "uuid")
+    @Column(columnDefinition = "varchar(36)")
     private UUID id;
 
     @Column(nullable = false)
@@ -19,7 +19,7 @@ public class QuestionOption {
     @Column(nullable = false, columnDefinition = "TEXT")
     private String optionText;
 
-    @Column(nullable = false)
+    @Column(name = "is_correct", nullable = false)
     private boolean correct = false;
 
     @Column(nullable = false)

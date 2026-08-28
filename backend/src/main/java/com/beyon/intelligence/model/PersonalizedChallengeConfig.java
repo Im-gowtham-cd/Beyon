@@ -15,8 +15,8 @@ public class PersonalizedChallengeConfig {
     @Column(name = "gap_weight", nullable = false, precision = 3, scale = 2) private BigDecimal gapWeight = new BigDecimal("0.40");
     @Column(name = "streak_weight", nullable = false, precision = 3, scale = 2) private BigDecimal streakWeight = new BigDecimal("0.15");
     @Column(name = "variety_weight", nullable = false, precision = 3, scale = 2) private BigDecimal varietyWeight = new BigDecimal("0.15");
-    @Column(nullable = false, columnDefinition = "jsonb") private String preferredTopics = "[]";
-    @Column(nullable = false, columnDefinition = "jsonb") private String avoidTopics = "[]";
+    @Column(nullable = false, columnDefinition = "text") private String preferredTopics = "[]";
+    @Column(nullable = false, columnDefinition = "text") private String avoidTopics = "[]";
     @Column(name = "created_at", nullable = false) private OffsetDateTime createdAt = OffsetDateTime.now();
     @Column(name = "updated_at", nullable = false) private OffsetDateTime updatedAt = OffsetDateTime.now();
 

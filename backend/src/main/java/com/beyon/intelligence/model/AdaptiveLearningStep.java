@@ -14,9 +14,9 @@ public class AdaptiveLearningStep {
     @Column(name = "skill_id") private UUID skillId;
     @Column(name = "skill_name", nullable = false, length = 200) private String skillName;
     @Column(length = 500) private String concept;
-    @Column(nullable = false, columnDefinition = "jsonb") private String prerequisites = "[]";
-    @Column(nullable = false, columnDefinition = "jsonb") private String learningResources = "[]";
-    @Column(name = "practice_question_ids", nullable = false, columnDefinition = "jsonb") private String practiceQuestionIds = "[]";
+    @Column(nullable = false, columnDefinition = "text") private String prerequisites = "[]";
+    @Column(nullable = false, columnDefinition = "text") private String learningResources = "[]";
+    @Column(name = "practice_question_ids", nullable = false, columnDefinition = "text") private String practiceQuestionIds = "[]";
     @Column(name = "assessment_id") private UUID assessmentId;
     @Column(name = "project_suggestion", columnDefinition = "text") private String projectSuggestion;
     @Column(nullable = false, length = 20) private String state = "LOCKED";

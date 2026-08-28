@@ -17,7 +17,7 @@ public class PlacementReadinessScore {
     @Column(name = "certifications_score", nullable = false, precision = 5, scale = 2) private BigDecimal certificationsScore = BigDecimal.ZERO;
     @Column(name = "interview_score", nullable = false, precision = 5, scale = 2) private BigDecimal interviewScore = BigDecimal.ZERO;
     @Column(name = "practice_score", nullable = false, precision = 5, scale = 2) private BigDecimal practiceScore = BigDecimal.ZERO;
-    @Column(nullable = false, columnDefinition = "jsonb") private String recommendations = "[]";
+    @Column(nullable = false, columnDefinition = "text") private String recommendations = "[]";
     @Column(name = "calculated_at", nullable = false) private OffsetDateTime calculatedAt = OffsetDateTime.now();
     @Column(name = "created_at", nullable = false) private OffsetDateTime createdAt = OffsetDateTime.now();
     @Column(name = "updated_at", nullable = false) private OffsetDateTime updatedAt = OffsetDateTime.now();

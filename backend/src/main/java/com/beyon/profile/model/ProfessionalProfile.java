@@ -20,7 +20,7 @@ public class ProfessionalProfile {
     @Column(nullable = false, length = 30) private String visibility = "PUBLIC";
     @Column(name = "profile_views", nullable = false) private Integer profileViews = 0;
     @Column(name = "last_viewed_at") private OffsetDateTime lastViewedAt;
-    @Column(columnDefinition = "jsonb") private String metadata = "{}";
+    @Column(columnDefinition = "text") private String metadata = "{}";
     @Column(name = "created_at", nullable = false) private OffsetDateTime createdAt = OffsetDateTime.now();
     @Column(name = "updated_at", nullable = false) private OffsetDateTime updatedAt = OffsetDateTime.now();
 

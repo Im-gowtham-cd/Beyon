@@ -37,10 +37,15 @@ export function CompletionPage() {
   return (
     <OnboardingLayout currentStep={5} totalSteps={5}>
       <div className={styles.container}>
-        <div className={styles.checkmark}>✓</div>
+        <div className={styles.checkmark}>
+          <i className="bx bx-check" />
+        </div>
         <h1 className={styles.title}>{msg.title}</h1>
         <p className={styles.subtitle}>{msg.subtitle}</p>
-        <Link to={msg.path} className={styles.cta}>{msg.cta}</Link>
+        <Link to={msg.path} className={styles.cta}>
+          <span>{msg.cta}</span>
+          <i className="bx bx-right-arrow-alt" style={{ marginLeft: '6px' }} />
+        </Link>
       </div>
     </OnboardingLayout>
   );

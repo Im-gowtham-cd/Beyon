@@ -9,4 +9,7 @@ import java.util.UUID;
 public interface TestRepository extends JpaRepository<Test, UUID> {
     List<Test> findByStatusOrderByStartTimeDesc(String status);
     List<Test> findByTestTypeAndStatus(String testType, String status);
+    List<Test> findByStatus(String status);
+    List<Test> findByStatusIn(List<String> statuses);
+    List<Test> findAllByOrderByCreatedAtDesc();
 }

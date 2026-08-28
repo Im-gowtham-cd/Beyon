@@ -11,7 +11,7 @@ public class InterviewScorecard {
     @Id @GeneratedValue(strategy = GenerationType.UUID) private UUID id;
     @Column(name = "schedule_id", nullable = false) private UUID scheduleId;
     @Column(name = "interviewer_id", nullable = false) private UUID interviewerId;
-    @Column(columnDefinition = "jsonb", nullable = false) private String scores = "{}";
+    @Column(columnDefinition = "text", nullable = false) private String scores = "{}";
     @Column(name = "overall_score", precision = 5, scale = 2) private BigDecimal overallScore;
     @Column(length = 30) private String recommendation;
     @Column(columnDefinition = "text") private String strengths;

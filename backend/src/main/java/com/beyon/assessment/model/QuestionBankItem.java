@@ -16,12 +16,12 @@ public class QuestionBankItem {
     @Column(name = "question_type", nullable = false, length = 30) private String questionType;
     @Column(nullable = false, length = 20) private String difficulty = "MEDIUM";
     @Column(name = "question_text", columnDefinition = "text", nullable = false) private String questionText;
-    @Column(columnDefinition = "jsonb") private String options;
+    @Column(columnDefinition = "text") private String options;
     @Column(name = "correct_answer", columnDefinition = "text") private String correctAnswer;
     @Column(columnDefinition = "text") private String explanation;
     @Column(name = "expected_time_seconds") private Integer expectedTimeSeconds = 60;
     @Column(nullable = false, precision = 5, scale = 2) private BigDecimal score = BigDecimal.ONE;
-    @Column(columnDefinition = "jsonb") private String tags = "[]";
+    @Column(columnDefinition = "text") private String tags = "[]";
     @Column(name = "is_active", nullable = false) private Boolean isActive = true;
     @Column(nullable = false) private Integer version = 1;
     @Column(name = "created_at", nullable = false) private OffsetDateTime createdAt = OffsetDateTime.now();

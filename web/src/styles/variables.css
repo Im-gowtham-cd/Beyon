@@ -1,6 +1,6 @@
 /* ================================================================
-   HPC COE DESIGN SYSTEM v2.0
-   Centre of Excellence — High Performance Computing for IIS
+   BEYON ENTERPRISE DESIGN SYSTEM v3.0
+   Unified Identity, Full-Bleed Fluid Architecture & Crisp Tokens
    ================================================================ */
 
 @font-face {
@@ -24,7 +24,7 @@
 @font-face {
   font-family: 'ClashDisplay';
   src: url('/fonts/ClashDisplay.ttf') format('truetype');
-  font-weight: 500;
+  font-weight: 100 900;
   font-style: normal;
   font-display: swap;
 }
@@ -38,107 +38,108 @@
 }
 
 :root {
-  /* ── Brand Colors ── */
-  --color-primary: #253cac;
-  --color-primary-rgb: 37, 60, 172;
-  --color-primary-dark: #1c2d81;
-  --color-primary-light: #019fdb;
-  --color-primary-hover: #1e3299;
+  /* ── Core Brand Palette ── */
+  --color-primary: #1c2d81;
+  --color-primary-rgb: 28, 45, 129;
+  --color-primary-dark: #121e5c;
+  --color-primary-light: #253cac;
+  --color-primary-hover: #16246e;
+  --color-primary-subtle: #eff6ff;
 
   --color-accent: #fed601;
   --color-accent-rgb: 254, 214, 1;
-  --color-accent-dark: #8b7500;
+  --color-accent-dark: #b45309;
+  --color-accent-light: #fef08a;
 
   /* ── Background & Surfaces ── */
   --color-background: #f4f6fb;
   --color-background-rgb: 244, 246, 251;
   --color-bg: #f4f6fb;
   --color-bg-rgb: 244, 246, 251;
-  --color-surface: #fefefe;
-  --color-surface-rgb: 254, 254, 254;
-  --color-surface-2: #f8f9fc;
-  --color-surface-3: #eef1f6;
-  --color-white: #fefefe;
+  --color-surface: #ffffff;
+  --color-surface-rgb: 255, 255, 255;
+  --color-surface-2: #f8fafc;
+  --color-surface-3: #f1f5f9;
+  --color-white: #ffffff;
 
-  /* ── Text ── */
-  --text-primary: #0d0d0e;
-  --text-secondary: #515150;
-  --text-muted: #77777a;
-  --color-text: #0d0d0e;
-  --color-text-primary: #0d0d0e;
-  --color-text-secondary: #515150;
-  --color-text-muted: #77777a;
+  /* ── Text Hierarchy (High Contrast & Sharp Visibility) ── */
+  --text-primary: #020617;
+  --text-secondary: #1e293b;
+  --text-muted: #334155;
+  --color-text: #020617;
+  --color-text-primary: #020617;
+  --color-text-secondary: #1e293b;
+  --color-text-muted: #334155;
 
-  /* ── Borders ── */
-  --color-border: #bcbcbd;
-  --color-border-light: #e7e7e9;
+  /* ── Clean Borders ── */
+  --color-border: #e2e8f0;
+  --color-border-light: #f1f5f9;
+  --color-border-dark: #cbd5e1;
 
-  /* ── Overlay ── */
-  --color-overlay: rgba(0, 0, 0, 0.45);
+  /* ── Overlays ── */
+  --color-overlay: rgba(15, 23, 42, 0.6);
 
-  /* ── Accents & Status ── */
-  --color-sushi: #91bd4b;
-  --color-green: #01a03a;
-  --color-gold: #fed601;
-  --color-cerulean: #019fdb;
-  --color-violet: #9e2dff;
-  --color-success: #01a03a;
-  --color-success-light: #91bd4b;
-  --color-warning: #c98f00;
-  --color-danger: #c62828;
-  --color-info: #019fdb;
+  /* ── Semantic Accents & Status ── */
+  --color-success: #10b981;
+  --color-success-dark: #059669;
+  --color-success-light: #dcfce7;
+  --color-warning: #f59e0b;
+  --color-warning-light: #fef3c7;
+  --color-danger: #ef4444;
+  --color-danger-light: #fee2e2;
+  --color-info: #0284c7;
+  --color-info-light: #e0f2fe;
+  --color-violet: #8b5cf6;
+  --color-violet-light: #f3e8ff;
 
-  /* ── Typography ── */
-  --font-body: 'Montserrat', sans-serif;
-  --font-heading: 'ClashDisplay', 'Montserrat', sans-serif;
-  --font-display: 'Montserrat', sans-serif;
+  /* ── Typography Stack ── */
+  --font-body: 'ClashDisplay', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-heading: 'ClashDisplay', sans-serif;
+  --font-display: 'ClashDisplay', sans-serif;
   --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
 
-  /* ── Fluid Font Sizes ── */
-  --fs-sm: 14px;
-  --fs-base: 16px;
-  --fs-lg: 18px;
-  --fs-xl: clamp(1.125rem, 2.5vw, 1.25rem);
-  --fs-2xl: clamp(1.25rem, 3vw, 1.5rem);
-  --fs-3xl: clamp(1.375rem, 3.5vw, 1.75rem);
-  --fs-4xl: clamp(1.5rem, 4vw, 2rem);
-  --fs-5xl: clamp(1.625rem, 4.5vw, 2.25rem);
-  --fs-6xl: clamp(1.875rem, 5.5vw, 2.625rem);
+  /* ── Typography Scales ── */
+  --fs-xs: 0.75rem;
+  --fs-sm: 0.84rem;
+  --fs-base: 0.94rem;
+  --fs-lg: 1.05rem;
+  --fs-xl: 1.25rem;
+  --fs-2xl: 1.5rem;
+  --fs-3xl: 1.85rem;
+  --fs-4xl: 2.25rem;
 
-  /* ── Layout & Nav ── */
-  --nav-utility: 32px;
-  --nav-main: 80px;
-  --nav-height: calc(var(--nav-utility) + var(--nav-main));
-  --max-content: 1400px;
-  --sidebar-width: 260px;
+  /* ── Layout Offsets ── */
+  --sidebar-width: 270px;
+  --sidebar-collapsed-width: 76px;
+  --topbar-height: 56px;
 
-  /* ── Spacing ── */
+  /* ── Spacing Scale ── */
+  --space-2xs: 2px;
   --space-xs: 4px;
   --space-sm: 8px;
   --space-md: 16px;
   --space-lg: 24px;
-  --space-xl: 40px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
 
-  /* ── Sharp Radii ── */
+  /* ── Architectural Sharp Radii (Zero Curved Geometry / Crisp Edges) ── */
   --radius-xs: 0px;
   --radius-sm: 0px;
   --radius-md: 0px;
   --radius-lg: 0px;
   --radius-xl: 0px;
-  --radius-full: 9999px;
+  --radius-full: 0px;
 
-  /* ── Shadows ── */
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.10);
-  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
-  --shadow-hover-sm: 0 2px 8px rgba(0, 0, 0, 0.08);
-  --shadow-hover-md: 0 6px 16px rgba(0, 0, 0, 0.10);
-  --shadow-hover-lg: 0 10px 28px rgba(0, 0, 0, 0.14);
+  /* ── Elevation Shadows ── */
+  --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.04), 0 1px 2px rgba(15, 23, 42, 0.02);
+  --shadow-md: 0 4px 12px rgba(15, 23, 42, 0.05), 0 2px 4px rgba(15, 23, 42, 0.02);
+  --shadow-lg: 0 10px 25px rgba(15, 23, 42, 0.08), 0 4px 10px rgba(15, 23, 42, 0.03);
+  --shadow-hover: 0 12px 28px rgba(28, 45, 129, 0.12), 0 4px 12px rgba(28, 45, 129, 0.06);
 
   /* ── Transitions ── */
-  --transition: all 0.3s ease;
-  --transition-fast: color 0.3s ease;
-  --transition-slow: all 0.4s ease;
+  --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-fast: all 0.15s ease;
+  --transition-slow: all 0.3s ease;
 
   /* Legacy & compatibility aliases */
   --primary-blue: var(--color-primary);

@@ -7,6 +7,6 @@ import java.util.List;
 import java.util.UUID;
 
 public interface MessageConversationRepository extends JpaRepository<MessageConversation, UUID> {
-    @Query("SELECT mc FROM MessageConversation mc JOIN mc.participants p WHERE p.userId = :userId ORDER BY mc.lastMessageAt DESC")
+    @Query("SELECT DISTINCT mc FROM MessageConversation mc WHERE mc.id IN (SELECT m.conversationId FROM Message m WHERE m.senderId = :userId) ORDER BY mc.lastMessageAt DESC")
     List<MessageConversation> findByParticipantUserId(UUID userId);
 }

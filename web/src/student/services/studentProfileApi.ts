@@ -39,10 +39,10 @@ export const studentProfileApi = {
   addLink: (data: { platform: string; url: string }) => api.post<StudentLink>('/student/links', data),
   removeLink: (id: string) => api.delete<void>(`/student/links/${id}`),
 
-  getLearningSkills: () => api.get<StudentLearningSkill[]>('/student/learning'),
+  getLearningSkills: () => api.get<StudentLearningSkill[]>('/student/learning-skills'),
   addLearningSkill: (data: { skillId?: string; skillName: string }) =>
-    api.post<StudentLearningSkill>('/student/learning', data),
-  removeLearningSkill: (id: string) => api.delete<void>(`/student/learning/${id}`),
+    api.post<StudentLearningSkill>('/student/learning-skills', data),
+  removeLearningSkill: (id: string) => api.delete<void>(`/student/learning-skills/${id}`),
 
   getCareerPreferences: () => api.get<StudentCareerPreferences>('/student/career-preferences'),
   updateCareerPreferences: (data: Record<string, unknown>) =>

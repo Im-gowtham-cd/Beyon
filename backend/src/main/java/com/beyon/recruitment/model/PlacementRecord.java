@@ -6,8 +6,8 @@ import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
-@Entity
-@Table(name = "placement_records")
+@Entity(name = "RecruitmentPlacementRecord")
+@Table(name = "recruitment_placements")
 public class PlacementRecord {
     @Id @GeneratedValue(strategy = GenerationType.UUID) private UUID id;
     @Column(name = "student_id", nullable = false) private UUID studentId;

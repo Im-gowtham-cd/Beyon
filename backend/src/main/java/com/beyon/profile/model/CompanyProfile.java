@@ -10,7 +10,7 @@ public class CompanyProfile {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(columnDefinition = "uuid")
+    @Column(columnDefinition = "varchar(36)")
     private UUID id;
 
     @Column(nullable = false, unique = true)

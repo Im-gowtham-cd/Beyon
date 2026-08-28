@@ -16,8 +16,8 @@ public class AssessmentResult {
     @Column(nullable = false, precision = 5, scale = 2) private BigDecimal accuracy = BigDecimal.ZERO;
     @Column(precision = 5, scale = 2) private BigDecimal percentile;
     @Column(nullable = false, length = 20) private String status = "PENDING";
-    @Column(name = "section_scores", columnDefinition = "jsonb") private String sectionScores;
-    @Column(name = "skill_scores", columnDefinition = "jsonb") private String skillScores;
+    @Column(name = "section_scores", columnDefinition = "text") private String sectionScores;
+    @Column(name = "skill_scores", columnDefinition = "text") private String skillScores;
     @Column(name = "time_taken_seconds") private Integer timeTakenSeconds = 0;
     @Column(name = "questions_attempted") private Integer questionsAttempted = 0;
     @Column(name = "questions_correct") private Integer questionsCorrect = 0;

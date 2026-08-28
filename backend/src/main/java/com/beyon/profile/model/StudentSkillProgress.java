@@ -10,7 +10,7 @@ public class StudentSkillProgress {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(columnDefinition = "uuid")
+    @Column(columnDefinition = "varchar(36)")
     private UUID id;
 
     @Column(nullable = false)
@@ -19,10 +19,10 @@ public class StudentSkillProgress {
     @Column(nullable = false)
     private UUID skillId;
 
-    @Column(columnDefinition = "uuid")
+    @Column(columnDefinition = "varchar(36)")
     private UUID topicId;
 
-    @Column(columnDefinition = "uuid")
+    @Column(columnDefinition = "varchar(36)")
     private UUID subtopicId;
 
     @Column(nullable = false)

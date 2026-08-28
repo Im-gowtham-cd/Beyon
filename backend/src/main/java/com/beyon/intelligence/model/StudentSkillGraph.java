@@ -15,7 +15,7 @@ public class StudentSkillGraph {
     @Column(nullable = false, length = 30) private String level = "BEGINNER";
     @Column(nullable = false, precision = 5, scale = 2) private BigDecimal confidence = BigDecimal.ZERO;
     @Column(name = "evidence_count", nullable = false) private Integer evidenceCount = 0;
-    @Column(nullable = false, columnDefinition = "jsonb") private String sources = "[]";
+    @Column(nullable = false, columnDefinition = "text") private String sources = "[]";
     @Column(name = "improvement_trend", nullable = false, length = 20) private String improvementTrend = "STABLE";
     @Column(name = "last_assessed_at") private OffsetDateTime lastAssessedAt;
     @Column(nullable = false) private Boolean verified = false;

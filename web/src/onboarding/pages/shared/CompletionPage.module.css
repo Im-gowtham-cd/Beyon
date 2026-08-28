@@ -3,60 +3,73 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 60vh;
   text-align: center;
-  padding: var(--space-2xl);
+  padding: 40px 20px;
 }
 
 .checkmark {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  background: var(--color-secondary);
-  color: var(--color-black);
+  width: 72px;
+  height: 72px;
+  border-radius: 0px;
+  background: #dcfce7;
+  border: 2px solid #86efac;
+  color: #15803d;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 2rem;
-  font-weight: var(--font-bold);
-  margin-bottom: var(--space-xl);
-  animation: pop 0.4s ease;
+  font-size: 2.2rem;
+  font-weight: 900;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 8px rgba(21, 128, 61, 0.15);
+  animation: pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 .title {
-  font-family: var(--font-heading);
-  font-size: var(--text-4xl);
-  font-weight: var(--font-bold);
-  color: var(--color-text);
-  margin: 0 0 var(--space-md);
+  font-family: var(--font-heading, Montserrat);
+  font-size: 1.8rem;
+  font-weight: 900;
+  color: #0f172a;
+  margin: 0 0 8px;
+  letter-spacing: -0.02em;
 }
 
 .subtitle {
-  font-size: var(--text-lg);
-  color: var(--color-text-muted);
-  margin: 0 0 var(--space-2xl);
-  max-width: 500px;
+  font-size: 0.95rem;
+  color: #64748b;
+  margin: 0 0 28px;
+  max-width: 480px;
+  line-height: 1.5;
 }
 
 .cta {
-  display: inline-block;
-  padding: 14px 40px;
-  background: var(--color-primary);
-  border: none;
-  border-radius: var(--radius-sm);
-  color: var(--color-black);
-  font-size: var(--text-base);
-  font-weight: var(--font-semibold);
-  font-family: var(--font-body);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 36px;
+  background: linear-gradient(135deg, #1c2d81 0%, #253cac 100%);
+  border: 1px solid #1c2d81;
+  border-radius: 0px;
+  color: #ffffff;
+  font-size: 0.96rem;
+  font-weight: 800;
   text-decoration: none;
-  transition: opacity var(--transition-fast);
+  box-shadow: 0 4px 12px rgba(28, 45, 129, 0.25);
+  transition: all 0.15s ease;
 }
 
 .cta:hover {
-  opacity: 0.9;
+  opacity: 0.95;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(28, 45, 129, 0.3);
 }
 
 @keyframes pop {
-  0% { transform: scale(0.5); opacity: 0; }
-  100% { transform: scale(1); opacity: 1; }
+  0% {
+    transform: scale(0.4);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
 }

@@ -11,7 +11,7 @@ public class AnalyticsEvent {
     @Column(name = "user_id") private UUID userId;
     @Column(name = "user_role", length = 30) private String userRole;
     @Column(name = "event_type", nullable = false, length = 50) private String eventType;
-    @Column(name = "event_data", columnDefinition = "jsonb") private String eventData;
+    @Column(name = "event_data", columnDefinition = "text") private String eventData;
     @Column(length = 500) private String page;
     @Column(name = "session_id", length = 100) private String sessionId;
     @Column(name = "created_at", nullable = false) private OffsetDateTime createdAt = OffsetDateTime.now();

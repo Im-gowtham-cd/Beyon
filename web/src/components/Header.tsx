@@ -113,11 +113,11 @@ export function Header() {
       {/* Utility Bar */}
       <div className={styles.utilityBar}>
         <span className={styles.utilityInstitution}>
-          <i className="bx bx-rocket" /> Beyon — AI Skill Development, Assessment &amp; Recruitment Platform
+          <i className="bx bx-brain" /> Beyon — AI-Powered Skill Matrix &amp; Intelligent Career Architecture
         </span>
         <span className={styles.utilityLinks}>
-          <a href="mailto:support@beyon.dev" aria-label="Email Support">
-            <i className="bx bx-envelope" /> support@beyon.dev
+          <a href="mailto:support@beyon.app" aria-label="Email Support">
+            <i className="bx bx-envelope" /> support@beyon.app
           </a>
           <span className={styles.utilityDivider}>|</span>
           <Link to="/verify">
@@ -131,7 +131,7 @@ export function Header() {
         <Link to="/" className={styles.navTitle} onClick={closeMobile}>
           <span className={styles.brandMark} aria-hidden="true" />
           <span className={styles.brandText}>Beyon</span>
-          <span className={styles.brandSub}>AI Skill Platform</span>
+          <span className={styles.brandSub}>Skills &amp; Careers</span>
         </Link>
 
         <button

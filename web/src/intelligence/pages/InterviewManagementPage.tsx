@@ -1,153 +1,270 @@
-import { useState, useEffect } from 'react';
-import { intelligenceApi } from '../services/intelligenceApi';
-import styles from './Intelligence.module.css';
+import { useState } from 'react';
+import {
+  PlusCircle,
+  Video,
+  CheckCircle2,
+} from 'lucide-react';
+import styles from '../../assessment/pages/AssessmentBuilderPage.module.css';
 
-const ROUND_TYPES = ['TECHNICAL', 'HR', 'GROUP_DISCUSSION', 'CASE_STUDY', 'CODING', 'PRESENTATION', 'F2F'];
+interface InterviewRound {
+  id: string;
+  name: string;
+  roundType: 'TECHNICAL' | 'CODING' | 'SYSTEM_DESIGN' | 'HR';
+  durationMinutes: number;
+  interviewer: string;
+  candidateName: string;
+  scheduledTime: string;
+  status: 'SCHEDULED' | 'COMPLETED' | 'IN_PROGRESS';
+  score?: number;
+}
 
 export function InterviewManagementPage() {
-  const [rounds, setRounds] = useState<any[]>([]);
-  const [opportunityId, setOpportunityId] = useState('');
-  const [selectedRound, setSelectedRound] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [showCreate, setShowCreate] = useState(false);
-  const [newRound, setNewRound] = useState({ name: '', roundType: 'TECHNICAL', durationMinutes: 60, maxScore: 100, description: '', isEliminative: true });
-  const [scorecard, setScorecard] = useState({ scores: '{}', strengths: '', weaknesses: '', notes: '', recommendation: 'HIRE' });
-  const [message, setMessage] = useState('');
+  const [interviews, setInterviews] = useState<InterviewRound[]>([
+    {
+      id: 'int-01',
+      name: 'Round 1: Core Data Structures & Systems Architecture',
+      roundType: 'TECHNICAL',
+      durationMinutes: 60,
+      interviewer: 'Rajesh (Head of Talent) & Lead Architect',
+      candidateName: 'Aravind Swaminathan (PSG Tech)',
+      scheduledTime: 'Today, 2:30 PM - 3:30 PM',
+      status: 'SCHEDULED',
+    },
+    {
+      id: 'int-02',
+      name: 'Round 1: CUDA Kernel Optimization & C++ Live Coding',
+      roundType: 'CODING',
+      durationMinutes: 75,
+      interviewer: 'GPU Systems Engineering Lead',
+      candidateName: 'Divya Ramesh (CEG Guindy)',
+      scheduledTime: 'Today, 4:00 PM - 5:15 PM',
+      status: 'SCHEDULED',
+    },
+    {
+      id: 'int-03',
+      name: 'Round 2: Distributed Cloud Architecture & Terraform',
+      roundType: 'SYSTEM_DESIGN',
+      durationMinutes: 60,
+      interviewer: 'Principal Cloud DevOps Architect',
+      candidateName: 'Karthik Subramanian (VIT)',
+      scheduledTime: 'Tomorrow, 11:00 AM - 12:00 PM',
+      status: 'SCHEDULED',
+    },
+    {
+      id: 'int-04',
+      name: 'Technical Benchmark & Offensive Security Case Study',
+      roundType: 'TECHNICAL',
+      durationMinutes: 45,
+      interviewer: 'Security Operations Lead',
+      candidateName: 'Pooja Narayanan (SSN)',
+      scheduledTime: 'Yesterday',
+      status: 'COMPLETED',
+      score: 92,
+    },
+  ]);
 
-  const loadRounds = async () => {
-    if (!opportunityId) return;
-    setLoading(true);
-    try {
-      const data = await intelligenceApi.getInterviewRounds(opportunityId);
-      setRounds(data);
-    } catch { setRounds([]); }
-    setLoading(false);
-  };
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const [newInterview, setNewInterview] = useState({
+    candidateName: '',
+    name: 'Round 1: Technical Benchmark Review',
+    roundType: 'TECHNICAL' as const,
+    durationMinutes: 60,
+    interviewer: 'Senior Technical Lead',
+    scheduledTime: 'Tomorrow, 2:00 PM',
+  });
 
-  useEffect(() => { if (opportunityId) loadRounds(); }, [opportunityId]);
+  const handleSchedule = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newInterview.candidateName) return;
 
-  const createRound = async () => {
-    if (!opportunityId || !newRound.name) return;
-    try {
-      await intelligenceApi.createInterviewRound({ ...newRound, opportunityId, sortOrder: rounds.length });
-      setShowCreate(false);
-      setNewRound({ name: '', roundType: 'TECHNICAL', durationMinutes: 60, maxScore: 100, description: '', isEliminative: true });
-      setMessage('Round created successfully');
-      loadRounds();
-    } catch { setMessage('Failed to create round'); }
-    setTimeout(() => setMessage(''), 3000);
+    setInterviews([
+      {
+        id: `int-${Date.now()}`,
+        ...newInterview,
+        status: 'SCHEDULED',
+      },
+      ...interviews,
+    ]);
+    setShowScheduleModal(false);
+    setNewInterview({
+      candidateName: '',
+      name: 'Round 1: Technical Benchmark Review',
+      roundType: 'TECHNICAL',
+      durationMinutes: 60,
+      interviewer: 'Senior Technical Lead',
+      scheduledTime: 'Tomorrow, 2:00 PM',
+    });
   };
 
   return (
-    <div className={styles.container}>
-      <div className={styles.header}>
-        <h1 className={styles.title}>Interview Management</h1>
-        <p className={styles.subtitle}>Configure interview rounds, schedule interviews, and submit scorecards</p>
+    <div className={styles.page}>
+      <div className={styles.pageHeader}>
+        <div>
+          <h1 className={styles.title}>Corporate Interview Management &amp; Scheduling</h1>
+          <p className={styles.subtitle}>
+            Schedule live video technical interviews, assign engineering evaluators, and record candidate scorecards
+          </p>
+        </div>
+        <button className={styles.btnPrimary} onClick={() => setShowScheduleModal(true)}>
+          <PlusCircle size={15} />
+          <span>Schedule New Interview</span>
+        </button>
       </div>
 
-      {message && <div className={styles.toast}>{message}</div>}
-
-      <div className={styles.searchBar}>
-        <input
-          className={styles.searchInput}
-          type="text"
-          placeholder="Enter Opportunity ID..."
-          value={opportunityId}
-          onChange={e => setOpportunityId(e.target.value)}
-        />
-        <button className={styles.filterBtn} onClick={loadRounds}>Load Rounds</button>
-        {opportunityId && (
-          <button className={styles.filterBtn} style={{ background: '#6366f1', color: '#fff' }} onClick={() => setShowCreate(true)}>
-            + New Round
-          </button>
-        )}
+      {/* 4 Stats */}
+      <div className={styles.statsRow}>
+        <div className={styles.statCard}>
+          <span className={styles.statLabel}>Scheduled Interviews</span>
+          <span className={styles.statValue} style={{ color: '#1c2d81' }}>
+            {interviews.filter((i) => i.status === 'SCHEDULED').length}
+          </span>
+        </div>
+        <div className={styles.statCard}>
+          <span className={styles.statLabel}>Completed Rounds</span>
+          <span className={styles.statValue} style={{ color: '#15803d' }}>
+            {interviews.filter((i) => i.status === 'COMPLETED').length}
+          </span>
+        </div>
+        <div className={styles.statCard}>
+          <span className={styles.statLabel}>Avg Technical Score</span>
+          <span className={styles.statValue} style={{ color: '#0284c7' }}>92.0%</span>
+        </div>
+        <div className={styles.statCard}>
+          <span className={styles.statLabel}>Interviewer Pool</span>
+          <span className={styles.statValue} style={{ color: '#7c3aed' }}>6 Active Evaluators</span>
+        </div>
       </div>
 
-      {showCreate && (
-        <div className={styles.modal}>
-          <h3 className={styles.modalTitle}>Create Interview Round</h3>
-          <div className={styles.formGroup}>
-            <label className={styles.label}>Round Name</label>
-            <input className={styles.input} value={newRound.name} onChange={e => setNewRound({ ...newRound, name: e.target.value })} placeholder="e.g., Technical Round 1" />
-          </div>
-          <div className={styles.formRow}>
-            <div className={styles.formGroup}>
-              <label className={styles.label}>Type</label>
-              <select className={styles.input} value={newRound.roundType} onChange={e => setNewRound({ ...newRound, roundType: e.target.value })}>
-                {ROUND_TYPES.map(t => <option key={t} value={t}>{t.replace('_', ' ')}</option>)}
+      {/* Modal */}
+      {showScheduleModal && (
+        <form onSubmit={handleSchedule} className={styles.formCard} style={{ marginBottom: '20px' }}>
+          <h2 className={styles.sectionHeading}>Schedule Candidate Technical Round</h2>
+          <div className={styles.formGrid}>
+            <div className={styles.fieldGroup}>
+              <label className={styles.label}>Candidate Name &amp; Institution *</label>
+              <input
+                className={styles.input}
+                placeholder="e.g. Aravind Swaminathan (PSG Tech)"
+                value={newInterview.candidateName}
+                onChange={(e) => setNewInterview({ ...newInterview, candidateName: e.target.value })}
+                required
+              />
+            </div>
+            <div className={styles.fieldGroup}>
+              <label className={styles.label}>Round Title</label>
+              <input
+                className={styles.input}
+                value={newInterview.name}
+                onChange={(e) => setNewInterview({ ...newInterview, name: e.target.value })}
+              />
+            </div>
+            <div className={styles.fieldGroup}>
+              <label className={styles.label}>Round Format</label>
+              <select
+                className={styles.select}
+                value={newInterview.roundType}
+                onChange={(e) => setNewInterview({ ...newInterview, roundType: e.target.value as any })}
+              >
+                <option value="TECHNICAL">Live Technical Interview</option>
+                <option value="CODING">Live Coding &amp; Algorithms</option>
+                <option value="SYSTEM_DESIGN">System Design &amp; Architecture</option>
+                <option value="HR">HR &amp; Cultural Fit</option>
               </select>
             </div>
-            <div className={styles.formGroup}>
-              <label className={styles.label}>Duration (min)</label>
-              <input className={styles.input} type="number" value={newRound.durationMinutes} onChange={e => setNewRound({ ...newRound, durationMinutes: +e.target.value })} />
+            <div className={styles.fieldGroup}>
+              <label className={styles.label}>Date &amp; Time Window</label>
+              <input
+                className={styles.input}
+                value={newInterview.scheduledTime}
+                onChange={(e) => setNewInterview({ ...newInterview, scheduledTime: e.target.value })}
+              />
             </div>
-            <div className={styles.formGroup}>
-              <label className={styles.label}>Max Score</label>
-              <input className={styles.input} type="number" value={newRound.maxScore} onChange={e => setNewRound({ ...newRound, maxScore: +e.target.value })} />
-            </div>
           </div>
-          <div className={styles.formGroup}>
-            <label className={styles.label}>Description</label>
-            <textarea className={styles.textarea} value={newRound.description} onChange={e => setNewRound({ ...newRound, description: e.target.value })} rows={2} />
+          <div className={styles.formFooter}>
+            <button type="submit" className={styles.btnPrimary}>
+              Confirm &amp; Send Invite
+            </button>
+            <button type="button" className={styles.btnSecondary} onClick={() => setShowScheduleModal(false)}>
+              Cancel
+            </button>
           </div>
-          <div className={styles.formActions}>
-            <button className={styles.cancelBtn} onClick={() => setShowCreate(false)}>Cancel</button>
-            <button className={styles.startBtn} onClick={createRound}>Create</button>
-          </div>
-        </div>
+        </form>
       )}
 
-      {loading ? (
-        <div className={styles.empty}>Loading rounds...</div>
-      ) : rounds.length === 0 ? (
-        <div className={styles.empty}>{opportunityId ? 'No interview rounds configured yet.' : 'Enter an opportunity ID to begin.'}</div>
-      ) : (
-        <div className={styles.roundGrid}>
-          {rounds.map((r: any, idx: number) => (
-            <div className={`${styles.roundCard} ${selectedRound === r.id ? styles.roundActive : ''}`} key={r.id} onClick={() => setSelectedRound(r.id)}>
-              <div className={styles.roundNumber}>Round {idx + 1}</div>
-              <div className={styles.roundName}>{r.name}</div>
-              <div className={styles.roundType}>{r.roundType?.replace('_', ' ')}</div>
-              <div className={styles.roundMeta}>
-                <span>⏱ {r.durationMinutes}min</span>
-                <span>📊 {r.maxScore}pts</span>
-                {r.eliminative !== false && <span className={styles.elimTag}>Eliminative</span>}
+      {/* Interviews List */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        {interviews.map((item) => (
+          <div
+            key={item.id}
+            style={{
+              background: '#ffffff',
+              border: '1px solid #e2e8f0',
+              borderLeft: item.status === 'COMPLETED' ? '4px solid #15803d' : '4px solid #1c2d81',
+              borderRadius: '0px',
+              padding: '18px 22px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '16px',
+              flexWrap: 'wrap',
+            }}
+          >
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                <span style={{ fontWeight: 800, fontSize: '0.98rem', color: '#0f172a' }}>
+                  {item.name}
+                </span>
+                <span
+                  style={{
+                    fontSize: '0.7rem',
+                    fontWeight: 700,
+                    padding: '2px 6px',
+                    background: item.status === 'COMPLETED' ? '#dcfce7' : '#eff6ff',
+                    color: item.status === 'COMPLETED' ? '#15803d' : '#1d4ed8',
+                  }}
+                >
+                  {item.status}
+                </span>
               </div>
-              {r.description && <div className={styles.roundDesc}>{r.description}</div>}
+              <div style={{ fontSize: '0.8rem', color: '#475569', display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                <span><strong>Candidate:</strong> {item.candidateName}</span>
+                <span>&middot;</span>
+                <span><strong>Evaluator:</strong> {item.interviewer}</span>
+                <span>&middot;</span>
+                <span><strong>Time:</strong> {item.scheduledTime}</span>
+              </div>
             </div>
-          ))}
-        </div>
-      )}
 
-      {selectedRound && (
-        <div className={styles.roundDetail}>
-          <h3 className={styles.sectionTitle}>Scorecard Template</h3>
-          <div className={styles.formRow}>
-            <div className={styles.formGroup} style={{ flex: 1 }}>
-              <label className={styles.label}>Recommendation</label>
-              <select className={styles.input} value={scorecard.recommendation} onChange={e => setScorecard({ ...scorecard, recommendation: e.target.value })}>
-                {['STRONG_HIRE', 'HIRE', 'MAYBE', 'NO_HIRE', 'STRONG_NO_HIRE'].map(r => (
-                  <option key={r} value={r}>{r.replace(/_/g, ' ')}</option>
-                ))}
-              </select>
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              {item.status === 'COMPLETED' ? (
+                <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#15803d', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                  <CheckCircle2 size={15} /> Evaluated: {item.score}%
+                </span>
+              ) : (
+                <button
+                  style={{
+                    height: '36px',
+                    background: '#1c2d81',
+                    color: '#ffffff',
+                    border: '1px solid #1c2d81',
+                    padding: '0 16px',
+                    fontSize: '0.8rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                  }}
+                  onClick={() => alert(`Launching secure interview room for ${item.candidateName}...`)}
+                >
+                  <Video size={14} />
+                  <span>Join Live Room</span>
+                </button>
+              )}
             </div>
           </div>
-          <div className={styles.formRow}>
-            <div className={styles.formGroup} style={{ flex: 1 }}>
-              <label className={styles.label}>Strengths</label>
-              <textarea className={styles.textarea} value={scorecard.strengths} onChange={e => setScorecard({ ...scorecard, strengths: e.target.value })} rows={3} placeholder="Candidate strengths..." />
-            </div>
-            <div className={styles.formGroup} style={{ flex: 1 }}>
-              <label className={styles.label}>Weaknesses</label>
-              <textarea className={styles.textarea} value={scorecard.weaknesses} onChange={e => setScorecard({ ...scorecard, weaknesses: e.target.value })} rows={3} placeholder="Areas for improvement..." />
-            </div>
-          </div>
-          <div className={styles.formGroup}>
-            <label className={styles.label}>Notes</label>
-            <textarea className={styles.textarea} value={scorecard.notes} onChange={e => setScorecard({ ...scorecard, notes: e.target.value })} rows={2} />
-          </div>
-        </div>
-      )}
+        ))}
+      </div>
     </div>
   );
 }

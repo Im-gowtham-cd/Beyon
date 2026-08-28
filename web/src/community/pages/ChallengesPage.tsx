@@ -62,7 +62,7 @@ export function ChallengesPage() {
 
       {challenges.length === 0 ? (
         <div className={styles.emptyState}>
-          <div className={styles.emptyIcon}>🏆</div>
+          <div className={styles.emptyIcon}><i className="bx bx-trophy" style={{ fontSize: '2.5rem', color: '#fed601' }} /></div>
           <h3 className={styles.emptyTitle}>No active challenges</h3>
           <p className={styles.emptyText}>Companies and institutions post real-world challenges here.</p>
         </div>
@@ -72,7 +72,10 @@ export function ChallengesPage() {
             <div key={c.id} className={styles.postCard}>
               <div className={styles.postHeader}>
                 <div>
-                  <h3 className={styles.postTitle}>🏆 {c.title}</h3>
+                  <h3 className={styles.postTitle} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <i className="bx bx-trophy" style={{ color: '#fed601' }} />
+                    <span>{c.title}</span>
+                  </h3>
                   <span className={styles.postMeta}>
                     <span style={{ color: diffColors[c.difficulty] || 'var(--color-text)' }}>{c.difficulty}</span>
                     {' · Team: '}{c.minTeamSize}-{c.maxTeamSize}
@@ -82,9 +85,9 @@ export function ChallengesPage() {
               </div>
               {c.description && <p className={styles.postContent}>{c.description}</p>}
               <div className={styles.postMeta}>
-                {c.deadline && <span>⏰ Deadline: {new Date(c.deadline).toLocaleDateString()}</span>}
-                {c.coinReward > 0 && <span>💰 {c.coinReward} coins</span>}
-                {c.xpReward > 0 && <span>⚡ {c.xpReward} XP</span>}
+                {c.deadline && <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><i className="bx bx-time" /> Deadline: {new Date(c.deadline).toLocaleDateString()}</span>}
+                {c.coinReward > 0 && <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><i className="bx bx-coin-stack" /> {c.coinReward} coins</span>}
+                {c.xpReward > 0 && <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><i className="bx bx-bolt" /> {c.xpReward} XP</span>}
               </div>
               {c.requiredSkills && (
                 <div className={styles.tagsRow}>

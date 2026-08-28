@@ -11,10 +11,10 @@ public class GeneratedResume {
     @Column(name = "student_id", nullable = false) private UUID studentId;
     @Column(name = "template_id") private UUID templateId;
     @Column(length = 300) private String title;
-    @Column(nullable = false, columnDefinition = "jsonb") private String sections = "[]";
+    @Column(nullable = false, columnDefinition = "text") private String sections = "[]";
     @Column(name = "file_url", length = 500) private String fileUrl;
     @Column(name = "generation_status", nullable = false, length = 30) private String generationStatus = "DRAFT";
-    @Column(columnDefinition = "jsonb") private String aiSuggestions;
+    @Column(columnDefinition = "text") private String aiSuggestions;
     @Column(name = "created_at", nullable = false) private OffsetDateTime createdAt = OffsetDateTime.now();
     @Column(name = "updated_at", nullable = false) private OffsetDateTime updatedAt = OffsetDateTime.now();
 

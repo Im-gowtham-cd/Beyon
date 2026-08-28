@@ -6,13 +6,13 @@ import jakarta.persistence.*;
 import java.time.Instant;
 import java.util.UUID;
 
-@Entity
+@Entity(name = "IdentityAuditEvent")
 @Table(name = "audit_events")
 public class AuditEvent {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(columnDefinition = "uuid")
+    @Column(columnDefinition = "varchar(36)")
     private UUID id;
 
     @Enumerated(EnumType.STRING)

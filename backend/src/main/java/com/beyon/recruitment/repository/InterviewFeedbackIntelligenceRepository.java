@@ -9,5 +9,5 @@ import java.util.UUID;
 public interface InterviewFeedbackIntelligenceRepository extends JpaRepository<InterviewFeedbackIntelligence, UUID> {
     List<InterviewFeedbackIntelligence> findByStudentIdOrderByCreatedAtDesc(UUID studentId);
     Optional<InterviewFeedbackIntelligence> findByInterviewId(UUID interviewId);
-    List<InterviewFeedbackIntelligence> findByIsCandidateVisibleTrue(UUID studentId);
+    List<InterviewFeedbackIntelligence> findByStudentIdAndIsCandidateVisibleTrue(UUID studentId);
 }
