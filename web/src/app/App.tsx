@@ -84,6 +84,10 @@ import { FeedbackPage } from '../community/pages/FeedbackPage';
 import { AdminFeedbackPage } from '../community/pages/AdminFeedbackPage';
 import { InstitutionHome } from '../pages/institution/InstitutionHome';
 import { CompanyHome } from '../pages/company/CompanyHome';
+import { CompanyLayout } from '../layouts/CompanyLayout';
+import { CompanyOpportunitiesPage } from '../pages/company/CompanyOpportunitiesPage';
+import { CreateOpportunityPage } from '../pages/company/CreateOpportunityPage';
+import { CompanyProfilePage } from '../pages/company/CompanyProfilePage';
 import { AdminHome } from '../pages/admin/AdminHome';
 import { StudentOnboarding } from '../onboarding/pages/student/StudentOnboarding';
 import { InstitutionOnboarding } from '../onboarding/pages/institution/InstitutionOnboarding';
@@ -181,10 +185,21 @@ export function App() {
           <Route path="/institution/home" element={<InstitutionHome />} />
           <Route path="/institution/dashboard" element={<InstitutionDashboard />} />
         </Route>
-        <Route element={<RoleGuard allowedRoles={['COMPANY']} />}>
-          <Route path="/company/home" element={<CompanyHome />} />
-          <Route path="/company/assessments" element={<CompanyAssessmentsPage />} />
-          <Route path="/company/assessment-builder" element={<AssessmentBuilderPage />} />
+        <Route element={<RoleGuard allowedRoles={['COMPANY', 'ADMIN']} />}>
+          <Route element={<CompanyLayout />}>
+            <Route path="/company/home" element={<CompanyHome />} />
+            <Route path="/company/opportunities" element={<CompanyOpportunitiesPage />} />
+            <Route path="/company/opportunities/create" element={<CreateOpportunityPage />} />
+            <Route path="/company/candidates" element={<CandidateDiscoveryPage />} />
+            <Route path="/company/pipeline" element={<PipelinePage />} />
+            <Route path="/company/candidate-intelligence" element={<CandidateIntelligencePage />} />
+            <Route path="/company/assessments" element={<CompanyAssessmentsPage />} />
+            <Route path="/company/assessment-builder" element={<AssessmentBuilderPage />} />
+            <Route path="/company/interview-management" element={<InterviewManagementPage />} />
+            <Route path="/company/analytics" element={<CompanyAnalyticsPage />} />
+            <Route path="/company/profile" element={<CompanyProfilePage />} />
+            <Route path="/company/messages" element={<MessagingPage />} />
+          </Route>
         </Route>
         <Route element={<RoleGuard allowedRoles={['ADMIN']} />}>
           <Route path="/admin/home" element={<AdminHome />} />
