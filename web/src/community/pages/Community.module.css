@@ -224,10 +224,10 @@
 .noteContent { font-size: 0.9rem; color: #374151; }
 .noteTime { font-size: 0.7rem; color: #9ca3af; margin-top: 0.25rem; }
 
-.filterSelect { padding: 0.5rem 0.75rem; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 0.8rem; background: #fff; }
-.searchInput { padding: 0.5rem 0.75rem; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 0.8rem; flex: 1; min-width: 200px; }
+.filterSelect { padding: 0.5rem 0.75rem; border: 1px solid #cbd5e1; border-radius: 0px; font-size: 0.8rem; font-family: inherit; background: #fff; }
+.searchInput { padding: 0.5rem 0.75rem; border: 1px solid #cbd5e1; border-radius: 0px; font-size: 0.8rem; font-family: inherit; flex: 1; min-width: 200px; }
 
 .pagination { display: flex; justify-content: center; align-items: center; gap: 1rem; margin-top: 1.5rem; }
-.pagination button { padding: 0.5rem 1rem; background: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 6px; cursor: pointer; font-size: 0.8rem; }
+.pagination button { padding: 0.5rem 1rem; background: #f3f4f6; border: 1px solid #e2e8f0; border-radius: 0px; cursor: pointer; font-size: 0.8rem; font-family: inherit; }
 .pagination button:disabled { opacity: 0.5; cursor: not-allowed; }
 .pagination span { font-size: 0.85rem; color: #6b7280; }
