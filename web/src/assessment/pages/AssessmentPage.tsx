@@ -244,7 +244,7 @@ export function AssessmentPage() {
         }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span style={{ fontSize: '1.2rem' }}>🛡️</span>
+              <i className="bx bx-shield-quarter" style={{ fontSize: '1.4rem', color: '#fed601' }} />
               <h3 style={{ margin: 0, fontSize: '1.15rem', color: '#fed601', fontWeight: 800 }}>Beyon Secure Lockdown Client</h3>
             </div>
             <p style={{ margin: '6px 0 0', fontSize: '0.85rem', color: '#e2e8f0', maxWidth: '600px' }}>
@@ -261,11 +261,14 @@ export function AssessmentPage() {
                 fontWeight: 700,
                 fontSize: '0.82rem',
                 padding: '8px 16px',
-                borderRadius: '4px',
+                borderRadius: '6px',
                 cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
               }}
             >
-              📥 Download Client
+              <i className="bx bx-download" /> Download Client
             </button>
           </div>
         </div>
@@ -329,29 +332,30 @@ export function AssessmentPage() {
                   </div>
 
                   <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', fontSize: '0.8rem', color: '#475569', background: '#f8fafc', padding: '8px 12px', borderRadius: '6px' }}>
-                    <span>⏱ {t.durationMinutes || 60} mins</span>
-                    <span>❓ {t.totalQuestions || 20} questions</span>
-                    <span>🎯 Passing: {t.passingScore ? `${t.passingScore}%` : '60%'}</span>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><i className="bx bx-time" /> {t.durationMinutes || 60} mins</span>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><i className="bx bx-help-circle" /> {t.totalQuestions || 20} questions</span>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><i className="bx bx-target-lock" /> Passing: {t.passingScore ? `${t.passingScore}%` : '60%'}</span>
                   </div>
 
                   <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
                     <button
                       className={`${styles.btn} ${styles.btnPrimary}`}
-                      style={{ flex: 1, padding: '8px 12px', fontSize: '0.84rem' }}
+                      style={{ flex: 1, padding: '8px 12px', fontSize: '0.84rem', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
                       onClick={() => handleStartWebTest(t)}
                     >
-                      Start Web Test →
+                      <span>Start Web Test</span>
+                      <i className="bx bx-right-arrow-alt" />
                     </button>
                     <button
                       className={`${styles.btn} ${styles.btnSecondary}`}
-                      style={{ padding: '8px 12px', fontSize: '0.84rem' }}
+                      style={{ padding: '8px 12px', fontSize: '0.84rem', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
                       onClick={() => {
                         navigator.clipboard?.writeText(t.id);
                         alert(`Session Token copied: ${t.id}\nPaste into Desktop Lockdown Client to begin.`);
                       }}
                       title="Copy Token for Desktop Client"
                     >
-                      📋 Token
+                      <i className="bx bx-copy" /> Token
                     </button>
                   </div>
                 </div>
@@ -376,11 +380,15 @@ export function AssessmentPage() {
           </p>
           <div className={styles.checkList}>
             <div className={styles.checkItem}>
-              <div className={`${styles.checkIcon} ${styles.checkPass}`}>📷</div>
+              <div className={`${styles.checkIcon} ${styles.checkPass}`}>
+                <i className="bx bx-camera" style={{ fontSize: '1.2rem' }} />
+              </div>
               <div><div className={styles.checkLabel}>Camera Access</div><div className={styles.checkStatus}>Ready</div></div>
             </div>
             <div className={styles.checkItem}>
-              <div className={`${styles.checkIcon} ${styles.checkPass}`}>👤</div>
+              <div className={`${styles.checkIcon} ${styles.checkPass}`}>
+                <i className="bx bx-user" style={{ fontSize: '1.2rem' }} />
+              </div>
               <div><div className={styles.checkLabel}>Face Detection</div><div className={styles.checkStatus}>Processing</div></div>
             </div>
           </div>
@@ -543,8 +551,10 @@ export function AssessmentPage() {
           <button
             className={`${styles.markReview} ${answers[questionId]?.marked ? styles.markReviewActive : ''}`}
             onClick={() => handleMarkReview(questionId)}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
           >
-            {answers[questionId]?.marked ? '★ Marked' : '☆ Mark for Review'}
+            <i className={answers[questionId]?.marked ? 'bx bxs-bookmark-star' : 'bx bx-bookmark'} />
+            <span>{answers[questionId]?.marked ? 'Marked for Review' : 'Mark for Review'}</span>
           </button>
         </div>
       </div>
@@ -554,18 +564,22 @@ export function AssessmentPage() {
           className={`${styles.btn} ${styles.btnSecondary}`}
           onClick={() => setCurrentQuestion(Math.max(0, currentQuestion - 1))}
           disabled={currentQuestion === 0}
+          style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
         >
-          ← Previous
+          <i className="bx bx-left-arrow-alt" />
+          <span>Previous</span>
         </button>
         <div className={styles.flexRow}>
           {currentQuestion < totalQuestions - 1 && (
-            <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={() => setCurrentQuestion(currentQuestion + 1)}>
-              Next →
+            <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={() => setCurrentQuestion(currentQuestion + 1)} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+              <span>Next</span>
+              <i className="bx bx-right-arrow-alt" />
             </button>
           )}
           {currentQuestion === totalQuestions - 1 && (
-            <button className={`${styles.btn} ${styles.btnSuccess}`} onClick={handleSubmit}>
-              Submit Assessment
+            <button className={`${styles.btn} ${styles.btnSuccess}`} onClick={handleSubmit} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+              <i className="bx bx-check-double" />
+              <span>Submit Assessment</span>
             </button>
           )}
         </div>

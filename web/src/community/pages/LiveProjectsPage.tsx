@@ -61,7 +61,7 @@ export function LiveProjectsPage() {
 
       {projects.length === 0 ? (
         <div className={styles.emptyState}>
-          <div className={styles.emptyIcon}>🛠️</div>
+          <div className={styles.emptyIcon}><i className="bx bx-layer" style={{ fontSize: '2.5rem', color: '#1c2d81' }} /></div>
           <h3 className={styles.emptyTitle}>No projects available</h3>
           <p className={styles.emptyText}>Companies post practical projects for students to work on.</p>
         </div>
@@ -71,7 +71,10 @@ export function LiveProjectsPage() {
             <div key={p.id} className={styles.postCard}>
               <div className={styles.postHeader}>
                 <div>
-                  <h3 className={styles.postTitle}>🛠️ {p.title}</h3>
+                  <h3 className={styles.postTitle} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <i className="bx bx-briefcase-alt-2" style={{ color: '#1c2d81' }} />
+                    <span>{p.title}</span>
+                  </h3>
                   <span className={styles.postMeta}>
                     <span style={{ color: diffColors[p.difficulty] || 'var(--color-text)' }}>{p.difficulty}</span>
                     {' · '}{p.durationWeeks} weeks
@@ -81,8 +84,8 @@ export function LiveProjectsPage() {
               </div>
               {p.description && <p className={styles.postContent}>{p.description}</p>}
               <div className={styles.postMeta}>
-                {p.coinReward > 0 && <span>💰 {p.coinReward} coins</span>}
-                {p.xpReward > 0 && <span>⚡ {p.xpReward} XP</span>}
+                {p.coinReward > 0 && <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><i className="bx bx-coin-stack" /> {p.coinReward} coins</span>}
+                {p.xpReward > 0 && <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><i className="bx bx-bolt" /> {p.xpReward} XP</span>}
               </div>
               {p.requiredSkills && (
                 <div className={styles.tagsRow}>

@@ -44,10 +44,16 @@ export function EventsPage() {
 
   function getTypeIcon(type: string) {
     const map: Record<string, string> = {
-      WORKSHOP: '🔧', WEBINAR: '🌐', GUEST_LECTURE: '🎤', HACKATHON: '💻',
-      CAREER_FAIR: '🏢', TECHNICAL_TALK: '💡', FDP: '📚', MENTORSHIP_SESSION: '🧑‍🏫',
+      WORKSHOP: 'bx bx-wrench',
+      WEBINAR: 'bx bx-globe',
+      GUEST_LECTURE: 'bx bx-microphone',
+      HACKATHON: 'bx bx-code-alt',
+      CAREER_FAIR: 'bx bx-briefcase',
+      TECHNICAL_TALK: 'bx bx-bulb',
+      FDP: 'bx bx-book-open',
+      MENTORSHIP_SESSION: 'bx bx-user-voice',
     };
-    return map[type] || '📌';
+    return map[type] || 'bx bx-calendar-event';
   }
 
   if (loading) {
@@ -63,12 +69,12 @@ export function EventsPage() {
   return (
     <div className={styles.page}>
       <div className={styles.pageHeader}>
-        <h1 className={styles.title}>Events & Workshops</h1>
+        <h1 className={styles.title}>Events &amp; Workshops</h1>
       </div>
 
       {events.length === 0 ? (
         <div className={styles.emptyState}>
-          <div className={styles.emptyIcon}>📅</div>
+          <div className={styles.emptyIcon}><i className="bx bx-calendar-x" style={{ fontSize: '2.5rem', color: '#94a3b8' }} /></div>
           <h3 className={styles.emptyTitle}>No upcoming events</h3>
           <p className={styles.emptyText}>Check back soon for workshops, webinars, and hackathons.</p>
         </div>
@@ -78,18 +84,21 @@ export function EventsPage() {
             <div key={e.id} className={styles.postCard}>
               <div className={styles.postHeader}>
                 <div>
-                  <h3 className={styles.postTitle}>{getTypeIcon(e.eventType)} {e.title}</h3>
+                  <h3 className={styles.postTitle} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <i className={getTypeIcon(e.eventType)} style={{ color: '#1c2d81' }} />
+                    <span>{e.title}</span>
+                  </h3>
                   <span className={styles.postMeta}>{e.eventType} · {e.isOnline ? 'Online' : 'Offline'}</span>
                 </div>
                 <span className={styles.tagBadge}>{e.status}</span>
               </div>
               {e.description && <p className={styles.postContent}>{e.description}</p>}
               <div className={styles.postMeta}>
-                <span>📅 {new Date(e.eventDate).toLocaleDateString()}</span>
-                {e.speakerName && <span>🎤 {e.speakerName}</span>}
-                <span>👥 {e.registeredCount}{e.capacity ? `/${e.capacity}` : ''}</span>
-                {e.coinReward > 0 && <span>💰 {e.coinReward}</span>}
-                {e.xpReward > 0 && <span>⚡ {e.xpReward} XP</span>}
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><i className="bx bx-calendar" /> {new Date(e.eventDate).toLocaleDateString()}</span>
+                {e.speakerName && <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><i className="bx bx-microphone" /> {e.speakerName}</span>}
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><i className="bx bx-group" /> {e.registeredCount}{e.capacity ? `/${e.capacity}` : ''}</span>
+                {e.coinReward > 0 && <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><i className="bx bx-coin-stack" /> {e.coinReward} coins</span>}
+                {e.xpReward > 0 && <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><i className="bx bx-bolt" /> {e.xpReward} XP</span>}
               </div>
               {e.status === 'PUBLISHED' && (
                 <button className={styles.followBtn} onClick={() => handleRegister(e.id)}>Register</button>

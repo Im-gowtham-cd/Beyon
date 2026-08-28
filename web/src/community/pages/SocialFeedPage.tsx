@@ -65,8 +65,14 @@ export function SocialFeedPage() {
             {post.title && <div className={styles.postTitle}>{post.title}</div>}
             <div className={styles.postContent}>{post.content}</div>
             <div className={styles.postActions}>
-              <button className={styles.actionBtn} onClick={() => handleLike(post.id)}>♡ {post.likeCount}</button>
-              <button className={styles.actionBtn} onClick={() => loadComments(post.id)}>💬 {post.commentCount}</button>
+              <button className={styles.actionBtn} onClick={() => handleLike(post.id)} style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                <i className="bx bx-heart" />
+                <span>{post.likeCount}</span>
+              </button>
+              <button className={styles.actionBtn} onClick={() => loadComments(post.id)} style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                <i className="bx bx-message-rounded" />
+                <span>{post.commentCount}</span>
+              </button>
             </div>
             {expandedPost === post.id && (
               <div className={styles.commentsSection}>

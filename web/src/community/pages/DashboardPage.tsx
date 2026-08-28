@@ -129,7 +129,7 @@ export function DashboardPage() {
                 <div className={styles.discussionTitle}>{d.title}</div>
                 <div className={styles.discussionMeta}>
                   {d.replyCount} replies
-                  {d.solved && <span className={styles.solvedBadge}>✓ Solved</span>}
+                  {d.solved && <span className={styles.solvedBadge} style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><i className="bx bx-check" /> Solved</span>}
                 </div>
               </div>
             ))}
@@ -144,7 +144,11 @@ export function DashboardPage() {
             {data.recentPosts.map(p => (
               <div className={styles.postHighlight} key={p.id}>
                 <div className={styles.postHighlightContent}>{p.content}</div>
-                <div className={styles.postHighlightMeta}>♡ {p.likeCount} · 💬 {p.commentCount}</div>
+                <div className={styles.postHighlightMeta} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><i className="bx bx-heart" /> {p.likeCount}</span>
+                  <span>·</span>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><i className="bx bx-message-rounded" /> {p.commentCount}</span>
+                </div>
               </div>
             ))}
           </div>

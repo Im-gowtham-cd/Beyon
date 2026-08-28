@@ -72,7 +72,13 @@ export function AdaptiveLearningPage() {
                 styles.stepLocked
               }`}>
                 <div className={styles.stepIcon}>
-                  {step.state === 'COMPLETED' ? '✅' : step.state === 'IN_PROGRESS' ? '📖' : '🔒'}
+                  {step.state === 'COMPLETED' ? (
+                    <i className="bx bx-check-circle" style={{ color: '#10b981', fontSize: '1.2rem' }} />
+                  ) : step.state === 'IN_PROGRESS' ? (
+                    <i className="bx bx-book-open" style={{ color: '#1c2d81', fontSize: '1.2rem' }} />
+                  ) : (
+                    <i className="bx bx-lock" style={{ color: '#94a3b8', fontSize: '1.2rem' }} />
+                  )}
                 </div>
                 <div className={styles.stepInfo}>
                   <div className={styles.stepName}>{step.skillName}</div>

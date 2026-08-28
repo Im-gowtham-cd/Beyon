@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { OnboardingLayout } from '../../components/OnboardingLayout';
 import { OnboardingProgress } from '../../components/OnboardingProgress';
@@ -90,7 +90,10 @@ export function StudentOnboarding() {
 
       {error && (
         <div style={{ padding: '14px 18px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '8px', color: '#b91c1c', marginBottom: '20px', fontSize: '0.86rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <span>⚠️ {error}</span>
+          <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <i className="bx bx-info-circle" style={{ fontSize: '1.1rem' }} />
+            {error}
+          </span>
           <button
             type="button"
             onClick={() => setError('')}
@@ -225,7 +228,7 @@ export function StudentOnboarding() {
           </FormSection>
 
           <FormSection
-            title="Placement & Campus Recruitment"
+            title="Placement &amp; Campus Recruitment"
             subtitle="Indicate your willingness for on-campus and enterprise placement drives."
           >
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px' }}>
@@ -318,7 +321,7 @@ export function StudentOnboarding() {
 
           {/* Certifications */}
           <FormSection
-            title="Certifications & Accreditations"
+            title="Certifications &amp; Accreditations"
             subtitle="Add industry certifications (AWS, Google Cloud, Microsoft, Cisco, etc.)."
           >
             {form.certifications.map((cert, i) => (
@@ -375,7 +378,7 @@ export function StudentOnboarding() {
                 fontWeight: 700,
               }}
             >
-              + Add Certification
+              <i className="bx bx-plus" /> Add Certification
             </button>
           </FormSection>
 
@@ -438,13 +441,13 @@ export function StudentOnboarding() {
                 fontWeight: 700,
               }}
             >
-              + Add Project
+              <i className="bx bx-plus" /> Add Project
             </button>
           </FormSection>
 
           {/* Links */}
           <FormSection
-            title="Online Profiles & Repositories"
+            title="Online Profiles &amp; Repositories"
             subtitle="Add links to GitHub, LinkedIn, Portfolio, and competitive coding handles."
           >
             {form.links.map((link, i) => (
@@ -513,7 +516,7 @@ export function StudentOnboarding() {
                 marginTop: '6px',
               }}
             >
-              + Add Link
+              <i className="bx bx-plus" /> Add Link
             </button>
           </FormSection>
         </>
@@ -522,17 +525,19 @@ export function StudentOnboarding() {
       {/* Step 4: Review & Confirmation */}
       {step === 4 && (
         <FormSection
-          title="5. Review & Confirm Profile"
+          title="5. Review &amp; Confirm Profile"
           subtitle="Please verify all your details before activating your verified scholar account."
         >
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
             {/* Card 1: Personal */}
-            <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '16px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                <span style={{ fontWeight: 800, color: '#1c2d81', fontSize: '0.84rem', textTransform: 'uppercase' }}>👤 Personal</span>
+            <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '18px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                <span style={{ fontWeight: 800, color: '#1c2d81', fontSize: '0.84rem', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <i className="bx bx-user" style={{ fontSize: '1rem' }} /> Personal
+                </span>
                 <button type="button" onClick={() => setStep(0)} style={{ background: 'none', border: 'none', color: '#1c2d81', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer', textDecoration: 'underline' }}>Edit</button>
               </div>
-              <div style={{ fontSize: '0.82rem', color: '#475569', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              <div style={{ fontSize: '0.84rem', color: '#475569', display: 'flex', flexDirection: 'column', gap: '6px' }}>
                 <div><strong>Phone:</strong> {form.phone || '—'}</div>
                 <div><strong>Location:</strong> {[form.city, form.state, form.country].filter(Boolean).join(', ') || '—'}</div>
                 <div><strong>Gender:</strong> {form.gender || '—'}</div>
@@ -540,26 +545,30 @@ export function StudentOnboarding() {
             </div>
 
             {/* Card 2: Academic */}
-            <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '16px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                <span style={{ fontWeight: 800, color: '#1c2d81', fontSize: '0.84rem', textTransform: 'uppercase' }}>🎓 Academic</span>
+            <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '18px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                <span style={{ fontWeight: 800, color: '#1c2d81', fontSize: '0.84rem', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <i className="bx bx-graduation" style={{ fontSize: '1rem' }} /> Academic
+                </span>
                 <button type="button" onClick={() => setStep(1)} style={{ background: 'none', border: 'none', color: '#1c2d81', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer', textDecoration: 'underline' }}>Edit</button>
               </div>
-              <div style={{ fontSize: '0.82rem', color: '#475569', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              <div style={{ fontSize: '0.84rem', color: '#475569', display: 'flex', flexDirection: 'column', gap: '6px' }}>
                 <div><strong>College:</strong> {form.institution || '—'}</div>
                 <div><strong>Department:</strong> {form.department || '—'}</div>
-                <div><strong>Degree & Year:</strong> {form.degree} ({form.academicYear})</div>
+                <div><strong>Degree &amp; Year:</strong> {form.degree} ({form.academicYear})</div>
                 <div><strong>CGPA:</strong> {form.cgpa ? `${form.cgpa} / 10.0` : '—'}</div>
               </div>
             </div>
 
             {/* Card 3: Career */}
-            <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '16px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                <span style={{ fontWeight: 800, color: '#1c2d81', fontSize: '0.84rem', textTransform: 'uppercase' }}>💼 Career Goals</span>
+            <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '18px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                <span style={{ fontWeight: 800, color: '#1c2d81', fontSize: '0.84rem', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <i className="bx bx-briefcase-alt-2" style={{ fontSize: '1rem' }} /> Career Goals
+                </span>
                 <button type="button" onClick={() => setStep(2)} style={{ background: 'none', border: 'none', color: '#1c2d81', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer', textDecoration: 'underline' }}>Edit</button>
               </div>
-              <div style={{ fontSize: '0.82rem', color: '#475569', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              <div style={{ fontSize: '0.84rem', color: '#475569', display: 'flex', flexDirection: 'column', gap: '6px' }}>
                 <div><strong>Roles:</strong> {form.preferredJobRoles.join(', ') || 'Any'}</div>
                 <div><strong>Work Mode:</strong> {form.preferredWorkType?.replace('_', ' ') || 'Any'}</div>
                 <div><strong>Placement Status:</strong> {form.placementPreference === 'PLACEMENT_WILLING' ? 'Actively Seeking' : 'Not Seeking'}</div>
@@ -567,12 +576,14 @@ export function StudentOnboarding() {
             </div>
 
             {/* Card 4: Skills & Portfolio */}
-            <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '16px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                <span style={{ fontWeight: 800, color: '#1c2d81', fontSize: '0.84rem', textTransform: 'uppercase' }}>⚡ Skills & Portfolio</span>
+            <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '18px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                <span style={{ fontWeight: 800, color: '#1c2d81', fontSize: '0.84rem', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <i className="bx bx-code-alt" style={{ fontSize: '1rem' }} /> Skills &amp; Portfolio
+                </span>
                 <button type="button" onClick={() => setStep(3)} style={{ background: 'none', border: 'none', color: '#1c2d81', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer', textDecoration: 'underline' }}>Edit</button>
               </div>
-              <div style={{ fontSize: '0.82rem', color: '#475569', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              <div style={{ fontSize: '0.84rem', color: '#475569', display: 'flex', flexDirection: 'column', gap: '6px' }}>
                 <div><strong>Skills:</strong> {form.skills.map(s => s.skillName).join(', ') || 'None listed'}</div>
                 <div><strong>Projects:</strong> {form.projects.length} added</div>
                 <div><strong>Certifications:</strong> {form.certifications.length} added</div>
@@ -586,7 +597,7 @@ export function StudentOnboarding() {
       <StepNavigation
         onBack={step > 0 ? () => setStep(step - 1) : undefined}
         onNext={step < 4 ? () => setStep(step + 1) : handleSubmit}
-        nextLabel={step === 4 ? '🚀 Complete & Activate Profile' : 'Continue →'}
+        nextLabel={step === 4 ? 'Complete & Activate Profile' : 'Continue'}
         loading={loading}
         loadingLabel="Creating Profile..."
       />

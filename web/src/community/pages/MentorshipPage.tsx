@@ -76,7 +76,7 @@ export function MentorshipPage() {
       {tab === 'mentors' && (
         mentors.length === 0 ? (
           <div className={styles.emptyState}>
-            <div className={styles.emptyIcon}>🧑‍🏫</div>
+            <div className={styles.emptyIcon}><i className="bx bx-user-voice" style={{ fontSize: '2.5rem', color: '#1c2d81' }} /></div>
             <h3 className={styles.emptyTitle}>No mentors available</h3>
             <p className={styles.emptyText}>Mentors will appear here once they join the platform.</p>
           </div>
@@ -93,8 +93,8 @@ export function MentorshipPage() {
                 </div>
                 {m.bio && <p className={styles.postContent}>{m.bio}</p>}
                 <div className={styles.postMeta}>
-                  <span>⭐ {m.rating}</span>
-                  <span>📚 {m.totalSessions} sessions</span>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><i className="bx bx-star" style={{ color: '#f59e0b' }} /> {m.rating}</span>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><i className="bx bx-book-open" /> {m.totalSessions} sessions</span>
                   <span>{m.availability}</span>
                 </div>
               </div>
@@ -106,7 +106,7 @@ export function MentorshipPage() {
       {tab === 'my-requests' && (
         myRequests.length === 0 ? (
           <div className={styles.emptyState}>
-            <div className={styles.emptyIcon}>📩</div>
+            <div className={styles.emptyIcon}><i className="bx bx-envelope" style={{ fontSize: '2.5rem', color: '#94a3b8' }} /></div>
             <h3 className={styles.emptyTitle}>No mentorship requests</h3>
             <p className={styles.emptyText}>Find a mentor and send a request to get started.</p>
           </div>

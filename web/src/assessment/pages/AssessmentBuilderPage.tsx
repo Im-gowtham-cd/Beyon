@@ -91,15 +91,15 @@ export function AssessmentBuilderPage() {
               </div>
               {a.description && <p className={styles.cardDesc}>{a.description}</p>}
               <div className={styles.cardMeta}>
-                <span>⏱️ {a.durationMinutes}min</span>
-                <span>📝 {a.totalQuestions} questions</span>
-                <span>🎯 {a.passingScore}% to pass</span>
-                <span>🪙 {a.coinCost} coins</span>
-                {a.adaptiveEnabled && <span>🧠 Adaptive</span>}
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><i className="bx bx-time" /> {a.durationMinutes}min</span>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><i className="bx bx-file-blank" /> {a.totalQuestions} questions</span>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><i className="bx bx-target-lock" /> {a.passingScore}% to pass</span>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><i className="bx bx-coin-stack" /> {a.coinCost} coins</span>
+                {a.adaptiveEnabled && <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><i className="bx bx-brain" /> Adaptive</span>}
               </div>
               <div className={styles.cardActions}>
                 {a.status === 'DRAFT' && <button className={styles.primaryBtn} onClick={() => publish(a.id)}>Publish</button>}
-                {a.status === 'PUBLISHED' && <span className={styles.publishedLabel}>✓ Published</span>}
+                {a.status === 'PUBLISHED' && <span className={styles.publishedLabel} style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><i className="bx bx-check" /> Published</span>}
               </div>
             </div>
           ))}

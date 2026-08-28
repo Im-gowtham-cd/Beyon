@@ -1,4 +1,4 @@
-import { useState, useEffect, type FormEvent } from 'react';
+﻿import { useState, useEffect, type FormEvent } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import styles from './CreateQuestionPage.module.css';
 
@@ -148,16 +148,18 @@ export function CreateQuestionPage() {
           <Link to="/practice" className={styles.backLink}>
             <i className="bx bx-arrow-back" /> Back to Practice Arena
           </Link>
-          <h1 className={styles.pageTitle}>Create Question & Seed Database</h1>
+          <h1 className={styles.pageTitle}>Create Question &amp; Seed Database</h1>
           <p className={styles.pageSubtitle}>
-            Add real computer science, algorithms, database, or networking questions. All entries are immediately saved to the database.
+            Add technical computer science, database, or algorithmic questions directly to the platform database.
           </p>
         </div>
       </div>
 
       {createdQuestionId ? (
         <div className={styles.successCard}>
-          <div className={styles.successIcon}>✓</div>
+          <div className={styles.successIcon}>
+            <i className="bx bx-check" />
+          </div>
           <h2 className={styles.successTitle}>Question Saved to Database Successfully!</h2>
           <p className={styles.successDesc}>
             Your question is now published in the Question Bank and live in the Practice Arena.
@@ -168,7 +170,7 @@ export function CreateQuestionPage() {
               className={styles.btnPrimary}
               onClick={() => navigate(`/practice/${createdQuestionId}`)}
             >
-              <i className="bx bx-play" /> Test & Solve Now
+              <i className="bx bx-play-circle" /> Test &amp; Solve Now
             </button>
             <button
               type="button"
@@ -186,7 +188,7 @@ export function CreateQuestionPage() {
                 ]);
               }}
             >
-              + Create Another Question
+              <i className="bx bx-plus" /> Create Another Question
             </button>
             <Link to="/practice" className={styles.btnOutline}>
               Go to Practice Arena
@@ -279,7 +281,7 @@ export function CreateQuestionPage() {
             <div className={styles.card}>
               <div className={styles.cardHeaderWithAction}>
                 <div>
-                  <h3 className={styles.cardTitle}>2. Answer Choices & Correct Key</h3>
+                  <h3 className={styles.cardTitle}>2. Answer Choices &amp; Correct Key</h3>
                   <p className={styles.cardSubtitle}>
                     Enter option choices and select the radio button for the correct answer.
                   </p>
@@ -315,7 +317,12 @@ export function CreateQuestionPage() {
                       onChange={e => handleOptionChange(idx, e.target.value)}
                       required
                     />
-                    {opt.isCorrect && <span className={styles.correctTag}>✓ Correct Key</span>}
+                    {opt.isCorrect && (
+                      <span className={styles.correctTag}>
+                        <i className="bx bx-check" style={{ marginRight: '3px' }} />
+                        Correct Key
+                      </span>
+                    )}
                     {options.length > 2 && (
                       <button
                         type="button"
@@ -367,7 +374,7 @@ export function CreateQuestionPage() {
 
           {/* Solution & Explanation */}
           <div className={styles.card}>
-            <h3 className={styles.cardTitle}>3. Explanation & Solution Rationale</h3>
+            <h3 className={styles.cardTitle}>3. Explanation &amp; Solution Rationale</h3>
             <p className={styles.cardSubtitle}>
               Help students understand why the answer is correct with detailed rationale.
             </p>
@@ -389,7 +396,8 @@ export function CreateQuestionPage() {
               className={styles.btnPrimary}
               disabled={loading}
             >
-              {loading ? 'Saving to Database...' : '💾 Save Question to Database'}
+              <i className="bx bx-save" />
+              <span>{loading ? 'Saving to Database...' : 'Save Question to Database'}</span>
             </button>
             <button
               type="button"
