@@ -24,6 +24,11 @@ public class DiscussionController {
         return ResponseEntity.ok(discussionService.createThread(userId, UUID.fromString(body.get("categoryId")), body.get("title"), body.get("content")));
     }
 
+    @GetMapping
+    public ResponseEntity<?> getAllThreads(@RequestParam(required = false) UUID categoryId) {
+        return ResponseEntity.ok(discussionService.getThreads(categoryId));
+    }
+
     @GetMapping("/threads")
     public ResponseEntity<?> getThreads(@RequestParam(required = false) UUID categoryId) {
         return ResponseEntity.ok(discussionService.getThreads(categoryId));

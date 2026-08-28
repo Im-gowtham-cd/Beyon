@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, Link } from 'react-router-dom';
 import { useAuth } from '../auth/context/AuthContext';
 import styles from './StudentSidebar.module.css';
 
@@ -17,7 +17,7 @@ export function StudentSidebar({ mobileOpen = false, onCloseMobile }: StudentSid
   useEffect(() => {
     async function fetchStats() {
       try {
-        const token = localStorage.getItem('beyon_access_token');
+        const token = localStorage.getItem('beyon_token') || localStorage.getItem('beyon_access_token');
         if (!token) return;
         const res = await fetch('/api/v1/practice/stats', {
           headers: { Authorization: `Bearer ${token}` }
@@ -46,18 +46,18 @@ export function StudentSidebar({ mobileOpen = false, onCloseMobile }: StudentSid
       ],
     },
     {
-      title: 'Practice & Test',
+      title: 'Practice & Tests',
       items: [
         { to: '/practice', icon: 'bx bx-code-block', label: 'Practice Arena', badge: '300+ Qs', badgeType: 'primary' },
         { to: '/daily-challenge', icon: 'bx bx-target-lock', label: 'Daily Challenge', badge: '+50 🪙', badgeType: 'gold' },
-        { to: '/assessment', icon: 'bx bx-shield-quarter', label: 'Proctored Assessments' },
+        { to: '/assessment', icon: 'bx bx-shield-quarter', label: 'Proctored Assessments', badge: '16 Tests', badgeType: 'primary' },
         { to: '/weekly-tests', icon: 'bx bx-timer', label: 'Benchmark Tests' },
       ],
     },
     {
       title: 'Career & Drives',
       items: [
-        { to: '/opportunities', icon: 'bx bx-briefcase-alt-2', label: 'Opportunities & Drives', badge: '35 Jobs', badgeType: 'primary' },
+        { to: '/opportunities', icon: 'bx bx-briefcase-alt-2', label: 'Opportunities & Drives', badge: '35 Open', badgeType: 'primary' },
         { to: '/my-applications', icon: 'bx bx-file', label: 'My Applications' },
         { to: '/placement', icon: 'bx bx-line-chart', label: 'Placement Intel' },
       ],
@@ -66,8 +66,8 @@ export function StudentSidebar({ mobileOpen = false, onCloseMobile }: StudentSid
       title: 'Progress & Social',
       items: [
         { to: '/leaderboard', icon: 'bx bx-trophy', label: 'Leaderboard' },
-        { to: '/stats', icon: 'bx bx-bar-chart-alt-2', label: 'Practice Analytics' },
-        { to: '/achievements', icon: 'bx bx-medal', label: 'Achievements & Badges' },
+        { to: '/stats', icon: 'bx bx-bar-chart-alt-2', label: 'Analytics & Stats' },
+        { to: '/achievements', icon: 'bx bx-medal', label: 'Achievements' },
         { to: '/notifications', icon: 'bx bx-bell', label: 'Notifications' },
       ],
     },
@@ -87,6 +87,21 @@ export function StudentSidebar({ mobileOpen = false, onCloseMobile }: StudentSid
       <aside
         className={`${styles.sidebar} ${collapsed ? styles.sidebarCollapsed : ''} ${mobileOpen ? styles.sidebarOpenMobile : ''}`}
       >
+        {/* Brand Header */}
+        <div className={styles.brandHeader}>
+          <Link to="/student/home" className={styles.brandLink}>
+            <div className={styles.brandLogo}>
+              <span>B</span>
+            </div>
+            {!collapsed && (
+              <div className={styles.brandInfo}>
+                <span className={styles.brandName}>BEYON</span>
+                <span className={styles.brandSub}>Candidate Portal</span>
+              </div>
+            )}
+          </Link>
+        </div>
+
         <div className={styles.sidebarScroll}>
           {/* User Mini Card */}
           <div className={`${styles.userCard} ${collapsed ? styles.userCardCollapsed : ''}`}>
@@ -143,7 +158,7 @@ export function StudentSidebar({ mobileOpen = false, onCloseMobile }: StudentSid
           ))}
         </div>
 
-        {/* Desktop Toggle Footer */}
+        {/* Sidebar Footer */}
         <div className={styles.sidebarFooter}>
           <button
             type="button"

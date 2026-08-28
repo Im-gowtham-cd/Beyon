@@ -31,7 +31,7 @@ public class Notification {
     @Column(columnDefinition = "varchar(36)")
     private UUID referenceId;
 
-    @Column(nullable = false)
+    @Column(name = "is_read", nullable = false)
     private boolean read = false;
 
     @Column(nullable = false, length = 20)

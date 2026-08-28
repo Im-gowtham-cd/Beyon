@@ -65,12 +65,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = (token: string, user: UserInfo) => {
     localStorage.setItem(TOKEN_KEY, token);
+    localStorage.setItem('beyon_access_token', token);
     setState({ user, token, loading: false, authenticated: true });
     setProfileStatus(user.profileStatus || 'INCOMPLETE');
   };
 
   const logout = async () => {
     localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem('beyon_access_token');
     setState({ user: null, token: null, loading: false, authenticated: false });
     setProfileStatus('INCOMPLETE');
   };

@@ -13,7 +13,7 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
     url += `?${searchParams.toString()}`;
   }
 
-  const token = localStorage.getItem('beyon_token');
+  const token = localStorage.getItem('beyon_token') || localStorage.getItem('beyon_access_token');
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     ...fetchOptions.headers as Record<string, string>,
