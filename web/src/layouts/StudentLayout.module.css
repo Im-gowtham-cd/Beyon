@@ -32,17 +32,19 @@
 }
 
 .topUtilityBar {
-  background: #ffffff;
-  border-bottom: 1px solid var(--color-border-light, #e2e8f0);
   height: 56px;
   min-height: 56px;
-  padding: 0 24px;
+  background: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+  padding: 0 32px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   position: sticky;
   top: 0;
   z-index: 50;
+  width: 100%;
+  box-sizing: border-box;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
 }
 
@@ -59,20 +61,22 @@
   background: #eff6ff;
   border: 1px solid #bfdbfe;
   padding: 4px 10px;
-  border-radius: 6px;
+  border-radius: 0px;
   letter-spacing: 0.02em;
+  white-space: nowrap;
 }
 
 .utilityRight {
   display: flex;
   align-items: center;
   gap: 10px;
+  margin-left: auto;
 }
 
 .utilityBtn {
   width: 36px;
   height: 36px;
-  border-radius: 6px;
+  border-radius: 0px;
   border: 1px solid #e2e8f0;
   background: #ffffff;
   color: #475569;

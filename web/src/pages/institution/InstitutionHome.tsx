@@ -94,7 +94,7 @@ export function InstitutionHome() {
       cgpa: '9.22',
       score: '93%',
       status: 'VERIFIED',
-      placement: 'Offered (24 LPA CTC)',
+      placement: 'Offered (28.5 LPA CTC)',
     },
   ];
 
@@ -108,7 +108,7 @@ export function InstitutionHome() {
 
   const activeDrives = [
     { company: 'Enterprise Cloud Technologies', role: 'Full Stack Engineer', pkg: '18 LPA', applicants: 42 },
-    { company: 'NVIDIA GPU Acceleration Lab', role: 'CUDA Systems Engineer', pkg: '28 LPA', applicants: 28 },
+    { company: 'NVIDIA GPU Acceleration Lab', role: 'CUDA Systems Engineer', pkg: '28.5 LPA', applicants: 28 },
     { company: 'Amazon Web Services', role: 'Cloud Platform Architect', pkg: '22 LPA', applicants: 64 },
   ];
 
@@ -240,7 +240,8 @@ export function InstitutionHome() {
         <div className={styles.mainColumn}>
           <div className={styles.sectionHeader}>
             <h2 className={styles.sectionTitle}>
-              <Users size={18} style={{ color: '#1c2d81' }} /> Student Cohort Verification Stream
+              <Users size={18} style={{ color: '#1c2d81' }} />
+              <span>Student Cohort Verification Stream</span>
             </h2>
             <Link
               to="/institution/students"
@@ -270,7 +271,7 @@ export function InstitutionHome() {
                     <td>
                       <div className={styles.studentName}>{s.name}</div>
                     </td>
-                    <td>{s.dept}</td>
+                    <td style={{ fontWeight: 400 }}>{s.dept}</td>
                     <td><strong>{s.cgpa}</strong></td>
                     <td>
                       <span style={{ color: '#15803d', fontWeight: 600 }}>{s.score}</span>
@@ -305,7 +306,9 @@ export function InstitutionHome() {
                 <div key={idx} className={styles.deptItem}>
                   <div>
                     <div className={styles.deptName}>{d.name}</div>
-                    <div style={{ fontSize: '0.7rem', color: '#64748b' }}>{d.students} Students &middot; Avg {d.avgCgpa}</div>
+                    <div style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 400 }}>
+                      {d.students} Students &middot; Avg {d.avgCgpa}
+                    </div>
                   </div>
                   <span className={styles.deptMeta}>{d.placed}</span>
                 </div>
@@ -321,9 +324,27 @@ export function InstitutionHome() {
             </div>
             <div className={styles.driveList}>
               {activeDrives.map((drv, idx) => (
-                <div key={idx} style={{ padding: '8px 10px', background: '#f8fafc', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                <div
+                  key={idx}
+                  style={{
+                    padding: '10px 12px',
+                    background: '#f8fafc',
+                    border: '1px solid #e2e8f0',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '3px',
+                  }}
+                >
                   <div style={{ fontSize: '0.82rem', fontWeight: 700, color: '#0f172a' }}>{drv.company}</div>
-                  <div style={{ fontSize: '0.72rem', color: '#64748b', display: 'flex', justifyContent: 'space-between' }}>
+                  <div
+                    style={{
+                      fontSize: '0.72rem',
+                      color: '#64748b',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      fontWeight: 400,
+                    }}
+                  >
                     <span>{drv.role} ({drv.pkg})</span>
                     <span style={{ color: '#1c2d81', fontWeight: 600 }}>{drv.applicants} Applicants</span>
                   </div>
@@ -332,7 +353,16 @@ export function InstitutionHome() {
             </div>
             <Link
               to="/institution/drives"
-              style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '0.78rem', color: '#1c2d81', fontWeight: 600, marginTop: '4px', textDecoration: 'none' }}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px',
+                fontSize: '0.78rem',
+                color: '#1c2d81',
+                fontWeight: 600,
+                marginTop: '4px',
+                textDecoration: 'none',
+              }}
             >
               <span>Manage Campus Slots</span>
               <ArrowRight size={13} />

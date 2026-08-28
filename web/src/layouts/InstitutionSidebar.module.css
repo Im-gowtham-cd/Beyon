@@ -1,6 +1,6 @@
 ﻿.sidebar {
-  width: 270px;
-  min-width: 270px;
+  width: 280px;
+  min-width: 280px;
   height: 100vh;
   position: sticky;
   top: 0;
@@ -24,7 +24,7 @@
   padding: 16px 18px;
   display: flex;
   align-items: center;
-  justifyContent: space-between;
+  justify-content: space-between;
   border-bottom: 1px solid #f1f5f9;
   min-height: 64px;
 }
@@ -43,7 +43,7 @@
   background: linear-gradient(135deg, #1c2d81 0%, #253cac 100%);
   display: flex;
   align-items: center;
-  justifyContent: center;
+  justify-content: center;
   color: #fed601;
   font-family: var(--font-heading, Montserrat);
   font-weight: 900;
@@ -164,6 +164,7 @@
   text-transform: uppercase;
   letter-spacing: 0.08em;
   padding: 4px 10px;
+  white-space: nowrap;
 }
 
 .navItem {
@@ -178,6 +179,7 @@
   border-radius: 0px;
   transition: all 0.15s ease;
   position: relative;
+  white-space: nowrap;
 }
 
 .navItem:hover {
@@ -192,12 +194,23 @@
   border-left: 3px solid #1c2d81;
 }
 
+.navLabel {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .badge {
   margin-left: auto;
   font-size: 0.68rem;
   font-weight: 700;
-  padding: 2px 6px;
+  padding: 2px 7px;
   border-radius: 0px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  line-height: 1.2;
 }
 
 .badgePrimary {
@@ -229,16 +242,17 @@
   font-size: 0.72rem;
   color: #334155;
   font-weight: 600;
+  white-space: nowrap;
 }
 
 @media (max-width: 900px) {
   .sidebar {
     position: fixed;
     top: 0;
-    left: -280px;
+    left: -290px;
     z-index: 1000;
   }
   .sidebarMobileOpen {
-    transform: translateX(280px);
+    transform: translateX(290px);
   }
 }

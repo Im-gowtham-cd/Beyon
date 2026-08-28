@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import {
   Search,
   CheckCircle2,
@@ -93,10 +93,12 @@ export function InstitutionStudentsPage() {
   const [searchQuery, setSearchQuery] = useState('');
 
   const verifyStudent = (id: string) => {
-    setStudents(prev => prev.map(s => s.id === id ? { ...s, status: 'VERIFIED' } : s));
+    setStudents((prev) =>
+      prev.map((s) => (s.id === id ? { ...s, status: 'VERIFIED' } : s))
+    );
   };
 
-  const filteredStudents = students.filter(s => {
+  const filteredStudents = students.filter((s) => {
     const matchesSearch =
       !searchQuery ||
       s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -108,7 +110,7 @@ export function InstitutionStudentsPage() {
     return matchesSearch && matchesDept && matchesStatus;
   });
 
-  const verifiedCount = students.filter(s => s.status === 'VERIFIED').length;
+  const verifiedCount = students.filter((s) => s.status === 'VERIFIED').length;
 
   return (
     <div className={styles.page}>
@@ -136,13 +138,13 @@ export function InstitutionStudentsPage() {
         <div className={styles.statCard}>
           <span className={styles.statLabel}>Pending Academic Review</span>
           <span className={styles.statValue} style={{ color: '#d97706' }}>
-            {students.filter(s => s.status === 'PENDING').length} Students
+            {students.filter((s) => s.status === 'PENDING').length} Students
           </span>
         </div>
         <div className={styles.statCard}>
           <span className={styles.statLabel}>Placement Ready</span>
           <span className={styles.statValue} style={{ color: '#0284c7' }}>
-            {students.filter(s => s.placementReady).length} Eligible
+            {students.filter((s) => s.placementReady).length} Eligible
           </span>
         </div>
       </div>
@@ -151,21 +153,30 @@ export function InstitutionStudentsPage() {
       <div className={styles.filterRow}>
         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
           <div style={{ position: 'relative' }}>
-            <Search size={15} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+            <Search
+              size={15}
+              style={{
+                position: 'absolute',
+                left: '12px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                color: '#94a3b8',
+              }}
+            />
             <input
               type="text"
               className={styles.searchInput}
               style={{ paddingLeft: '34px', minWidth: '240px' }}
               placeholder="Search by student name, roll number..."
               value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
+              onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
 
           <select
             className={styles.searchInput}
             value={deptFilter}
-            onChange={e => setDeptFilter(e.target.value)}
+            onChange={(e) => setDeptFilter(e.target.value)}
           >
             <option value="ALL">All Departments</option>
             <option value="Computer Science & Engg.">Computer Science</option>
@@ -178,7 +189,7 @@ export function InstitutionStudentsPage() {
           <select
             className={styles.searchInput}
             value={statusFilter}
-            onChange={e => setStatusFilter(e.target.value)}
+            onChange={(e) => setStatusFilter(e.target.value)}
           >
             <option value="ALL">All Statuses</option>
             <option value="VERIFIED">Verified Only</option>
@@ -203,34 +214,40 @@ export function InstitutionStudentsPage() {
             </tr>
           </thead>
           <tbody>
-            {filteredStudents.map(s => (
+            {filteredStudents.map((s) => (
               <tr key={s.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
                 <td style={{ padding: '12px 16px' }}><code>{s.rollNo}</code></td>
                 <td style={{ padding: '12px 16px', fontWeight: 700, color: '#0f172a' }}>{s.name}</td>
-                <td style={{ padding: '12px 16px', color: '#475569' }}>{s.dept}</td>
+                <td style={{ padding: '12px 16px', color: '#475569', fontWeight: 400 }}>{s.dept}</td>
                 <td style={{ padding: '12px 16px', fontWeight: 800 }}>{s.cgpa}</td>
                 <td style={{ padding: '12px 16px', color: '#15803d', fontWeight: 600 }}>{s.benchmarkScore}%</td>
                 <td style={{ padding: '12px 16px' }}>
-                  <span style={{
-                    fontSize: '0.72rem',
-                    fontWeight: 700,
-                    padding: '2px 8px',
-                    borderRadius: '0px',
-                    background: s.status === 'VERIFIED' ? '#dcfce7' : '#fef3c7',
-                    color: s.status === 'VERIFIED' ? '#15803d' : '#b45309',
-                  }}>
+                  <span
+                    style={{
+                      fontSize: '0.72rem',
+                      fontWeight: 600,
+                      padding: '2px 8px',
+                      borderRadius: '0px',
+                      background: s.status === 'VERIFIED' ? '#dcfce7' : '#fef3c7',
+                      color: s.status === 'VERIFIED' ? '#15803d' : '#b45309',
+                      border: `1px solid ${s.status === 'VERIFIED' ? '#bbf7d0' : '#fde68a'}`,
+                    }}
+                  >
                     {s.status}
                   </span>
                 </td>
                 <td style={{ padding: '12px 16px' }}>
-                  <span style={{
-                    fontSize: '0.72rem',
-                    fontWeight: 700,
-                    padding: '2px 8px',
-                    borderRadius: '0px',
-                    background: s.placementReady ? '#eff6ff' : '#f1f5f9',
-                    color: s.placementReady ? '#1d4ed8' : '#64748b',
-                  }}>
+                  <span
+                    style={{
+                      fontSize: '0.72rem',
+                      fontWeight: 600,
+                      padding: '2px 8px',
+                      borderRadius: '0px',
+                      background: s.placementReady ? '#eff6ff' : '#f1f5f9',
+                      color: s.placementReady ? '#1d4ed8' : '#64748b',
+                      border: `1px solid ${s.placementReady ? '#bfdbfe' : '#e2e8f0'}`,
+                    }}
+                  >
                     {s.placementReady ? 'Authorized' : 'Hold'}
                   </span>
                 </td>
@@ -238,12 +255,13 @@ export function InstitutionStudentsPage() {
                   {s.status === 'PENDING' ? (
                     <button
                       style={{
-                        padding: '5px 10px',
+                        padding: '5px 12px',
                         background: '#1c2d81',
                         color: '#ffffff',
-                        border: 'none',
+                        border: '1px solid #1c2d81',
                         fontSize: '0.75rem',
                         fontWeight: 600,
+                        borderRadius: '0px',
                         cursor: 'pointer',
                         display: 'inline-flex',
                         alignItems: 'center',
@@ -251,11 +269,22 @@ export function InstitutionStudentsPage() {
                       }}
                       onClick={() => verifyStudent(s.id)}
                     >
-                      <Check size={13} /> Verify
+                      <Check size={13} />
+                      <span>Verify</span>
                     </button>
                   ) : (
-                    <span style={{ fontSize: '0.76rem', color: '#15803d', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
-                      <CheckCircle2 size={14} /> Approved
+                    <span
+                      style={{
+                        fontSize: '0.76rem',
+                        color: '#15803d',
+                        fontWeight: 600,
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                      }}
+                    >
+                      <CheckCircle2 size={14} />
+                      <span>Approved</span>
                     </span>
                   )}
                 </td>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import {
   Search,
   CheckCircle2,
@@ -68,11 +68,13 @@ export function InstitutionPlacementsPage() {
 
   const [searchQuery, setSearchQuery] = useState('');
 
-  const filtered = records.filter(r =>
-    !searchQuery ||
-    r.studentName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    r.companyName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    r.dept.toLowerCase().includes(searchQuery.toLowerCase())
+  const filtered = records.filter(
+    (r) =>
+      !searchQuery ||
+      r.studentName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      r.companyName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      r.dept.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      r.roleTitle.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
@@ -84,7 +86,10 @@ export function InstitutionPlacementsPage() {
             Verified institutional repository of employment offers, CTC packages, and recruitment partner audits
           </p>
         </div>
-        <button className={styles.btnSecondary} onClick={() => alert('Exporting NAAC/NIRF Compliant Placement Ledger PDF...')}>
+        <button
+          className={styles.btnSecondary}
+          onClick={() => alert('Exporting NAAC/NIRF Compliant Placement Ledger PDF...')}
+        >
           <Download size={15} />
           <span>Export Accreditation Ledger</span>
         </button>
@@ -94,33 +99,50 @@ export function InstitutionPlacementsPage() {
       <div className={styles.statsRow}>
         <div className={styles.statCard}>
           <span className={styles.statLabel}>Total Verified Offers</span>
-          <span className={styles.statValue} style={{ color: '#15803d' }}>182 Placed</span>
+          <span className={styles.statValue} style={{ color: '#15803d' }}>
+            182 Placed
+          </span>
         </div>
         <div className={styles.statCard}>
           <span className={styles.statLabel}>Highest CTC Package</span>
-          <span className={styles.statValue} style={{ color: '#1c2d81' }}>28.5 LPA</span>
+          <span className={styles.statValue} style={{ color: '#1c2d81' }}>
+            28.5 LPA
+          </span>
         </div>
         <div className={styles.statCard}>
           <span className={styles.statLabel}>Average Salary Package</span>
-          <span className={styles.statValue} style={{ color: '#0284c7' }}>18.2 LPA</span>
+          <span className={styles.statValue} style={{ color: '#0284c7' }}>
+            18.2 LPA
+          </span>
         </div>
         <div className={styles.statCard}>
           <span className={styles.statLabel}>Tier 1 Corporate Offers</span>
-          <span className={styles.statValue} style={{ color: '#7c3aed' }}>78.4%</span>
+          <span className={styles.statValue} style={{ color: '#7c3aed' }}>
+            78.4%
+          </span>
         </div>
       </div>
 
       {/* Search */}
       <div className={styles.filterRow}>
         <div style={{ position: 'relative' }}>
-          <Search size={15} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+          <Search
+            size={15}
+            style={{
+              position: 'absolute',
+              left: '12px',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              color: '#94a3b8',
+            }}
+          />
           <input
             type="text"
             className={styles.searchInput}
             style={{ paddingLeft: '34px', minWidth: '280px' }}
             placeholder="Search placed candidate, company, role..."
             value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
+            onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
       </div>
@@ -141,18 +163,32 @@ export function InstitutionPlacementsPage() {
             </tr>
           </thead>
           <tbody>
-            {filtered.map(r => (
+            {filtered.map((r) => (
               <tr key={r.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
                 <td style={{ padding: '12px 16px' }}><code>{r.rollNo}</code></td>
                 <td style={{ padding: '12px 16px', fontWeight: 700, color: '#0f172a' }}>{r.studentName}</td>
-                <td style={{ padding: '12px 16px', color: '#475569' }}>{r.dept}</td>
+                <td style={{ padding: '12px 16px', color: '#475569', fontWeight: 400 }}>{r.dept}</td>
                 <td style={{ padding: '12px 16px', fontWeight: 600, color: '#1c2d81' }}>{r.companyName}</td>
-                <td style={{ padding: '12px 16px' }}>{r.roleTitle}</td>
+                <td style={{ padding: '12px 16px', color: '#334155', fontWeight: 400 }}>{r.roleTitle}</td>
                 <td style={{ padding: '12px 16px', fontWeight: 800, color: '#15803d' }}>{r.packageLpa} LPA</td>
-                <td style={{ padding: '12px 16px', color: '#64748b' }}>{r.offerDate}</td>
+                <td style={{ padding: '12px 16px', color: '#64748b', fontWeight: 400 }}>{r.offerDate}</td>
                 <td style={{ padding: '12px 16px' }}>
-                  <span style={{ fontSize: '0.72rem', fontWeight: 700, padding: '2px 8px', background: '#dcfce7', color: '#15803d', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
-                    <CheckCircle2 size={12} /> Verified Offer
+                  <span
+                    style={{
+                      fontSize: '0.72rem',
+                      fontWeight: 600,
+                      padding: '2px 8px',
+                      borderRadius: '0px',
+                      background: '#dcfce7',
+                      color: '#15803d',
+                      border: '1px solid #bbf7d0',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                    }}
+                  >
+                    <CheckCircle2 size={12} />
+                    <span>Verified Offer</span>
                   </span>
                 </td>
               </tr>

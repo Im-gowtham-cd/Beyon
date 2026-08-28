@@ -19,7 +19,7 @@
   display: flex;
   flex-direction: column;
   background: #f8fafc;
-  width: calc(100% - 270px);
+  width: calc(100% - 280px);
 }
 
 .mainContentCollapsed {
@@ -34,10 +34,18 @@
   padding: 0 clamp(16px, 3vw, 32px);
   display: flex;
   align-items: center;
-  justifyContent: space-between;
+  justify-content: space-between;
   position: sticky;
   top: 0;
   z-index: 50;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.utilityLeft {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
 .portalTag {
@@ -49,19 +57,21 @@
   color: #1c2d81;
   background: #eff6ff;
   border: 1px solid #bfdbfe;
-  padding: 4px 10px;
+  padding: 5px 12px;
   border-radius: 0px;
   letter-spacing: 0.02em;
+  white-space: nowrap;
 }
 
 .utilityRight {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
+  margin-left: auto;
 }
 
 .utilityBtn {
-  background: transparent;
+  background: #ffffff;
   border: 1px solid #e2e8f0;
   color: #475569;
   width: 36px;
@@ -76,7 +86,7 @@
 }
 
 .utilityBtn:hover {
-  background: #f1f5f9;
+  background: #f8fafc;
   color: #1c2d81;
   border-color: #cbd5e1;
 }
@@ -105,6 +115,7 @@
   border-radius: 0px;
   cursor: pointer;
   transition: all 0.15s ease;
+  white-space: nowrap;
 }
 
 .logoutBtn:hover {
@@ -127,7 +138,7 @@
   border-bottom: 1px solid #e2e8f0;
   padding: 0 16px;
   align-items: center;
-  justifyContent: space-between;
+  justify-content: space-between;
   position: sticky;
   top: 0;
   z-index: 150;

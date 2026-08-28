@@ -1,4 +1,4 @@
-﻿.sidebar {
+.sidebar {
   width: 270px;
   min-width: 270px;
   background: #ffffff;
@@ -257,6 +257,9 @@
   border-radius: 0px;
   text-transform: uppercase;
   letter-spacing: 0.04em;
+  white-space: nowrap;
+  flex-shrink: 0;
+  line-height: 1.2;
 }
 
 .badge_success {

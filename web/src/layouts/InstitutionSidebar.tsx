@@ -37,16 +37,16 @@ export function InstitutionSidebar({
       title: 'Campus Command',
       items: [
         { to: '/institution/home', icon: LayoutDashboard, label: 'Executive Dashboard' },
-        { to: '/institution/analytics', icon: LineChart, label: 'Institutional Analytics & NIRF' },
-        { to: '/institution/drives', icon: Briefcase, label: 'Campus Placement Drives', badge: '18 Active', badgeType: 'primary' },
+        { to: '/institution/analytics', icon: LineChart, label: 'Institutional Analytics' },
+        { to: '/institution/drives', icon: Briefcase, label: 'Placement Drives', badge: '18 Active', badgeType: 'primary' },
       ],
     },
     {
       title: 'Student Cohorts & Verification',
       items: [
-        { to: '/institution/students', icon: Users, label: 'Student Cohort Roster', badge: `${enrolledCount} Enrolled`, badgeType: 'gold' },
+        { to: '/institution/students', icon: Users, label: 'Student Cohort Roster', badge: `${enrolledCount}`, badgeType: 'gold' },
         { to: '/institution/placements', icon: Award, label: 'Placement Records & Offers' },
-        { to: '/institution/curriculum', icon: BookOpen, label: 'Skill Matrix & Curriculum' },
+        { to: '/institution/curriculum', icon: BookOpen, label: 'Skill Matrix & Tracks' },
       ],
     },
     {
@@ -129,7 +129,7 @@ export function InstitutionSidebar({
                   <Icon size={18} style={{ flexShrink: 0 }} />
                   {!collapsed && (
                     <>
-                      <span>{item.label}</span>
+                      <span className={styles.navLabel}>{item.label}</span>
                       {item.badge && (
                         <span
                           className={`${styles.badge} ${
@@ -152,7 +152,7 @@ export function InstitutionSidebar({
       {!collapsed && (
         <div className={styles.footer}>
           <div className={styles.accreditationPill}>
-            <GraduationCap size={16} style={{ color: '#1c2d81' }} />
+            <GraduationCap size={16} style={{ color: '#1c2d81', flexShrink: 0 }} />
             <div>
               <div style={{ fontSize: '0.74rem', fontWeight: 800, color: '#0f172a' }}>NIRF Rank #53</div>
               <div style={{ fontSize: '0.66rem', color: '#64748b' }}>Verified Academic Partner</div>

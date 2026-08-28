@@ -1,5 +1,11 @@
 import { useState } from 'react';
-import { Check, Search } from 'lucide-react';
+import {
+  Search,
+  Calendar,
+  Building2,
+  Check,
+  Users,
+} from 'lucide-react';
 import styles from '../../assessment/pages/AssessmentBuilderPage.module.css';
 
 interface InstitutionalDrive {
@@ -72,17 +78,27 @@ export function InstitutionDrivesPage() {
     },
   ]);
 
+  const [tab, setTab] = useState<'ALL' | 'APPROVED' | 'PENDING_APPROVAL'>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
 
   const approveDrive = (id: string) => {
-    setDrives(prev => prev.map(d => d.id === id ? { ...d, status: 'APPROVED', interviewDate: 'Sept 28, 2026' } : d));
+    setDrives((prev) =>
+      prev.map((d) =>
+        d.id === id ? { ...d, status: 'APPROVED', interviewDate: 'Sept 28, 2026' } : d
+      )
+    );
   };
 
-  const filteredDrives = drives.filter(d =>
-    !searchQuery ||
-    d.companyName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    d.role.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredDrives = drives.filter((d) => {
+    const matchesSearch =
+      !searchQuery ||
+      d.companyName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      d.role.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      d.eligibleDepts.toLowerCase().includes(searchQuery.toLowerCase());
+
+    const matchesTab = tab === 'ALL' || d.status === tab;
+    return matchesSearch && matchesTab;
+  });
 
   return (
     <div className={styles.page}>
@@ -99,82 +115,199 @@ export function InstitutionDrivesPage() {
       <div className={styles.statsRow}>
         <div className={styles.statCard}>
           <span className={styles.statLabel}>Active Campus Drives</span>
-          <span className={styles.statValue} style={{ color: '#1c2d81' }}>{drives.length} Drives</span>
+          <span className={styles.statValue} style={{ color: '#1c2d81' }}>
+            {drives.length} Drives
+          </span>
         </div>
         <div className={styles.statCard}>
           <span className={styles.statLabel}>Highest CTC Package</span>
-          <span className={styles.statValue} style={{ color: '#15803d' }}>28.5 LPA</span>
+          <span className={styles.statValue} style={{ color: '#15803d' }}>
+            28.5 LPA
+          </span>
         </div>
         <div className={styles.statCard}>
           <span className={styles.statLabel}>Average CTC Offer</span>
-          <span className={styles.statValue} style={{ color: '#0284c7' }}>18.2 LPA</span>
+          <span className={styles.statValue} style={{ color: '#0284c7' }}>
+            18.2 LPA
+          </span>
         </div>
         <div className={styles.statCard}>
           <span className={styles.statLabel}>Total Campus Applicants</span>
-          <span className={styles.statValue} style={{ color: '#d97706' }}>182 Placed/Applied</span>
+          <span className={styles.statValue} style={{ color: '#d97706' }}>
+            182 Registered
+          </span>
         </div>
       </div>
 
       {/* Filter / Search Row */}
       <div className={styles.filterRow}>
+        <div className={styles.filters}>
+          {(['ALL', 'APPROVED', 'PENDING_APPROVAL'] as const).map((t) => (
+            <button
+              key={t}
+              className={`${styles.filterChip} ${tab === t ? styles.filterActive : ''}`}
+              onClick={() => setTab(t)}
+            >
+              {t === 'ALL'
+                ? `All Drives (${drives.length})`
+                : t === 'APPROVED'
+                ? 'Approved Slots'
+                : 'Pending Approval'}
+            </button>
+          ))}
+        </div>
+
         <div style={{ position: 'relative' }}>
-          <Search size={15} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+          <Search
+            size={15}
+            style={{
+              position: 'absolute',
+              left: '12px',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              color: '#94a3b8',
+            }}
+          />
           <input
             type="text"
             className={styles.searchInput}
             style={{ paddingLeft: '34px', minWidth: '280px' }}
             placeholder="Search drive by company, role..."
             value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
+            onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
       </div>
 
       {/* Drives Grid */}
       <div className={styles.grid}>
-        {filteredDrives.map(d => (
+        {filteredDrives.map((d) => (
           <div key={d.id} className={styles.card}>
             <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'flex-start',
+                  marginBottom: '8px',
+                  gap: '12px',
+                }}
+              >
                 <div>
-                  <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#1c2d81', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                    {d.companyName}
+                  <span
+                    style={{
+                      fontSize: '0.72rem',
+                      fontWeight: 600,
+                      color: '#1c2d81',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.04em',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                    }}
+                  >
+                    <Building2 size={12} />
+                    <span>{d.companyName}</span>
                   </span>
-                  <h3 style={{ margin: '4px 0 0', fontSize: '1.08rem', fontWeight: 800, color: '#0f172a' }}>
+                  <h3
+                    style={{
+                      margin: '4px 0 0',
+                      fontSize: '1.08rem',
+                      fontWeight: 800,
+                      color: '#0f172a',
+                      lineHeight: 1.35,
+                    }}
+                  >
                     {d.role}
                   </h3>
                 </div>
-                <span style={{
-                  fontSize: '0.72rem',
-                  fontWeight: 700,
-                  padding: '3px 8px',
-                  background: d.status === 'APPROVED' ? '#dcfce7' : '#fef3c7',
-                  color: d.status === 'APPROVED' ? '#15803d' : '#b45309',
-                }}>
+                <span
+                  style={{
+                    fontSize: '0.72rem',
+                    fontWeight: 600,
+                    padding: '3px 8px',
+                    borderRadius: '0px',
+                    whiteSpace: 'nowrap',
+                    flexShrink: 0,
+                    background: d.status === 'APPROVED' ? '#dcfce7' : '#fef3c7',
+                    color: d.status === 'APPROVED' ? '#15803d' : '#b45309',
+                    border: `1px solid ${d.status === 'APPROVED' ? '#bbf7d0' : '#fde68a'}`,
+                  }}
+                >
                   {d.status.replace('_', ' ')}
                 </span>
               </div>
 
               <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', margin: '10px 0' }}>
-                <span style={{ fontSize: '0.76rem', fontWeight: 700, color: '#15803d', background: '#f0fdf4', border: '1px solid #bbf7d0', padding: '2px 8px' }}>
+                <span
+                  style={{
+                    fontSize: '0.76rem',
+                    fontWeight: 600,
+                    color: '#15803d',
+                    background: '#f0fdf4',
+                    border: '1px solid #bbf7d0',
+                    padding: '3px 8px',
+                    borderRadius: '0px',
+                  }}
+                >
                   {d.packageLpa} LPA CTC
                 </span>
-                <span style={{ fontSize: '0.76rem', fontWeight: 500, color: '#475569', background: '#f8fafc', border: '1px solid #e2e8f0', padding: '2px 8px' }}>
+                <span
+                  style={{
+                    fontSize: '0.76rem',
+                    fontWeight: 400,
+                    color: '#475569',
+                    background: '#f8fafc',
+                    border: '1px solid #e2e8f0',
+                    padding: '3px 8px',
+                    borderRadius: '0px',
+                  }}
+                >
                   Min {d.minCgpa} CGPA
                 </span>
-                <span style={{ fontSize: '0.76rem', fontWeight: 500, color: '#0284c7', background: '#f0f9ff', border: '1px solid #bae6fd', padding: '2px 8px' }}>
+                <span
+                  style={{
+                    fontSize: '0.76rem',
+                    fontWeight: 400,
+                    color: '#0284c7',
+                    background: '#f0f9ff',
+                    border: '1px solid #bae6fd',
+                    padding: '3px 8px',
+                    borderRadius: '0px',
+                  }}
+                >
                   Class of {d.eligibleBatch}
                 </span>
               </div>
 
-              <div style={{ fontSize: '0.76rem', color: '#64748b', marginTop: '6px' }}>
-                <strong>Eligible:</strong> {d.eligibleDepts}
+              <div style={{ fontSize: '0.76rem', color: '#64748b', marginTop: '6px', fontWeight: 400 }}>
+                <span style={{ fontWeight: 600, color: '#334155' }}>Eligible:</span> {d.eligibleDepts}
               </div>
             </div>
 
-            <div style={{ paddingTop: '12px', borderTop: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: '0.76rem', color: '#64748b' }}>
-                📅 {d.interviewDate}
+            <div
+              style={{
+                paddingTop: '12px',
+                borderTop: '1px solid #f1f5f9',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: '10px',
+              }}
+            >
+              <span
+                style={{
+                  fontSize: '0.76rem',
+                  color: '#64748b',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  fontWeight: 400,
+                }}
+              >
+                <Calendar size={13} style={{ color: '#1c2d81' }} />
+                <span>{d.interviewDate}</span>
               </span>
 
               {d.status === 'PENDING_APPROVAL' ? (
@@ -183,9 +316,10 @@ export function InstitutionDrivesPage() {
                     padding: '6px 14px',
                     background: '#1c2d81',
                     color: '#ffffff',
-                    border: 'none',
+                    border: '1px solid #1c2d81',
                     fontSize: '0.76rem',
-                    fontWeight: 700,
+                    fontWeight: 600,
+                    borderRadius: '0px',
                     cursor: 'pointer',
                     display: 'inline-flex',
                     alignItems: 'center',
@@ -193,11 +327,22 @@ export function InstitutionDrivesPage() {
                   }}
                   onClick={() => approveDrive(d.id)}
                 >
-                  <Check size={13} /> Approve Drive Slot
+                  <Check size={13} />
+                  <span>Approve Drive Slot</span>
                 </button>
               ) : (
-                <span style={{ fontSize: '0.76rem', fontWeight: 700, color: '#1c2d81' }}>
-                  {d.applicantCount} Candidates Registered
+                <span
+                  style={{
+                    fontSize: '0.76rem',
+                    fontWeight: 600,
+                    color: '#1c2d81',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                  }}
+                >
+                  <Users size={13} />
+                  <span>{d.applicantCount} Candidates Registered</span>
                 </span>
               )}
             </div>
