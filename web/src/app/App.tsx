@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { MainLayout } from '../layouts/MainLayout';
 import { HomePage } from '../pages/HomePage';
 import { NotFoundPage } from '../pages/NotFoundPage';
@@ -65,7 +65,6 @@ import { SkillGapAnalysisPage } from '../intelligence/pages/SkillGapAnalysisPage
 import { CareerAdvisorPage } from '../intelligence/pages/CareerAdvisorPage';
 import { AdaptiveLearningPage } from '../intelligence/pages/AdaptiveLearningPage';
 import { CareerIntelligenceDashboard } from '../intelligence/pages/CareerIntelligenceDashboard';
-import { DriveBuilderPage } from '../recruitment/pages/DriveBuilderPage';
 import { CandidateDiscoveryPage } from '../recruitment/pages/CandidateDiscoveryPage';
 import { PlacementDashboardPage } from '../recruitment/pages/PlacementDashboardPage';
 import { PlacementIntelligencePage } from '../recruitment/pages/PlacementIntelligencePage';
@@ -97,6 +96,7 @@ import { CompletionPage } from '../onboarding/pages/shared/CompletionPage';
 export function App() {
   return (
     <Routes>
+      {/* Public & Auth Routes */}
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/verify-email" element={<VerifyEmailPage />} />
@@ -105,18 +105,55 @@ export function App() {
       <Route path="/unauthorized" element={<UnauthorizedPage />} />
       <Route path="/403" element={<UnauthorizedPage />} />
 
+      {/* Authenticated Routes */}
       <Route element={<ProtectedRoute />}>
+        {/* Role Onboarding Pages */}
         <Route path="/onboarding/student" element={<StudentOnboarding />} />
         <Route path="/onboarding/institution" element={<InstitutionOnboarding />} />
         <Route path="/onboarding/company" element={<CompanyOnboarding />} />
         <Route path="/onboarding/complete" element={<CompletionPage />} />
 
+        {/* Global Settings & Status */}
         <Route path="/verification-pending" element={<VerificationPendingPage />} />
         <Route path="/account-suspended" element={<AccountSuspendedPage />} />
         <Route path="/settings" element={<SettingsPage />} />
-        <Route path="/settings/privacy" element={<PrivacySettingsPage />} />          <Route path="/settings/sessions" element={<SessionSettingsPage />} />
-          <Route path="/realtime-notifications" element={<RealtimeNotificationsPage />} />
+        <Route path="/settings/privacy" element={<PrivacySettingsPage />} />
+        <Route path="/settings/sessions" element={<SessionSettingsPage />} />
+        <Route path="/realtime-notifications" element={<RealtimeNotificationsPage />} />
 
+        {/* Enterprise Company & Recruiter Portal */}
+        <Route element={<RoleGuard allowedRoles={['COMPANY', 'ADMIN']} />}>
+          <Route element={<CompanyLayout />}>
+            <Route path="/company/home" element={<CompanyHome />} />
+            <Route path="/company" element={<Navigate to="/company/home" replace />} />
+            <Route path="/company/dashboard" element={<CompanyHome />} />
+            <Route path="/company/opportunities" element={<CompanyOpportunitiesPage />} />
+            <Route path="/company/opportunities/create" element={<CreateOpportunityPage />} />
+            <Route path="/company/drives" element={<CompanyOpportunitiesPage />} />
+            <Route path="/company/drives/create" element={<CreateOpportunityPage />} />
+            <Route path="/company/candidates" element={<CandidateDiscoveryPage />} />
+            <Route path="/company/pipeline" element={<PipelinePage />} />
+            <Route path="/company/recruitment/pipeline" element={<PipelinePage />} />
+            <Route path="/company/candidate-intelligence" element={<CandidateIntelligencePage />} />
+            <Route path="/company/assessments" element={<CompanyAssessmentsPage />} />
+            <Route path="/company/assessment-builder" element={<AssessmentBuilderPage />} />
+            <Route path="/company/interview-management" element={<InterviewManagementPage />} />
+            <Route path="/company/analytics" element={<CompanyAnalyticsPage />} />
+            <Route path="/company/profile" element={<CompanyProfilePage />} />
+            <Route path="/company/profile/edit" element={<CompanyProfilePage />} />
+            <Route path="/company/messages" element={<MessagingPage />} />
+            <Route path="/company/notifications" element={<NotificationsPage />} />
+          </Route>
+        </Route>
+
+        {/* Higher-Ed Institution Portal */}
+        <Route element={<RoleGuard allowedRoles={['INSTITUTION']} />}>
+          <Route path="/institution/home" element={<InstitutionHome />} />
+          <Route path="/institution/dashboard" element={<InstitutionDashboard />} />
+          <Route path="/institution/analytics" element={<InstitutionAnalyticsPage />} />
+        </Route>
+
+        {/* Student & Candidate Portal */}
         <Route element={<RoleGuard allowedRoles={['STUDENT']} />}>
           <Route element={<StudentLayout />}>
             <Route path="/student/home" element={<StudentHome />} />
@@ -138,15 +175,9 @@ export function App() {
             <Route path="/skill-profile" element={<SkillProfilePage />} />
             <Route path="/career-paths" element={<CareerPathsPage />} />
             <Route path="/collaboration" element={<CollaborationHubPage />} />
-            <Route path="/candidate-intelligence" element={<CandidateIntelligencePage />} />
-            <Route path="/interview-management" element={<InterviewManagementPage />} />
-            <Route path="/institution/analytics" element={<InstitutionAnalyticsPage />} />
-            <Route path="/company/analytics" element={<CompanyAnalyticsPage />} />
             <Route path="/recommendations" element={<RecommendationsPage />} />
             <Route path="/career-roadmap" element={<CareerRoadmapPage />} />
             <Route path="/entity-feed" element={<EntityFeedPage />} />
-            <Route path="/assessment-builder" element={<AssessmentBuilderPage />} />
-            <Route path="/recruitment/pipeline" element={<PipelinePage />} />
             <Route path="/feed" element={<SocialFeedPage />} />
             <Route path="/discussions" element={<DiscussionsPage />} />
             <Route path="/portfolio" element={<PortfolioPage />} />
@@ -174,33 +205,13 @@ export function App() {
             <Route path="/career-advisor" element={<CareerAdvisorPage />} />
             <Route path="/adaptive-learning" element={<AdaptiveLearningPage />} />
             <Route path="/career-intelligence" element={<CareerIntelligenceDashboard />} />
-            <Route path="/drives" element={<DriveBuilderPage />} />
-            <Route path="/candidates" element={<CandidateDiscoveryPage />} />
             <Route path="/placement" element={<PlacementDashboardPage />} />
             <Route path="/placement-intelligence" element={<PlacementIntelligencePage />} />
             <Route path="/professional-profile" element={<ProfessionalProfilePage />} />
           </Route>
         </Route>
-        <Route element={<RoleGuard allowedRoles={['INSTITUTION']} />}>
-          <Route path="/institution/home" element={<InstitutionHome />} />
-          <Route path="/institution/dashboard" element={<InstitutionDashboard />} />
-        </Route>
-        <Route element={<RoleGuard allowedRoles={['COMPANY', 'ADMIN']} />}>
-          <Route element={<CompanyLayout />}>
-            <Route path="/company/home" element={<CompanyHome />} />
-            <Route path="/company/opportunities" element={<CompanyOpportunitiesPage />} />
-            <Route path="/company/opportunities/create" element={<CreateOpportunityPage />} />
-            <Route path="/company/candidates" element={<CandidateDiscoveryPage />} />
-            <Route path="/company/pipeline" element={<PipelinePage />} />
-            <Route path="/company/candidate-intelligence" element={<CandidateIntelligencePage />} />
-            <Route path="/company/assessments" element={<CompanyAssessmentsPage />} />
-            <Route path="/company/assessment-builder" element={<AssessmentBuilderPage />} />
-            <Route path="/company/interview-management" element={<InterviewManagementPage />} />
-            <Route path="/company/analytics" element={<CompanyAnalyticsPage />} />
-            <Route path="/company/profile" element={<CompanyProfilePage />} />
-            <Route path="/company/messages" element={<MessagingPage />} />
-          </Route>
-        </Route>
+
+        {/* Platform Administrator Portal */}
         <Route element={<RoleGuard allowedRoles={['ADMIN']} />}>
           <Route path="/admin/home" element={<AdminHome />} />
           <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
@@ -209,10 +220,12 @@ export function App() {
         </Route>
       </Route>
 
+      {/* Public Credential Verification & Profiles */}
       <Route path="/verify/:certificateNumber" element={<CredentialVerificationPage />} />
       <Route path="/verify" element={<CredentialVerificationPage />} />
       <Route path="/student/u/:username" element={<PublicProfilePage />} />
 
+      {/* Landing and Catch-all */}
       <Route element={<MainLayout />}>
         <Route path="/" element={<HomePage />} />
         <Route path="*" element={<NotFoundPage />} />
