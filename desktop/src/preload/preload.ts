@@ -25,12 +25,20 @@ contextBridge.exposeInMainWorld('beyon', {
     onFocusChange: (callback: (hasFocus: boolean) => void) => {
       ipcRenderer.on('proctoring:focus-change', (_event, hasFocus) => callback(hasFocus));
     },
+    onMinimize: (callback: () => void) => {
+      ipcRenderer.on('proctoring:minimize', () => callback());
+    },
+    onRestore: (callback: () => void) => {
+      ipcRenderer.on('proctoring:restore', () => callback());
+    },
     onBeforeQuit: (callback: () => void) => {
       ipcRenderer.on('proctoring:before-quit', () => callback());
     },
     removeListeners: () => {
       ipcRenderer.removeAllListeners('proctoring:fullscreen-change');
       ipcRenderer.removeAllListeners('proctoring:focus-change');
+      ipcRenderer.removeAllListeners('proctoring:minimize');
+      ipcRenderer.removeAllListeners('proctoring:restore');
       ipcRenderer.removeAllListeners('proctoring:before-quit');
     },
   },

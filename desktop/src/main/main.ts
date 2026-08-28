@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, screen } from 'electron';
+import { app, BrowserWindow, ipcMain, screen, session } from 'electron';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import fs from 'node:fs';
@@ -39,21 +39,41 @@ ipcMain.handle('auth:set-token', (_event, token: string) => writeToken(token));
 ipcMain.handle('auth:clear-token', () => clearToken());
 
 ipcMain.handle('assessment:enter-fullscreen', async () => {
-  if (mainWindow && !mainWindow.isFullScreen()) {
-    mainWindow.setFullScreen(true);
-    mainWindow.setMenuBarVisibility(false);
+  if (mainWindow) {
+    // On Windows, setFullScreen can cause a minimize flash.
+    // Use maximize + focus instead for a stable lockdown experience.
+    if (process.platform === 'win32') {
+      mainWindow.maximize();
+      mainWindow.focus();
+      mainWindow.setMenuBarVisibility(false);
+    } else {
+      if (!mainWindow.isFullScreen()) {
+        mainWindow.setFullScreen(true);
+        mainWindow.setMenuBarVisibility(false);
+      }
+    }
   }
   return true;
 });
 
 ipcMain.handle('assessment:exit-fullscreen', async () => {
-  if (mainWindow && mainWindow.isFullScreen()) {
-    mainWindow.setFullScreen(false);
+  if (mainWindow) {
+    if (process.platform === 'win32') {
+      mainWindow.unmaximize();
+      mainWindow.setMenuBarVisibility(true);
+    } else {
+      if (mainWindow.isFullScreen()) {
+        mainWindow.setFullScreen(false);
+      }
+    }
   }
   return true;
 });
 
 ipcMain.handle('assessment:is-fullscreen', () => {
+  if (process.platform === 'win32') {
+    return mainWindow?.isMaximized() ?? false;
+  }
   return mainWindow?.isFullScreen() ?? false;
 });
 
@@ -62,7 +82,9 @@ ipcMain.handle('assessment:lock-window', () => {
   if (mainWindow) {
     mainWindow.setResizable(false);
     mainWindow.setMovable(false);
-    mainWindow.setAlwaysOnTop(true);
+    // Do NOT call setAlwaysOnTop(true) — on Windows it causes an immediate
+    // minimize/focus-steal flash. Window protection is via minimize auto-restore.
+    mainWindow.focus();
   }
   return true;
 });
@@ -72,7 +94,6 @@ ipcMain.handle('assessment:unlock-window', () => {
   if (mainWindow) {
     mainWindow.setResizable(true);
     mainWindow.setMovable(true);
-    mainWindow.setAlwaysOnTop(false);
   }
   return true;
 });
@@ -127,6 +148,35 @@ function createWindow() {
     },
   });
 
+  // ── Grant camera, microphone, and display permissions ──────────────────────
+  // Electron blocks getUserMedia by default; we must explicitly allow it.
+  mainWindow.webContents.session.setPermissionRequestHandler(
+    (_webContents, permission, callback) => {
+      const allowedPermissions = [
+        'media',           // camera + microphone via getUserMedia
+        'camera',          // explicit camera
+        'microphone',      // explicit microphone
+        'display-capture', // screen capture (proctoring)
+        'notifications',   // assessment notifications
+      ];
+      callback(allowedPermissions.includes(permission));
+    }
+  );
+
+  // Also allow permission checks (for permissionState / checkPermission calls)
+  mainWindow.webContents.session.setPermissionCheckHandler(
+    (_webContents, permission) => {
+      const allowedPermissions = [
+        'media',
+        'camera',
+        'microphone',
+        'display-capture',
+        'notifications',
+      ];
+      return allowedPermissions.includes(permission);
+    }
+  );
+
   if (process.env.VITE_DEV_SERVER_URL) {
     mainWindow.loadURL(process.env.VITE_DEV_SERVER_URL);
   } else {
@@ -159,9 +209,48 @@ function createWindow() {
   mainWindow.on('blur', () => {
     mainWindow?.webContents.send('proctoring:focus-change', false);
   });
+
+  // ── Minimize detection: notify renderer + auto-restore if window is locked ──
+  mainWindow.on('minimize', () => {
+    mainWindow?.webContents.send('proctoring:minimize');
+    if (isWindowLocked) {
+      // Restore the window immediately — candidate cannot minimize during exam
+      setTimeout(() => {
+        if (mainWindow && isWindowLocked) {
+          mainWindow.restore();
+          mainWindow.focus();
+          if (process.platform === 'win32') {
+            mainWindow.maximize();
+          }
+        }
+      }, 200);
+    }
+  });
+
+  mainWindow.on('restore', () => {
+    mainWindow?.webContents.send('proctoring:restore');
+  });
 }
 
-app.whenReady().then(createWindow);
+app.whenReady().then(() => {
+  // ── App-level default session permission handler ───────────────────────────
+  // Grants camera / microphone / display-capture before the window is created
+  // so that any early permission checks (Permissions API, getUserMedia) resolve.
+  session.defaultSession.setPermissionRequestHandler(
+    (_webContents, permission, callback) => {
+      const allowed = ['media', 'camera', 'microphone', 'display-capture', 'notifications'];
+      callback(allowed.includes(permission));
+    }
+  );
+  session.defaultSession.setPermissionCheckHandler(
+    (_webContents, permission) => {
+      const allowed = ['media', 'camera', 'microphone', 'display-capture', 'notifications'];
+      return allowed.includes(permission);
+    }
+  );
+
+  createWindow();
+});
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();
