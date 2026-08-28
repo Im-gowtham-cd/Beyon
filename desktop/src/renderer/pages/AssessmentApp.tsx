@@ -118,7 +118,9 @@ export function AssessmentApp() {
   const multiPersonStreakRef = useRef(0);
   const phoneStreakRef = useRef(0);
   const voiceStreakRef = useRef(0);
+  const noiseStreakRef = useRef(0);
   const proctorIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const handleSubmitRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     const loadSys = async () => {
@@ -355,7 +357,7 @@ export function AssessmentApp() {
           };
         }
 
-        // Setup Web Audio Analyser
+        // Setup Web Audio Analyser for Noise & Speech Detection
         try {
           const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
           if (AudioContextClass) {
@@ -363,25 +365,40 @@ export function AssessmentApp() {
             audioContextRef.current = audioCtx;
             const source = audioCtx.createMediaStreamSource(stream);
             const analyser = audioCtx.createAnalyser();
-            analyser.fftSize = 256;
+            analyser.fftSize = 512;
             source.connect(analyser);
-            const audioData = new Uint8Array(analyser.frequencyBinCount);
+            const timeData = new Uint8Array(analyser.fftSize);
+            const freqData = new Uint8Array(analyser.frequencyBinCount);
 
             (stream as any)._checkAudio = () => {
-              analyser.getByteFrequencyData(audioData);
-              let sum = 0;
-              for (let i = 0; i < audioData.length; i++) {
-                sum += audioData[i];
+              // 1. RMS Energy
+              analyser.getByteTimeDomainData(timeData);
+              let sumSquares = 0;
+              for (let i = 0; i < timeData.length; i++) {
+                const val = (timeData[i] - 128) / 128;
+                sumSquares += val * val;
               }
-              const avg = sum / audioData.length;
-              if (avg > 52) {
-                voiceStreakRef.current++;
-                if (voiceStreakRef.current === 3) {
-                  addMalpracticeAlert('SUSPICIOUS_AUDIO_DETECTED', 'Speech / conversation noise detected in test environment');
-                  setProctoringWarnings(prev => [...prev, 'Suspicious voice detected']);
+              const rms = Math.sqrt(sumSquares / timeData.length);
+
+              // 2. Vocal Frequencies (Bins 2..45 in 512 FFT)
+              analyser.getByteFrequencyData(freqData);
+              let voiceSum = 0;
+              for (let i = 2; i < 45; i++) {
+                voiceSum += freqData[i];
+              }
+              const voiceAvg = voiceSum / 43;
+
+              // High sensitivity noise/voice detection
+              if (rms > 0.035 || voiceAvg > 24) {
+                noiseStreakRef.current++;
+                if (noiseStreakRef.current === 1 || noiseStreakRef.current % 4 === 0) {
+                  setProctorStatus('WARNING');
+                  setProctorMessage('Noise / Voice Detected');
+                  addMalpracticeAlert('NOISE_DETECTED', `Noise / speech detected in exam room (${Math.round(rms * 100)}% acoustic energy). Please maintain silence.`);
+                  setProctoringWarnings(prev => [...prev, 'Acoustic noise / speech detected']);
                 }
               } else {
-                voiceStreakRef.current = 0;
+                noiseStreakRef.current = 0;
               }
             };
           }
@@ -397,7 +414,7 @@ export function AssessmentApp() {
           if (isTerminatingRef.current) return;
           if (!examVideoRef.current || examVideoRef.current.readyState < 2 || !ctx) return;
 
-          // 1. Audio check
+          // 1. Run Audio Check
           if ((stream as any)._checkAudio) {
             (stream as any)._checkAudio();
           }
@@ -410,7 +427,9 @@ export function AssessmentApp() {
           let centerSkinPixels = 0;
           let leftSkinPixels = 0;
           let rightSkinPixels = 0;
-          let bottomHighContrastPixels = 0;
+          let phoneDarkPixels = 0;
+          let phoneBrightPixels = 0;
+          let phoneEdgeTransitions = 0;
 
           for (let y = 0; y < 120; y++) {
             for (let x = 0; x < 160; x++) {
@@ -419,51 +438,66 @@ export function AssessmentApp() {
               const g = data[idx + 1];
               const b = data[idx + 2];
 
-              // Skin tone pixel model (RGB model for multiple skin tones)
-              const isSkin =
-                r > 55 && g > 38 && b > 20 &&
-                r > g && r > b &&
-                (r - g > 10) &&
-                (Math.max(r, g, b) - Math.min(r, g, b) > 15);
+              // Biometric YCbCr skin chrominance formula (rejects wooden walls, beige doors, yellow light)
+              const Y  =  0.299 * r + 0.587 * g + 0.114 * b;
+              const Cb = -0.1687 * r - 0.3313 * g + 0.5 * b + 128;
+              const Cr =  0.5 * r - 0.4187 * g - 0.0813 * b + 128;
 
-              if (isSkin) {
-                if (x >= 35 && x <= 125 && y >= 15 && y <= 95) {
+              const isHumanSkin =
+                Y >= 35 && Y <= 235 &&
+                Cb >= 75 && Cb <= 130 &&
+                Cr >= 130 && Cr <= 175 &&
+                r > g && r > b &&
+                (r - g > 8);
+
+              if (isHumanSkin) {
+                if (x >= 30 && x <= 130 && y >= 15 && y <= 95) {
                   centerSkinPixels++;
-                } else if (x < 35 && y >= 20 && y <= 100) {
+                } else if (x < 30 && y >= 20 && y <= 100) {
                   leftSkinPixels++;
-                } else if (x > 125 && y >= 20 && y <= 100) {
+                } else if (x > 130 && y >= 20 && y <= 100) {
                   rightSkinPixels++;
                 }
               }
 
-              // Object / phone edge detection in bottom area
-              if (y >= 80 && x >= 40 && x <= 120) {
-                const brightness = (r + g + b) / 3;
-                if (brightness < 25 || brightness > 235) {
-                  bottomHighContrastPixels++;
+              // Smartphone / Electronic device detection in lower center region
+              if (y >= 45 && y <= 115 && x >= 30 && x <= 130) {
+                const lum = (r + g + b) / 3;
+                if (lum < 22) phoneDarkPixels++;
+                else if (lum > 225) phoneBrightPixels++;
+
+                if (x < 129) {
+                  const rightIdx = (y * 160 + (x + 1)) * 4;
+                  const rightLum = (data[rightIdx] + data[rightIdx + 1] + data[rightIdx + 2]) / 3;
+                  if (Math.abs(lum - rightLum) > 50) {
+                    phoneEdgeTransitions++;
+                  }
                 }
               }
             }
           }
 
           // EVALUATION 1: Face Presence / Absence (Candidate left screen)
-          if (centerSkinPixels < 75) {
+          if (centerSkinPixels < 140) {
             absenceStreakRef.current++;
-            if (absenceStreakRef.current === 3) {
+            if (absenceStreakRef.current === 1) {
               setProctorStatus('WARNING');
               setProctorMessage('Face Not Detected');
-              addMalpracticeAlert('FACE_NOT_DETECTED', 'Face not detected in camera frame! Please face your screen.');
-              setProctoringWarnings(prev => [...prev, 'Face not visible']);
-            } else if (absenceStreakRef.current >= 9) { // ~7-8 seconds of continuous absence
+            } else if (absenceStreakRef.current === 2) {
+              setProctorStatus('WARNING');
+              setProctorMessage('Auto-terminating in 3s...');
+              addMalpracticeAlert('FACE_NOT_DETECTED', 'Face not detected in camera viewport! Auto-terminating in 3s if not returned.');
+              setProctoringWarnings(prev => [...prev, 'Candidate absent from screen']);
+            } else if (absenceStreakRef.current >= 5) { // ~3 seconds of continuous absence
               isTerminatingRef.current = true;
               setProctorStatus('CRITICAL');
-              setProctorMessage('AUTO-TERMINATED');
-              addMalpracticeAlert('CRITICAL_ABSENCE_TERMINATION', 'Assessment automatically terminated: Candidate absent from camera view for >8 seconds.');
-              handleSubmit();
+              setProctorMessage('AUTO-TERMINATED (ABSENT)');
+              addMalpracticeAlert('CRITICAL_ABSENCE_AUTO_TERMINATION', 'Assessment automatically terminated: Candidate left camera viewport during exam.');
+              if (handleSubmitRef.current) handleSubmitRef.current();
               return;
             }
           } else {
-            if (absenceStreakRef.current > 0 && absenceStreakRef.current < 9) {
+            if (absenceStreakRef.current > 0 && absenceStreakRef.current < 5) {
               setProctorStatus('CLEAR');
               setProctorMessage('Face Detected & Monitored');
             }
@@ -471,7 +505,7 @@ export function AssessmentApp() {
           }
 
           // EVALUATION 2: Multiple People
-          if (centerSkinPixels >= 75 && (leftSkinPixels > 220 || rightSkinPixels > 220)) {
+          if (centerSkinPixels >= 140 && (leftSkinPixels > 240 || rightSkinPixels > 240)) {
             multiPersonStreakRef.current++;
             if (multiPersonStreakRef.current === 2) {
               setProctorStatus('WARNING');
@@ -484,25 +518,26 @@ export function AssessmentApp() {
           }
 
           // EVALUATION 3: Phone / Unauthorized Device
-          if (bottomHighContrastPixels > 700) {
+          const isPhoneInFrame = (phoneDarkPixels > 240 || phoneBrightPixels > 240) && phoneEdgeTransitions > 75;
+          if (isPhoneInFrame) {
             phoneStreakRef.current++;
-            if (phoneStreakRef.current === 3) {
+            if (phoneStreakRef.current === 2) {
               setProctorStatus('WARNING');
-              setProctorMessage('Unauthorized Device Detected');
-              addMalpracticeAlert('MOBILE_PHONE_DETECTED', 'Unauthorized mobile phone / electronic device detected in camera frame');
+              setProctorMessage('Mobile Phone Detected');
+              addMalpracticeAlert('MOBILE_PHONE_DETECTED', 'Unauthorized mobile phone / smartphone detected in camera frame!');
               setProctoringWarnings(prev => [...prev, 'Mobile device detected']);
-            } else if (phoneStreakRef.current >= 6) {
+            } else if (phoneStreakRef.current >= 5) {
               isTerminatingRef.current = true;
               setProctorStatus('CRITICAL');
-              setProctorMessage('AUTO-TERMINATED');
+              setProctorMessage('AUTO-TERMINATED (DEVICE)');
               addMalpracticeAlert('DEVICE_MALPRACTICE_TERMINATION', 'Assessment automatically terminated: Unauthorized mobile phone usage detected.');
-              handleSubmit();
+              if (handleSubmitRef.current) handleSubmitRef.current();
               return;
             }
           } else {
             phoneStreakRef.current = 0;
           }
-        }, 800);
+        }, 600);
 
       } catch {
         setExamCameraReady(false);
@@ -690,6 +725,7 @@ export function AssessmentApp() {
   const handleSubmit = async () => {
     if (timerRef.current) clearInterval(timerRef.current);
     if (heartbeatRef.current) clearInterval(heartbeatRef.current);
+    if (proctorIntervalRef.current) clearInterval(proctorIntervalRef.current);
     // Keep application in fullscreen lockdown until candidate explicitly exits
     window.beyon?.assessment?.unlockWindow();
     setStep('submitting');
@@ -715,6 +751,7 @@ export function AssessmentApp() {
       setStep('results');
     }
   };
+  handleSubmitRef.current = handleSubmit;
 
   const handleDesktopAuth = async (e: React.FormEvent) => {
     e.preventDefault();
