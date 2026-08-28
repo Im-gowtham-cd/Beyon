@@ -108,6 +108,18 @@ export function AssessmentApp() {
   const settingsVideoRef = useRef<HTMLVideoElement | null>(null);
   const settingsStreamRef = useRef<MediaStream | null>(null);
 
+  // Real-Time Proctoring AI Engine state
+  const [proctorStatus, setProctorStatus] = useState<'CLEAR' | 'WARNING' | 'CRITICAL'>('CLEAR');
+  const [proctorMessage, setProctorMessage] = useState('Face Detected & Monitored');
+  const analysisCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const isTerminatingRef = useRef(false);
+  const absenceStreakRef = useRef(0);
+  const multiPersonStreakRef = useRef(0);
+  const phoneStreakRef = useRef(0);
+  const voiceStreakRef = useRef(0);
+  const proctorIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
   useEffect(() => {
     const loadSys = async () => {
       try {
@@ -191,6 +203,8 @@ export function AssessmentApp() {
       window.beyon?.proctoring?.removeListeners();
       if (timerRef.current) clearInterval(timerRef.current);
       if (heartbeatRef.current) clearInterval(heartbeatRef.current);
+      if (proctorIntervalRef.current) clearInterval(proctorIntervalRef.current);
+      if (audioContextRef.current) audioContextRef.current.close().catch(() => {});
     };
   }, [launchToken]);
 
@@ -245,17 +259,29 @@ export function AssessmentApp() {
 
   useEffect(() => {
     if (step !== 'exam') {
-      // Stop exam camera when leaving exam
+      // Stop exam camera and analyzer when leaving exam
+      if (proctorIntervalRef.current) {
+        clearInterval(proctorIntervalRef.current);
+        proctorIntervalRef.current = null;
+      }
+      if (audioContextRef.current) {
+        audioContextRef.current.close().catch(() => {});
+        audioContextRef.current = null;
+      }
       if (examCameraStreamRef.current) {
         examCameraStreamRef.current.getTracks().forEach(t => t.stop());
         examCameraStreamRef.current = null;
       }
+      isTerminatingRef.current = false;
+      absenceStreakRef.current = 0;
+      multiPersonStreakRef.current = 0;
+      phoneStreakRef.current = 0;
+      voiceStreakRef.current = 0;
       return;
     }
 
     const handleFullscreenChange = (isFullscreen: boolean) => {
       if (!isFullscreen) {
-        // Always alert — API call is optional (only if we have a session)
         addMalpracticeAlert('FULLSCREEN_EXIT', 'Fullscreen mode exited — this has been recorded');
         setProctoringWarnings(prev => [...prev, 'Fullscreen exited']);
         if (session?.sessionId) {
@@ -313,12 +339,12 @@ export function AssessmentApp() {
     window.beyon?.proctoring?.onMinimize(handleMinimize);
     window.beyon?.proctoring?.onBeforeQuit(handleBeforeQuit);
 
-    // Start exam camera feed
+    // ── Start exam camera feed + Real-Time AI Proctoring Engine ─────────────────
     const startExamCamera = async () => {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
-          video: { width: { ideal: 320 }, height: { ideal: 240 }, facingMode: 'user' },
-          audio: false,
+          video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: 'user' },
+          audio: true,
         });
         examCameraStreamRef.current = stream;
         if (examVideoRef.current) {
@@ -328,6 +354,156 @@ export function AssessmentApp() {
             setExamCameraReady(true);
           };
         }
+
+        // Setup Web Audio Analyser
+        try {
+          const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+          if (AudioContextClass) {
+            const audioCtx = new AudioContextClass();
+            audioContextRef.current = audioCtx;
+            const source = audioCtx.createMediaStreamSource(stream);
+            const analyser = audioCtx.createAnalyser();
+            analyser.fftSize = 256;
+            source.connect(analyser);
+            const audioData = new Uint8Array(analyser.frequencyBinCount);
+
+            (stream as any)._checkAudio = () => {
+              analyser.getByteFrequencyData(audioData);
+              let sum = 0;
+              for (let i = 0; i < audioData.length; i++) {
+                sum += audioData[i];
+              }
+              const avg = sum / audioData.length;
+              if (avg > 52) {
+                voiceStreakRef.current++;
+                if (voiceStreakRef.current === 3) {
+                  addMalpracticeAlert('SUSPICIOUS_AUDIO_DETECTED', 'Speech / conversation noise detected in test environment');
+                  setProctoringWarnings(prev => [...prev, 'Suspicious voice detected']);
+                }
+              } else {
+                voiceStreakRef.current = 0;
+              }
+            };
+          }
+        } catch {}
+
+        // Setup Computer Vision Frame Analysis Canvas
+        const canvas = analysisCanvasRef.current || document.createElement('canvas');
+        canvas.width = 160;
+        canvas.height = 120;
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+
+        proctorIntervalRef.current = setInterval(() => {
+          if (isTerminatingRef.current) return;
+          if (!examVideoRef.current || examVideoRef.current.readyState < 2 || !ctx) return;
+
+          // 1. Audio check
+          if ((stream as any)._checkAudio) {
+            (stream as any)._checkAudio();
+          }
+
+          // 2. Capture and analyze visual frame
+          ctx.drawImage(examVideoRef.current, 0, 0, 160, 120);
+          const frame = ctx.getImageData(0, 0, 160, 120);
+          const data = frame.data;
+
+          let centerSkinPixels = 0;
+          let leftSkinPixels = 0;
+          let rightSkinPixels = 0;
+          let bottomHighContrastPixels = 0;
+
+          for (let y = 0; y < 120; y++) {
+            for (let x = 0; x < 160; x++) {
+              const idx = (y * 160 + x) * 4;
+              const r = data[idx];
+              const g = data[idx + 1];
+              const b = data[idx + 2];
+
+              // Skin tone pixel model (RGB model for multiple skin tones)
+              const isSkin =
+                r > 55 && g > 38 && b > 20 &&
+                r > g && r > b &&
+                (r - g > 10) &&
+                (Math.max(r, g, b) - Math.min(r, g, b) > 15);
+
+              if (isSkin) {
+                if (x >= 35 && x <= 125 && y >= 15 && y <= 95) {
+                  centerSkinPixels++;
+                } else if (x < 35 && y >= 20 && y <= 100) {
+                  leftSkinPixels++;
+                } else if (x > 125 && y >= 20 && y <= 100) {
+                  rightSkinPixels++;
+                }
+              }
+
+              // Object / phone edge detection in bottom area
+              if (y >= 80 && x >= 40 && x <= 120) {
+                const brightness = (r + g + b) / 3;
+                if (brightness < 25 || brightness > 235) {
+                  bottomHighContrastPixels++;
+                }
+              }
+            }
+          }
+
+          // EVALUATION 1: Face Presence / Absence (Candidate left screen)
+          if (centerSkinPixels < 75) {
+            absenceStreakRef.current++;
+            if (absenceStreakRef.current === 3) {
+              setProctorStatus('WARNING');
+              setProctorMessage('Face Not Detected');
+              addMalpracticeAlert('FACE_NOT_DETECTED', 'Face not detected in camera frame! Please face your screen.');
+              setProctoringWarnings(prev => [...prev, 'Face not visible']);
+            } else if (absenceStreakRef.current >= 9) { // ~7-8 seconds of continuous absence
+              isTerminatingRef.current = true;
+              setProctorStatus('CRITICAL');
+              setProctorMessage('AUTO-TERMINATED');
+              addMalpracticeAlert('CRITICAL_ABSENCE_TERMINATION', 'Assessment automatically terminated: Candidate absent from camera view for >8 seconds.');
+              handleSubmit();
+              return;
+            }
+          } else {
+            if (absenceStreakRef.current > 0 && absenceStreakRef.current < 9) {
+              setProctorStatus('CLEAR');
+              setProctorMessage('Face Detected & Monitored');
+            }
+            absenceStreakRef.current = 0;
+          }
+
+          // EVALUATION 2: Multiple People
+          if (centerSkinPixels >= 75 && (leftSkinPixels > 220 || rightSkinPixels > 220)) {
+            multiPersonStreakRef.current++;
+            if (multiPersonStreakRef.current === 2) {
+              setProctorStatus('WARNING');
+              setProctorMessage('Multiple People in Frame');
+              addMalpracticeAlert('MULTIPLE_PEOPLE_DETECTED', 'Multiple people detected in proctoring camera frame');
+              setProctoringWarnings(prev => [...prev, 'Multiple persons detected']);
+            }
+          } else {
+            multiPersonStreakRef.current = 0;
+          }
+
+          // EVALUATION 3: Phone / Unauthorized Device
+          if (bottomHighContrastPixels > 700) {
+            phoneStreakRef.current++;
+            if (phoneStreakRef.current === 3) {
+              setProctorStatus('WARNING');
+              setProctorMessage('Unauthorized Device Detected');
+              addMalpracticeAlert('MOBILE_PHONE_DETECTED', 'Unauthorized mobile phone / electronic device detected in camera frame');
+              setProctoringWarnings(prev => [...prev, 'Mobile device detected']);
+            } else if (phoneStreakRef.current >= 6) {
+              isTerminatingRef.current = true;
+              setProctorStatus('CRITICAL');
+              setProctorMessage('AUTO-TERMINATED');
+              addMalpracticeAlert('DEVICE_MALPRACTICE_TERMINATION', 'Assessment automatically terminated: Unauthorized mobile phone usage detected.');
+              handleSubmit();
+              return;
+            }
+          } else {
+            phoneStreakRef.current = 0;
+          }
+        }, 800);
+
       } catch {
         setExamCameraReady(false);
       }
@@ -342,6 +518,14 @@ export function AssessmentApp() {
 
     return () => {
       clearTimeout(timer);
+      if (proctorIntervalRef.current) {
+        clearInterval(proctorIntervalRef.current);
+        proctorIntervalRef.current = null;
+      }
+      if (audioContextRef.current) {
+        audioContextRef.current.close().catch(() => {});
+        audioContextRef.current = null;
+      }
       window.beyon?.proctoring?.removeListeners();
       window.beyon?.assessment?.unlockWindow();
       if (examCameraStreamRef.current) {
@@ -882,16 +1066,33 @@ export function AssessmentApp() {
 
           {/* Left Sidebar — Question Palette + Camera */}
           <aside className={styles.paletteContainer}>
-            {/* Camera Panel */}
+            {/* Camera Panel with AI Detection HUD */}
             <div className={styles.examCameraPanel}>
               <div className={styles.examCameraHeader}>
                 <i className="bx bx-camera" style={{ fontSize: 14 }} />
-                <span>Live Proctoring</span>
-                {examCameraReady && (
-                  <span className={styles.liveIndicator}>
-                    <span className={styles.liveDot} /> LIVE
-                  </span>
-                )}
+                <span>AI Proctor</span>
+                <span
+                  style={{
+                    marginLeft: 'auto',
+                    fontSize: '0.68rem',
+                    fontWeight: 800,
+                    color: proctorStatus === 'CLEAR' ? '#15803d' : '#dc2626',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 4,
+                  }}
+                >
+                  <span
+                    style={{
+                      width: 6,
+                      height: 6,
+                      borderRadius: '50%',
+                      background: proctorStatus === 'CLEAR' ? '#22c55e' : '#ef4444',
+                      display: 'inline-block',
+                    }}
+                  />
+                  {proctorStatus === 'CLEAR' ? 'ACTIVE' : 'ALERT'}
+                </span>
               </div>
               <div className={styles.examCameraFeed}>
                 <video
@@ -911,6 +1112,32 @@ export function AssessmentApp() {
                   <div className={styles.examCameraPlaceholder}>
                     <i className="bx bx-camera-off" style={{ fontSize: 24, color: '#64748b' }} />
                     <span>Camera unavailable</span>
+                  </div>
+                )}
+                {/* Real-time AI HUD Overlay */}
+                {examCameraReady && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      bottom: 0,
+                      left: 0,
+                      right: 0,
+                      padding: '4px 8px',
+                      background: proctorStatus === 'CLEAR' ? 'rgba(15, 23, 42, 0.75)' : 'rgba(185, 28, 28, 0.88)',
+                      color: '#fff',
+                      fontSize: '0.68rem',
+                      fontWeight: 700,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      borderTop: `1px solid ${proctorStatus === 'CLEAR' ? 'rgba(255,255,255,0.1)' : '#ef4444'}`,
+                    }}
+                  >
+                    <span>
+                      <i className={`bx ${proctorStatus === 'CLEAR' ? 'bx-face' : 'bx-error'}`} style={{ marginRight: 4 }} />
+                      {proctorMessage}
+                    </span>
+                    <span style={{ fontSize: '0.64rem', opacity: 0.85 }}>AI Guard</span>
                   </div>
                 )}
               </div>
