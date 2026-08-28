@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
+﻿import { Routes, Route, Navigate } from 'react-router-dom';
 import { MainLayout } from '../layouts/MainLayout';
 import { HomePage } from '../pages/HomePage';
 import { NotFoundPage } from '../pages/NotFoundPage';
@@ -30,7 +30,6 @@ import { DailyChallengePage } from '../practice/pages/DailyChallengePage';
 import { StatsPage } from '../practice/pages/StatsPage';
 import { LeaderboardPage } from '../practice/pages/LeaderboardPage';
 import { OpportunitiesPage } from '../practice/pages/OpportunitiesPage';
-import { InstitutionDashboard } from '../institution/pages/InstitutionDashboard';
 import { NotificationsPage } from '../notification/pages/NotificationsPage';
 import { MyApplicationsPage } from '../recruitment/pages/MyApplicationsPage';
 import { AssessmentPage } from '../assessment/pages/AssessmentPage';
@@ -82,6 +81,11 @@ import { MessagingPage } from '../community/pages/MessagingPage';
 import { FeedbackPage } from '../community/pages/FeedbackPage';
 import { AdminFeedbackPage } from '../community/pages/AdminFeedbackPage';
 import { InstitutionHome } from '../pages/institution/InstitutionHome';
+import { InstitutionLayout } from '../layouts/InstitutionLayout';
+import { InstitutionStudentsPage } from '../pages/institution/InstitutionStudentsPage';
+import { InstitutionDrivesPage } from '../pages/institution/InstitutionDrivesPage';
+import { InstitutionPlacementsPage } from '../pages/institution/InstitutionPlacementsPage';
+import { InstitutionProfilePage } from '../pages/institution/InstitutionProfilePage';
 import { CompanyHome } from '../pages/company/CompanyHome';
 import { CompanyLayout } from '../layouts/CompanyLayout';
 import { CompanyOpportunitiesPage } from '../pages/company/CompanyOpportunitiesPage';
@@ -147,10 +151,21 @@ export function App() {
         </Route>
 
         {/* Higher-Ed Institution Portal */}
-        <Route element={<RoleGuard allowedRoles={['INSTITUTION']} />}>
-          <Route path="/institution/home" element={<InstitutionHome />} />
-          <Route path="/institution/dashboard" element={<InstitutionDashboard />} />
-          <Route path="/institution/analytics" element={<InstitutionAnalyticsPage />} />
+        <Route element={<RoleGuard allowedRoles={['INSTITUTION', 'ADMIN']} />}>
+          <Route element={<InstitutionLayout />}>
+            <Route path="/institution/home" element={<InstitutionHome />} />
+            <Route path="/institution" element={<Navigate to="/institution/home" replace />} />
+            <Route path="/institution/dashboard" element={<InstitutionHome />} />
+            <Route path="/institution/analytics" element={<InstitutionAnalyticsPage />} />
+            <Route path="/institution/drives" element={<InstitutionDrivesPage />} />
+            <Route path="/institution/students" element={<InstitutionStudentsPage />} />
+            <Route path="/institution/placements" element={<InstitutionPlacementsPage />} />
+            <Route path="/institution/curriculum" element={<SkillTaxonomyPage />} />
+            <Route path="/institution/profile" element={<InstitutionProfilePage />} />
+            <Route path="/institution/profile/edit" element={<InstitutionProfilePage />} />
+            <Route path="/institution/messages" element={<MessagingPage />} />
+            <Route path="/institution/notifications" element={<NotificationsPage />} />
+          </Route>
         </Route>
 
         {/* Student & Candidate Portal */}
