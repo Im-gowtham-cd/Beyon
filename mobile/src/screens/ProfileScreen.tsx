@@ -81,7 +81,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onOpenSettings }) 
       {/* Settings & Logout */}
       <View style={styles.btnRow}>
         <TouchableOpacity style={styles.settingsBtn} onPress={onOpenSettings}>
-          <Text style={styles.settingsBtnText}>⚙️ Backend &amp; Ngrok Settings</Text>
+          <Text style={styles.settingsBtnText}>⚙️ Backend Service Settings</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
           <Text style={styles.logoutBtnText}>🚪 Log Out</Text>

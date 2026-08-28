@@ -26,11 +26,11 @@ export const ApiSettingsScreen: React.FC<ApiSettingsScreenProps> = ({ onClose })
 
   const handleSave = () => {
     if (!urlInput.trim()) {
-      Alert.alert('Error', 'Please enter a valid Backend / Ngrok URL');
+      Alert.alert('Error', 'Please enter a valid Backend Service URL');
       return;
     }
     setApiBaseUrl(urlInput);
-    Alert.alert('Saved', `Backend URL updated to:\n${getApiBaseUrl()}`);
+    Alert.alert('Saved', `Backend Service URL updated to:\n${getApiBaseUrl()}`);
     onClose();
   };
 
@@ -43,8 +43,8 @@ export const ApiSettingsScreen: React.FC<ApiSettingsScreenProps> = ({ onClose })
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <View style={styles.header}>
         <View>
-          <Text style={styles.title}>Backend &amp; Ngrok Gateway</Text>
-          <Text style={styles.subtitle}>Configure mobile API connectivity to your backend services</Text>
+          <Text style={styles.title}>Backend Service Gateway</Text>
+          <Text style={styles.subtitle}>Configure mobile API connectivity to local or remote services</Text>
         </View>
         <TouchableOpacity style={styles.closeBtn} onPress={onClose}>
           <Text style={styles.closeText}>✕</Text>
@@ -66,18 +66,18 @@ export const ApiSettingsScreen: React.FC<ApiSettingsScreenProps> = ({ onClose })
 
       {/* Input section */}
       <View style={styles.inputSection}>
-        <Text style={styles.fieldLabel}>Custom Ngrok / Backend URL:</Text>
+        <Text style={styles.fieldLabel}>Custom Backend URL:</Text>
         <TextInput
           style={styles.textInput}
           value={urlInput}
           onChangeText={setUrlInput}
-          placeholder="https://your-domain.ngrok-free.app/api/v1"
+          placeholder="http://10.0.2.2:8085/api/v1"
           placeholderTextColor={colors.textMuted}
           autoCapitalize="none"
           autoCorrect={false}
         />
         <Text style={styles.helpText}>
-          Enter your live ngrok public forwarding link (e.g. https://xxxx.ngrok-free.app) or local backend address.
+          Use 10.0.2.2 for Android Studio Emulator (maps to your PC localhost:8085) or your computer LAN IP for physical phones.
         </Text>
       </View>
 
@@ -87,21 +87,21 @@ export const ApiSettingsScreen: React.FC<ApiSettingsScreenProps> = ({ onClose })
         <View style={styles.presetGrid}>
           <TouchableOpacity
             style={styles.presetBtn}
-            onPress={() => setPreset('https://beyon.ngrok-free.app/api/v1')}
-          >
-            <Text style={styles.presetBtnText}>🌐 Ngrok Cloud Tunnel</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.presetBtn}
             onPress={() => setPreset('http://10.0.2.2:8085/api/v1')}
           >
-            <Text style={styles.presetBtnText}>📱 Android Emulator (10.0.2.2)</Text>
+            <Text style={styles.presetBtnText}>📱 Android Emulator (10.0.2.2:8085)</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.presetBtn}
             onPress={() => setPreset('http://localhost:8085/api/v1')}
           >
             <Text style={styles.presetBtnText}>💻 Localhost (8085)</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.presetBtn}
+            onPress={() => setPreset('http://10.0.2.2:8080/api/v1')}
+          >
+            <Text style={styles.presetBtnText}>⚙️ Alternate Port (8080)</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -136,7 +136,7 @@ export const ApiSettingsScreen: React.FC<ApiSettingsScreenProps> = ({ onClose })
           <Text style={styles.testFeedbackDetail}>
             {testResult.ok
               ? `Backend responded with latency: ${testResult.latencyMs}ms`
-              : `Error: ${testResult.error || 'Server unreachable. Check ngrok process.'}`}
+              : `Error: ${testResult.error || 'Server unreachable. Ensure backend service is running.'}`}
           </Text>
         </View>
       )}

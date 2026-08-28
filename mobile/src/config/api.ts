@@ -1,20 +1,19 @@
-// ─── Beyon Mobile API Configuration & Ngrok Gateway ───────────────────────────
+// ─── Beyon Mobile API Configuration & Direct Host Gateway ───────────────────
 
 declare const process: any;
 
 export interface ApiConfigState {
   baseUrl: string;
-  isNgrok: boolean;
   lastPingMs: number | null;
   status: 'ONLINE' | 'OFFLINE' | 'UNTESTED';
 }
 
-// Default initial ngrok or backend URL
-// Can be customized via process.env.EXPO_PUBLIC_API_URL or modified in app settings
+// Default initial direct backend URL
+// In Android Emulator, 10.0.2.2 points directly to host machine's localhost:8085
 export const DEFAULT_API_URL = 
   (typeof process !== 'undefined' && process?.env?.EXPO_PUBLIC_API_URL) 
     ? process.env.EXPO_PUBLIC_API_URL 
-    : 'https://beyon.ngrok-free.app/api/v1';
+    : 'http://10.0.2.2:8085/api/v1';
 
 let currentBaseUrl = DEFAULT_API_URL;
 let authToken: string | null = null;
@@ -47,7 +46,6 @@ export async function pingBackend(customUrl?: string): Promise<{ ok: boolean; la
     const res = await fetch(`${targetUrl}/health`, {
       method: 'GET',
       headers: {
-        'ngrok-skip-browser-warning': 'true',
         'Accept': 'application/json',
       },
       signal: controller.signal,
@@ -70,7 +68,6 @@ export async function apiFetch<T = any>(endpoint: string, options: RequestInit =
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
-    'ngrok-skip-browser-warning': 'true', // Skip ngrok browser interstitial warning
     ...((options.headers as Record<string, string>) || {}),
   };
 

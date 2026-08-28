@@ -78,7 +78,7 @@ function MainApp() {
         onSelectTab={setActiveTab}
       />
 
-      {/* Ngrok & Backend API Settings Modal */}
+      {/* Backend API Settings Modal */}
       <Modal
         visible={showSettingsModal}
         animationType="slide"
