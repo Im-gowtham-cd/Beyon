@@ -62,6 +62,9 @@ export async function seedOpportunities(cfg: SeedConfig): Promise<void> {
     const skills = comp ? rng.pickN(comp.hiringSkills, 2).join(",") : "SKILL_JAVA,SKILL_SQL";
     const isRemote = rng.bool(0.4) ? 1 : 0;
 
+    const daysAgo = rng.int(10, 350);
+    const updatedDaysAgo = Math.max(0, daysAgo - rng.int(0, 15));
+
     optyStmts.push(
       `INSERT IGNORE INTO company_opportunities
         (id, company_user_id, title, description, opportunity_type, location, is_remote, remote,
@@ -79,13 +82,14 @@ export async function seedOpportunities(cfg: SeedConfig): Promise<void> {
          ${coinCost},
          ${esc(testId)},
          ${esc(status)},
-         NOW(), NOW()
+         DATE_SUB(NOW(), INTERVAL ${daysAgo} DAY),
+         DATE_SUB(NOW(), INTERVAL ${updatedDaysAgo} DAY)
        );`
     );
   }
 
   // ─── Placement Drives ───
-  for (let i = 0; i < 20; i++) {
+  for (let i = 0; i < 25; i++) {
     const compKey = compKeys[i % compKeys.length];
     const compUserId = companyUserIds[compKey];
     const optyId = opportunityIds[i % opportunityIds.length];
@@ -94,10 +98,11 @@ export async function seedOpportunities(cfg: SeedConfig): Promise<void> {
     driveIds.push(driveId);
 
     const driveDate = new Date();
-    driveDate.setDate(driveDate.getDate() + rng.int(-30, 60));
+    driveDate.setDate(driveDate.getDate() + rng.int(-180, 60));
     const driveDateStr = driveDate.toISOString().split("T")[0];
 
     const status = rng.pick(["PENDING", "ACTIVE", "COMPLETED", "ACTIVE"]);
+    const daysAgo = rng.int(20, 340);
 
     driveStmts.push(
       `INSERT IGNORE INTO placement_drives
@@ -105,9 +110,11 @@ export async function seedOpportunities(cfg: SeedConfig): Promise<void> {
          eligible_student_count, drive_date, created_at, updated_at)
        VALUES (
          ${esc(driveId)}, ${esc(optyId)}, ${esc(instUserId)}, ${esc(compUserId)},
-         ${esc(`Campus Drive ${i + 1}`)},
-         'Campus recruitment drive for eligible students.',
-         ${esc(status)}, ${rng.int(20, 200)}, ${esc(driveDateStr)}, NOW(), NOW()
+         ${esc(`Enterprise Campus Placement Drive ${i + 1}`)},
+         'Campus recruitment and skill evaluation drive for eligible candidates.',
+         ${esc(status)}, ${rng.int(20, 200)}, ${esc(driveDateStr)},
+         DATE_SUB(NOW(), INTERVAL ${daysAgo} DAY),
+         NOW()
        );`
     );
   }

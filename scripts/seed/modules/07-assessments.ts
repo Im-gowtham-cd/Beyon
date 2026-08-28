@@ -68,25 +68,38 @@ export async function seedAssessments(cfg: SeedConfig): Promise<void> {
     );
   }
 
-  // ─── Daily Challenges (per-student, per-date) ───
+  // ─── Daily Challenges (365 days historical timeline) ───
   const dailyChallengeStmts: string[] = [];
   const today = new Date();
-  // Seed for fixed exam candidates
+
+  // Seed 365 days of challenges for fixed active students, and 30 days for others
   const challengeStudents = [
     toUUID("beyon-student-strong-0001"),
     toUUID("beyon-student-placement-0001"),
     toUUID("beyon-exam-candidate-0001"),
+    toUUID("beyon-student-weak-0001"),
+    toUUID("beyon-student-fresh-0001"),
   ];
+
   for (const studentId of challengeStudents) {
-    for (let d = 0; d < 7; d++) {
+    for (let d = 0; d < 365; d++) {
       const date = new Date(today);
       date.setDate(today.getDate() - d);
       const dateStr = date.toISOString().split("T")[0];
       const qId = rng.pick(questionIds);
       const id = toUUID(`beyon-daily-${studentId}-${dateStr}`);
+      const isToday = d === 0;
+      const isCompleted = !isToday && rng.int(1, 10) <= 8;
+      const isCorrect = isCompleted ? (rng.int(1, 10) <= 8 ? 1 : 0) : 0;
+      const status = isToday ? "ACTIVE" : isCompleted ? "COMPLETED" : "EXPIRED";
+      const timeSpent = isCompleted ? rng.int(60, 480) : "NULL";
+      const completedAtSql = isCompleted ? `DATE_SUB(NOW(), INTERVAL ${d} DAY)` : "NULL";
+
       dailyChallengeStmts.push(
-        `INSERT IGNORE INTO daily_challenges (id, student_id, challenge_date, question_id, status, created_at)
-         VALUES (${esc(id)}, ${esc(studentId)}, ${esc(dateStr)}, ${esc(qId)}, 'ACTIVE', NOW());`
+        `INSERT IGNORE INTO daily_challenges (id, student_id, challenge_date, question_id, status, started_at, completed_at, time_spent_seconds, is_correct, created_at)
+         VALUES (${esc(id)}, ${esc(studentId)}, ${esc(dateStr)}, ${esc(qId)}, ${esc(status)},
+                 DATE_SUB(NOW(), INTERVAL ${d} DAY), ${completedAtSql}, ${timeSpent}, ${isCorrect},
+                 DATE_SUB(NOW(), INTERVAL ${d} DAY));`
       );
     }
   }
@@ -99,15 +112,20 @@ export async function seedAssessments(cfg: SeedConfig): Promise<void> {
     const testId = toUUID(`beyon-test-comp-${i}`);
     testIds.push(testId);
     const diff = rng.pick(["EASY", "MEDIUM", "MEDIUM", "HARD"]);
-    const qCount = rng.int(10, 30);
+    const qCount = rng.int(12, 30);
+    const passScore = rng.int(55, 75);
+    const daysAgo = rng.int(30, 360);
+
     testStmts.push(
       `INSERT IGNORE INTO tests (id, title, description, test_type, duration_minutes, difficulty, total_questions, passing_score, status, created_by, created_at, updated_at)
        VALUES (
          ${esc(testId)},
-         ${esc(`Company Assessment ${i + 1} — ${diff} Level`)},
-         'Technical screening assessment for candidate evaluation.',
-         'COMPANY', ${rng.int(45, 120)}, ${esc(diff)}, ${qCount}, ${rng.int(50, 75)}.00,
-         'ACTIVE', ${esc(cUserId)}, NOW(), NOW()
+         ${esc(`Technical Competency Benchmark ${i + 1} — ${diff}`)},
+         'Standardized proctored skill benchmark assessment for career candidate placement.',
+         'COMPANY', ${rng.int(45, 120)}, ${esc(diff)}, ${qCount}, ${passScore}.00,
+         'ACTIVE', ${esc(cUserId)},
+         DATE_SUB(NOW(), INTERVAL ${daysAgo} DAY),
+         DATE_SUB(NOW(), INTERVAL ${Math.max(0, daysAgo - 10)} DAY)
        );`
     );
 
@@ -122,10 +140,64 @@ export async function seedAssessments(cfg: SeedConfig): Promise<void> {
     }
   }
 
+  // ─── Test Attempts (1-Year Timeline) ───
+  const attemptStmts: string[] = [];
+  const testPool = [...testIds];
+  let attemptIdx = 0;
+
+  for (const sId of challengeStudents) {
+    const attemptsCount = rng.int(8, 20);
+    for (let a = 0; a < attemptsCount; a++) {
+      const tId = rng.pick(testPool);
+      const attemptId = toUUID(`beyon-ta-${sId}-${a}`);
+      const daysAgo = rng.int(5, 350);
+      const score = rng.int(55, 98);
+      const totalMarks = 100;
+      const accuracy = (score / totalMarks) * 100;
+      const timeSpent = rng.int(1800, 5400);
+
+      attemptStmts.push(
+        `INSERT IGNORE INTO test_attempts (id, student_id, test_id, started_at, submitted_at, score, total_marks, accuracy, time_spent_seconds, status, created_at)
+         VALUES (${esc(attemptId)}, ${esc(sId)}, ${esc(tId)},
+                 DATE_SUB(NOW(), INTERVAL ${daysAgo} DAY),
+                 DATE_ADD(DATE_SUB(NOW(), INTERVAL ${daysAgo} DAY), INTERVAL ${Math.floor(timeSpent / 60)} MINUTE),
+                 ${score}.00, ${totalMarks}.00, ${accuracy.toFixed(2)}, ${timeSpent}, 'COMPLETED',
+                 DATE_SUB(NOW(), INTERVAL ${daysAgo} DAY));`
+      );
+      attemptIdx++;
+    }
+  }
+
+  // ─── Student Question Practice Attempts ───
+  const qAttemptStmts: string[] = [];
+  let qaIdx = 0;
+  for (const sId of challengeStudents) {
+    const qSample = rng.pickN(questionIds, 60);
+    for (let qi = 0; qi < qSample.length; qi++) {
+      const qId = qSample[qi];
+      const qaId = toUUID(`beyon-sqa-${sId}-${qi}`);
+      const daysAgo = rng.int(1, 350);
+      const isCorrect = rng.int(1, 10) <= 8 ? 1 : 0;
+      const score = isCorrect ? 100 : 0;
+      const timeSpent = rng.int(45, 360);
+
+      qAttemptStmts.push(
+        `INSERT IGNORE INTO student_question_attempts (id, student_id, question_id, attempt_number, user_answer, is_correct, time_spent_seconds, score, feedback, status, created_at)
+         VALUES (${esc(qaId)}, ${esc(sId)}, ${esc(qId)}, 1, 'SEEDED_SOLUTION', ${isCorrect}, ${timeSpent}, ${score}.00, 'Well reasoned solution.', 'SUBMITTED',
+                 DATE_SUB(NOW(), INTERVAL ${daysAgo} DAY));`
+      );
+      qaIdx++;
+    }
+  }
+
   doltBatch(testStmts);
   doltBatch(testQStmts, 150);
-  doltBatch(dailyChallengeStmts);
+  doltBatch(dailyChallengeStmts, 200);
+  doltBatch(attemptStmts, 100);
+  doltBatch(qAttemptStmts, 150);
 
   console.log(`  ✅ ${testIds.length} assessments/tests`);
-  console.log(`  ✅ ${dailyChallengeStmts.length} daily challenges`);
+  console.log(`  ✅ ${dailyChallengeStmts.length} daily challenges across 365 days`);
+  console.log(`  ✅ ${attemptStmts.length} historical test attempts`);
+  console.log(`  ✅ ${qAttemptStmts.length} student practice attempts`);
 }

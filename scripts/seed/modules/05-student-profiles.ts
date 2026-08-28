@@ -31,7 +31,11 @@ export async function seedStudentProfiles(cfg: SeedConfig): Promise<void> {
   const profileStmts: string[] = [];
   const skillStmts: string[] = [];
   const walletStmts: string[] = [];
+  const projectStmts: string[] = [];
+  const certStmts: string[] = [];
+  const achieveStmts: string[] = [];
   const streakStmts: string[] = [];
+  const practiceStatsStmts: string[] = [];
 
   const instKeys = Object.keys(institutionUserIds);
 
@@ -78,14 +82,33 @@ export async function seedStudentProfiles(cfg: SeedConfig): Promise<void> {
     }
   }
 
-  const projectStmts: string[] = [];
-  const certStmts: string[] = [];
-  const achieveStmts: string[] = [];
-
   for (const userId of studentUserIds) {
     projectStmts.push(...buildProjectsSql(userId, rng));
     certStmts.push(...buildCertsSql(userId, rng));
     achieveStmts.push(...buildAchievementsSql(userId, rng));
+
+    // Streaks
+    const currentStreak = rng.int(2, 60);
+    const longestStreak = Math.max(currentStreak, rng.int(15, 280));
+    const streakId = toUUID(`beyon-streak-${userId}`);
+    streakStmts.push(
+      `INSERT IGNORE INTO student_streaks (id, student_id, current_streak, longest_streak, last_activity_date, created_at, updated_at)
+       VALUES (${esc(streakId)}, ${esc(userId)}, ${currentStreak}, ${longestStreak}, CURDATE(), DATE_SUB(NOW(), INTERVAL ${rng.int(30, 360)} DAY), NOW());`
+    );
+
+    // Practice stats
+    const attempted = rng.int(25, 280);
+    const solved = Math.floor(attempted * (rng.int(70, 96) / 100));
+    const timeSpent = attempted * rng.int(60, 300);
+    const statId = toUUID(`beyon-pstat-${userId}`);
+    practiceStatsStmts.push(
+      `INSERT IGNORE INTO student_practice_stats
+        (id, student_id, total_attempted, total_solved, easy_solved, medium_solved, hard_solved,
+         current_streak, longest_streak, last_practice_date, total_time_seconds, updated_at)
+       VALUES (${esc(statId)}, ${esc(userId)}, ${attempted}, ${solved},
+               ${Math.floor(solved * 0.5)}, ${Math.floor(solved * 0.35)}, ${Math.floor(solved * 0.15)},
+               ${currentStreak}, ${longestStreak}, CURDATE(), ${timeSpent}, NOW());`
+    );
   }
 
   doltBatch(profileStmts, 100);
@@ -94,6 +117,8 @@ export async function seedStudentProfiles(cfg: SeedConfig): Promise<void> {
   doltBatch(projectStmts, 200);
   doltBatch(certStmts, 200);
   doltBatch(achieveStmts, 200);
+  doltBatch(streakStmts, 200);
+  doltBatch(practiceStatsStmts, 200);
 
   console.log(`  ✅ ${profileStmts.length} student profiles`);
   console.log(`  ✅ ${walletStmts.length} coin wallets`);
@@ -101,6 +126,8 @@ export async function seedStudentProfiles(cfg: SeedConfig): Promise<void> {
   console.log(`  ✅ ${projectStmts.length} student projects`);
   console.log(`  ✅ ${certStmts.length} student certifications`);
   console.log(`  ✅ ${achieveStmts.length} student achievements`);
+  console.log(`  ✅ ${streakStmts.length} student streaks`);
+  console.log(`  ✅ ${practiceStatsStmts.length} practice stats records`);
 }
 
 function buildStudentProfileSql(

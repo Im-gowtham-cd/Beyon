@@ -19,7 +19,7 @@ public class QuestionOption {
     @Column(nullable = false, columnDefinition = "TEXT")
     private String optionText;
 
-    @Column(nullable = false)
+    @Column(name = "is_correct", nullable = false)
     private boolean correct = false;
 
     @Column(nullable = false)

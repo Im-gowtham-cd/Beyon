@@ -113,11 +113,11 @@ export function Header() {
       {/* Utility Bar */}
       <div className={styles.utilityBar}>
         <span className={styles.utilityInstitution}>
-          <i className="bx bx-chip" /> HPC COE — High Performance Computing for Innovative Intelligent Solutions
+          <i className="bx bx-brain" /> Beyon — AI-Powered Skill Matrix &amp; Intelligent Career Architecture
         </span>
         <span className={styles.utilityLinks}>
-          <a href="mailto:support@hpc.edu.in" aria-label="Email Support">
-            <i className="bx bx-envelope" /> support@hpc.edu.in
+          <a href="mailto:support@beyon.app" aria-label="Email Support">
+            <i className="bx bx-envelope" /> support@beyon.app
           </a>
           <span className={styles.utilityDivider}>|</span>
           <Link to="/verify">
@@ -130,8 +130,8 @@ export function Header() {
       <div className={styles.mainBar}>
         <Link to="/" className={styles.navTitle} onClick={closeMobile}>
           <span className={styles.brandMark} aria-hidden="true" />
-          <span className={styles.brandText}>HPC COE</span>
-          <span className={styles.brandSub}>Centre of Excellence</span>
+          <span className={styles.brandText}>Beyon</span>
+          <span className={styles.brandSub}>Skills &amp; Careers</span>
         </Link>
 
         <button

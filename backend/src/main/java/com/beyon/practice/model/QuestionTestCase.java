@@ -22,7 +22,7 @@ public class QuestionTestCase {
     @Column(nullable = false, columnDefinition = "TEXT")
     private String expectedOutput;
 
-    @Column(nullable = false)
+    @Column(name = "is_sample", nullable = false)
     private boolean sample = false;
 
     @Column(nullable = false)

@@ -38,12 +38,14 @@ export async function seedNotifications(cfg: SeedConfig): Promise<void> {
       const tmpl = rng.pick(NOTIFICATION_TEMPLATES);
       const isRead = rng.bool(0.6);
       const id = toUUID(`beyon-notif-${count}`);
+      const daysAgo = rng.int(1, 350);
       stmts.push(
         `INSERT IGNORE INTO notifications
           (id, user_id, title, message, notification_type, is_read, channel, created_at)
          VALUES (
            ${esc(id)}, ${esc(userId)}, ${esc(tmpl.title)}, ${esc(tmpl.message)},
-           ${esc(tmpl.type)}, ${isRead ? 1 : 0}, 'IN_APP', NOW()
+           ${esc(tmpl.type)}, ${isRead ? 1 : 0}, 'IN_APP',
+           DATE_SUB(NOW(), INTERVAL ${daysAgo} DAY)
          );`
       );
       count++;

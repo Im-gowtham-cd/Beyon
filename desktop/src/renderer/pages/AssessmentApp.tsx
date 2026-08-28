@@ -317,8 +317,8 @@ export function AssessmentApp() {
         <div className={styles.brandTitle}>
           <span className={styles.brandMark} />
           <div>
-            <span className={styles.brandName}>HPC COE</span>
-            <span className={styles.brandSub}>Centre of Excellence &middot; Secure Assessment</span>
+            <span className={styles.brandName}>Beyon</span>
+            <span className={styles.brandSub}>Secure Proctored Assessment Client</span>
           </div>
         </div>
 
@@ -344,16 +344,16 @@ export function AssessmentApp() {
           <div className={styles.authCard}>
             <div className={styles.authAside}>
               <span className={styles.asideMark} />
-              <h2>High Performance Computing Assessment Portal</h2>
-              <p>Secure candidate authentication for proctored examinations and skill assessments.</p>
+              <h2>Beyon Secure Assessment Portal</h2>
+              <p>Secure candidate authentication for proctored examinations and skill competency assessments.</p>
               <div className={styles.authNotice}>
                 <i className="bx bx-shield-quarter" />
-                <span>Protected test environment &middot; NVIDIA H200 Verified</span>
+                <span>Protected test environment &middot; Beyon AI Proctored</span>
               </div>
             </div>
 
             <div className={styles.authPanel}>
-              <span className="section-label">HPC COE Portal</span>
+              <span className="section-label">Beyon Portal</span>
               <h1>Candidate Sign In</h1>
               <p className={styles.subtitle}>Enter your candidate credentials to start the assessment.</p>
 
@@ -553,15 +553,15 @@ export function AssessmentApp() {
             </div>
 
             <h2 className={styles.questionText}>
-              Sample Question #{currentQuestion + 1}: Which NVIDIA GPU architecture provides HBM3e high-bandwidth memory for extreme HPC and AI workloads?
+              Sample Question #{currentQuestion + 1}: Which data structure offers O(1) average time complexity for key-value lookups and insertion?
             </h2>
 
             <div className={styles.options}>
               {[
-                { id: 'opt-a', label: 'A', text: 'NVIDIA H200 NVL Tensor Core GPU' },
-                { id: 'opt-b', label: 'B', text: 'NVIDIA GeForce GT 710' },
-                { id: 'opt-c', label: 'C', text: 'Standard Integrated Display Controller' },
-                { id: 'opt-d', label: 'D', text: 'Legacy AGP 8X Graphics Adapter' },
+                { id: 'opt-a', label: 'A', text: 'Hash Table / Hash Map' },
+                { id: 'opt-b', label: 'B', text: 'Binary Search Tree' },
+                { id: 'opt-c', label: 'C', text: 'Singly Linked List' },
+                { id: 'opt-d', label: 'D', text: 'Balanced AVL Tree' },
               ].map(opt => (
                 <div
                   key={opt.id}

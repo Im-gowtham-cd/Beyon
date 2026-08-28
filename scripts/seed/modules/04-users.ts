@@ -43,9 +43,14 @@ export async function seedUsers(cfg: SeedConfig): Promise<void> {
     userIds[email] = id;
     studentUserIds.push(id);
 
+    const daysAgo = rng.int(1, 365);
+    const updatedDaysAgo = Math.max(0, daysAgo - rng.int(0, 30));
+
     genStmts.push(
       `INSERT IGNORE INTO users (id, email, password_hash, display_name, role, status, email_verified, profile_status, created_at, updated_at)
-       VALUES (${esc(id)}, ${esc(email)}, 'SEEDED_NO_AUTH', ${esc(full)}, 'STUDENT', 'ACTIVE', 1, 'COMPLETED', NOW(), NOW());`
+       VALUES (${esc(id)}, ${esc(email)}, 'SEEDED_NO_AUTH', ${esc(full)}, 'STUDENT', 'ACTIVE', 1, 'COMPLETED',
+               DATE_SUB(NOW(), INTERVAL ${daysAgo} DAY),
+               DATE_SUB(NOW(), INTERVAL ${updatedDaysAgo} DAY));`
     );
     genCount++;
   }
@@ -69,7 +74,8 @@ async function seedOneUser(
   doltExec(
     `INSERT INTO users (id, email, password_hash, display_name, role, status, email_verified, profile_status, created_at, updated_at)
      VALUES (${esc(id)}, ${esc(email)}, ${esc(passwordHash)},
-             ${esc(name)}, ${esc(role)}, ${esc(status)}, ${emailVerified ? 1 : 0}, ${status === "ACTIVE" ? "'COMPLETED'" : "'INCOMPLETE'"}, NOW(), NOW())
+             ${esc(name)}, ${esc(role)}, ${esc(status)}, ${emailVerified ? 1 : 0}, ${status === "ACTIVE" ? "'COMPLETED'" : "'INCOMPLETE'"},
+             DATE_SUB(NOW(), INTERVAL 365 DAY), NOW())
      ON DUPLICATE KEY UPDATE password_hash = ${esc(passwordHash)}, status = ${esc(status)}, email_verified = ${emailVerified ? 1 : 0};`
   );
 }

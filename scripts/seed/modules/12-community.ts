@@ -51,9 +51,10 @@ export async function seedCommunity(cfg: SeedConfig): Promise<void> {
       if (followUsed.has(key)) continue;
       followUsed.add(key);
       const id = toUUID(`beyon-follow-${followCount}`);
+      const daysAgo = rng.int(1, 350);
       followStmts.push(
         `INSERT IGNORE INTO follows (id, follower_id, following_id, follow_type, created_at)
-         VALUES (${esc(id)}, ${esc(studentId)}, ${esc(compId)}, 'COMPANY', NOW());`
+         VALUES (${esc(id)}, ${esc(studentId)}, ${esc(compId)}, 'COMPANY', DATE_SUB(NOW(), INTERVAL ${daysAgo} DAY));`
       );
       followCount++;
     }

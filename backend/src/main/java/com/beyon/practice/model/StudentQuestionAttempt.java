@@ -26,6 +26,7 @@ public class StudentQuestionAttempt {
     @Column(columnDefinition = "TEXT")
     private String userAnswer;
 
+    @Column(name = "is_correct")
     private Boolean correct;
 
     private Integer timeSpentSeconds;

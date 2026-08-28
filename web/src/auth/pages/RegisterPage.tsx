@@ -74,29 +74,29 @@ export function RegisterPage() {
             <div className={styles.asideBrand}>
               <span className={styles.asideMark} aria-hidden="true" />
               <div className={styles.asideBrandText}>
-                <span className={styles.asideName}>HPC COE</span>
-                <span className={styles.asideSub}>Centre of Excellence &middot; HPC</span>
+                <span className={styles.asideName}>Beyon</span>
+                <span className={styles.asideSub}>Next-Gen Skills &amp; Career Architecture</span>
               </div>
             </div>
 
             <div className={styles.asideBody}>
-              <h2>High Performance Computing for Innovative Intelligent Solutions</h2>
-              <p>Create your candidate or organization account to access AI-powered assessments and research opportunities.</p>
+              <h2>Intelligent Talent Assessment &amp; Career Growth Platform</h2>
+              <p>Create your candidate or organization account to access AI-powered skill assessments and career opportunities.</p>
               <ul className={styles.asideFeatures}>
                 <li>
-                  <i className="bx bx-chip" /> NVIDIA H200 GPUs
+                  <i className="bx bx-shield-quarter" /> Proctored Skill Assessments
                 </li>
                 <li>
-                  <i className="bx bx-brain" /> AI Research &amp; Innovation
+                  <i className="bx bx-brain" /> AI-Powered Career Intelligence
                 </li>
                 <li>
-                  <i className="bx bx-group" /> Innovation Hub
+                  <i className="bx bx-briefcase-alt-2" /> Direct Enterprise Placements
                 </li>
               </ul>
             </div>
 
             <div className={styles.asideFoot}>
-              <i className="bx bx-envelope" /> support@hpc.edu.in
+              <i className="bx bx-envelope" /> support@beyon.app
             </div>
           </aside>
 

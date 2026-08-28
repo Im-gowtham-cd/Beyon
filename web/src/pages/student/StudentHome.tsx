@@ -105,17 +105,17 @@ export function StudentHome() {
         <div className={styles.welcomeInfo}>
           <div className={styles.badgeRow}>
             <span className={styles.portalBadge}>
-              <i className="bx bx-chip" /> HPC COE Candidate Portal
+              <i className="bx bx-brain" /> Beyon Candidate Portal
             </span>
             <span className={styles.verifiedBadge}>
-              <i className="bx bx-check-shield" /> NVIDIA H200 Verified
+              <i className="bx bx-check-shield" /> Verified Beyon Scholar
             </span>
           </div>
           <h1 className={styles.welcomeTitle}>
             Welcome back, <span className={styles.highlightName}>{firstName}</span>
           </h1>
           <p className={styles.welcomeSub}>
-            High Performance Computing &amp; AI Engineering Track &middot; Accelerating Intelligent Solutions
+            AI Engineering &amp; Skill Development Track &middot; Accelerating Verified Competencies
           </p>
         </div>
 

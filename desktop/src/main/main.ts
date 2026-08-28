@@ -117,7 +117,7 @@ function createWindow() {
     height: 800,
     minWidth: 1024,
     minHeight: 600,
-    title: 'HPC COE — Secure Assessment Portal',
+    title: 'Beyon — Secure Lockdown Assessment Client',
     backgroundColor: '#f4f6fb',
     autoHideMenuBar: true,
     webPreferences: {

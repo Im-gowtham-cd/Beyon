@@ -3,9 +3,9 @@ import styles from './Footer.module.css';
 
 export function Footer() {
   const brand = {
-    heading: 'HPC COE',
+    heading: 'Beyon',
     description:
-      'Centre of Excellence in High Performance Computing for Innovative Intelligent Solutions. Delivering state-of-the-art supercomputing infrastructure, AI model training, and verifiable candidate assessment.',
+      'AI-Powered Talent Assessment & Skill Intelligence Platform. Empowering candidates, institutions, and enterprise hiring partners with verified competency benchmarking and career opportunities.',
   };
 
   const social = [
@@ -128,7 +128,7 @@ export function Footer() {
       </div>
 
       <div className={styles.footerBottom}>
-        <span>&copy; 2026 HPC COE. All rights reserved.</span>
+        <span>&copy; 2026 Beyon Platform. All rights reserved.</span>
         <div className={styles.footerBottomLinks}>
           {bottomLinks.map(link => (
             <a key={link.text} href={link.href}>

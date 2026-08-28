@@ -72,15 +72,15 @@ export function loadConfig(overrides: Partial<SeedConfig["counts"]> = {}): SeedC
       process.env.NODE_ENV ||
       "development",
     counts: {
-      students: overrides.students ?? 50,
+      students: overrides.students ?? 110,
       institutions: overrides.institutions ?? 25,
       companies: overrides.companies ?? 30,
       questions: overrides.questions ?? 300,
-      assessments: overrides.assessments ?? 10,
-      jobs: overrides.jobs ?? 30,
-      applications: overrides.applications ?? 200,
-      notifications: overrides.notifications ?? 500,
-      posts: overrides.posts ?? 50,
+      assessments: overrides.assessments ?? 15,
+      jobs: overrides.jobs ?? 35,
+      applications: overrides.applications ?? 300,
+      notifications: overrides.notifications ?? 750,
+      posts: overrides.posts ?? 60,
     },
     options: {
       createAssessments: true,
