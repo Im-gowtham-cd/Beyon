@@ -68,4 +68,41 @@ public class QuestionController {
         stats.put("hard", questionBankService.countByDifficulty("HARD"));
         return ResponseEntity.ok(ApiResponse.ok(stats));
     }
+
+    @PostMapping
+    public ResponseEntity<ApiResponse<Question>> createQuestion(@RequestBody java.util.Map<String, Object> body) {
+        Question q = new Question();
+        if (body.get("skillId") != null && !body.get("skillId").toString().isBlank()) {
+            q.setSkillId(UUID.fromString((String) body.get("skillId")));
+        }
+        if (body.get("topicId") != null && !body.get("topicId").toString().isBlank()) {
+            q.setTopicId(UUID.fromString((String) body.get("topicId")));
+        }
+        q.setTitle((String) body.getOrDefault("title", "Untitled Question"));
+        q.setDescription((String) body.getOrDefault("description", ""));
+        q.setQuestionType((String) body.getOrDefault("questionType", "MCQ"));
+        q.setDifficulty((String) body.getOrDefault("difficulty", "MEDIUM"));
+        q.setExplanation((String) body.get("explanation"));
+        q.setExpectedOutput((String) body.get("expectedOutput"));
+        q.setCodeTemplate((String) body.get("codeTemplate"));
+        q.setStatus("ACTIVE");
+        q.setEvaluationMethod("EXACT_MATCH");
+
+        java.util.List<java.util.Map<String, Object>> rawOptions = (java.util.List<java.util.Map<String, Object>>) body.get("options");
+        java.util.List<QuestionOption> options = new java.util.ArrayList<>();
+        if (rawOptions != null) {
+            int order = 1;
+            for (java.util.Map<String, Object> ro : rawOptions) {
+                QuestionOption opt = new QuestionOption();
+                opt.setOptionText((String) ro.getOrDefault("optionText", ""));
+                opt.setCorrect(Boolean.TRUE.equals(ro.get("isCorrect")) || Boolean.TRUE.equals(ro.get("correct")));
+                opt.setDisplayOrder(order++);
+                if (ro.get("explanation") != null) opt.setExplanation((String) ro.get("explanation"));
+                options.add(opt);
+            }
+        }
+
+        Question saved = questionBankService.createFullQuestion(q, options, null);
+        return ResponseEntity.ok(ApiResponse.ok(saved, "Question created successfully"));
+    }
 }

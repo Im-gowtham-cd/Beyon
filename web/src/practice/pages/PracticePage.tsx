@@ -33,8 +33,32 @@ export function PracticePage() {
 
   return (
     <div className={styles.page}>
-      <div className={styles.pageHeader}>
-        <h1 className={styles.title}>Practice</h1>
+      <div className={styles.pageHeader} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
+        <div>
+          <h1 className={styles.title} style={{ margin: 0 }}>Practice Arena</h1>
+          <p style={{ color: '#64748b', fontSize: '0.88rem', marginTop: '4px' }}>
+            Solve real multiple choice, SQL, and coding questions across domain topics.
+          </p>
+        </div>
+        <Link
+          to="/practice/create"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '8px',
+            background: 'linear-gradient(135deg, #1c2d81 0%, #253cac 100%)',
+            color: '#ffffff',
+            padding: '10px 18px',
+            borderRadius: '8px',
+            fontWeight: 800,
+            fontSize: '0.86rem',
+            textDecoration: 'none',
+            boxShadow: '0 2px 6px rgba(28, 45, 129, 0.2)',
+          }}
+        >
+          <i className="bx bx-plus-circle" style={{ fontSize: '1.1rem' }} />
+          <span>+ Create New Question</span>
+        </Link>
       </div>
 
       <div className={styles.statsRow}>

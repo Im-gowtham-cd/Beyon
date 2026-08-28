@@ -24,6 +24,7 @@ import { SkillExplorer } from '../student/pages/SkillExplorer';
 import { SkillDetail } from '../student/pages/SkillDetail';
 import { TopicDetail } from '../student/pages/TopicDetail';
 import { PracticePage } from '../practice/pages/PracticePage';
+import { CreateQuestionPage } from '../practice/pages/CreateQuestionPage';
 import { QuestionDetailPage } from '../practice/pages/QuestionDetailPage';
 import { DailyChallengePage } from '../practice/pages/DailyChallengePage';
 import { StatsPage } from '../practice/pages/StatsPage';
@@ -121,6 +122,7 @@ export function App() {
             <Route path="/student/skills/:skillSlug" element={<SkillDetail />} />
             <Route path="/student/skills/:skillSlug/:topicSlug" element={<TopicDetail />} />
             <Route path="/practice" element={<PracticePage />} />
+            <Route path="/practice/create" element={<CreateQuestionPage />} />
             <Route path="/practice/:id" element={<QuestionDetailPage />} />
             <Route path="/daily-challenge" element={<DailyChallengePage />} />
             <Route path="/stats" element={<StatsPage />} />
