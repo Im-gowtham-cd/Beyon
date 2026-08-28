@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { dailyChallengeApi, questionApi, practiceApi } from '../services/practiceApi';
 import type { DailyChallenge, Question } from '../types/practice';
@@ -80,11 +80,11 @@ export function DailyChallengePage() {
             Solve today's curated problem to protect your learning streak and earn verified reward coins.
           </p>
         </div>
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#fef3c7', color: '#b45309', border: '1px solid #fde68a', padding: '6px 14px', borderRadius: '20px', fontWeight: 800, fontSize: '0.8rem' }}>
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#fef3c7', color: '#b45309', border: '1px solid #fde68a', padding: '6px 14px', borderRadius: '0px', fontWeight: 800, fontSize: '0.8rem', whiteSpace: 'nowrap' }}>
             <i className="bx bx-coin-stack" /> +50 Coins Reward
           </span>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#fee2e2', color: '#b91c1c', border: '1px solid #fecaca', padding: '6px 14px', borderRadius: '20px', fontWeight: 800, fontSize: '0.8rem' }}>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#fee2e2', color: '#b91c1c', border: '1px solid #fecaca', padding: '6px 14px', borderRadius: '0px', fontWeight: 800, fontSize: '0.8rem', whiteSpace: 'nowrap' }}>
             <i className="bx bx-flame" /> +1 Streak Bonus
           </span>
         </div>

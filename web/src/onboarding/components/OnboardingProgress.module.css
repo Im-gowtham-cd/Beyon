@@ -1,4 +1,4 @@
-.progressContainer {
+﻿.progressContainer {
   margin-bottom: 32px;
   width: 100%;
 }
@@ -26,9 +26,9 @@
 }
 
 .stepCircle {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
+  width: 34px;
+  height: 34px;
+  border-radius: 0px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -47,7 +47,6 @@
   border-color: #1c2d81;
   background: #1c2d81;
   color: #fed601;
-  box-shadow: 0 0 0 4px rgba(28, 45, 129, 0.15);
 }
 
 .circleCompleted {
@@ -97,6 +96,7 @@
     width: 28px;
     height: 28px;
     font-size: 0.75rem;
+    border-radius: 0px;
   }
 
   .stepLabel {

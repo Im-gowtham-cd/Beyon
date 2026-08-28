@@ -1,6 +1,6 @@
 ﻿.page {
   width: 100%;
-  padding: 28px 36px 60px;
+  padding: 24px 32px 60px;
   display: flex;
   flex-direction: column;
   gap: 24px;
@@ -10,17 +10,16 @@
 /* Hero Welcome Banner */
 .welcomeHero {
   background: #ffffff;
-  border: 1px solid var(--color-border, #e2e8f0);
-  border-radius: 16px;
-  padding: 28px 32px;
-  box-shadow: var(--shadow-sm, 0 1px 3px rgba(15, 23, 42, 0.04));
+  border: 1px solid #e2e8f0;
+  border-radius: 0px;
+  padding: 24px 28px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 24px;
   flex-wrap: wrap;
   position: relative;
-  overflow: hidden;
 }
 
 .welcomeHero::before {
@@ -29,20 +28,20 @@
   top: 0;
   left: 0;
   right: 0;
-  height: 4px;
+  height: 3px;
   background: linear-gradient(90deg, #1c2d81 0%, #253cac 50%, #fed601 100%);
 }
 
 .welcomeInfo {
   flex: 1;
-  min-width: 300px;
+  min-width: 280px;
 }
 
 .badgeRow {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 10px;
+  gap: 8px;
+  margin-bottom: 8px;
   flex-wrap: wrap;
 }
 
@@ -50,34 +49,34 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 4px 12px;
+  padding: 3px 10px;
   background: #eff6ff;
   border: 1px solid #bfdbfe;
   color: #1c2d81;
-  font-size: 0.75rem;
-  font-weight: 800;
+  font-size: 0.72rem;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  border-radius: 20px;
+  letter-spacing: 0.04em;
+  border-radius: 0px;
 }
 
 .verifiedBadge {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 4px 12px;
+  padding: 3px 10px;
   background: #f0fdf4;
   border: 1px solid #bbf7d0;
   color: #15803d;
-  font-size: 0.75rem;
-  font-weight: 700;
-  border-radius: 20px;
+  font-size: 0.72rem;
+  font-weight: 500;
+  border-radius: 0px;
 }
 
 .welcomeTitle {
   font-family: var(--font-heading, Montserrat);
-  font-size: clamp(1.6rem, 2.5vw, 2.2rem);
-  font-weight: 900;
+  font-size: clamp(1.5rem, 2.4vw, 2rem);
+  font-weight: 800;
   color: #0f172a;
   margin: 0 0 4px;
   letter-spacing: -0.02em;
@@ -89,10 +88,10 @@
 }
 
 .welcomeSub {
-  font-size: 0.88rem;
+  font-size: 0.86rem;
   color: #64748b;
   margin: 0;
-  font-weight: 500;
+  font-weight: 400;
 }
 
 .statsSummary {
@@ -101,8 +100,8 @@
   gap: 20px;
   background: #f8fafc;
   border: 1px solid #e2e8f0;
-  padding: 14px 24px;
-  border-radius: 12px;
+  padding: 12px 20px;
+  border-radius: 0px;
 }
 
 .statMetric {
@@ -112,17 +111,17 @@
 }
 
 .statMetricLabel {
-  font-size: 0.7rem;
+  font-size: 0.68rem;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.05em;
   color: #64748b;
-  font-weight: 700;
+  font-weight: 500;
 }
 
 .statMetricValue {
   font-family: var(--font-heading, Montserrat);
-  font-size: 1.3rem;
-  font-weight: 900;
+  font-size: 1.25rem;
+  font-weight: 700;
   color: #0f172a;
 }
 
@@ -135,7 +134,7 @@
 
 .statDivider {
   width: 1px;
-  height: 32px;
+  height: 28px;
   background: #cbd5e1;
 }
 
@@ -159,26 +158,26 @@
 .spotlightBanner {
   background: linear-gradient(135deg, #1c2d81 0%, #253cac 100%);
   color: #ffffff;
-  border-radius: 14px;
-  padding: 24px 28px;
+  border-radius: 0px;
+  border: 1px solid #1c2d81;
+  padding: 22px 24px;
   display: flex;
   align-items: center;
   gap: 20px;
-  box-shadow: 0 4px 16px rgba(28, 45, 129, 0.15);
+  box-shadow: 0 4px 12px rgba(28, 45, 129, 0.12);
   position: relative;
-  overflow: hidden;
 }
 
 .spotlightIcon {
-  width: 52px;
-  height: 52px;
-  background: rgba(254, 214, 1, 0.2);
-  border: 1.5px solid #fed601;
-  border-radius: 12px;
+  width: 48px;
+  height: 48px;
+  background: rgba(254, 214, 1, 0.15);
+  border: 1px solid #fed601;
+  border-radius: 0px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 26px;
+  font-size: 24px;
   color: #fed601;
   flex-shrink: 0;
 }
@@ -189,41 +188,43 @@
 
 .spotlightTag {
   display: inline-block;
-  font-size: 0.72rem;
-  font-weight: 800;
+  font-size: 0.7rem;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.05em;
   color: #fed601;
   margin-bottom: 2px;
 }
 
 .spotlightBody h3 {
   font-family: var(--font-heading, Montserrat);
-  font-size: 1.15rem;
+  font-size: 1.1rem;
   font-weight: 800;
   color: #ffffff;
   margin: 0 0 4px;
 }
 
 .spotlightBody p {
-  font-size: 0.85rem;
+  font-size: 0.84rem;
   opacity: 0.9;
   margin: 0;
   line-height: 1.4;
+  font-weight: 400;
 }
 
 .spotlightAction {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 10px 22px;
+  padding: 9px 18px;
   background: #fed601;
   color: #1c2d81;
-  font-weight: 800;
-  font-size: 0.85rem;
+  font-weight: 600;
+  font-size: 0.84rem;
   text-decoration: none;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  border-radius: 0px;
+  border: 1px solid #eab308;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
   transition: all 0.15s ease;
   flex-shrink: 0;
 }
@@ -244,7 +245,7 @@
 
 .sectionTitle {
   font-family: var(--font-heading, Montserrat);
-  font-size: 1.2rem;
+  font-size: 1.15rem;
   font-weight: 800;
   color: #0f172a;
   margin: 0;
@@ -254,8 +255,8 @@
 }
 
 .sectionMeta {
-  font-size: 0.75rem;
-  font-weight: 700;
+  font-size: 0.74rem;
+  font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: #64748b;
@@ -272,21 +273,20 @@
 .card {
   background: #ffffff;
   border: 1px solid #e2e8f0;
-  border-radius: 12px;
+  border-radius: 0px;
   padding: 20px;
   text-decoration: none;
   display: flex;
   flex-direction: column;
   gap: 10px;
   box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.15s ease;
   position: relative;
 }
 
 .card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(28, 45, 129, 0.08);
-  border-color: #cbd5e1;
+  border-color: #1c2d81;
+  box-shadow: 0 4px 14px rgba(28, 45, 129, 0.08);
 }
 
 .cardHeader {
@@ -296,17 +296,17 @@
 }
 
 .cardIconBox {
-  width: 42px;
-  height: 42px;
+  width: 40px;
+  height: 40px;
   background: #eff6ff;
   border: 1px solid #dbeafe;
-  border-radius: 10px;
+  border-radius: 0px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 22px;
+  font-size: 20px;
   color: #1c2d81;
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
 }
 
 .card:hover .cardIconBox {
@@ -315,12 +315,14 @@
 }
 
 .cardTag {
-  font-size: 0.7rem;
-  font-weight: 800;
+  font-size: 0.68rem;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  padding: 3px 10px;
-  border-radius: 20px;
+  padding: 3px 8px;
+  border-radius: 0px;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .tag_success {
@@ -349,8 +351,8 @@
 
 .cardTitle {
   font-family: var(--font-heading, Montserrat);
-  font-size: 1.02rem;
-  font-weight: 800;
+  font-size: 1rem;
+  font-weight: 700;
   color: #0f172a;
   margin: 0;
 }
@@ -361,14 +363,15 @@
   line-height: 1.45;
   margin: 0;
   flex: 1;
+  font-weight: 400;
 }
 
 .cardFoot {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 0.78rem;
-  font-weight: 700;
+  font-size: 0.76rem;
+  font-weight: 500;
   color: #1c2d81;
   padding-top: 10px;
   border-top: 1px solid #f1f5f9;
@@ -385,7 +388,7 @@
 .sideCard {
   background: #ffffff;
   border: 1px solid #e2e8f0;
-  border-radius: 12px;
+  border-radius: 0px;
   padding: 20px;
   box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
 }
@@ -398,13 +401,13 @@
 }
 
 .sideCardHeader i {
-  font-size: 20px;
+  font-size: 18px;
   color: #1c2d81;
 }
 
 .sideCardHeader h4 {
   font-family: var(--font-heading, Montserrat);
-  font-size: 0.95rem;
+  font-size: 0.92rem;
   font-weight: 800;
   color: #0f172a;
   margin: 0;
@@ -415,6 +418,7 @@
   color: #64748b;
   line-height: 1.45;
   margin: 0 0 14px;
+  font-weight: 400;
 }
 
 .sideCardBtn {
@@ -422,20 +426,20 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
-  padding: 10px 16px;
+  padding: 9px 16px;
   background: linear-gradient(135deg, #1c2d81 0%, #253cac 100%);
   color: #ffffff;
   font-size: 0.82rem;
-  font-weight: 700;
+  font-weight: 600;
   text-decoration: none;
-  border-radius: 8px;
-  box-shadow: 0 2px 6px rgba(28, 45, 129, 0.18);
+  border-radius: 0px;
+  border: 1px solid #1c2d81;
+  box-shadow: 0 2px 6px rgba(28, 45, 129, 0.15);
   transition: all 0.15s ease;
 }
 
 .sideCardBtn:hover {
   opacity: 0.95;
-  transform: translateY(-1px);
 }
 
 .enrollmentMeta {
@@ -444,11 +448,12 @@
   gap: 8px;
   font-size: 0.82rem;
   color: #475569;
+  font-weight: 400;
 }
 
 .statusLive {
   color: #15803d;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 @media (max-width: 1080px) {
@@ -463,7 +468,7 @@
   }
 
   .welcomeHero {
-    padding: 20px;
+    padding: 16px;
   }
 
   .statsSummary {

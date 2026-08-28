@@ -14,7 +14,7 @@
   padding: 10px 20px;
   background: #ffffff;
   border: 1px solid #cbd5e1;
-  border-radius: 8px;
+  border-radius: 0px;
   color: #475569;
   font-size: 0.88rem;
   font-weight: 700;
@@ -34,8 +34,8 @@
   gap: 8px;
   padding: 12px 28px;
   background: linear-gradient(135deg, #1c2d81 0%, #253cac 100%);
-  border: none;
-  border-radius: 8px;
+  border: 1px solid #1c2d81;
+  border-radius: 0px;
   color: #ffffff;
   font-size: 0.92rem;
   font-weight: 800;

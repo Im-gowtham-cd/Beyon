@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../auth/context/AuthContext';
 import { LearningWidget } from '../../student/components/LearningWidget';
@@ -7,18 +7,24 @@ import styles from './StudentHome.module.css';
 export function StudentHome() {
   const { user } = useAuth();
   const [profileData, setProfileData] = useState<any>(null);
+  const [dailyChallenge, setDailyChallenge] = useState<any>(null);
 
   useEffect(() => {
     async function loadData() {
       try {
         const token = localStorage.getItem('beyon_token') || localStorage.getItem('beyon_access_token');
         if (token) {
-          const res = await fetch('/api/v1/student/profile', {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-          if (res.ok) {
-            const data = await res.json();
+          const [profRes, chalRes] = await Promise.all([
+            fetch('/api/v1/student/profile', { headers: { Authorization: `Bearer ${token}` } }).catch(() => null),
+            fetch('/api/v1/daily-challenge/today', { headers: { Authorization: `Bearer ${token}` } }).catch(() => null),
+          ]);
+          if (profRes && profRes.ok) {
+            const data = await profRes.json();
             setProfileData(data.data || null);
+          }
+          if (chalRes && chalRes.ok) {
+            const data = await chalRes.json();
+            setDailyChallenge(data.data || null);
           }
         }
       } catch {
@@ -77,7 +83,7 @@ export function StudentHome() {
       icon: 'bx bx-briefcase-alt-2',
       title: 'Career Opportunities',
       desc: 'Explore enterprise placements and internships',
-      tag: '30 Drives',
+      tag: 'Drives',
       tagType: 'success',
     },
     {
@@ -85,7 +91,7 @@ export function StudentHome() {
       icon: 'bx bx-trophy',
       title: 'Global Leaderboard',
       desc: 'Track cohort rankings, XP milestones & badges',
-      tag: 'Top 10%',
+      tag: 'Live Rank',
       tagType: 'gold',
     },
     {
@@ -128,13 +134,13 @@ export function StudentHome() {
           <div className={styles.statMetric}>
             <span className={styles.statMetricLabel}>Beyon Coins</span>
             <span className={`${styles.statMetricValue} ${styles.goldVal}`}>
-              <i className="bx bx-coin-stack" /> 2,450
+              <i className="bx bx-coin-stack" /> {profileData?.coins ?? '2,450'}
             </span>
           </div>
           <div className={styles.statDivider} />
           <div className={styles.statMetric}>
-            <span className={styles.statMetricLabel}>Assessments</span>
-            <span className={styles.statMetricValue}>2 Passed</span>
+            <span className={styles.statMetricLabel}>Status</span>
+            <span className={styles.statMetricValue} style={{ color: '#15803d', fontSize: '1rem', fontWeight: 800 }}>ACTIVE</span>
           </div>
         </div>
       </section>
@@ -149,11 +155,12 @@ export function StudentHome() {
             </div>
             <div className={styles.spotlightBody}>
               <span className={styles.spotlightTag}>Daily Challenge Active</span>
-              <h3>NVIDIA GPU Kernel Memory Optimization (CUDA)</h3>
+              <h3>{dailyChallenge?.question?.title || dailyChallenge?.title || 'Interactive Technical Daily Challenge'}</h3>
               <p>Solve today's algorithmic puzzle within 30 minutes to claim 50 Beyon Coins and 100 XP.</p>
             </div>
             <Link to="/daily-challenge" className={styles.spotlightAction}>
-              Start Challenge <i className="bx bx-right-arrow-alt" />
+              <span>Start Challenge</span>
+              <i className="bx bx-right-arrow-alt" />
             </Link>
           </div>
 

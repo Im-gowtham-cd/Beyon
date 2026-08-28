@@ -10,8 +10,9 @@
 .checkmark {
   width: 72px;
   height: 72px;
-  border-radius: 50%;
+  border-radius: 0px;
   background: #dcfce7;
+  border: 2px solid #86efac;
   color: #15803d;
   display: flex;
   align-items: center;
@@ -19,7 +20,7 @@
   font-size: 2.2rem;
   font-weight: 900;
   margin-bottom: 20px;
-  box-shadow: 0 4px 12px rgba(21, 128, 61, 0.15);
+  box-shadow: 0 2px 8px rgba(21, 128, 61, 0.15);
   animation: pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
@@ -46,8 +47,8 @@
   gap: 8px;
   padding: 14px 36px;
   background: linear-gradient(135deg, #1c2d81 0%, #253cac 100%);
-  border: none;
-  border-radius: 8px;
+  border: 1px solid #1c2d81;
+  border-radius: 0px;
   color: #ffffff;
   font-size: 0.96rem;
   font-weight: 800;

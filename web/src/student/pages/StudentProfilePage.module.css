@@ -11,14 +11,13 @@
 .profileHeader {
   background: #ffffff;
   border: 1px solid var(--color-border, #e2e8f0);
-  border-radius: 16px;
-  padding: 28px 32px;
+  border-radius: 0px;
+  padding: 24px 28px;
   display: flex;
   gap: 24px;
   align-items: flex-start;
   box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
   position: relative;
-  overflow: hidden;
 }
 
 .profileHeader::before {
