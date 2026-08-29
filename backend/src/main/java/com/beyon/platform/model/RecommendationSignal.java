@@ -20,7 +20,7 @@ public class RecommendationSignal {
     @Column(name = "recommendation_id")
     private UUID recommendationId;
 
-    @Column(nullable = false, length = 50)
+    @Column(name = "`signal`", nullable = false, length = 50)
     private String signal;
 
     @Column(columnDefinition = "TEXT")

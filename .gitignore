@@ -1,50 +1,131 @@
-# Beyon Monorepo .gitignore
+# ============================================================
+# Beyon Monorepo — Comprehensive .gitignore
+# ============================================================
 
-# Dependencies
+# ─── Dependencies & Package Managers ───────────────────────────
 node_modules/
 .pnp.*
+.yarn/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
 
-# Build output
+# ─── Build Outputs & Distribution ──────────────────────────────
 dist/
 build/
 out/
 target/
 *.class
+*.jar
+*.war
+*.tsbuildinfo
+.parcel-cache/
+.next/
+.vite/
+.turbo/
+.cache/
 
-# Environment
+# ─── Environment & Secrets ─────────────────────────────────────
 .env
 .env.local
 .env.*.local
+.env.development.local
+.env.test.local
 .env.production
+.env.production.local
+*.pem
+*.key
+*.crt
+*.pfx
+*.p12
 
-# IDE
+# ─── IDE & Editors ─────────────────────────────────────────────
 .vscode/
 .idea/
+*.iml
+*.iws
+*.ipr
 *.swp
+*.swo
 *~
+*.sublime-project
+*.sublime-workspace
 
-# OS
+# ─── Operating System Files ────────────────────────────────────
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
 Desktop.ini
 
-# Logs
+# ─── Logs & Runtime State ──────────────────────────────────────
 *.log
 logs/
+backend/logs/
+*.pid
+*.seed
+*.pid.lock
 
-# Python
+# ─── Python & AI Service ───────────────────────────────────────
 __pycache__/
 *.py[cod]
+*$py.class
+*.so
+.Python
 .venv/
 venv/
+env/
+ENV/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
 
-# TypeScript
-*.tsbuildinfo
+# ─── Android Native Application & Gradle ───────────────────────
+.gradle/
+**/.gradle/
+**/build/
+mobile/android/.gradle/
+mobile/android/app/build/
+*.apk
+*.ap_
+*.aab
+*.dex
+local.properties
+*.keystore
+*.jks
+captures/
+.externalNativeBuild/
+.cxx/
 
-# Misc
-*.tgz
+# ─── Desktop (Electron) Artifacts ──────────────────────────────
+desktop/dist/
+desktop/release/
+
+# ─── Dolt Database & History ───────────────────────────────────
+beyon/
+.doltcfg/
+.dolt_dropped_databases/
+.sqlhistory
+.dolt/
+*.darc
+sql-server.info
+.dolt/sql-server.info
+.dolt/noms/LOCK
+.dolt/noms/oldgen/LOCK
+.dolt/stats/.dolt/noms/LOCK
+
+# ─── Temporary, Backup & Scratch Files ─────────────────────────
 *.tmp
-.cache/
-
+*.temp
+*.bak
+*.orig
+*.rej
+*.patch
 .freebuff
-.github
+presentation/

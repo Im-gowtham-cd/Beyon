@@ -34,7 +34,8 @@ export function doltExec(sql: string): void {
   // Write to temp file to avoid shell quoting issues
   const tmpFile = path.join(os.tmpdir(), `beyon_seed_${Date.now()}_${Math.random().toString(36).slice(2)}.sql`);
   try {
-    fs.writeFileSync(tmpFile, sql, "utf8");
+    const fullSql = sql.startsWith("USE ") ? sql : `USE beyon;\n${sql}`;
+    fs.writeFileSync(tmpFile, fullSql, "utf8");
     const result = spawnSync(
       "dolt",
       ["sql", `--file=${tmpFile}`],
@@ -63,7 +64,8 @@ export function doltExec(sql: string): void {
 export function doltQuery(sql: string): Record<string, string>[] {
   const tmpFile = path.join(os.tmpdir(), `beyon_seed_q_${Date.now()}.sql`);
   try {
-    fs.writeFileSync(tmpFile, sql, "utf8");
+    const fullSql = sql.startsWith("USE ") ? sql : `USE beyon;\n${sql}`;
+    fs.writeFileSync(tmpFile, fullSql, "utf8");
     const result = spawnSync(
       "dolt",
       ["sql", "--result-format=csv", `--file=${tmpFile}`],

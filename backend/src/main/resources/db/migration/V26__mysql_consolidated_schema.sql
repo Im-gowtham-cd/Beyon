@@ -1326,63 +1326,6 @@ CREATE TABLE IF NOT EXISTS system_check_results (
 );
 
 -- ============================================================
--- Source: V9_1__seed_career_paths.sql
--- ============================================================
-
-INSERT IGNORE INTO career_paths (name, slug, description, category, required_skills, optional_skills, typical_education, salary_range, growth_outlook) VALUES
-('Backend Developer', 'backend-developer', 'Build scalable server-side applications, APIs, and microservices. Work with databases, caching, and cloud infrastructure.', 'Engineering', '["Java","SQL","Spring Boot","REST APIs","Docker","Redis","Git"]', '["Kubernetes","MongoDB","Kafka","GraphQL"]', 'B.Tech Computer Science or equivalent', '₹6-18 LPA', 'High — 25% YoY growth'),
-('Frontend Developer', 'frontend-developer', 'Create responsive, performant web interfaces. Master modern frameworks, state management, and design systems.', 'Engineering', '["JavaScript","TypeScript","React","CSS","HTML","Git","Responsive Design"]', '["Next.js","Tailwind CSS","Redux","Testing"]', 'B.Tech Computer Science or equivalent', '₹5-16 LPA', 'High — 22% YoY growth'),
-('Full Stack Developer', 'full-stack-developer', 'End-to-end web development spanning frontend UI, backend APIs, databases, and deployment.', 'Engineering', '["JavaScript","TypeScript","React","Node.js","SQL","Git","REST APIs"]', '["Next.js","Docker","PostgreSQL","Redis"]', 'B.Tech Computer Science or equivalent', '₹7-20 LPA', 'Very High — 28% YoY growth'),
-('Data Scientist', 'data-scientist', 'Extract insights from complex data using statistics, machine learning, and programming.', 'Data & Analytics', '["Python","SQL","Machine Learning","Statistics","Pandas","NumPy","Data Visualization"]', '["TensorFlow","PySpark","Hadoop","Deep Learning"]', 'B.Tech/MTech with specialization in Data Science or Statistics', '₹8-25 LPA', 'Very High — 35% YoY growth'),
-('AI Engineer', 'ai-engineer', 'Build and deploy AI/ML models, design intelligent systems, and work with large language models.', 'Data & Analytics', '["Python","Machine Learning","Deep Learning","TensorFlow","NLP","Computer Vision"]', '["PyTorch","LLMs","MLOps","Kubernetes"]', 'B.Tech/MTech in CS or AI specialization', '₹10-30 LPA', 'Extremely High — 40% YoY growth'),
-('DevOps Engineer', 'devOps-engineer', 'Bridge development and operations with CI/CD, infrastructure automation, and cloud platform expertise.', 'Infrastructure', '["Linux","Docker","Kubernetes","CI/CD","AWS","Terraform","Git"]', '["Ansible","Prometheus","Jenkins","Azure"]', 'B.Tech Computer Science or equivalent', '₹7-22 LPA', 'High — 25% YoY growth'),
-('Cloud Engineer', 'cloud-engineer', 'Design, build, and manage cloud infrastructure and services on major cloud platforms.', 'Infrastructure', '["AWS","Azure","Terraform","Docker","Kubernetes","Linux","Networking"]', '["GCP","Serverless","Cost Optimization","Security"]', 'B.Tech with Cloud Computing specialization', '₹8-24 LPA', 'High — 23% YoY growth'),
-('Cybersecurity Engineer', 'cybersecurity-engineer', 'Protect systems and networks from cyber threats. Design security architecture and conduct audits.', 'Security', '["Network Security","Cryptography","Penetration Testing","SIEM","Linux","Python"]', '["Cloud Security","Compliance","Incident Response","Forensics"]', 'B.Tech CS or Cybersecurity specialization', '₹6-20 LPA', 'High — 25% YoY growth')
-;
-
-INSERT IGNORE INTO career_path_skills (career_path_id, skill_id, required, proficiency_level, sort_order)
-SELECT cp.id, s.id, 1, 'INTERMEDIATE', ROW_NUMBER() OVER (ORDER BY s.name)
-FROM career_paths cp
-CROSS JOIN skills s
-WHERE cp.slug = 'backend-developer' AND s.name IN ('Java', 'SQL', 'Docker', 'Redis')
-;
-
-INSERT IGNORE INTO career_path_skills (career_path_id, skill_id, required, proficiency_level, sort_order)
-SELECT cp.id, s.id, 1, 'INTERMEDIATE', ROW_NUMBER() OVER (ORDER BY s.name)
-FROM career_paths cp
-CROSS JOIN skills s
-WHERE cp.slug = 'frontend-developer' AND s.name IN ('React', 'CSS')
-;
-
-INSERT IGNORE INTO career_path_skills (career_path_id, skill_id, required, proficiency_level, sort_order)
-SELECT cp.id, s.id, 1, 'INTERMEDIATE', ROW_NUMBER() OVER (ORDER BY s.name)
-FROM career_paths cp
-CROSS JOIN skills s
-WHERE cp.slug = 'full-stack-developer' AND s.name IN ('React', 'Java', 'SQL')
-;
-
-INSERT IGNORE INTO career_path_skills (career_path_id, skill_id, required, proficiency_level, sort_order)
-SELECT cp.id, s.id, 1, 'INTERMEDIATE', ROW_NUMBER() OVER (ORDER BY s.name)
-FROM career_paths cp
-CROSS JOIN skills s
-WHERE cp.slug = 'data-scientist' AND s.name IN ('Python', 'SQL', 'Machine Learning')
-;
-
-INSERT IGNORE INTO career_path_skills (career_path_id, skill_id, required, proficiency_level, sort_order)
-SELECT cp.id, s.id, 1, 'INTERMEDIATE', ROW_NUMBER() OVER (ORDER BY s.name)
-FROM career_paths cp
-CROSS JOIN skills s
-WHERE cp.slug = 'ai-engineer' AND s.name IN ('Python', 'Machine Learning')
-;
-
-INSERT IGNORE INTO career_path_skills (career_path_id, skill_id, required, proficiency_level, sort_order)
-SELECT cp.id, s.id, 1, 'INTERMEDIATE', ROW_NUMBER() OVER (ORDER BY s.name)
-FROM career_paths cp
-CROSS JOIN skills s
-WHERE cp.slug = 'devops-engineer' AND s.name IN ('Docker', 'SQL')
-;
-
--- ============================================================
 -- Source: V9__recruitment_intelligence.sql
 -- ============================================================
 
@@ -1525,7 +1468,7 @@ CREATE TABLE IF NOT EXISTS interview_rounds (
     duration_minutes INTEGER NOT NULL DEFAULT 60,
     max_score DECIMAL(5,2) NOT NULL DEFAULT 100,
     description TEXT,
-    is eliminative TINYINT(1) NOT NULL DEFAULT 1,
+    is_eliminative TINYINT(1) NOT NULL DEFAULT 1,
     created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
@@ -1671,6 +1614,63 @@ CREATE TABLE IF NOT EXISTS student_portfolio_items (
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
+
+-- ============================================================
+-- Source: V9_1__seed_career_paths.sql
+-- ============================================================
+
+INSERT IGNORE INTO career_paths (name, slug, description, category, required_skills, optional_skills, typical_education, salary_range, growth_outlook) VALUES
+('Backend Developer', 'backend-developer', 'Build scalable server-side applications, APIs, and microservices. Work with databases, caching, and cloud infrastructure.', 'Engineering', '["Java","SQL","Spring Boot","REST APIs","Docker","Redis","Git"]', '["Kubernetes","MongoDB","Kafka","GraphQL"]', 'B.Tech Computer Science or equivalent', '₹6-18 LPA', 'High — 25% YoY growth'),
+('Frontend Developer', 'frontend-developer', 'Create responsive, performant web interfaces. Master modern frameworks, state management, and design systems.', 'Engineering', '["JavaScript","TypeScript","React","CSS","HTML","Git","Responsive Design"]', '["Next.js","Tailwind CSS","Redux","Testing"]', 'B.Tech Computer Science or equivalent', '₹5-16 LPA', 'High — 22% YoY growth'),
+('Full Stack Developer', 'full-stack-developer', 'End-to-end web development spanning frontend UI, backend APIs, databases, and deployment.', 'Engineering', '["JavaScript","TypeScript","React","Node.js","SQL","Git","REST APIs"]', '["Next.js","Docker","PostgreSQL","Redis"]', 'B.Tech Computer Science or equivalent', '₹7-20 LPA', 'Very High — 28% YoY growth'),
+('Data Scientist', 'data-scientist', 'Extract insights from complex data using statistics, machine learning, and programming.', 'Data & Analytics', '["Python","SQL","Machine Learning","Statistics","Pandas","NumPy","Data Visualization"]', '["TensorFlow","PySpark","Hadoop","Deep Learning"]', 'B.Tech/MTech with specialization in Data Science or Statistics', '₹8-25 LPA', 'Very High — 35% YoY growth'),
+('AI Engineer', 'ai-engineer', 'Build and deploy AI/ML models, design intelligent systems, and work with large language models.', 'Data & Analytics', '["Python","Machine Learning","Deep Learning","TensorFlow","NLP","Computer Vision"]', '["PyTorch","LLMs","MLOps","Kubernetes"]', 'B.Tech/MTech in CS or AI specialization', '₹10-30 LPA', 'Extremely High — 40% YoY growth'),
+('DevOps Engineer', 'devOps-engineer', 'Bridge development and operations with CI/CD, infrastructure automation, and cloud platform expertise.', 'Infrastructure', '["Linux","Docker","Kubernetes","CI/CD","AWS","Terraform","Git"]', '["Ansible","Prometheus","Jenkins","Azure"]', 'B.Tech Computer Science or equivalent', '₹7-22 LPA', 'High — 25% YoY growth'),
+('Cloud Engineer', 'cloud-engineer', 'Design, build, and manage cloud infrastructure and services on major cloud platforms.', 'Infrastructure', '["AWS","Azure","Terraform","Docker","Kubernetes","Linux","Networking"]', '["GCP","Serverless","Cost Optimization","Security"]', 'B.Tech with Cloud Computing specialization', '₹8-24 LPA', 'High — 23% YoY growth'),
+('Cybersecurity Engineer', 'cybersecurity-engineer', 'Protect systems and networks from cyber threats. Design security architecture and conduct audits.', 'Security', '["Network Security","Cryptography","Penetration Testing","SIEM","Linux","Python"]', '["Cloud Security","Compliance","Incident Response","Forensics"]', 'B.Tech CS or Cybersecurity specialization', '₹6-20 LPA', 'High — 25% YoY growth')
+;
+
+INSERT IGNORE INTO career_path_skills (career_path_id, skill_id, required, proficiency_level, sort_order)
+SELECT cp.id, s.id, 1, 'INTERMEDIATE', ROW_NUMBER() OVER (ORDER BY s.name)
+FROM career_paths cp
+CROSS JOIN skills s
+WHERE cp.slug = 'backend-developer' AND s.name IN ('Java', 'SQL', 'Docker', 'Redis')
+;
+
+INSERT IGNORE INTO career_path_skills (career_path_id, skill_id, required, proficiency_level, sort_order)
+SELECT cp.id, s.id, 1, 'INTERMEDIATE', ROW_NUMBER() OVER (ORDER BY s.name)
+FROM career_paths cp
+CROSS JOIN skills s
+WHERE cp.slug = 'frontend-developer' AND s.name IN ('React', 'CSS')
+;
+
+INSERT IGNORE INTO career_path_skills (career_path_id, skill_id, required, proficiency_level, sort_order)
+SELECT cp.id, s.id, 1, 'INTERMEDIATE', ROW_NUMBER() OVER (ORDER BY s.name)
+FROM career_paths cp
+CROSS JOIN skills s
+WHERE cp.slug = 'full-stack-developer' AND s.name IN ('React', 'Java', 'SQL')
+;
+
+INSERT IGNORE INTO career_path_skills (career_path_id, skill_id, required, proficiency_level, sort_order)
+SELECT cp.id, s.id, 1, 'INTERMEDIATE', ROW_NUMBER() OVER (ORDER BY s.name)
+FROM career_paths cp
+CROSS JOIN skills s
+WHERE cp.slug = 'data-scientist' AND s.name IN ('Python', 'SQL', 'Machine Learning')
+;
+
+INSERT IGNORE INTO career_path_skills (career_path_id, skill_id, required, proficiency_level, sort_order)
+SELECT cp.id, s.id, 1, 'INTERMEDIATE', ROW_NUMBER() OVER (ORDER BY s.name)
+FROM career_paths cp
+CROSS JOIN skills s
+WHERE cp.slug = 'ai-engineer' AND s.name IN ('Python', 'Machine Learning')
+;
+
+INSERT IGNORE INTO career_path_skills (career_path_id, skill_id, required, proficiency_level, sort_order)
+SELECT cp.id, s.id, 1, 'INTERMEDIATE', ROW_NUMBER() OVER (ORDER BY s.name)
+FROM career_paths cp
+CROSS JOIN skills s
+WHERE cp.slug = 'devops-engineer' AND s.name IN ('Docker', 'SQL')
+;
 
 -- ============================================================
 -- Source: V10__social_community_platform.sql
@@ -2212,20 +2212,20 @@ VALUES
 ;
 
 -- Test Student Profiles
-INSERT IGNORE INTO student_profiles (id, user_id, username, degree, department, institution, graduation_year, placement_status, created_at, updated_at)
+INSERT IGNORE INTO student_profiles (id, user_id, username, degree, department, institution, graduation_year, placement_preference, created_at, updated_at)
 VALUES
-  ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '11111111-1111-1111-1111-111111111111', 'teststudent', 'B.Tech', 'Computer Science', 'Test University', 2026, 'SEEKING', NOW(), NOW()),
-  ('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', '55555555-5555-5555-5555-555555555555', 'teststudent2', 'B.Tech', 'Information Technology', 'Test University', 2026, 'SEEKING', NOW(), NOW())
+  ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '11111111-1111-1111-1111-111111111111', 'teststudent', 'B.Tech', 'Computer Science', 'Test University', 2026, 'PLACEMENT_SEEKING', NOW(), NOW()),
+  ('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', '55555555-5555-5555-5555-555555555555', 'teststudent2', 'B.Tech', 'Information Technology', 'Test University', 2026, 'PLACEMENT_SEEKING', NOW(), NOW())
 ;
 
 -- Test Institution Profiles
-INSERT IGNORE INTO institution_profiles (id, user_id, institution_name, institution_type, location, website, accreditation, student_count, established_year, created_at, updated_at)
+INSERT IGNORE INTO institution_profiles (id, user_id, institution_name, institution_type, city, state, country, website, accreditation_grade, total_students, established_year, created_at, updated_at)
 VALUES
-  ('cccccccc-cccc-cccc-cccc-cccccccccccc', '22222222-2222-2222-2222-222222222222', 'Test University', 'DEEMED', 'Chennai, India', 'https://testuniversity.edu', 'NAAC A+', 5000, 1990, NOW(), NOW())
+  ('cccccccc-cccc-cccc-cccc-cccccccccccc', '22222222-2222-2222-2222-222222222222', 'Test University', 'DEEMED', 'Chennai', 'Tamil Nadu', 'India', 'https://testuniversity.edu', 'NAAC A+', 5000, 1990, NOW(), NOW())
 ;
 
 -- Test Company Profiles
-INSERT IGNORE INTO company_profiles (id, user_id, company_name, industry, website, logo_url, description, founded_year, headquarters, company_size, created_at, updated_at)
+INSERT IGNORE INTO company_profiles (id, user_id, company_name, industry, website, logo_url, about, founded_year, headquarters, company_size, created_at, updated_at)
 VALUES
   ('dddddddd-dddd-dddd-dddd-dddddddddddd', '33333333-3333-3333-3333-333333333333', 'Test Corp', 'Technology', 'https://testcorp.com', NULL, 'A leading technology company for testing', 2010, 'Bangalore, India', '1000-5000', NOW(), NOW())
 ;
@@ -2237,22 +2237,19 @@ VALUES
   ('ffffffff-ffff-ffff-ffff-ffffffffffff', '55555555-5555-5555-5555-555555555555', 1000, 1000, 0, NOW(), NOW())
 ;
 
--- Test Discussion Categories (only if not already seeded)
-INSERT IGNORE INTO discussion_categories (id, name, slug, description, icon, sort_order, created_at)
-SELECT UUID(), cat.name, cat.slug, cat.description, cat.icon, cat.sort_order, NOW()
-FROM (VALUES
-  ('Programming', 'programming', 'General programming discussions', '💻', 1),
-  ('DSA', 'dsa', 'Data Structures & Algorithms', '🧮', 2),
-  ('Java', 'java', 'Java programming language', '☕', 3),
-  ('Web Development', 'web-dev', 'Frontend & Backend web development', '🌐', 4),
-  ('AI/ML', 'ai-ml', 'Artificial Intelligence & Machine Learning', '🤖', 5),
-  ('Placements', 'placements', 'Campus placement preparation', '🎯', 6),
-  ('Internships', 'internships', 'Internship opportunities & experience', '💼', 7),
-  ('Career', 'career', 'Career guidance & advice', '🚀', 8),
-  ('Projects', 'projects', 'Project showcase & help', '🛠️', 9),
-  ('General', 'general', 'General discussion', '💬', 10)
-) AS cat(name, slug, description, icon, sort_order)
-WHERE NOT EXISTS (SELECT 1 FROM discussion_categories WHERE slug = cat.slug);
+-- Test Discussion Categories
+INSERT IGNORE INTO discussion_categories (id, name, slug, description, icon, sort_order, created_at) VALUES
+  (UUID(), 'Programming', 'programming', 'General programming discussions', '💻', 1, NOW()),
+  (UUID(), 'DSA', 'dsa', 'Data Structures & Algorithms', '🧮', 2, NOW()),
+  (UUID(), 'Java', 'java', 'Java programming language', '☕', 3, NOW()),
+  (UUID(), 'Web Development', 'web-dev', 'Frontend & Backend web development', '🌐', 4, NOW()),
+  (UUID(), 'AI/ML', 'ai-ml', 'Artificial Intelligence & Machine Learning', '🤖', 5, NOW()),
+  (UUID(), 'Placements', 'placements', 'Campus placement preparation', '🎯', 6, NOW()),
+  (UUID(), 'Internships', 'internships', 'Internship opportunities & experience', '💼', 7, NOW()),
+  (UUID(), 'Career', 'career', 'Career guidance & advice', '🚀', 8, NOW()),
+  (UUID(), 'Projects', 'projects', 'Project showcase & help', '🛠️', 9, NOW()),
+  (UUID(), 'General', 'general', 'General discussion', '💬', 10, NOW())
+;
 
 -- ============================================================
 -- Source: V14__feedback_stabilization.sql
@@ -2285,7 +2282,8 @@ CREATE TABLE IF NOT EXISTS feedback_reports (
     metadata JSON,
     created_at TIMESTAMP NOT NULL DEFAULT now(),
     updated_at TIMESTAMP NOT NULL DEFAULT now(),
-    resolved_at TIMESTAMP
+    resolved_at TIMESTAMP,
+    KEY idx_feedback_reports_num (report_number)
 );
 
 
@@ -2384,7 +2382,7 @@ CREATE TABLE IF NOT EXISTS analytics_daily_snapshots (
     metric_value NUMERIC NOT NULL,
     dimensions JSON,
     created_at TIMESTAMP NOT NULL DEFAULT now(),
-    UNIQUE(snapshot_date, metric_name, dimensions)
+    UNIQUE(snapshot_date, metric_name)
 );
 
 
@@ -2711,7 +2709,6 @@ ALTER TABLE daily_challenges ADD COLUMN challenge_type VARCHAR(50) DEFAULT 'MCQ'
 ALTER TABLE daily_challenges ADD COLUMN topic VARCHAR(200);
 ALTER TABLE daily_challenges ADD COLUMN difficulty VARCHAR(20) DEFAULT 'MEDIUM' ;
 ALTER TABLE daily_challenges ADD COLUMN xp_reward INTEGER DEFAULT 25;
-ALTER TABLE daily_challenges ADD COLUMN completed_at TIMESTAMP;
 ALTER TABLE daily_challenges ADD COLUMN time_taken_seconds INTEGER;
 
 -- Streak freeze system (Phase 113)
@@ -2730,7 +2727,6 @@ CREATE TABLE IF NOT EXISTS streak_freeze_log (
 -- Enhanced achievements with rarity (Phase 114)
 ALTER TABLE student_achievements_gamification ADD COLUMN rarity VARCHAR(20) DEFAULT 'COMMON' ;
 ALTER TABLE student_achievements_gamification ADD COLUMN category VARCHAR(50) DEFAULT 'LEARNING' ;
-ALTER TABLE student_achievements_gamification ADD COLUMN badge_icon VARCHAR(20);
 ALTER TABLE student_achievements_gamification ADD COLUMN unlocked_at TIMESTAMP DEFAULT NOW();
 
 -- Weekly tests (Phase 115)
@@ -2874,9 +2870,6 @@ CREATE TABLE IF NOT EXISTS personalized_feed_items (
 -- Phase 121-130: Community, Mentorship, Institution & Industry Collaboration
 
 -- Phase 121: Enhanced Community Posts
-ALTER TABLE social_posts ADD COLUMN post_type VARCHAR(50) DEFAULT 'DISCUSSION';
-ALTER TABLE social_posts ADD COLUMN tags TEXT;
-ALTER TABLE social_posts ADD COLUMN is_pinned TINYINT(1) DEFAULT 0;
 ALTER TABLE social_posts ADD COLUMN is_featured TINYINT(1) DEFAULT 0;
 ALTER TABLE social_posts ADD COLUMN edit_count INTEGER DEFAULT 0;
 ALTER TABLE social_posts ADD COLUMN last_edited_at TIMESTAMP;
@@ -3275,11 +3268,6 @@ CREATE TABLE IF NOT EXISTS coin_transaction_ledger (
     created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
-
-
--- Phase 139: Correlation IDs for request tracing
-ALTER TABLE security_audit_log ADD COLUMN correlation_id VARCHAR(100);
-
 -- ============================================================
 -- Source: V20__search_performance_scale.sql
 -- ============================================================
@@ -3345,7 +3333,7 @@ CREATE TABLE IF NOT EXISTS realtime_events (
     user_id VARCHAR(36) NOT NULL,
     event_type VARCHAR(100) NOT NULL,
     payload TEXT NOT NULL,
-    read TINYINT(1) DEFAULT 0,
+    `read` TINYINT(1) DEFAULT 0,
     created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
@@ -3356,7 +3344,7 @@ CREATE TABLE IF NOT EXISTS recommendation_signals (
     user_id VARCHAR(36) NOT NULL,
     recommendation_type VARCHAR(100) NOT NULL,
     recommendation_id VARCHAR(36),
-    signal VARCHAR(50) NOT NULL,
+    `signal` VARCHAR(50) NOT NULL,
     metadata TEXT,
     created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
@@ -3393,8 +3381,8 @@ CREATE TABLE IF NOT EXISTS skill_taxonomy_nodes (
     avg_salary_range VARCHAR(100),
     growth_outlook VARCHAR(100),
     active TINYINT(1) NOT NULL DEFAULT 1,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
 
@@ -3405,7 +3393,7 @@ CREATE TABLE IF NOT EXISTS skill_taxonomy_links (
     id VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
     skill_id VARCHAR(36) NOT NULL,
     taxonomy_node_id VARCHAR(36) NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     UNIQUE(skill_id, taxonomy_node_id)
 );
 
@@ -3417,7 +3405,7 @@ CREATE TABLE IF NOT EXISTS skill_prerequisites (
     skill_node_id VARCHAR(36) NOT NULL,
     prerequisite_node_id VARCHAR(36) NOT NULL,
     required_level VARCHAR(20) DEFAULT 'INTERMEDIATE',
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     UNIQUE(skill_node_id, prerequisite_node_id)
 );
 
@@ -3432,10 +3420,10 @@ CREATE TABLE IF NOT EXISTS student_skill_graph (
     evidence_count INTEGER NOT NULL DEFAULT 0,
     sources JSON NOT NULL DEFAULT '[]',
     improvement_trend VARCHAR(20) NOT NULL DEFAULT 'STABLE',
-    last_assessed_at TIMESTAMP WITH TIME ZONE,
+    last_assessed_at TIMESTAMP,
     verified TINYINT(1) NOT NULL DEFAULT 0,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
     UNIQUE(student_id, skill_id)
 );
 
@@ -3453,8 +3441,8 @@ CREATE TABLE IF NOT EXISTS personalized_challenge_config (
     variety_weight NUMERIC(3,2) NOT NULL DEFAULT 0.15,
     preferred_topics JSON NOT NULL DEFAULT '[]',
     avoid_topics JSON NOT NULL DEFAULT '[]',
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE IF NOT EXISTS challenge_selection_log (
@@ -3466,7 +3454,7 @@ CREATE TABLE IF NOT EXISTS challenge_selection_log (
     difficulty_score NUMERIC(5,2),
     gap_score NUMERIC(5,2),
     streak_relevance NUMERIC(3,2),
-    selected_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+    selected_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
 
@@ -3479,10 +3467,10 @@ CREATE TABLE IF NOT EXISTS adaptive_learning_paths (
     current_step_index INTEGER NOT NULL DEFAULT 0,
     overall_progress NUMERIC(5,2) NOT NULL DEFAULT 0,
     status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
-    started_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    completed_at TIMESTAMP WITH TIME ZONE,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+    started_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    completed_at TIMESTAMP,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
 
@@ -3500,10 +3488,10 @@ CREATE TABLE IF NOT EXISTS adaptive_learning_steps (
     project_suggestion TEXT,
     state VARCHAR(20) NOT NULL DEFAULT 'LOCKED',
     progress NUMERIC(5,2) NOT NULL DEFAULT 0,
-    started_at TIMESTAMP WITH TIME ZONE,
-    completed_at TIMESTAMP WITH TIME ZONE,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+    started_at TIMESTAMP,
+    completed_at TIMESTAMP,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
 
@@ -3514,8 +3502,8 @@ CREATE TABLE IF NOT EXISTS advisor_chat_sessions (
     title VARCHAR(300) DEFAULT 'Career Advice',
     status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
     context_snapshot JSON,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
 
@@ -3525,7 +3513,7 @@ CREATE TABLE IF NOT EXISTS advisor_chat_messages (
     role VARCHAR(10) NOT NULL,
     content TEXT NOT NULL,
     data_references JSON,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+    created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
 
@@ -3540,9 +3528,9 @@ CREATE TABLE IF NOT EXISTS portfolio_analysis (
     certification_strength NUMERIC(5,2) NOT NULL DEFAULT 0,
     recommendations JSON NOT NULL DEFAULT '[]',
     missing_items JSON NOT NULL DEFAULT '[]',
-    analyzed_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+    analyzed_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
 
@@ -3560,8 +3548,8 @@ CREATE TABLE IF NOT EXISTS opportunity_match_detail (
     match_factors JSON NOT NULL DEFAULT '[]',
     strength_items JSON NOT NULL DEFAULT '[]',
     gap_items JSON NOT NULL DEFAULT '[]',
-    calculated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    calculated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     UNIQUE(student_id, opportunity_id)
 );
 
@@ -3586,14 +3574,14 @@ CREATE TABLE IF NOT EXISTS recruitment_drives (
     salary_range VARCHAR(100),
     location VARCHAR(200),
     work_mode VARCHAR(30) DEFAULT 'ONSITE',
-    application_deadline TIMESTAMP WITH TIME ZONE,
+    application_deadline TIMESTAMP,
     assessment_id VARCHAR(36),
     max_candidates INTEGER DEFAULT 0,
     coin_cost INTEGER DEFAULT 100,
     targeting_mode VARCHAR(30) DEFAULT 'PUBLIC',
     status VARCHAR(30) NOT NULL DEFAULT 'DRAFT',
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
 
@@ -3608,7 +3596,7 @@ CREATE TABLE IF NOT EXISTS drive_institution_targets (
     max_graduation_year INTEGER,
     min_cgpa NUMERIC(4,2),
     placement_willing_only TINYINT(1) NOT NULL DEFAULT 1,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     UNIQUE(drive_id, institution_id)
 );
 
@@ -3623,8 +3611,8 @@ CREATE TABLE IF NOT EXISTS placement_registrations (
     preferred_locations TEXT,
     preferred_work_mode VARCHAR(30),
     min_expected_package NUMERIC(12,2),
-    registered_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+    registered_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
 
@@ -3642,10 +3630,10 @@ CREATE TABLE IF NOT EXISTS candidate_shortlists (
     rank_in_drive INTEGER,
     status VARCHAR(30) NOT NULL DEFAULT 'SHORTLISTED',
     shortlisted_by VARCHAR(36),
-    shortlisted_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    shortlisted_at TIMESTAMP NOT NULL DEFAULT NOW(),
     notes TEXT,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
 
@@ -3660,7 +3648,7 @@ CREATE TABLE IF NOT EXISTS recruitment_interviews (
     interviewer_id VARCHAR(36),
     interview_type VARCHAR(50) NOT NULL,
     round_number INTEGER NOT NULL DEFAULT 1,
-    scheduled_at TIMESTAMP WITH TIME ZONE,
+    scheduled_at TIMESTAMP,
     duration_minutes INTEGER DEFAULT 60,
     meeting_link VARCHAR(500),
     location VARCHAR(300),
@@ -3668,8 +3656,8 @@ CREATE TABLE IF NOT EXISTS recruitment_interviews (
     feedback TEXT,
     score NUMERIC(5,2),
     recommendation VARCHAR(30),
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
 
@@ -3690,13 +3678,13 @@ CREATE TABLE IF NOT EXISTS placement_records (
     placement_type VARCHAR(30) DEFAULT 'FULL_TIME',
     placement_year INTEGER NOT NULL,
     joining_date DATE,
-    offer_date TIMESTAMP WITH TIME ZONE,
+    offer_date TIMESTAMP,
     status VARCHAR(30) NOT NULL DEFAULT 'OFFERED',
     verified TINYINT(1) NOT NULL DEFAULT 0,
     verified_by VARCHAR(36),
-    verified_at TIMESTAMP WITH TIME ZONE,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+    verified_at TIMESTAMP,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
 
@@ -3724,7 +3712,7 @@ CREATE TABLE IF NOT EXISTS institution_placement_stats (
     department_stats JSON DEFAULT '{}',
     skill_demand JSON DEFAULT '{}',
     company_tier_distribution JSON DEFAULT '{}',
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
     UNIQUE(institution_id, academic_year)
 );
 
@@ -3743,12 +3731,12 @@ CREATE TABLE IF NOT EXISTS placement_verifications (
     institution_id VARCHAR(36),
     verification_status VARCHAR(30) NOT NULL DEFAULT 'PENDING',
     verified_by VARCHAR(36),
-    verified_at TIMESTAMP WITH TIME ZONE,
+    verified_at TIMESTAMP,
     verification_source VARCHAR(50),
     verification_document_url VARCHAR(500),
     rejection_reason TEXT,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
 
@@ -3764,9 +3752,9 @@ CREATE TABLE IF NOT EXISTS institution_ratings (
     skill_score NUMERIC(3,2) NOT NULL DEFAULT 0,
     overall_rating NUMERIC(3,2) NOT NULL DEFAULT 0,
     calculation_version INTEGER NOT NULL DEFAULT 1,
-    last_calculated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+    last_calculated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
 -- 3. Company Tier Profile (Phase 173)
@@ -3783,9 +3771,9 @@ CREATE TABLE IF NOT EXISTS company_tier_profiles (
     reputation_score NUMERIC(3,2) DEFAULT 0,
     retention_score NUMERIC(3,2) DEFAULT 0,
     calculation_version INTEGER NOT NULL DEFAULT 1,
-    last_calculated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+    last_calculated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
 
@@ -3808,8 +3796,8 @@ CREATE TABLE IF NOT EXISTS interview_feedback_intelligence (
     feedback TEXT,
     recommended_improvements TEXT,
     is_candidate_visible TINYINT(1) NOT NULL DEFAULT 0,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
 
@@ -3828,8 +3816,8 @@ CREATE TABLE IF NOT EXISTS career_outcomes (
     is_current TINYINT(1) NOT NULL DEFAULT 1,
     verified TINYINT(1) NOT NULL DEFAULT 0,
     verified_by VARCHAR(36),
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
 
@@ -3850,8 +3838,8 @@ CREATE TABLE IF NOT EXISTS alumni_profiles (
     is_mentoring TINYINT(1) NOT NULL DEFAULT 0,
     mentor_availability VARCHAR(30) DEFAULT 'UNAVAILABLE',
     public_profile TINYINT(1) NOT NULL DEFAULT 1,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
 
@@ -3865,8 +3853,8 @@ CREATE TABLE IF NOT EXISTS alumni_connections (
     connection_type VARCHAR(30) NOT NULL DEFAULT 'FOLLOW',
     status VARCHAR(30) NOT NULL DEFAULT 'PENDING',
     message TEXT,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
     UNIQUE(alumni_id, student_id, connection_type)
 );
 
@@ -3888,9 +3876,9 @@ CREATE TABLE IF NOT EXISTS opportunity_referrals (
     referral_limit INTEGER DEFAULT 0,
     referral_count INTEGER NOT NULL DEFAULT 0,
     status VARCHAR(30) NOT NULL DEFAULT 'ACTIVE',
-    expires_at TIMESTAMP WITH TIME ZONE,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+    expires_at TIMESTAMP,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
 
@@ -3899,7 +3887,7 @@ CREATE TABLE IF NOT EXISTS referral_clicks (
     id VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
     referral_id VARCHAR(36) NOT NULL,
     student_id VARCHAR(36) NOT NULL,
-    clicked_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    clicked_at TIMESTAMP NOT NULL DEFAULT NOW(),
     applied TINYINT(1) NOT NULL DEFAULT 0,
     UNIQUE(referral_id, student_id)
 );
@@ -3916,9 +3904,9 @@ CREATE TABLE IF NOT EXISTS placement_readiness_scores (
     interview_score NUMERIC(5,2) NOT NULL DEFAULT 0,
     practice_score NUMERIC(5,2) NOT NULL DEFAULT 0,
     recommendations JSON NOT NULL DEFAULT '[]',
-    calculated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+    calculated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
 -- ============================================================
@@ -3944,14 +3932,14 @@ CREATE TABLE IF NOT EXISTS beyon_certificates (
     issuer_type VARCHAR(30) NOT NULL DEFAULT 'BEYON',
     score INTEGER,
     skills_covered TEXT,
-    issued_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    expires_at TIMESTAMP WITH TIME ZONE,
+    issued_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    expires_at TIMESTAMP,
     verification_url VARCHAR(500),
     qr_data TEXT,
     verification_status VARCHAR(30) NOT NULL DEFAULT 'VERIFIED',
     metadata JSON DEFAULT '{}',
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
 
@@ -3968,10 +3956,10 @@ CREATE TABLE IF NOT EXISTS skill_endorsements (
     endorsement_level VARCHAR(30) NOT NULL DEFAULT 'ENDORSED',
     evidence_url VARCHAR(500),
     evidence_description TEXT,
-    valid_until TIMESTAMP WITH TIME ZONE,
+    valid_until TIMESTAMP,
     status VARCHAR(30) NOT NULL DEFAULT 'ACTIVE',
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
 
@@ -3991,10 +3979,10 @@ CREATE TABLE IF NOT EXISTS professional_profiles (
     resume_url VARCHAR(500),
     visibility VARCHAR(30) NOT NULL DEFAULT 'PUBLIC',
     profile_views INTEGER NOT NULL DEFAULT 0,
-    last_viewed_at TIMESTAMP WITH TIME ZONE,
+    last_viewed_at TIMESTAMP,
     metadata JSON DEFAULT '{}',
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
 
@@ -4012,13 +4000,13 @@ CREATE TABLE IF NOT EXISTS portfolio_projects (
     image_url VARCHAR(500),
     verification_status VARCHAR(30) NOT NULL DEFAULT 'UNVERIFIED',
     verified_by VARCHAR(36),
-    verified_at TIMESTAMP WITH TIME ZONE,
+    verified_at TIMESTAMP,
     verification_source VARCHAR(50),
     sort_order INTEGER NOT NULL DEFAULT 0,
     is_featured TINYINT(1) NOT NULL DEFAULT 0,
     metadata JSON DEFAULT '{}',
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
 
@@ -4032,10 +4020,10 @@ CREATE TABLE IF NOT EXISTS portfolio_verifications (
     verification_status VARCHAR(30) NOT NULL DEFAULT 'PENDING',
     evidence_url VARCHAR(500),
     evidence_description TEXT,
-    verified_at TIMESTAMP WITH TIME ZONE,
-    expires_at TIMESTAMP WITH TIME ZONE,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+    verified_at TIMESTAMP,
+    expires_at TIMESTAMP,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
 
@@ -4047,7 +4035,7 @@ CREATE TABLE IF NOT EXISTS resume_templates (
     template_data JSON NOT NULL DEFAULT '{}',
     is_default TINYINT(1) NOT NULL DEFAULT 0,
     active TINYINT(1) NOT NULL DEFAULT 1,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+    created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
 -- 7. Generated Resumes (Phase 189)
@@ -4060,8 +4048,8 @@ CREATE TABLE IF NOT EXISTS generated_resumes (
     file_url VARCHAR(500),
     generation_status VARCHAR(30) NOT NULL DEFAULT 'DRAFT',
     ai_suggestions JSON,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
 -- ============================================================
@@ -4081,8 +4069,8 @@ CREATE TABLE IF NOT EXISTS project_teams (
     current_members INTEGER NOT NULL DEFAULT 1,
     status VARCHAR(30) NOT NULL DEFAULT 'FORMING',
     looking_for TEXT,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
 
@@ -4094,7 +4082,7 @@ CREATE TABLE IF NOT EXISTS team_members (
     role VARCHAR(100),
     skills_brought TEXT,
     status VARCHAR(30) NOT NULL DEFAULT 'PENDING',
-    joined_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    joined_at TIMESTAMP NOT NULL DEFAULT NOW(),
     UNIQUE(team_id, student_id)
 );
 
@@ -4119,8 +4107,8 @@ CREATE TABLE IF NOT EXISTS project_evaluations (
     improvements TEXT,
     feedback TEXT,
     status VARCHAR(30) NOT NULL DEFAULT 'SUBMITTED',
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
 
@@ -4143,7 +4131,7 @@ CREATE TABLE IF NOT EXISTS platform_daily_stats (
     new_feedback_reports INTEGER NOT NULL DEFAULT 0,
     resolved_feedback_reports INTEGER NOT NULL DEFAULT 0,
     metadata JSON DEFAULT '{}',
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+    created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
 -- 4. Platform Reports (Phase 215)
@@ -4156,6 +4144,6 @@ CREATE TABLE IF NOT EXISTS platform_reports (
     file_url VARCHAR(500),
     generation_status VARCHAR(30) NOT NULL DEFAULT 'PENDING',
     format VARCHAR(10) NOT NULL DEFAULT 'PDF',
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    completed_at TIMESTAMP WITH TIME ZONE
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    completed_at TIMESTAMP
 );

@@ -158,6 +158,15 @@ public class InstitutionService {
     }
 
     @Transactional
+    public PlacementDrive createDrive(PlacementDrive drive, UUID institutionId) {
+        drive.setInstitutionId(institutionId);
+        if (drive.getStatus() == null || drive.getStatus().isBlank()) {
+            drive.setStatus("ACTIVE");
+        }
+        return placementDriveRepository.save(drive);
+    }
+
+    @Transactional
     public PlacementDrive approveDrive(UUID driveId, UUID institutionId) {
         PlacementDrive drive = placementDriveRepository.findById(driveId)
                 .orElseThrow(() -> new ResourceNotFoundException("Drive not found"));

@@ -36,10 +36,10 @@ export function assertNotProduction(forceOverride = false): void {
 
 // ─── Paths ────────────────────────────────────────────────────
 export const DOLT_DB_DIR = path.resolve(
-  path.join(process.cwd(), "..", "..", "beyon")
+  path.join(import.meta.dir, "..", "..")
 );
 export const DOCS_DIR = path.resolve(
-  path.join(process.cwd(), "..", "..", "docs")
+  path.join(import.meta.dir, "..", "..", "docs")
 );
 
 // ─── Seed Configuration ───────────────────────────────────────

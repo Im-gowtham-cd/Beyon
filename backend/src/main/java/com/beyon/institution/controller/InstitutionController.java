@@ -75,6 +75,12 @@ public class InstitutionController {
         return ResponseEntity.ok(ApiResponse.ok(institutionService.getDrives(instId)));
     }
 
+    @PostMapping("/drives")
+    public ResponseEntity<ApiResponse<PlacementDrive>> createDrive(Authentication auth, @RequestBody PlacementDrive drive) {
+        UUID instId = extractUserId(auth);
+        return ResponseEntity.ok(ApiResponse.ok(institutionService.createDrive(drive, instId)));
+    }
+
     @PostMapping("/drives/{driveId}/approve")
     public ResponseEntity<ApiResponse<PlacementDrive>> approveDrive(Authentication auth, @PathVariable UUID driveId) {
         UUID instId = extractUserId(auth);
