@@ -1,97 +1,48 @@
 # Beyon — Changelog
 
+## v1.2.0 (Current Release)
+
+### Native Mobile Application (`@beyon/mobile`)
+- Built native **Android Studio Gradle Project** (`mobile/android`) in Kotlin targeting **Android SDK 34**.
+- Implemented Material 3 zero border-radius UI with ViewBinding and 5 navigation fragments:
+  - `HomeFragment`: Overview, 7-day streak, XP level, Beyon Coins (⚡), and daily challenges.
+  - `PracticeFragment`: Interactive MCQ Arena with domain category filters, instant answers, and technical explanations.
+  - `SkillsFragment`: 109-node Verified Skills Taxonomy Matrix viewer.
+  - `OpportunitiesFragment`: Job & internship listings with match score ranking and 1-click apply.
+  - `ProfileFragment`: Verified credentials and live "⚡ Ping Backend Service" latency test.
+- Implemented `BackendTunnel.kt` OkHttp + Coroutines client connecting to host gateway (`http://10.0.2.2:8085/api/v1`).
+- Automated 1-command emulator launcher script `run-android.ts` (`bun run dev:mobile`).
+
+### Advanced Real-Time AI Proctoring Engine (`desktop/`)
+- Upgraded to normalized **$YC_bC_r$ Biometric Skin Chrominance Filter** ($Y \in [35, 235], C_b \in [75, 130], C_r \in [130, 175]$) with luminance gradient checks to reject background furniture and ambient light.
+- Implemented **3.0-second Face Absence Auto-Termination** (`CRITICAL_ABSENCE_AUTO_TERMINATION`).
+- Implemented **512-bin Fast Fourier Transform (FFT) Web Audio Acoustic Analyzer** measuring room noise (RMS $>0.035$) and vocal frequency speech bands ($100\text{Hz} - 2500\text{Hz}$).
+- Implemented **Sobel Edge Handheld Device Detector** ($|\Delta\text{Lum}| > 50$) flagging smartphone usage in frame.
+- Intercepted OS-level window minimize events with immediate auto-restore (<50ms) and focus loss tracking.
+
+### Monorepo & Infrastructure Enhancements
+- Configured unified **Bun Workspaces** (`web`, `desktop`, `mobile`, `packages/*`).
+- Added parallel development runner `bun run dev:all` orchestrating Web, Spring Boot API, and AI Microservice.
+- Integrated **Dolt MySQL** Git-versioned local SQL server (`bun run dev:dolt`) alongside PostgreSQL 17.
+- Upgraded to 27 Flyway migrations managing 91+ tables and 60+ composite indexes.
+
+---
+
+## v1.1.0
+
+### Fullscreen Lockdown Desktop Client
+- Electron 43 kiosk-mode window with hardware-accelerated rendering and menu bar suppression.
+- Secure `window.beyon` IPC bridge exposing system diagnostics, window locking, and auth tokens.
+- Automated 8-step exam lifecycle with 10s countdown synchronization and 30s session heartbeats.
+
+---
+
 ## v1.0.0-rc.1 (Release Candidate)
 
-### Core Platform
-- Authentication & authorization (JWT, email verification, password reset)
-- Role-based access control (Student, Institution, Company, Admin)
-- Multi-step onboarding for all roles
-
-### Student Ecosystem
-- Student profile with skills, projects, certifications, links
-- Skill taxonomy explorer with topics and subtopics
-- Question bank with practice mode
-- Daily challenges with streaks
-- Coin economy (earn, spend, leaderboard)
-- Career path recommendations with readiness scores
-- Student portfolio with verified achievements
-
-### Institution Ecosystem
-- Institution dashboard with placement analytics
-- Student management and academic tracking
-- Placement drive management
-- Institution ratings and reviews
-- Department performance analytics
-
-### Company Ecosystem
-- Company profile and verification
-- Job opportunity publishing with eligibility rules
-- Coin-based application access
-- Candidate intelligence and ranking
-- Assessment creation and management
-- Interview round configuration and scorecards
-- Recruitment analytics dashboard
-
-### Assessment & Proctoring
-- Desktop assessment app (Electron)
-- Proctored exam with fullscreen, focus, camera monitoring
-- System check before exam launch
-- Identity verification
-- Real-time proctoring event reporting
-- Auto-submit on timeout
-- Assessment evaluation and skill scoring
-
-### Intelligence Engine
-- Student↔Opportunity matching with weighted scoring
-- Skill gap analysis with recommendations
-- Career roadmap with prerequisites
-- Institution placement analytics
-- Company recruitment analytics
-
-### Community & Social
-- Social feed with posts, comments, likes
-- Discussion forums with categories, replies, solved marking
-- Follow/unfollow system
-- Direct messaging
-- Verified achievements and reputation system
-
-### Notifications & Personalization
-- Smart notification engine with priorities (CRITICAL/HIGH/NORMAL/LOW)
-- Notification preferences per type
-- Personalized dashboard combining all intelligence
-
-### Collaboration
-- Academia–Industry collaboration hub
-- Workshop, mentorship, project programs
-- Registration and participation tracking
-
-### Security & Infrastructure
-- Rate limiting (Redis sliding window)
-- Security audit logging
-- Input validation and XSS/CSRF protection
-- Security headers (CSP, X-Frame-Options, etc.)
-- Request correlation IDs for distributed tracing
-- Structured logging with logback
-- Global exception handling with consistent API responses
-- Coin economy fraud protection (duplicate prevention, balance locks)
-
-### Database
-- 12 Flyway migrations (V1–V12)
-- 91+ tables
-- 60+ performance indexes
-- Redis caching layer (Upstash)
-- Background job system with retry and exponential backoff
-
-### Testing
-- 29+ frontend unit tests (Vitest + Testing Library)
-- Backend unit tests (JUnit 5 + Mockito)
-- Cache, rate limiter, background job, coin security tests
-- API response wrapper tests
-
-### Production Readiness
-- Health check and readiness endpoints
-- JVM metrics and observability
-- File and document management
-- Privacy and consent controls (GDPR-style)
-- Data export and account deletion
-- CORS hardening
+### Core Platform & Ecosystems
+- Authentication & Authorization with 15-minute stateless JWT tokens, BCrypt hashing, and role guards (`STUDENT`, `COMPANY`, `INSTITUTION`, `ADMIN`).
+- Multi-step onboarding for all user roles.
+- Student Practice Arena, Question Bank, Coin Economy, and 109 Skills Taxonomy Matrix.
+- Institution cohort management, placement drives, and department analytics.
+- Company candidate intelligence, recruitment pipeline, assessment builder, and interview scorecards.
+- Community social feed, discussion forums, direct messaging, and verified achievement credentials.
