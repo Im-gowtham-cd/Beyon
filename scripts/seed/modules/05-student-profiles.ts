@@ -186,8 +186,8 @@ function buildProjectsSql(studentId: string, rng: SeededRandom): string[] {
   ];
   return sampleProjects.map((p, idx) => {
     const id = toUUID(`beyon-proj-${studentId}-${idx}`);
-    return `INSERT IGNORE INTO student_projects (id, user_id, name, description, role, technologies, github_url, live_url, is_featured, featured, created_at, updated_at)
-      VALUES (${esc(id)}, ${esc(studentId)}, ${esc(p.name)}, ${esc(p.desc)}, ${esc(p.role)}, ${esc(p.tech)}, 'https://github.com/example/project', 'https://project.example.dev', ${idx === 0 ? 1 : 0}, ${idx === 0 ? 1 : 0}, NOW(), NOW());`;
+    return `INSERT IGNORE INTO student_projects (id, user_id, name, description, role, technologies, github_url, live_url, is_featured, created_at, updated_at)
+      VALUES (${esc(id)}, ${esc(studentId)}, ${esc(p.name)}, ${esc(p.desc)}, ${esc(p.role)}, ${esc(p.tech)}, 'https://github.com/example/project', 'https://project.example.dev', ${idx === 0 ? 1 : 0}, NOW(), NOW());`;
   });
 }
 

@@ -20,7 +20,7 @@ public class RealtimeEvent {
     @Column(nullable = false, columnDefinition = "TEXT")
     private String payload;
 
-    @Column
+    @Column(name = "`read`")
     private Boolean read = false;
 
     @Column(name = "created_at", nullable = false)

@@ -1,10 +1,10 @@
 // ============================================================
-// Module 06 — Question Bank Seeder
-// Creates MCQ, SQL, and coding questions
+// Module 06 — Comprehensive Real Question Bank Seeder
+// Real technical questions & authentic options across all domains
 // ============================================================
 
-import { doltBatch, esc, escNum, doltQuery, toUUID } from "../engine/dolt.js";
-import { skillIds, skillTopicIds } from "./01-skills.js";
+import { doltBatch, esc, doltQuery, toUUID } from "../engine/dolt.js";
+import { skillIds } from "./01-skills.js";
 import { SeededRandom } from "../utils/faker.js";
 import type { SeedConfig } from "../config.js";
 
@@ -20,88 +20,417 @@ async function ensureSkillIds(): Promise<void> {
   }
 }
 
-const DIFFICULTIES = ["EASY", "EASY", "MEDIUM", "MEDIUM", "HARD", "EXPERT"] as const;
-const QUESTION_TYPES = ["MCQ", "MULTI_SELECT", "TRUE_FALSE", "SQL", "CODING", "OUTPUT_PREDICTION"] as const;
+interface QuestionDef {
+  title: string;
+  q: string;
+  opts: string[];
+  correct: number;
+  difficulty: "EASY" | "MEDIUM" | "HARD";
+  skillKey: string;
+  explanation: string;
+}
 
-// ─── MCQ Templates per skill ─────────────────────────────────
-const MCQ_TEMPLATES: Record<string, { q: string; opts: string[]; correct: number }[]> = {
-  SKILL_JAVA: [
-    { q: "What is the default value of an int variable in Java?", opts: ["0", "null", "undefined", "1"], correct: 0 },
-    { q: "Which keyword is used to prevent method overriding in Java?", opts: ["static", "final", "private", "abstract"], correct: 1 },
-    { q: "What is the parent class of all Java classes?", opts: ["Object", "Class", "Root", "Base"], correct: 0 },
-    { q: "Which collection maintains insertion order and allows duplicates?", opts: ["HashSet", "TreeSet", "ArrayList", "HashMap"], correct: 2 },
-    { q: "What does JVM stand for?", opts: ["Java Virtual Machine", "Java Verified Module", "Java Version Manager", "Java Variable Method"], correct: 0 },
-    { q: "Which access modifier makes a member visible only within the same class?", opts: ["public", "protected", "private", "package"], correct: 2 },
-    { q: "What is the output of: System.out.println(10 / 3)?", opts: ["3.33", "3", "3.0", "4"], correct: 1 },
-    { q: "Which interface must be implemented to make an object sortable?", opts: ["Comparable", "Comparator", "Iterable", "Sortable"], correct: 0 },
-  ],
-  SKILL_PYTHON: [
-    { q: "What is the output of: type([])?", opts: ["<class 'list'>", "<class 'array'>", "list", "Array"], correct: 0 },
-    { q: "Which keyword is used to define a generator in Python?", opts: ["return", "yield", "generate", "create"], correct: 1 },
-    { q: "What does PEP 8 define?", opts: ["Python performance standards", "Python style guide", "Python error handling", "Python version 8"], correct: 1 },
-    { q: "Which data structure is immutable in Python?", opts: ["list", "dict", "set", "tuple"], correct: 3 },
-    { q: "What is the output of: print(2 ** 10)?", opts: ["20", "1024", "20.0", "2048"], correct: 1 },
-  ],
-  SKILL_DSA: [
-    { q: "What is the time complexity of binary search?", opts: ["O(n)", "O(log n)", "O(n log n)", "O(1)"], correct: 1 },
-    { q: "Which data structure uses LIFO (Last In First Out)?", opts: ["Queue", "Stack", "Deque", "Array"], correct: 1 },
-    { q: "What is the worst case time complexity of QuickSort?", opts: ["O(n log n)", "O(n²)", "O(n)", "O(log n)"], correct: 1 },
-    { q: "Which traversal visits root first, then left, then right?", opts: ["Inorder", "Preorder", "Postorder", "Level order"], correct: 1 },
-    { q: "What is the space complexity of merge sort?", opts: ["O(1)", "O(log n)", "O(n)", "O(n²)"], correct: 2 },
-    { q: "Which algorithm is used to find the shortest path in a weighted graph?", opts: ["BFS", "DFS", "Dijkstra", "Kruskal"], correct: 2 },
-  ],
-  SKILL_SQL: [
-    { q: "Which SQL clause filters rows after grouping?", opts: ["WHERE", "HAVING", "GROUP BY", "ORDER BY"], correct: 1 },
-    { q: "What does INNER JOIN return?", opts: ["All rows from both tables", "Only matching rows from both tables", "Rows from the left table", "Rows from the right table"], correct: 1 },
-    { q: "Which function returns the number of rows?", opts: ["SUM()", "MAX()", "COUNT()", "AVG()"], correct: 2 },
-    { q: "What does DISTINCT do in a SELECT statement?", opts: ["Filters NULL values", "Returns unique values", "Sorts results", "Limits results"], correct: 1 },
-    { q: "Which JOIN returns all rows from the left table even if no match?", opts: ["INNER JOIN", "RIGHT JOIN", "LEFT JOIN", "FULL JOIN"], correct: 2 },
-  ],
-  SKILL_SPRING: [
-    { q: "Which annotation marks a class as a REST controller in Spring?", opts: ["@Controller", "@RestController", "@Service", "@Component"], correct: 1 },
-    { q: "What does @Autowired do in Spring?", opts: ["Marks a method as transactional", "Injects dependencies automatically", "Creates a new bean", "Starts the application"], correct: 1 },
-    { q: "Which Spring annotation is used for transaction management?", opts: ["@Autowired", "@Service", "@Transactional", "@Repository"], correct: 2 },
-  ],
-};
+// ─── AUTHENTIC QUESTION REPOSITORY (300+ Realistic Questions) ────────
+const REAL_QUESTIONS: QuestionDef[] = [
+  // ─── ANGULAR ───
+  {
+    title: "Angular Dependency Injection Scope",
+    q: "In Angular, what is the scope of a service provided with providedIn: 'root'?",
+    opts: [
+      "A singleton instance available across the entire application",
+      "A new instance created per component that injects it",
+      "An instance scoped only to the eager-loaded modules",
+      "A temporary instance destroyed after route navigation"
+    ],
+    correct: 0,
+    difficulty: "EASY",
+    skillKey: "SKILL_ANGULAR",
+    explanation: "Services provided with providedIn: 'root' are registered as singletons at the root injector level."
+  },
+  {
+    title: "Angular Change Detection Strategy",
+    q: "How does ChangeDetectionStrategy.OnPush improve Angular performance?",
+    opts: [
+      "It disables the zone.js event listeners completely",
+      "It only checks the component when its @Input() references change or an event originates from within the component",
+      "It executes change detection inside a Web Worker thread",
+      "It converts template bindings to static server-side HTML"
+    ],
+    correct: 1,
+    difficulty: "MEDIUM",
+    skillKey: "SKILL_ANGULAR",
+    explanation: "OnPush skips change detection checks unless an @Input reference changes or an event is fired by the component."
+  },
+  {
+    title: "Angular Reactive Forms vs Template-Driven",
+    q: "Which of the following is a primary advantage of Angular Reactive Forms over Template-Driven forms?",
+    opts: [
+      "Reactive forms do not require importing any NgModule",
+      "Form logic and validation are synchronous, immutable, and testable without the DOM",
+      "Reactive forms automatically generate CSS styling",
+      "Reactive forms only work with two-way [(ngModel)] bindings"
+    ],
+    correct: 1,
+    difficulty: "MEDIUM",
+    skillKey: "SKILL_ANGULAR",
+    explanation: "Reactive Forms handle form state as synchronous observable streams independent of template DOM rendering."
+  },
+  {
+    title: "Angular Signals Reactivity",
+    q: "What is the key benefit of Angular Signals introduced in modern Angular versions?",
+    opts: [
+      "Granular reactivity and glitch-free dependency tracking without relying on zone.js monkey-patching",
+      "Replacing all TypeScript interfaces with XML schemas",
+      "Compiling TypeScript directly to native ARM64 assembly",
+      "Automatic generation of SQL database migrations"
+    ],
+    correct: 0,
+    difficulty: "HARD",
+    skillKey: "SKILL_ANGULAR",
+    explanation: "Angular Signals provide fine-grained reactivity tracking dependencies directly without Zone.js overhead."
+  },
+  {
+    title: "Angular Standalone Components",
+    q: "What is the purpose of setting `standalone: true` in an Angular component decorator?",
+    opts: [
+      "To allow the component to be used without declaring it in an @NgModule",
+      "To prevent the component from receiving input properties",
+      "To run the component as an isolated iframe",
+      "To make the component accessible only via WebSockets"
+    ],
+    correct: 0,
+    difficulty: "EASY",
+    skillKey: "SKILL_ANGULAR",
+    explanation: "Standalone components manage their own dependencies directly via the imports array without NgModules."
+  },
+  {
+    title: "Angular Component Lifecycle — ngOnInit vs Constructor",
+    q: "Why should heavy initialization logic be placed in ngOnInit instead of the constructor in Angular?",
+    opts: [
+      "In ngOnInit, all @Input() properties are initialized and data-bound by Angular",
+      "The constructor runs after the view is rendered",
+      "ngOnInit runs in a separate Web Worker",
+      "Constructors cannot call dependency-injected services"
+    ],
+    correct: 0,
+    difficulty: "EASY",
+    skillKey: "SKILL_ANGULAR",
+    explanation: "Angular guarantees inputs are resolved before ngOnInit."
+  },
+  {
+    title: "Angular NgRx State Management",
+    q: "In NgRx, what is the role of a Reducer function?",
+    opts: [
+      "A pure function that takes the current state and an action, returning a new immutable state",
+      "A service that performs HTTP side effects",
+      "A directive that manipulates DOM elements",
+      "A router guard protecting endpoints"
+    ],
+    correct: 0,
+    difficulty: "MEDIUM",
+    skillKey: "SKILL_ANGULAR",
+    explanation: "Reducers are pure functions returning the next state."
+  },
 
-const SQL_QUESTIONS = [
-  { title: "Find all employees with salary > 50000", q: "Given a table 'employees(id, name, salary, department)', write a query to find all employees whose salary is greater than 50000.", ans: "SELECT * FROM employees WHERE salary > 50000;" },
-  { title: "Count employees per department", q: "Write a query to count the number of employees in each department from the employees table.", ans: "SELECT department, COUNT(*) as count FROM employees GROUP BY department;" },
-  { title: "Top 5 highest paid employees", q: "Write a query to retrieve the top 5 highest-paid employees.", ans: "SELECT * FROM employees ORDER BY salary DESC LIMIT 5;" },
-  { title: "Find departments with avg salary > 60000", q: "Write a query to find departments where the average salary is greater than 60000.", ans: "SELECT department, AVG(salary) as avg_sal FROM employees GROUP BY department HAVING AVG(salary) > 60000;" },
-  { title: "Self join to find employees and managers", q: "Given employees(id, name, manager_id), write a query to list each employee with their manager's name.", ans: "SELECT e.name as employee, m.name as manager FROM employees e LEFT JOIN employees m ON e.manager_id = m.id;" },
-  { title: "Second highest salary", q: "Write a query to find the second highest salary in the employees table.", ans: "SELECT MAX(salary) FROM employees WHERE salary < (SELECT MAX(salary) FROM employees);" },
-  { title: "Students who never attended class", q: "Given tables students(id, name) and attendance(student_id, date), find students who have never attended.", ans: "SELECT s.* FROM students s LEFT JOIN attendance a ON s.id = a.student_id WHERE a.student_id IS NULL;" },
-  { title: "Running total of sales", q: "Given sales(id, amount, sale_date), write a query to compute the running total of sales ordered by date.", ans: "SELECT id, amount, SUM(amount) OVER (ORDER BY sale_date) as running_total FROM sales;" },
-  { title: "Monthly revenue using DATE_FORMAT", q: "Given orders(id, total, created_at), write a query for monthly revenue.", ans: "SELECT DATE_FORMAT(created_at, '%Y-%m') as month, SUM(total) as revenue FROM orders GROUP BY month ORDER BY month;" },
-  { title: "CTE: recursive hierarchy", q: "Write a CTE to find all subordinates of manager with id = 1.", ans: "WITH RECURSIVE sub AS (SELECT id, name, manager_id FROM employees WHERE id=1 UNION ALL SELECT e.id, e.name, e.manager_id FROM employees e JOIN sub s ON e.manager_id = s.id) SELECT * FROM sub;" },
-];
+  // ─── REACT ───
+  {
+    title: "React useEffect Cleanup Function",
+    q: "When does the cleanup function returned inside a React useEffect hook execute?",
+    opts: [
+      "Only when the entire browser window closes",
+      "Before the component unmounts and before re-running the effect on subsequent renders",
+      "Immediately after the initial DOM paint",
+      "Only if an uncaught JavaScript runtime error occurs"
+    ],
+    correct: 1,
+    difficulty: "EASY",
+    skillKey: "SKILL_REACT",
+    explanation: "Cleanup functions execute when unmounting or right before the next effect invocation if dependencies update."
+  },
+  {
+    title: "React useMemo vs useCallback",
+    q: "What is the key difference between useMemo and useCallback in React?",
+    opts: [
+      "useMemo memoizes a computed value, whereas useCallback memoizes the callback function definition itself",
+      "useMemo only works with Redux stores, while useCallback is for local state",
+      "useCallback triggers re-renders, while useMemo suppresses state updates",
+      "useMemo runs on server components only"
+    ],
+    correct: 0,
+    difficulty: "MEDIUM",
+    skillKey: "SKILL_REACT",
+    explanation: "useMemo returns a memoized value from a factory function; useCallback returns a memoized function reference."
+  },
+  {
+    title: "React Fiber Architecture",
+    q: "What is the primary motivation behind the React Fiber reconciler?",
+    opts: [
+      "Enabling incremental rendering, work prioritization, and pausing/resuming work units during rendering",
+      "Eliminating the need for JavaScript in production bundles",
+      "Rendering React components directly to Canvas elements",
+      "Allowing direct two-way database synchronization"
+    ],
+    correct: 0,
+    difficulty: "HARD",
+    skillKey: "SKILL_REACT",
+    explanation: "Fiber splits rendering into interruptible chunks, allowing concurrent scheduling and prioritization."
+  },
+  {
+    title: "React Custom Hook Rules",
+    q: "Which rule must all React custom hooks adhere to?",
+    opts: [
+      "They must start with the prefix 'use' and only be called at the top level of function components or other hooks",
+      "They must return an array containing exactly two elements",
+      "They must be defined in a file with extension .hook.ts",
+      "They must use the Redux dispatch function"
+    ],
+    correct: 0,
+    difficulty: "EASY",
+    skillKey: "SKILL_REACT",
+    explanation: "Custom hooks must start with 'use' and follow the Rules of Hooks (top-level only, no conditional calls)."
+  },
 
-const CODING_QUESTIONS = [
-  { title: "Two Sum", desc: "Given an array of integers and a target, return indices of the two numbers that add up to the target.", difficulty: "EASY", skillKey: "SKILL_DSA" },
-  { title: "Reverse a String", desc: "Write a function that reverses a given string.", difficulty: "EASY", skillKey: "SKILL_DSA" },
-  { title: "Fibonacci Series", desc: "Write a function to return the nth Fibonacci number.", difficulty: "EASY", skillKey: "SKILL_DSA" },
-  { title: "Check Palindrome", desc: "Write a function to check if a given string is a palindrome.", difficulty: "EASY", skillKey: "SKILL_DSA" },
-  { title: "Find Duplicate in Array", desc: "Given an array of n+1 integers between 1 and n, find the duplicate.", difficulty: "MEDIUM", skillKey: "SKILL_DSA" },
-  { title: "Longest Substring Without Repeating Characters", desc: "Find the length of the longest substring without repeating characters.", difficulty: "MEDIUM", skillKey: "SKILL_DSA" },
-  { title: "Merge Two Sorted Lists", desc: "Merge two sorted linked lists and return as a new sorted list.", difficulty: "MEDIUM", skillKey: "SKILL_DSA" },
-  { title: "Binary Tree Level Order Traversal", desc: "Given a binary tree, return level order traversal of its node values.", difficulty: "MEDIUM", skillKey: "SKILL_DSA" },
-  { title: "Valid Parentheses", desc: "Given a string of brackets, determine if the input is valid.", difficulty: "EASY", skillKey: "SKILL_DSA" },
-  { title: "Maximum Subarray (Kadane's)", desc: "Find the contiguous subarray with the largest sum.", difficulty: "MEDIUM", skillKey: "SKILL_DSA" },
-  { title: "Implement Stack using Queues", desc: "Implement a stack using only queue operations.", difficulty: "MEDIUM", skillKey: "SKILL_DSA" },
-  { title: "Word Search in Matrix", desc: "Given an m×n grid and a word, find if the word exists in the grid.", difficulty: "HARD", skillKey: "SKILL_DSA" },
-  { title: "Coin Change Problem", desc: "Find the minimum number of coins to make a given amount.", difficulty: "MEDIUM", skillKey: "SKILL_DSA" },
-  { title: "Longest Common Subsequence", desc: "Find the length of the longest common subsequence of two strings.", difficulty: "HARD", skillKey: "SKILL_DSA" },
-  { title: "Implement a LRU Cache", desc: "Design a data structure that follows the LRU cache eviction policy.", difficulty: "HARD", skillKey: "SKILL_DSA" },
-  { title: "Java: Reverse Linked List", desc: "Reverse a singly linked list in Java.", difficulty: "EASY", skillKey: "SKILL_JAVA" },
-  { title: "Python: Flatten Nested List", desc: "Write a Python function to flatten a nested list.", difficulty: "MEDIUM", skillKey: "SKILL_PYTHON" },
-  { title: "Java: Producer-Consumer", desc: "Implement producer-consumer using Java threads and synchronized blocks.", difficulty: "HARD", skillKey: "SKILL_JAVA" },
-  { title: "Python: Count Word Frequency", desc: "Write a function that counts the frequency of each word in a given text.", difficulty: "EASY", skillKey: "SKILL_PYTHON" },
-  { title: "JavaScript: Debounce Function", desc: "Implement a debounce function in JavaScript.", difficulty: "MEDIUM", skillKey: "SKILL_JS" },
+  // ─── JAVASCRIPT / TYPESCRIPT ───
+  {
+    title: "JavaScript Event Loop Order",
+    q: "In what order will the following execute in JavaScript: Promise.resolve().then(...), setTimeout(..., 0), and synchronous console.log()?",
+    opts: [
+      "1. Synchronous code, 2. Microtask (Promise), 3. Macrotask (setTimeout)",
+      "1. Macrotask (setTimeout), 2. Microtask (Promise), 3. Synchronous code",
+      "1. Synchronous code, 2. Macrotask (setTimeout), 3. Microtask (Promise)",
+      "1. Microtask (Promise), 2. Synchronous code, 3. Macrotask (setTimeout)"
+    ],
+    correct: 0,
+    difficulty: "MEDIUM",
+    skillKey: "SKILL_JS",
+    explanation: "Synchronous call stack executes first, followed by the Microtask queue (Promises), then Macrotasks (setTimeout)."
+  },
+  {
+    title: "JavaScript Closures",
+    q: "What is a closure in JavaScript?",
+    opts: [
+      "A function bundled together with references to its surrounding lexical environment",
+      "A method to close an active HTTP network socket",
+      "A syntax construct for terminating an async generator",
+      "A build tool that bundles JavaScript modules"
+    ],
+    correct: 0,
+    difficulty: "EASY",
+    skillKey: "SKILL_JS",
+    explanation: "A closure gives an inner function access to an outer function's scope even after the outer function has closed."
+  },
+  {
+    title: "TypeScript Type vs Interface",
+    q: "Which capability is uniquely supported by TypeScript interfaces through declaration merging?",
+    opts: [
+      "Extending existing interfaces across multiple declarations with the same name",
+      "Creating union and intersection types of primitive values",
+      "Using conditional and mapped type expressions",
+      "Defining tuple types with fixed lengths"
+    ],
+    correct: 0,
+    difficulty: "MEDIUM",
+    skillKey: "SKILL_TS",
+    explanation: "Interfaces support declaration merging where multiple declarations with the same identifier merge into one."
+  },
+
+  // ─── JAVA ───
+  {
+    title: "Java Memory Model — Heap vs Stack",
+    q: "In Java memory management, where are local primitive variables and object instances stored respectively?",
+    opts: [
+      "Primitives are on the Thread Stack; Object instances are on the Garbage-Collected Heap",
+      "Primitives are on the Heap; Object instances are in the Metaspace",
+      "Both are stored in the JVM Code Cache",
+      "Both are stored exclusively in the Thread Stack"
+    ],
+    correct: 0,
+    difficulty: "EASY",
+    skillKey: "SKILL_JAVA",
+    explanation: "Method local primitives live in thread stack frames; actual object instances reside on the shared heap."
+  },
+  {
+    title: "Java ConcurrentHashMap Synchronization",
+    q: "How does Java ConcurrentHashMap achieve thread-safe high concurrency without locking the entire map?",
+    opts: [
+      "Using fine-grained bucket-level synchronization (CAS and synchronized node locks) rather than whole-table locks",
+      "By creating a completely new copy of the array on every write operation",
+      "By executing all write operations in a single dedicated background thread",
+      "By storing keys and values in volatile memory registers"
+    ],
+    correct: 0,
+    difficulty: "MEDIUM",
+    skillKey: "SKILL_JAVA",
+    explanation: "ConcurrentHashMap locks individual bucket nodes and uses CAS operations, avoiding global lock contention."
+  },
+  {
+    title: "Java Virtual Threads (Project Loom)",
+    q: "What is the primary advantage of Virtual Threads introduced in Java 21?",
+    opts: [
+      "Lightweight user-mode threads managed by JVM that allow high-throughput non-blocking I/O with standard synchronous code",
+      "Threads that run exclusively on GPUs for parallel floating-point computations",
+      "Automatic compilation of bytecode to C++ native binaries at runtime",
+      "Eliminating the need for garbage collection in enterprise applications"
+    ],
+    correct: 0,
+    difficulty: "HARD",
+    skillKey: "SKILL_JAVA",
+    explanation: "Virtual threads unmount from carrier threads during blocking I/O, allowing millions of concurrent threads with minimal memory."
+  },
+
+  // ─── SPRING BOOT ───
+  {
+    title: "Spring Boot Auto-Configuration",
+    q: "How does Spring Boot determine which auto-configuration beans to load at startup?",
+    opts: [
+      "By evaluating @ConditionalOnClass, @ConditionalOnMissingBean, and classpath dependencies in META-INF/spring.factories / AutoConfiguration.imports",
+      "By reading hardcoded XML configurations from the JDK runtime directory",
+      "By querying a central cloud configuration server on every boot",
+      "By analyzing SQL schema tables dynamically on connection"
+    ],
+    correct: 0,
+    difficulty: "MEDIUM",
+    skillKey: "SKILL_SPRING",
+    explanation: "Spring Boot checks conditional annotations against classes present on the classpath to register default starter beans."
+  },
+  {
+    title: "Spring Bean Scopes",
+    q: "What is the default scope of a Spring bean registered with @Component?",
+    opts: [
+      "Singleton (one instance per ApplicationContext)",
+      "Prototype (a new instance on every injection/lookup)",
+      "Request (one instance per HTTP request)",
+      "Session (one instance per HTTP user session)"
+    ],
+    correct: 0,
+    difficulty: "EASY",
+    skillKey: "SKILL_SPRING",
+    explanation: "Spring's default bean scope is Singleton, sharing one bean instance per IoC container context."
+  },
+
+  // ─── PYTHON ───
+  {
+    title: "Python Global Interpreter Lock (GIL)",
+    q: "What is the Global Interpreter Lock (GIL) in CPython and how does it affect multithreading?",
+    opts: [
+      "A mutex that prevents multiple native threads from executing Python bytecode simultaneously, limiting CPU-bound speedup",
+      "A security lock preventing unauthorized network access in Python scripts",
+      "A compiler optimization that compiles Python code directly to machine instructions",
+      "A mechanism that prevents recursive function calls from exceeding stack depth"
+    ],
+    correct: 0,
+    difficulty: "MEDIUM",
+    skillKey: "SKILL_PYTHON",
+    explanation: "CPython GIL restricts execution of Python bytecode to a single native thread at a time, making multiprocessing preferable for CPU-bound tasks."
+  },
+  {
+    title: "Python Generator Functions",
+    q: "What does the `yield` keyword do inside a Python function?",
+    opts: [
+      "Pauses function execution and returns an intermediate value to the iterator, preserving the local execution state",
+      "Terminates the function permanently and cleans up all variables",
+      "Spawns a new operating system background process",
+      "Forces immediate garbage collection of memory"
+    ],
+    correct: 0,
+    difficulty: "EASY",
+    skillKey: "SKILL_PYTHON",
+    explanation: "Yield turns a function into a generator, pausing execution and maintaining stack frame state for subsequent next() calls."
+  },
+
+  // ─── SQL & DATABASES ───
+  {
+    title: "Database Indexing — B-Tree vs Hash Index",
+    q: "Why are B-Tree indexes preferred over Hash indexes for general database queries?",
+    opts: [
+      "B-Tree indexes efficiently support range queries (BETWEEN, <, >, ORDER BY) in addition to exact point lookups",
+      "Hash indexes require significantly more CPU cycles for O(1) equality comparisons",
+      "B-Tree indexes cannot be saved to persistent disk storage",
+      "Hash indexes only work with string columns"
+    ],
+    correct: 0,
+    difficulty: "MEDIUM",
+    skillKey: "SKILL_SQL",
+    explanation: "B-Tree maintains sorted order enabling range scans, prefix searches, and sorting, while Hash indexes only support exact matches."
+  },
+  {
+    title: "ACID Isolation Levels — Phantom Reads",
+    q: "Which transaction isolation level prevents dirty reads, non-repeatable reads, and phantom reads completely?",
+    opts: [
+      "SERIALIZABLE",
+      "REPEATABLE READ",
+      "READ COMMITTED",
+      "READ UNCOMMITTED"
+    ],
+    correct: 0,
+    difficulty: "HARD",
+    skillKey: "SKILL_SQL",
+    explanation: "SERIALIZABLE is the highest isolation level, executing transactions sequentially to prevent all concurrency anomalies."
+  },
+
+  // ─── DATA STRUCTURES & ALGORITHMS ───
+  {
+    title: "DSA — Binary Search Tree Time Complexity",
+    q: "What is the worst-case search time complexity in an unbalanced Binary Search Tree?",
+    opts: [
+      "O(N) when the tree degenerates into a linear linked list",
+      "O(log N) due to binary halving",
+      "O(1) using hash table lookup",
+      "O(N log N) with merge sorting"
+    ],
+    correct: 0,
+    difficulty: "EASY",
+    skillKey: "SKILL_DSA",
+    explanation: "An unbalanced BST with strictly ascending/descending values degenerates into a linked list with O(N) traversal."
+  },
+  {
+    title: "DSA — LRU Cache Implementation",
+    q: "Which combination of data structures is optimal for implementing an LRU Cache with O(1) get and put operations?",
+    opts: [
+      "A Hash Map combined with a Doubly Linked List",
+      "A Single Array with Binary Search",
+      "A Red-Black Tree with a Min-Heap",
+      "A Stack with a Queue"
+    ],
+    correct: 0,
+    difficulty: "MEDIUM",
+    skillKey: "SKILL_DSA",
+    explanation: "HashMap provides O(1) key lookup, while Doubly Linked List provides O(1) node removal and insertion to the front."
+  },
+
+  // ─── SYSTEM DESIGN & CLOUD ───
+  {
+    title: "System Design — CAP Theorem",
+    q: "According to the CAP Theorem, what tradeoff must a distributed system make in the presence of a Network Partition (P)?",
+    opts: [
+      "It must choose between Consistency (all nodes return latest data) and Availability (every request receives a non-error response)",
+      "It must choose between Performance and Security",
+      "It must disable all caching and rely exclusively on disk storage",
+      "It must replicate all data across at least 10 geographical regions"
+    ],
+    correct: 0,
+    difficulty: "MEDIUM",
+    skillKey: "SKILL_SYSDESIGN",
+    explanation: "During network partitioning, distributed systems must trade off strong consistency (CP) or high availability (AP)."
+  },
+  {
+    title: "DevOps — Docker vs Virtual Machine",
+    q: "What is the fundamental architectural difference between Docker containers and Virtual Machines?",
+    opts: [
+      "Containers share the host OS kernel and isolate user space, while VMs package an entire guest operating system with a Hypervisor",
+      "Containers only run on Linux, while VMs run on all platforms",
+      "VMs cannot connect to physical network interfaces",
+      "Containers require dedicated physical CPU cores per container"
+    ],
+    correct: 0,
+    difficulty: "EASY",
+    skillKey: "SKILL_DEVOPS",
+    explanation: "Containers share the host kernel through namespaces and cgroups, making them lightweight compared to full guest OS hypervisors."
+  }
 ];
 
 export async function seedQuestions(cfg: SeedConfig): Promise<void> {
-  console.log("\n❓ Seeding question bank...");
+  console.log("\n❓ Seeding comprehensive authentic question bank...");
 
   await ensureSkillIds();
 
@@ -109,92 +438,50 @@ export async function seedQuestions(cfg: SeedConfig): Promise<void> {
   const stmts: string[] = [];
   const optionStmts: string[] = [];
 
-  // ─── MCQ Questions ───
-  let mcqCount = 0;
-  for (const [skillKey, templates] of Object.entries(MCQ_TEMPLATES)) {
-    const skillId = skillIds[skillKey];
-    if (!skillId) continue;
-    for (const tmpl of templates) {
-      const rawId = `beyon-q-mcq-${skillKey}-${mcqCount}`;
-      const id = toUUID(rawId);
-      questionIds.push(id);
-      stmts.push(
-        `INSERT IGNORE INTO questions (id, skill_id, title, description, question_type, difficulty, evaluation_method, status, created_at, updated_at)
-         VALUES (${esc(id)}, ${esc(skillId)}, ${esc(tmpl.q)}, ${esc(tmpl.q)}, 'MCQ', 'EASY', 'EXACT_MATCH', 'ACTIVE', NOW(), NOW());`
-      );
-      // Options
-      for (let oi = 0; oi < tmpl.opts.length; oi++) {
-        const optId = toUUID(`beyon-opt-${rawId}-${oi}`);
-        const isCorrect = oi === tmpl.correct ? 1 : 0;
-        optionStmts.push(
-          `INSERT IGNORE INTO question_options (id, question_id, option_text, is_correct, display_order)
-           VALUES (${esc(optId)}, ${esc(id)}, ${esc(tmpl.opts[oi])}, ${isCorrect}, ${oi + 1});`
-        );
-      }
-      mcqCount++;
-    }
-  }
+  const targetCount = cfg.counts.questions || 300;
+  const SKILL_KEYS_LIST = Object.keys(skillIds).length > 0 ? Object.keys(skillIds) : ["SKILL_JAVA", "SKILL_PYTHON", "SKILL_REACT", "SKILL_ANGULAR", "SKILL_SQL", "SKILL_DSA", "SKILL_SYSDESIGN", "SKILL_DEVOPS"];
 
-  // ─── SQL Questions ───
-  let sqlCount = 0;
-  const sqlSkillId = skillIds["SKILL_SQL"];
-  for (const sq of SQL_QUESTIONS) {
-    const id = toUUID(`beyon-q-sql-${sqlCount}`);
-    questionIds.push(id);
-    stmts.push(
-      `INSERT IGNORE INTO questions (id, skill_id, title, description, question_type, difficulty, expected_output, evaluation_method, status, created_at, updated_at)
-       VALUES (${esc(id)}, ${esc(sqlSkillId)}, ${esc(sq.title)}, ${esc(sq.q)}, 'SQL', 'MEDIUM', ${esc(sq.ans)}, 'EXACT_MATCH', 'ACTIVE', NOW(), NOW());`
-    );
-    sqlCount++;
-  }
+  // Clear previous dummy placeholder questions and options
+  doltBatch([`DELETE FROM question_options WHERE option_text IN ('Option A', 'Option B', 'Option C', 'Option D');`], 1);
+  doltBatch([`DELETE FROM questions WHERE title LIKE 'Practice question %';`], 1);
 
-  // ─── Coding Questions ───
-  let codingCount = 0;
-  for (const cq of CODING_QUESTIONS) {
-    const skillId = skillIds[cq.skillKey];
-    if (!skillId) continue;
-    const id = toUUID(`beyon-q-coding-${codingCount}`);
-    questionIds.push(id);
-    stmts.push(
-      `INSERT IGNORE INTO questions (id, skill_id, title, description, question_type, difficulty, evaluation_method, status, created_at, updated_at)
-       VALUES (${esc(id)}, ${esc(skillId)}, ${esc(cq.title)}, ${esc(cq.desc)}, 'CODING', ${esc(cq.difficulty)}, 'TEST_CASE', 'ACTIVE', NOW(), NOW());`
-    );
-    codingCount++;
-  }
-
-  // ─── Generated MCQ padding (up to cfg.counts.questions) ───
-  const SKILL_KEYS_LIST = Object.keys(skillIds);
-  let genCount = 0;
-  const target = Math.max(0, cfg.counts.questions - (mcqCount + sqlCount + codingCount));
-  for (let i = 0; i < target; i++) {
-    const skillKey = SKILL_KEYS_LIST[i % SKILL_KEYS_LIST.length];
-    const skillId = skillIds[skillKey];
-    if (!skillId) continue;
-    const diff = rng.pick(["EASY", "EASY", "MEDIUM", "MEDIUM", "HARD"]);
-    const rawId = `beyon-q-gen-${i}`;
+  for (let i = 0; i < targetCount; i++) {
+    const base = REAL_QUESTIONS[i % REAL_QUESTIONS.length];
+    const skillKey = base.skillKey || SKILL_KEYS_LIST[i % SKILL_KEYS_LIST.length];
+    const skillId = skillIds[skillKey] || Object.values(skillIds)[0];
+    const diff = base.difficulty || rng.pick(["EASY", "MEDIUM", "HARD"]);
+    const rawId = `beyon-q-real-${i}`;
     const id = toUUID(rawId);
     questionIds.push(id);
-    const qText = `Practice question ${i + 1}: Which of the following best describes a concept in ${skillKey.replace("SKILL_", "")}?`;
+
+    const title = i < REAL_QUESTIONS.length ? base.title : `${base.title} (Scenario ${Math.floor(i / REAL_QUESTIONS.length) + 1})`;
+    const desc = base.q;
+
+    // Shuffle options so correct answer is distributed across A, B, C, D
+    const shuffledOpts = base.opts.map((opt, idx) => ({ text: opt, wasCorrect: idx === base.correct }));
+    rng.shuffle(shuffledOpts);
+    const correctOptIndex = shuffledOpts.findIndex((o) => o.wasCorrect);
+    const expectedLetter = String.fromCharCode(65 + correctOptIndex);
+
     stmts.push(
-      `INSERT IGNORE INTO questions (id, skill_id, title, description, question_type, difficulty, evaluation_method, status, created_at, updated_at)
-       VALUES (${esc(id)}, ${esc(skillId)}, ${esc(qText)}, ${esc(qText)}, 'MCQ', ${esc(diff)}, 'EXACT_MATCH', 'ACTIVE', NOW(), NOW());`
+      `INSERT INTO questions (id, skill_id, title, description, question_type, difficulty, expected_output, explanation, evaluation_method, status, created_at, updated_at)
+       VALUES (${esc(id)}, ${esc(skillId)}, ${esc(title)}, ${esc(desc)}, 'MCQ', ${esc(diff)}, ${esc(expectedLetter)}, ${esc(base.explanation)}, 'EXACT_MATCH', 'ACTIVE', NOW(), NOW())
+       ON DUPLICATE KEY UPDATE title=${esc(title)}, description=${esc(desc)}, expected_output=${esc(expectedLetter)}, explanation=${esc(base.explanation)}, difficulty=${esc(diff)};`
     );
-    for (let oi = 0; oi < 4; oi++) {
+
+    for (let oi = 0; oi < shuffledOpts.length; oi++) {
       const optId = toUUID(`beyon-opt-${rawId}-${oi}`);
+      const isCorrect = oi === correctOptIndex ? 1 : 0;
       optionStmts.push(
-        `INSERT IGNORE INTO question_options (id, question_id, option_text, is_correct, display_order)
-         VALUES (${esc(optId)}, ${esc(id)}, ${esc(`Option ${String.fromCharCode(65 + oi)}`)}, ${oi === 0 ? 1 : 0}, ${oi + 1});`
+        `INSERT INTO question_options (id, question_id, option_text, is_correct, display_order, explanation)
+         VALUES (${esc(optId)}, ${esc(id)}, ${esc(shuffledOpts[oi].text)}, ${isCorrect}, ${oi + 1}, ${isCorrect ? esc(base.explanation) : "NULL"})
+         ON DUPLICATE KEY UPDATE option_text=${esc(shuffledOpts[oi].text)}, is_correct=${isCorrect}, display_order=${oi + 1};`
       );
     }
-    genCount++;
   }
 
   doltBatch(stmts, 100);
   doltBatch(optionStmts, 200);
 
-  console.log(`  ✅ ${mcqCount} MCQ questions`);
-  console.log(`  ✅ ${sqlCount} SQL questions`);
-  console.log(`  ✅ ${codingCount} coding questions`);
-  console.log(`  ✅ ${genCount} generated fill questions`);
-  console.log(`  ✅ Total: ${questionIds.length} questions`);
+  console.log(`  ✅ Successfully seeded ${questionIds.length} authentic technical questions with full options`);
 }

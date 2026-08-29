@@ -8,5 +8,6 @@ import java.util.UUID;
 public interface RecruitmentDriveRepository extends JpaRepository<RecruitmentDrive, UUID> {
     List<RecruitmentDrive> findByCompanyUserIdOrderByCreatedAtDesc(UUID companyUserId);
     List<RecruitmentDrive> findByStatusOrderByCreatedAtDesc(String status);
+    List<RecruitmentDrive> findByStatusInOrderByCreatedAtDesc(List<String> statuses);
     List<RecruitmentDrive> findByTargetingModeAndStatusOrderByCreatedAtDesc(String targetingMode, String status);
 }

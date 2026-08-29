@@ -12,10 +12,10 @@ VALUES
 ON CONFLICT (id) DO NOTHING;
 
 -- Test Student Profiles
-INSERT INTO student_profiles (id, user_id, username, degree, department, institution, graduation_year, placement_status, created_at, updated_at)
+INSERT INTO student_profiles (id, user_id, username, degree, department, institution, graduation_year, placement_preference, created_at, updated_at)
 VALUES
-  ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '11111111-1111-1111-1111-111111111111', 'teststudent', 'B.Tech', 'Computer Science', 'Test University', 2026, 'SEEKING', NOW(), NOW()),
-  ('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', '55555555-5555-5555-5555-555555555555', 'teststudent2', 'B.Tech', 'Information Technology', 'Test University', 2026, 'SEEKING', NOW(), NOW())
+  ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '11111111-1111-1111-1111-111111111111', 'teststudent', 'B.Tech', 'Computer Science', 'Test University', 2026, 'PLACEMENT_SEEKING', NOW(), NOW()),
+  ('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', '55555555-5555-5555-5555-555555555555', 'teststudent2', 'B.Tech', 'Information Technology', 'Test University', 2026, 'PLACEMENT_SEEKING', NOW(), NOW())
 ON CONFLICT (id) DO NOTHING;
 
 -- Test Institution Profiles

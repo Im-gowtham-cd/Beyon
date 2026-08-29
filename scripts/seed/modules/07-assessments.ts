@@ -96,10 +96,11 @@ export async function seedAssessments(cfg: SeedConfig): Promise<void> {
       const completedAtSql = isCompleted ? `DATE_SUB(NOW(), INTERVAL ${d} DAY)` : "NULL";
 
       dailyChallengeStmts.push(
-        `INSERT IGNORE INTO daily_challenges (id, student_id, challenge_date, question_id, status, started_at, completed_at, time_spent_seconds, is_correct, created_at)
+        `INSERT INTO daily_challenges (id, student_id, challenge_date, question_id, status, started_at, completed_at, time_spent_seconds, is_correct, created_at)
          VALUES (${esc(id)}, ${esc(studentId)}, ${esc(dateStr)}, ${esc(qId)}, ${esc(status)},
                  DATE_SUB(NOW(), INTERVAL ${d} DAY), ${completedAtSql}, ${timeSpent}, ${isCorrect},
-                 DATE_SUB(NOW(), INTERVAL ${d} DAY));`
+                 DATE_SUB(NOW(), INTERVAL ${d} DAY))
+         ON DUPLICATE KEY UPDATE question_id=${esc(qId)}, status=${esc(status)}, is_correct=${isCorrect};`
       );
     }
   }

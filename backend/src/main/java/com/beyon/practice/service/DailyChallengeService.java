@@ -21,13 +21,25 @@ public class DailyChallengeService {
     private final DailyChallengeRepository challengeRepository;
     private final QuestionRepository questionRepository;
     private final CoinService coinService;
+    private final StreakService streakService;
+    private final SkillXpService skillXpService;
+    private final AchievementBadgeService badgeService;
+    private final PracticeService practiceService;
 
     public DailyChallengeService(DailyChallengeRepository challengeRepository,
                                   QuestionRepository questionRepository,
-                                  CoinService coinService) {
+                                  CoinService coinService,
+                                  StreakService streakService,
+                                  SkillXpService skillXpService,
+                                  AchievementBadgeService badgeService,
+                                  PracticeService practiceService) {
         this.challengeRepository = challengeRepository;
         this.questionRepository = questionRepository;
         this.coinService = coinService;
+        this.streakService = streakService;
+        this.skillXpService = skillXpService;
+        this.badgeService = badgeService;
+        this.practiceService = practiceService;
     }
 
     public DailyChallenge getTodayChallenge(UUID studentId) {
@@ -40,7 +52,7 @@ public class DailyChallengeService {
     }
 
     @Transactional
-    DailyChallenge generateChallenge(UUID studentId, LocalDate date) {
+    public DailyChallenge generateChallenge(UUID studentId, LocalDate date) {
         List<Question> unsolved = questionRepository.findUnsolvedForStudent(studentId, PageRequest.of(0, 20));
         if (unsolved.isEmpty()) {
             unsolved = questionRepository.findByStatusInOrderByCreatedAtDesc(List.of("PUBLISHED", "ACTIVE"), PageRequest.of(0, 20));
@@ -83,7 +95,29 @@ public class DailyChallengeService {
 
         DailyChallenge saved = challengeRepository.save(challenge);
         if (correct) {
+            // 1. Award coins
             coinService.earnCoins(studentId, "DAILY_CHALLENGE_COMPLETED", "DAILY_CHALLENGE", challengeId);
+
+            // 2. Advance streak
+            streakService.recordActivity(studentId);
+
+            // 3. Award achievement badge
+            badgeService.awardBadge(studentId, "LEARNING_STARTER");
+
+            // 4. Update practice stats and XP if question exists
+            if (challenge.getQuestionId() != null) {
+                questionRepository.findById(challenge.getQuestionId()).ifPresent(q -> {
+                    practiceService.updateStats(studentId, q, true, timeSpent);
+                    int xp = switch (q.getDifficulty() != null ? q.getDifficulty() : "MEDIUM") {
+                        case "HARD" -> 50;
+                        case "EASY" -> 15;
+                        default -> 30;
+                    };
+                    if (q.getSkillId() != null) {
+                        skillXpService.earnXp(studentId, q.getSkillId(), xp, "DAILY_CHALLENGE", challengeId, "Completed daily challenge: " + q.getTitle());
+                    }
+                });
+            }
         }
         return saved;
     }

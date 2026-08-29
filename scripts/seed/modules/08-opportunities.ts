@@ -67,7 +67,7 @@ export async function seedOpportunities(cfg: SeedConfig): Promise<void> {
 
     optyStmts.push(
       `INSERT IGNORE INTO company_opportunities
-        (id, company_user_id, title, description, opportunity_type, location, is_remote, remote,
+        (id, company_user_id, title, description, opportunity_type, location, is_remote,
          min_cgpa, required_skills, min_beyon_coins, assessment_id, status, created_at, updated_at)
        VALUES (
          ${esc(id)}, ${esc(compUserId)},
@@ -75,7 +75,6 @@ export async function seedOpportunities(cfg: SeedConfig): Promise<void> {
          ${esc(`${title} position at a leading technology company. Strong problem-solving and communication skills required.`)},
          ${esc(optyType)},
          ${esc(comp?.city ?? "Bangalore")},
-         ${isRemote},
          ${isRemote},
          ${escNum(Math.round(minCgpa * 100) / 100)},
          ${esc(skills)},

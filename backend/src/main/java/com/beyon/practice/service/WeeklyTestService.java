@@ -21,13 +21,16 @@ public class WeeklyTestService {
     private final TestAttemptRepository attemptRepo;
     private final CoinService coinService;
     private final SkillXpService skillXpService;
+    private final StreakService streakService;
 
     public WeeklyTestService(TestRepository testRepo, TestAttemptRepository attemptRepo,
-                              CoinService coinService, SkillXpService skillXpService) {
+                              CoinService coinService, SkillXpService skillXpService,
+                              StreakService streakService) {
         this.testRepo = testRepo;
         this.attemptRepo = attemptRepo;
         this.coinService = coinService;
         this.skillXpService = skillXpService;
+        this.streakService = streakService;
     }
 
     public List<Map<String, Object>> getRecentTests() {
@@ -88,7 +91,13 @@ public class WeeklyTestService {
         attempt.setTimeSpentSeconds(timeTakenSeconds);
         attempt.setScore(BigDecimal.valueOf(correctAnswers));
         attempt.setAccuracy(BigDecimal.valueOf(correctAnswers));
-        return attemptRepo.save(attempt);
+        com.beyon.practice.model.TestAttempt saved = attemptRepo.save(attempt);
+
+        // Award rewards
+        coinService.earnCoins(studentId, "WEEKEND_TEST_COMPLETED", "TEST", testId);
+        streakService.recordActivity(studentId);
+
+        return saved;
     }
 
     public List<Map<String, Object>> getLeaderboard(UUID testId) {
