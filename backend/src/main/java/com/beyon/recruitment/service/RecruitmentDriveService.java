@@ -32,6 +32,12 @@ public class RecruitmentDriveService {
     }
 
     public RecruitmentDrive createDrive(RecruitmentDrive drive) {
+        if (drive.getJobRole() == null || drive.getJobRole().isBlank()) {
+            drive.setJobRole(drive.getTitle() != null ? drive.getTitle() : "Software Engineer");
+        }
+        if (drive.getStatus() == null || drive.getStatus().isBlank()) {
+            drive.setStatus("ACTIVE");
+        }
         return driveRepo.save(drive);
     }
 
@@ -77,7 +83,7 @@ public class RecruitmentDriveService {
     }
 
     public List<RecruitmentDrive> getPublicDrives() {
-        return driveRepo.findByTargetingModeAndStatusOrderByCreatedAtDesc("PUBLIC", "ACTIVE");
+        return driveRepo.findByStatusInOrderByCreatedAtDesc(List.of("ACTIVE", "PUBLISHED", "OPEN"));
     }
 
     public List<RecruitmentDrive> getInstitutionDrives(UUID institutionId) {

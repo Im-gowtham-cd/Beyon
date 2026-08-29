@@ -27,7 +27,7 @@ public class QuestionBankService {
     }
 
     public List<Question> getPublishedQuestions(int page, int size) {
-        return questionRepository.findByStatusOrderByCreatedAtDesc("PUBLISHED", PageRequest.of(page, size));
+        return questionRepository.findByStatusInOrderByCreatedAtDesc(List.of("PUBLISHED", "ACTIVE"), PageRequest.of(page, size));
     }
 
     public List<Question> getQuestionsBySkill(UUID skillId, int limit) {
@@ -43,7 +43,8 @@ public class QuestionBankService {
     }
 
     public List<Question> searchQuestions(String query, int limit) {
-        return questionRepository.searchPublished(query, PageRequest.of(0, limit));
+        String search = query != null ? query.trim() : "";
+        return questionRepository.findByStatusInAndTitleContainingIgnoreCaseOrderByCreatedAtDesc(List.of("PUBLISHED", "ACTIVE"), search, PageRequest.of(0, limit));
     }
 
     public List<Question> getQuestionsBySkillAndDifficulty(UUID skillId, String difficulty, int limit) {

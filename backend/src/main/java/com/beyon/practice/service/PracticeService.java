@@ -20,17 +20,26 @@ public class PracticeService {
     private final QuestionTestCaseRepository testCaseRepository;
     private final StudentQuestionAttemptRepository attemptRepository;
     private final StudentPracticeStatsRepository statsRepository;
+    private final CoinService coinService;
+    private final SkillXpService skillXpService;
+    private final StreakService streakService;
 
     public PracticeService(QuestionRepository questionRepository,
                             QuestionOptionRepository optionRepository,
                             QuestionTestCaseRepository testCaseRepository,
                             StudentQuestionAttemptRepository attemptRepository,
-                            StudentPracticeStatsRepository statsRepository) {
+                            StudentPracticeStatsRepository statsRepository,
+                            CoinService coinService,
+                            SkillXpService skillXpService,
+                            StreakService streakService) {
         this.questionRepository = questionRepository;
         this.optionRepository = optionRepository;
         this.testCaseRepository = testCaseRepository;
         this.attemptRepository = attemptRepository;
         this.statsRepository = statsRepository;
+        this.coinService = coinService;
+        this.skillXpService = skillXpService;
+        this.streakService = streakService;
     }
 
     public List<Question> getQuestions(UUID skillId, UUID topicId, String difficulty, int page, int size) {
@@ -71,9 +80,10 @@ public class PracticeService {
         attempt.setCorrect(isCorrect);
         attempt.setTimeSpentSeconds(timeSpent);
         attempt.setStatus("EVALUATED");
+        attempt.setFeedback(isCorrect ? "Correct! Well done." : "Incorrect. Try again or check the hints.");
 
         if (isCorrect) {
-            switch (question.getDifficulty()) {
+            switch (question.getDifficulty() != null ? question.getDifficulty() : "EASY") {
                 case "EASY" -> attempt.setScore(new BigDecimal("10"));
                 case "MEDIUM" -> attempt.setScore(new BigDecimal("25"));
                 case "HARD" -> attempt.setScore(new BigDecimal("50"));
@@ -85,16 +95,63 @@ public class PracticeService {
 
         StudentQuestionAttempt saved = attemptRepository.save(attempt);
         updateStats(studentId, question, isCorrect, timeSpent);
+
+        if (isCorrect) {
+            String ruleAction = switch (question.getDifficulty() != null ? question.getDifficulty() : "EASY") {
+                case "HARD" -> "QUESTION_SOLVED_HARD";
+                case "MEDIUM" -> "QUESTION_SOLVED_MEDIUM";
+                default -> "QUESTION_SOLVED_EASY";
+            };
+            coinService.earnCoins(studentId, ruleAction, "QUESTION", questionId);
+            if (attemptNumber == 1) {
+                coinService.earnCoins(studentId, "FIRST_SOLVE", "QUESTION", questionId);
+            }
+
+            int xpAmount = switch (question.getDifficulty() != null ? question.getDifficulty() : "EASY") {
+                case "HARD" -> 50;
+                case "MEDIUM" -> 25;
+                default -> 10;
+            };
+            if (question.getSkillId() != null) {
+                skillXpService.earnXp(studentId, question.getSkillId(), xpAmount, "PRACTICE", saved.getId(), "Solved " + question.getDifficulty() + " question");
+            }
+
+            streakService.recordActivity(studentId);
+        }
+
         return saved;
     }
 
     private boolean evaluateAnswer(Question question, String answer) {
         if (answer == null || answer.isBlank()) return false;
-        String evalMethod = question.getEvaluationMethod();
+        String trimmed = answer.trim();
+
+        // Check options for MCQ questions
+        List<QuestionOption> options = optionRepository.findByQuestionIdOrderByDisplayOrder(question.getId());
+        if (!options.isEmpty()) {
+            for (int i = 0; i < options.size(); i++) {
+                QuestionOption opt = options.get(i);
+                if (opt.isCorrect()) {
+                    if (trimmed.equalsIgnoreCase(opt.getId().toString())
+                            || trimmed.equalsIgnoreCase(opt.getOptionText().trim())
+                            || trimmed.equalsIgnoreCase(String.valueOf((char) ('A' + i)))
+                            || trimmed.equalsIgnoreCase(String.valueOf(i))) {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        String expected = question.getExpectedOutput() != null ? question.getExpectedOutput().trim() : "";
+        if (expected.isEmpty()) {
+            return false;
+        }
+
+        String evalMethod = question.getEvaluationMethod() != null ? question.getEvaluationMethod() : "EXACT_MATCH";
         return switch (evalMethod) {
-            case "EXACT_MATCH" -> answer.trim().equalsIgnoreCase(question.getExpectedOutput() != null ? question.getExpectedOutput().trim() : "");
-            case "FUZZY_MATCH" -> answer.trim().toLowerCase().contains(question.getExpectedOutput() != null ? question.getExpectedOutput().trim().toLowerCase() : "");
-            default -> answer.trim().equalsIgnoreCase(question.getExpectedOutput() != null ? question.getExpectedOutput().trim() : "");
+            case "EXACT_MATCH" -> trimmed.equalsIgnoreCase(expected);
+            case "FUZZY_MATCH" -> trimmed.toLowerCase().contains(expected.toLowerCase()) || expected.toLowerCase().contains(trimmed.toLowerCase());
+            default -> trimmed.equalsIgnoreCase(expected);
         };
     }
 

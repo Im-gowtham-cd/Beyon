@@ -108,9 +108,11 @@ desktop/dist/
 desktop/release/
 
 # ─── Dolt Database & History ───────────────────────────────────
+beyon/
 .doltcfg/
 .dolt_dropped_databases/
 .sqlhistory
+.dolt/
 *.darc
 sql-server.info
 .dolt/sql-server.info

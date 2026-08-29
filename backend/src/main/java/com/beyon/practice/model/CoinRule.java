@@ -22,7 +22,7 @@ public class CoinRule {
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    @Column(nullable = false)
+    @Column(name = "is_active", nullable = false)
     private boolean active = true;
 
     private Integer dailyLimit;

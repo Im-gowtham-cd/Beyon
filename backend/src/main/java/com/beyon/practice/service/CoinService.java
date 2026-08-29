@@ -44,24 +44,42 @@ public class CoinService {
 
     @Transactional
     public CoinTransaction earnCoins(UUID studentId, String action, String referenceType, UUID referenceId) {
+        long amount = 10;
+        Integer dailyLimit = null;
+
         Optional<CoinRule> ruleOpt = ruleRepository.findByActionAndActiveTrue(action);
-        if (ruleOpt.isEmpty()) return null;
+        if (ruleOpt.isPresent()) {
+            CoinRule rule = ruleOpt.get();
+            amount = rule.getCoinsAmount();
+            dailyLimit = rule.getDailyLimit();
+        } else {
+            amount = switch (action) {
+                case "DAILY_CHALLENGE_COMPLETED" -> 50;
+                case "WEEKEND_TEST_COMPLETED" -> 100;
+                case "QUESTION_SOLVED_HARD" -> 25;
+                case "QUESTION_SOLVED_MEDIUM" -> 10;
+                case "QUESTION_SOLVED_EASY" -> 5;
+                case "FIRST_SOLVE" -> 10;
+                case "7_DAY_STREAK" -> 100;
+                case "30_DAY_STREAK" -> 500;
+                default -> 10;
+            };
+        }
 
-        CoinRule rule = ruleOpt.get();
-
-        if (rule.getDailyLimit() != null) {
-            long todayCount = transactionRepository.countTodayByStudentAndReason(studentId, action);
-            if (todayCount >= rule.getDailyLimit()) return null;
+        if (dailyLimit != null) {
+            java.time.Instant startOfDay = java.time.LocalDate.now().atStartOfDay(java.time.ZoneOffset.UTC).toInstant();
+            long todayCount = transactionRepository.countSinceByStudentAndReason(studentId, action, startOfDay);
+            if (todayCount >= dailyLimit) return null;
         }
 
         CoinWallet wallet = getOrCreateWallet(studentId);
-        wallet.setBalance(wallet.getBalance() + rule.getCoinsAmount());
-        wallet.setTotalEarned(wallet.getTotalEarned() + rule.getCoinsAmount());
+        wallet.setBalance(wallet.getBalance() + amount);
+        wallet.setTotalEarned(wallet.getTotalEarned() + amount);
         walletRepository.save(wallet);
 
         CoinTransaction txn = new CoinTransaction();
         txn.setStudentId(studentId);
-        txn.setAmount(rule.getCoinsAmount());
+        txn.setAmount(amount);
         txn.setType("EARNED");
         txn.setReason(action);
         txn.setReferenceType(referenceType);

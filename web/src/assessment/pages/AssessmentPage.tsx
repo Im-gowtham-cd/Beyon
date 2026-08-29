@@ -109,7 +109,19 @@ export function AssessmentPage() {
   };
 
   const handleOpenProtocol = (tokenId: string) => {
-    window.location.href = `beyon://launch?token=${encodeURIComponent(tokenId)}`;
+    try {
+      const iframe = document.createElement('iframe');
+      iframe.style.display = 'none';
+      iframe.src = `beyon://launch?token=${encodeURIComponent(tokenId)}`;
+      document.body.appendChild(iframe);
+      setTimeout(() => {
+        try {
+          if (iframe.parentNode) iframe.parentNode.removeChild(iframe);
+        } catch {}
+      }, 2000);
+    } catch {
+      // Fallback
+    }
   };
 
   if (loading) {
@@ -612,6 +624,35 @@ export function AssessmentPage() {
                 <p style={{ margin: '6px 0 0', fontSize: '0.75rem', color: '#64748b' }}>
                   Paste this token into the Desktop Assessment Client after launching to begin.
                 </p>
+              </div>
+
+              {/* Launch Step 3: Web Kiosk Mode */}
+              <div>
+                <div style={{ fontWeight: 800, fontSize: '0.84rem', color: '#020617', marginBottom: '8px' }}>
+                  Option C: Instant Web Proctored Mode
+                </div>
+                <button
+                  onClick={() => {
+                    window.location.href = `/practice/tests`;
+                  }}
+                  style={{
+                    width: '100%',
+                    height: '42px',
+                    background: '#fed601',
+                    color: '#020617',
+                    border: 'none',
+                    borderRadius: '0px',
+                    fontWeight: 800,
+                    fontSize: '0.88rem',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                  }}
+                >
+                  <Target size={16} /> Take Proctored Test in Browser (Web Kiosk)
+                </button>
               </div>
             </div>
 

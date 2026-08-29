@@ -24,8 +24,7 @@ public interface QuestionRepository extends JpaRepository<Question, UUID> {
     @Query("SELECT q FROM Question q WHERE (q.status = 'PUBLISHED' OR q.status = 'ACTIVE') AND q.difficulty = :difficulty ORDER BY q.createdAt DESC")
     List<Question> findByDifficultyPublished(@Param("difficulty") String difficulty, Pageable pageable);
 
-    @Query("SELECT q FROM Question q WHERE (q.status = 'PUBLISHED' OR q.status = 'ACTIVE') AND LOWER(q.title) LIKE LOWER(CONCAT('%', :search, '%')) ORDER BY q.createdAt DESC")
-    List<Question> searchPublished(@Param("search") String search, Pageable pageable);
+    List<Question> findByStatusInAndTitleContainingIgnoreCaseOrderByCreatedAtDesc(List<String> statuses, String title, Pageable pageable);
 
     @Query("SELECT q FROM Question q WHERE (q.status = 'PUBLISHED' OR q.status = 'ACTIVE') AND q.skillId = :skillId AND q.difficulty = :difficulty")
     List<Question> findBySkillAndDifficulty(@Param("skillId") UUID skillId, @Param("difficulty") String difficulty, Pageable pageable);
