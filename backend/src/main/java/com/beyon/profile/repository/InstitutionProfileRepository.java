@@ -8,4 +8,5 @@ import java.util.UUID;
 public interface InstitutionProfileRepository extends JpaRepository<InstitutionProfile, UUID> {
     Optional<InstitutionProfile> findByUserId(UUID userId);
     boolean existsByUserId(UUID userId);
+    Optional<InstitutionProfile> findByInstitutionNameContainingIgnoreCase(String institutionName);
 }

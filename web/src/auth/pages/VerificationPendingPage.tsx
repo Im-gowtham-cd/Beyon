@@ -11,16 +11,26 @@ export function VerificationPendingPage() {
           <i className="bx bx-time-five" />
         </div>
         <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: 'var(--text-3xl)', fontWeight: 'var(--font-bold)', color: 'var(--color-text)', margin: '0 0 var(--space-md)' }}>
-          Account Under Verification
+          {user?.role === 'STUDENT'
+            ? 'Awaiting Institution Academic Verification'
+            : user?.role === 'INSTITUTION'
+            ? 'Institution Account Under Review'
+            : 'Corporate Account Under Review'}
         </h1>
-        <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-lg)', maxWidth: 500, margin: '0 0 var(--space-md)' }}>
-          Your {user?.role === 'INSTITUTION' ? 'institution' : 'company'} account is being reviewed by our team.
+        <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-lg)', maxWidth: 540, margin: '0 0 var(--space-md)', lineHeight: 1.5 }}>
+          {user?.role === 'STUDENT'
+            ? "Your student account is currently in the verification queue. Your institution's Placement Office will review your academic CGPA and transcripts."
+            : user?.role === 'INSTITUTION'
+            ? 'Your institution account and accreditation documents are being reviewed by the platform administration team.'
+            : 'Your corporate recruiting account is being verified by our enterprise team.'}
         </p>
         <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-sm)', maxWidth: 500, margin: '0 0 var(--space-2xl)' }}>
-          You can update your submitted information if permitted. We'll notify you once verification is complete.
+          {user?.role === 'STUDENT'
+            ? 'Once approved by your institution, full access to placement drives, proctored tests, and daily challenges will be activated.'
+            : "You will receive an email notification as soon as verification is complete."}
         </p>
         <div style={{ display: 'flex', gap: 'var(--space-md)' }}>
-          <button onClick={() => logout()} style={{ padding: '12px 24px', background: 'transparent', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-sm)', color: 'var(--color-text-secondary)', fontSize: 'var(--text-base)', cursor: 'pointer' }}>
+          <button onClick={() => logout()} style={{ padding: '12px 24px', background: '#1c2d81', border: '1px solid #1c2d81', borderRadius: 'var(--radius-sm)', color: '#ffffff', fontWeight: 600, fontSize: 'var(--text-base)', cursor: 'pointer' }}>
             Sign Out
           </button>
         </div>
