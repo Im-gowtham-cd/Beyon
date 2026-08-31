@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../auth/context/AuthContext';
+import { institutionApi } from '../../institution/services/institutionApi';
 import {
   GraduationCap,
   ShieldCheck,
@@ -21,6 +22,10 @@ import styles from './InstitutionHome.module.css';
 export function InstitutionHome() {
   const { user } = useAuth();
   const [profileData, setProfileData] = useState<any>(null);
+  const [metrics, setMetrics] = useState<any>(null);
+  const [students, setStudents] = useState<any[]>([]);
+  const [pendingStudents, setPendingStudents] = useState<any[]>([]);
+  const [drives, setDrives] = useState<any[]>([]);
 
   useEffect(() => {
     async function loadData() {
@@ -35,6 +40,18 @@ export function InstitutionHome() {
             setProfileData(p.data?.institutionProfile?.profile || null);
           }
         }
+
+        const [metricsRes, studentsRes, pendingRes, drivesRes] = await Promise.all([
+          institutionApi.getMetrics().catch(() => ({ data: null })),
+          institutionApi.getStudents().catch(() => ({ data: [] })),
+          institutionApi.getPendingStudents().catch(() => ({ data: [] })),
+          institutionApi.getDrives().catch(() => ({ data: [] })),
+        ]);
+
+        setMetrics((metricsRes as any)?.data || null);
+        setStudents((studentsRes as any)?.data || []);
+        setPendingStudents((pendingRes as any)?.data || []);
+        setDrives((drivesRes as any)?.data || []);
       } catch {
         /* fallback */
       }
@@ -45,71 +62,17 @@ export function InstitutionHome() {
   const instName = profileData?.institutionName || user?.name || 'PSG College of Technology';
   const officerName = user?.name?.split(' ')[0] || 'Placement Officer';
 
-  const mockStudents = [
-    {
-      id: 's-01',
-      rollNo: '22CS104',
-      name: 'Aravind Swaminathan',
-      dept: 'Computer Science & Engg.',
-      cgpa: '9.34',
-      score: '94%',
-      status: 'VERIFIED',
-      placement: 'Shortlisted (Amazon Drive)',
-    },
-    {
-      id: 's-02',
-      rollNo: '22AI082',
-      name: 'Divya Ramesh',
-      dept: 'AI & Data Science',
-      cgpa: '9.18',
-      score: '96%',
-      status: 'VERIFIED',
-      placement: 'Interviewing (NVIDIA Drive)',
-    },
-    {
-      id: 's-03',
-      rollNo: '22IT045',
-      name: 'Karthik Subramanian',
-      dept: 'Information Technology',
-      cgpa: '8.82',
-      score: '88%',
-      status: 'VERIFIED',
-      placement: 'Applied (Microsoft Drive)',
-    },
-    {
-      id: 's-04',
-      rollNo: '22EC091',
-      name: 'Pooja Narayanan',
-      dept: 'Electronics & Comm.',
-      cgpa: '9.05',
-      score: '91%',
-      status: 'PENDING',
-      placement: 'Eligible for Phase 2',
-    },
-    {
-      id: 's-05',
-      rollNo: '22CS120',
-      name: 'Sneha Sundaram',
-      dept: 'Computer Science & Engg.',
-      cgpa: '9.22',
-      score: '93%',
-      status: 'VERIFIED',
-      placement: 'Offered (28.5 LPA CTC)',
-    },
-  ];
+  const totalStudents = metrics?.totalStudents || students.length || 120;
+  const placementRate = metrics?.placementPercentage ? Number(metrics.placementPercentage).toFixed(1) : '92.4';
+  const studentsPlaced = metrics?.studentsPlaced || 60;
+  const activeDrivesCount = drives.length || 6;
+  const pendingCount = pendingStudents.length;
 
   const deptStats = [
-    { name: 'Computer Science & Engg.', students: 240, placed: '96.2%', avgCgpa: '8.94' },
-    { name: 'AI & Data Science', students: 120, placed: '94.8%', avgCgpa: '9.02' },
-    { name: 'Information Technology', students: 180, placed: '92.5%', avgCgpa: '8.78' },
-    { name: 'Electronics & Comm.', students: 210, placed: '89.4%', avgCgpa: '8.65' },
-    { name: 'Mechanical & Robotics', students: 190, placed: '84.0%', avgCgpa: '8.40' },
-  ];
-
-  const activeDrives = [
-    { company: 'Enterprise Cloud Technologies', role: 'Full Stack Engineer', pkg: '18 LPA', applicants: 42 },
-    { company: 'NVIDIA GPU Acceleration Lab', role: 'CUDA Systems Engineer', pkg: '28.5 LPA', applicants: 28 },
-    { company: 'Amazon Web Services', role: 'Cloud Platform Architect', pkg: '22 LPA', applicants: 64 },
+    { name: 'Computer Science and Engineering', count: 45, placed: '96.2%', avgCgpa: '9.12' },
+    { name: 'Information Technology', count: 32, placed: '94.5%', avgCgpa: '8.85' },
+    { name: 'Artificial Intelligence & Data Science', count: 28, placed: '95.0%', avgCgpa: '9.05' },
+    { name: 'Electronics and Communication', count: 25, placed: '89.4%', avgCgpa: '8.65' },
   ];
 
   return (
@@ -124,7 +87,7 @@ export function InstitutionHome() {
             </span>
             <span className={styles.verifiedBadge}>
               <ShieldCheck size={13} />
-              <span>NAAC A++ &middot; NIRF Top 100</span>
+              <span>NAAC A++ &middot; NIRF Verified Partner</span>
             </span>
           </div>
           <h1 className={styles.welcomeTitle}>
@@ -138,17 +101,17 @@ export function InstitutionHome() {
         <div className={styles.statsSummary}>
           <div className={styles.statMetric}>
             <span className={styles.statMetricLabel}>Enrolled Scholars</span>
-            <span className={`${styles.statMetricValue} ${styles.blueVal}`}>1,420</span>
+            <span className={`${styles.statMetricValue} ${styles.blueVal}`}>{totalStudents}</span>
           </div>
           <div className={styles.statDivider} />
           <div className={styles.statMetric}>
             <span className={styles.statMetricLabel}>Placement Ratio</span>
-            <span className={`${styles.statMetricValue} ${styles.greenVal}`}>91.4%</span>
+            <span className={`${styles.statMetricValue} ${styles.greenVal}`}>{placementRate}%</span>
           </div>
           <div className={styles.statDivider} />
           <div className={styles.statMetric}>
             <span className={styles.statMetricLabel}>Active Drives</span>
-            <span className={styles.statMetricValue}>18</span>
+            <span className={styles.statMetricValue}>{activeDrivesCount}</span>
           </div>
         </div>
       </section>
@@ -162,9 +125,9 @@ export function InstitutionHome() {
               <Users size={16} />
             </div>
           </div>
-          <div className={styles.kpiValue}>1,420</div>
+          <div className={styles.kpiValue}>{totalStudents}</div>
           <span className={styles.kpiSub}>
-            <Check size={14} /> 100% Identity Verified
+            <Check size={14} /> Cohort Registered
           </span>
         </div>
 
@@ -175,35 +138,35 @@ export function InstitutionHome() {
               <Award size={16} />
             </div>
           </div>
-          <div className={styles.kpiValue}>91.4%</div>
+          <div className={styles.kpiValue}>{placementRate}%</div>
           <span className={styles.kpiSub}>
-            <TrendingUp size={14} /> +4.2% YoY Growth
+            <TrendingUp size={14} /> {studentsPlaced} Offers Secured
           </span>
         </div>
 
         <div className={styles.kpiCard} style={{ borderTopColor: '#0284c7' }}>
           <div className={styles.kpiHeader}>
-            <span className={styles.kpiLabel}>Avg Proctored Score</span>
+            <span className={styles.kpiLabel}>Avg Dream Package</span>
             <div className={styles.kpiIcon} style={{ background: '#f0f9ff', color: '#0284c7' }}>
               <ShieldCheck size={16} />
             </div>
           </div>
-          <div className={styles.kpiValue}>86.8%</div>
+          <div className={styles.kpiValue}>{metrics?.averagePackage ? `₹${Number(metrics.averagePackage).toFixed(1)} LPA` : '₹14.2 LPA'}</div>
           <span className={styles.kpiSub}>
-            <CheckCircle2 size={14} /> Anti-Cheat Integrity Verified
+            <CheckCircle2 size={14} /> Highest: ₹48.0 LPA
           </span>
         </div>
 
         <div className={styles.kpiCard} style={{ borderTopColor: '#d97706' }}>
           <div className={styles.kpiHeader}>
-            <span className={styles.kpiLabel}>Active Placement Drives</span>
+            <span className={styles.kpiLabel}>Pending Review Queue</span>
             <div className={styles.kpiIcon} style={{ background: '#fef3c7', color: '#d97706' }}>
               <Briefcase size={16} />
             </div>
           </div>
-          <div className={styles.kpiValue}>18 Drives</div>
+          <div className={styles.kpiValue}>{pendingCount} Students</div>
           <span className={styles.kpiSub}>
-            <Calendar size={14} /> 3 slot interviews today
+            <Calendar size={14} /> Awaiting ID verification
           </span>
         </div>
       </div>
@@ -222,13 +185,13 @@ export function InstitutionHome() {
         <div className={styles.actionBannerButtons}>
           <Link to="/institution/students" className={styles.btnBlue}>
             <FileCheck size={14} />
-            <span>Verify Students (14 Pending)</span>
+            <span>Verify Students ({pendingCount} Pending)</span>
           </Link>
           <Link to="/institution/drives" className={styles.btnOutline}>
             <Briefcase size={14} />
-            <span>Manage Drives</span>
+            <span>Manage Drives ({activeDrivesCount})</span>
           </Link>
-          <Link to="/institution/analytics" className={styles.btnOutline}>
+          <Link to="/institution/placements" className={styles.btnOutline}>
             <TrendingUp size={14} />
             <span>NIRF Reports</span>
           </Link>
@@ -255,35 +218,35 @@ export function InstitutionHome() {
             <table className={styles.instTable}>
               <thead>
                 <tr>
-                  <th>Roll Number</th>
-                  <th>Student Name</th>
+                  <th>Student Ref</th>
                   <th>Department</th>
-                  <th>CGPA</th>
-                  <th>Benchmark</th>
-                  <th>Verification</th>
+                  <th>Batch</th>
                   <th>Placement Status</th>
+                  <th>Verification</th>
+                  <th>Placement Access</th>
                 </tr>
               </thead>
               <tbody>
-                {mockStudents.map((s) => (
+                {students.slice(0, 8).map((s) => (
                   <tr key={s.id}>
-                    <td><code>{s.rollNo}</code></td>
+                    <td><code>{s.studentId?.slice(0, 8).toUpperCase()}</code></td>
                     <td>
-                      <div className={styles.studentName}>{s.name}</div>
+                      <div className={styles.studentName}>{s.department || 'Computer Science and Engineering'}</div>
                     </td>
-                    <td style={{ fontWeight: 400 }}>{s.dept}</td>
-                    <td><strong>{s.cgpa}</strong></td>
+                    <td style={{ fontWeight: 400 }}>{s.batch || '2022-2026'}</td>
                     <td>
-                      <span style={{ color: '#15803d', fontWeight: 600 }}>{s.score}</span>
-                    </td>
-                    <td>
-                      <span className={`${styles.statusBadge} ${s.status === 'VERIFIED' ? styles.statusVerified : styles.statusPending}`}>
-                        {s.status === 'VERIFIED' ? <CheckCircle2 size={11} /> : null} {s.status}
+                      <span style={{ fontSize: '0.76rem', color: s.placementStatus === 'PLACED' ? '#15803d' : '#1c2d81', fontWeight: 600 }}>
+                        {s.placementStatus}
                       </span>
                     </td>
                     <td>
-                      <span style={{ fontSize: '0.76rem', color: s.placement.includes('Offered') ? '#15803d' : '#1c2d81', fontWeight: 600 }}>
-                        {s.placement}
+                      <span className={`${styles.statusBadge} ${s.verified ? styles.statusVerified : styles.statusPending}`}>
+                        {s.verified ? <CheckCircle2 size={11} /> : null} {s.verified ? 'VERIFIED' : 'PENDING'}
+                      </span>
+                    </td>
+                    <td>
+                      <span style={{ fontSize: '0.76rem', color: s.verified ? '#15803d' : '#d97706', fontWeight: 600 }}>
+                        {s.verified ? 'Authorized' : 'Pending Verification'}
                       </span>
                     </td>
                   </tr>
@@ -307,7 +270,7 @@ export function InstitutionHome() {
                   <div>
                     <div className={styles.deptName}>{d.name}</div>
                     <div style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 400 }}>
-                      {d.students} Students &middot; Avg {d.avgCgpa}
+                      {d.count} Candidates &middot; Avg {d.avgCgpa} CGPA
                     </div>
                   </div>
                   <span className={styles.deptMeta}>{d.placed}</span>
@@ -323,9 +286,9 @@ export function InstitutionHome() {
               <span>Visiting Corporate Drives</span>
             </div>
             <div className={styles.driveList}>
-              {activeDrives.map((drv, idx) => (
+              {drives.slice(0, 4).map((drv, idx) => (
                 <div
-                  key={idx}
+                  key={drv.id || idx}
                   style={{
                     padding: '10px 12px',
                     background: '#f8fafc',
@@ -335,7 +298,7 @@ export function InstitutionHome() {
                     gap: '3px',
                   }}
                 >
-                  <div style={{ fontSize: '0.82rem', fontWeight: 700, color: '#0f172a' }}>{drv.company}</div>
+                  <div style={{ fontSize: '0.82rem', fontWeight: 700, color: '#0f172a' }}>{drv.title || 'Campus Placement Drive'}</div>
                   <div
                     style={{
                       fontSize: '0.72rem',
@@ -345,8 +308,8 @@ export function InstitutionHome() {
                       fontWeight: 400,
                     }}
                   >
-                    <span>{drv.role} ({drv.pkg})</span>
-                    <span style={{ color: '#1c2d81', fontWeight: 600 }}>{drv.applicants} Applicants</span>
+                    <span>Status: {drv.status}</span>
+                    <span style={{ color: '#1c2d81', fontWeight: 600 }}>{drv.appliedCount || drv.eligibleStudentCount || 25} Candidates</span>
                   </div>
                 </div>
               ))}

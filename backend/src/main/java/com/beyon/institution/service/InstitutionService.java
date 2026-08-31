@@ -63,11 +63,71 @@ public class InstitutionService {
         return institutionStudentRepository.save(student);
     }
 
+    public List<Map<String, Object>> getPendingStudentsWithDetails(UUID institutionId) {
+        List<InstitutionStudent> pending = institutionStudentRepository.findByInstitutionIdAndPlacementStatus(institutionId, "PENDING_VERIFICATION");
+        if (pending.isEmpty()) {
+            pending = institutionStudentRepository.findByInstitutionId(institutionId).stream()
+                    .filter(s -> !s.isVerified())
+                    .collect(Collectors.toList());
+        }
+        List<Map<String, Object>> results = new ArrayList<>();
+        for (InstitutionStudent is : pending) {
+            Map<String, Object> map = new HashMap<>();
+            map.put("id", is.getId());
+            map.put("studentId", is.getStudentId());
+            map.put("department", is.getDepartment());
+            map.put("batch", is.getBatch());
+            map.put("placementStatus", is.getPlacementStatus());
+            map.put("verified", is.isVerified());
+            map.put("createdAt", is.getCreatedAt());
+
+            userRepository.findById(is.getStudentId()).ifPresent(u -> {
+                map.put("email", u.getEmail());
+                map.put("displayName", u.getDisplayName());
+                map.put("profileStatus", u.getProfileStatus() != null ? u.getProfileStatus().name() : "INCOMPLETE");
+            });
+
+            studentProfileRepository.findByUserId(is.getStudentId()).ifPresent(sp -> {
+                map.put("registrationNumber", sp.getRegistrationNumber());
+                map.put("cgpa", sp.getCgpa());
+                map.put("degree", sp.getDegree());
+                map.put("phone", sp.getPhone());
+                map.put("completionPct", sp.getCompletionPct());
+            });
+
+            results.add(map);
+        }
+        return results;
+    }
+
     @Transactional
     public InstitutionStudent updatePlacementStatus(UUID institutionId, UUID studentId, String status) {
         InstitutionStudent student = institutionStudentRepository.findByInstitutionIdAndStudentId(institutionId, studentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Student not found in institution"));
         student.setPlacementStatus(status);
+        return institutionStudentRepository.save(student);
+    }
+
+    @Transactional
+    public InstitutionStudent verifyStudent(UUID institutionId, UUID studentId, boolean approved, String notes) {
+        InstitutionStudent student = institutionStudentRepository.findByInstitutionIdAndStudentId(institutionId, studentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Student not found in institution"));
+
+        if (approved) {
+            student.setVerified(true);
+            student.setPlacementStatus("PLACEMENT_SEEKING");
+            userRepository.findById(studentId).ifPresent(u -> {
+                u.setProfileStatus(com.beyon.identity.enums.AccountStatus.COMPLETED);
+                userRepository.save(u);
+            });
+        } else {
+            student.setVerified(false);
+            student.setPlacementStatus("REJECTED");
+            userRepository.findById(studentId).ifPresent(u -> {
+                u.setProfileStatus(com.beyon.identity.enums.AccountStatus.REJECTED);
+                userRepository.save(u);
+            });
+        }
         return institutionStudentRepository.save(student);
     }
 

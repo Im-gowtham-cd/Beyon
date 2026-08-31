@@ -22,6 +22,23 @@ public class InstitutionController {
         this.institutionService = institutionService;
     }
 
+    @GetMapping("/students/pending")
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getPendingStudents(Authentication auth) {
+        UUID instId = extractUserId(auth);
+        return ResponseEntity.ok(ApiResponse.ok(institutionService.getPendingStudentsWithDetails(instId)));
+    }
+
+    @PostMapping("/students/{studentId}/verify")
+    public ResponseEntity<ApiResponse<InstitutionStudent>> verifyStudent(
+            Authentication auth,
+            @PathVariable UUID studentId,
+            @RequestBody Map<String, Object> body) {
+        UUID instId = extractUserId(auth);
+        boolean approved = Boolean.parseBoolean(String.valueOf(body.getOrDefault("approved", true)));
+        String notes = (String) body.get("notes");
+        return ResponseEntity.ok(ApiResponse.ok(institutionService.verifyStudent(instId, studentId, approved, notes)));
+    }
+
     @GetMapping("/students")
     public ResponseEntity<ApiResponse<List<InstitutionStudent>>> getStudents(
             Authentication auth,

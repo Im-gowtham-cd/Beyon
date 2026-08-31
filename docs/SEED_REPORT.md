@@ -1,10 +1,10 @@
 # BEYON TEST DATA SEED REPORT
-Generated: 2026-08-29T13:23:08.648Z
+Generated: 2026-08-30T10:15:32.281Z
 
 ========================================
 ENVIRONMENT  : development
 SEED VALUE   : 20260826
-ELAPSED      : 151.6s
+ELAPSED      : 91.3s
 OVERALL      : PASS
 ========================================
 
@@ -15,14 +15,14 @@ Students            : 123
 Institutions        : 26
 Companies           : 31
 Skills              : 109
-Questions           : 300
+Questions           : 357
 Assessments/Tests   : 16
 Opportunities       : 35
 Applications        : 293
-Coin Transactions   : 1880
+Coin Transactions   : 1887
 Notifications       : 750
-Follows             : 378
-Daily Challenges    : 1825
+Follows             : 467
+Daily Challenges    : 1830
 
 ========================================
 VALIDATION RESULTS
@@ -32,15 +32,15 @@ PASS  | Student Profiles                       | 123 records
 PASS  | Institution Profiles                   | 26 records
 PASS  | Company Profiles                       | 31 records
 PASS  | Skills                                 | 109 records
-PASS  | Questions                              | 300 records
+PASS  | Questions                              | 357 records
 PASS  | Tests                                  | 16 records
 PASS  | Opportunities                          | 35 records
 PASS  | Applications                           | 293 records
 PASS  | Coin Wallets                           | 123 records
-PASS  | Coin Transactions                      | 1880 records
+PASS  | Coin Transactions                      | 1887 records
 PASS  | Notifications                          | 750 records
-PASS  | Follows                                | 378 records
-PASS  | Daily Challenges                       | 1825 records
+PASS  | Follows                                | 467 records
+PASS  | Daily Challenges                       | 1830 records
 WARN  | Coin Ledger Reconciliation             | 2 wallets have minor balance drift (may be due to seeding order)
 PASS  | Application Referential Integrity      | All applications reference valid students
 

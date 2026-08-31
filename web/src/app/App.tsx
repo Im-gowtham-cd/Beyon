@@ -1,4 +1,4 @@
-﻿import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { MainLayout } from '../layouts/MainLayout';
 import { HomePage } from '../pages/HomePage';
 import { NotFoundPage } from '../pages/NotFoundPage';
@@ -92,6 +92,13 @@ import { CompanyOpportunitiesPage } from '../pages/company/CompanyOpportunitiesP
 import { CreateOpportunityPage } from '../pages/company/CreateOpportunityPage';
 import { CompanyProfilePage } from '../pages/company/CompanyProfilePage';
 import { AdminHome } from '../pages/admin/AdminHome';
+import { AdminUsersPage } from '../pages/admin/AdminUsersPage';
+import { AdminInstitutionsPage } from '../pages/admin/AdminInstitutionsPage';
+import { AdminCompaniesPage } from '../pages/admin/AdminCompaniesPage';
+import { AdminQuestionsPage } from '../pages/admin/AdminQuestionsPage';
+import { AdminEconomyPage } from '../pages/admin/AdminEconomyPage';
+import { AdminModerationPage } from '../pages/admin/AdminModerationPage';
+import { AdminLayout } from '../layouts/AdminLayout';
 import { StudentOnboarding } from '../onboarding/pages/student/StudentOnboarding';
 import { InstitutionOnboarding } from '../onboarding/pages/institution/InstitutionOnboarding';
 import { CompanyOnboarding } from '../onboarding/pages/company/CompanyOnboarding';
@@ -228,10 +235,19 @@ export function App() {
 
         {/* Platform Administrator Portal */}
         <Route element={<RoleGuard allowedRoles={['ADMIN']} />}>
-          <Route path="/admin/home" element={<AdminHome />} />
-          <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
-          <Route path="/admin/feedback" element={<AdminFeedbackPage />} />
-          <Route path="/admin/reports" element={<ReportsPage />} />
+          <Route element={<AdminLayout />}>
+            <Route path="/admin/home" element={<AdminHome />} />
+            <Route path="/admin" element={<Navigate to="/admin/home" replace />} />
+            <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
+            <Route path="/admin/users" element={<AdminUsersPage />} />
+            <Route path="/admin/institutions" element={<AdminInstitutionsPage />} />
+            <Route path="/admin/companies" element={<AdminCompaniesPage />} />
+            <Route path="/admin/questions" element={<AdminQuestionsPage />} />
+            <Route path="/admin/economy" element={<AdminEconomyPage />} />
+            <Route path="/admin/moderation" element={<AdminModerationPage />} />
+            <Route path="/admin/feedback" element={<AdminFeedbackPage />} />
+            <Route path="/admin/reports" element={<ReportsPage />} />
+          </Route>
         </Route>
       </Route>
 

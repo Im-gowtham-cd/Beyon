@@ -1,10 +1,11 @@
-package com.beyon.community.controller;
+﻿package com.beyon.community.controller;
 
 import com.beyon.community.service.MessagingService;
 import com.beyon.identity.security.JwtUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.*;
 
 @RestController
@@ -18,31 +19,72 @@ public class MessagingController {
         this.jwtUtil = jwtUtil;
     }
 
+    @GetMapping("/contacts")
+    public ResponseEntity<?> getContacts(
+            @RequestParam(required = false) String query,
+            @RequestParam(required = false) String role,
+            @RequestParam(defaultValue = "50") int limit,
+            HttpServletRequest request) {
+        UUID currentUserId = extractUserId(request);
+        return ResponseEntity.ok(Map.of("data", messagingService.getContacts(currentUserId, query, role, limit)));
+    }
+
     @PostMapping("/conversations")
-    public ResponseEntity<?> startConversation(@RequestBody Map<String, String> body, HttpServletRequest request) {
+    public ResponseEntity<?> startConversation(@RequestBody Map<String, Object> body, HttpServletRequest request) {
         UUID userId = extractUserId(request);
-        UUID recipientId = UUID.fromString(body.get("recipientId"));
-        return ResponseEntity.ok(messagingService.startConversation(userId, recipientId, body.get("message")));
+        String recipientIdStr = (String) body.get("recipientId");
+        if (recipientIdStr == null && body.containsKey("participantIds")) {
+            List<?> pIds = (List<?>) body.get("participantIds");
+            if (pIds != null && !pIds.isEmpty()) {
+                recipientIdStr = pIds.get(0).toString();
+            }
+        }
+        if (recipientIdStr == null) {
+            return ResponseEntity.badRequest().body(Map.of("error", "recipientId or participantIds is required"));
+        }
+
+        UUID recipientId = UUID.fromString(recipientIdStr);
+        String title = (String) body.get("title");
+        String message = (String) body.get("message");
+
+        Map<String, Object> conv = messagingService.startConversation(userId, recipientId, title, message);
+        return ResponseEntity.ok(Map.of("data", conv));
     }
 
     @GetMapping("/conversations")
     public ResponseEntity<?> getConversations(HttpServletRequest request) {
-        return ResponseEntity.ok(messagingService.getMyConversations(extractUserId(request)));
+        UUID userId = extractUserId(request);
+        return ResponseEntity.ok(Map.of("data", messagingService.getMyConversations(userId)));
     }
 
-    @GetMapping("/conversations/{conversationId}")
-    public ResponseEntity<?> getMessages(@PathVariable UUID conversationId, @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "50") int size) {
-        return ResponseEntity.ok(messagingService.getMessages(conversationId, page, size));
+    @GetMapping({"/conversations/{conversationId}", "/conversations/{conversationId}/messages"})
+    public ResponseEntity<?> getMessages(
+            @PathVariable UUID conversationId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "100") int size,
+            HttpServletRequest request) {
+        UUID userId = extractUserId(request);
+        return ResponseEntity.ok(Map.of("data", messagingService.getMessages(conversationId, userId, page, size)));
     }
 
-    @PostMapping("/conversations/{conversationId}")
-    public ResponseEntity<?> sendMessage(@PathVariable UUID conversationId, @RequestBody Map<String, String> body, HttpServletRequest request) {
-        return ResponseEntity.ok(messagingService.sendMessage(conversationId, extractUserId(request), body.get("content")));
+    @PostMapping({"/conversations/{conversationId}", "/conversations/{conversationId}/messages"})
+    public ResponseEntity<?> sendMessage(
+            @PathVariable UUID conversationId,
+            @RequestBody Map<String, String> body,
+            HttpServletRequest request) {
+        UUID userId = extractUserId(request);
+        String content = body.get("content");
+        if (content == null || content.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "content is required"));
+        }
+        return ResponseEntity.ok(Map.of("data", messagingService.sendMessage(conversationId, userId, content.trim())));
     }
 
     private UUID extractUserId(HttpServletRequest request) {
         String auth = request.getHeader("Authorization");
-        if (auth != null && auth.startsWith("Bearer ")) return jwtUtil.getUserId(auth.substring(7));
+        if (auth != null && auth.startsWith("Bearer ")) {
+            return jwtUtil.getUserId(auth.substring(7));
+        }
         throw new RuntimeException("Unauthorized");
     }
 }
