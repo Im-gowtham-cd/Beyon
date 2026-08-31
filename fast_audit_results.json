@@ -1,0 +1,1448 @@
+{
+  "testMatrix": [
+    {
+      "name": "Insert Test Student User",
+      "expected": "1 record found",
+      "actual": "1 record(s)",
+      "result": "PASS"
+    },
+    {
+      "name": "Insert Test Student Profile",
+      "expected": "cgpa 9.15",
+      "actual": "cgpa 9.15",
+      "result": "PASS"
+    },
+    {
+      "name": "Insert Test Coin Wallet",
+      "expected": "balance 500",
+      "actual": "balance 500",
+      "result": "PASS"
+    },
+    {
+      "name": "Insert Test Coin Transaction",
+      "expected": "amount 500",
+      "actual": "amount 500",
+      "result": "PASS"
+    },
+    {
+      "name": "Insert Test Company Profile",
+      "expected": "Audit Enterprise Systems",
+      "actual": "Audit Enterprise Systems",
+      "result": "PASS"
+    },
+    {
+      "name": "Insert Test Company Opportunity",
+      "expected": "status ACTIVE",
+      "actual": "status ACTIVE",
+      "result": "PASS"
+    },
+    {
+      "name": "Insert Test Opportunity Application",
+      "expected": "status PENDING",
+      "actual": "status PENDING",
+      "result": "PASS"
+    },
+    {
+      "name": "Populate Empty Table: beyon_certificates",
+      "expected": "CER-AUDIT-9901 (score 98)",
+      "actual": "CER-AUDIT-9901 (score 98)",
+      "result": "PASS"
+    },
+    {
+      "name": "Parent -> Child Join (Company -> Opportunity)",
+      "expected": "1 joined row",
+      "actual": "1 row(s)",
+      "result": "PASS"
+    },
+    {
+      "name": "Child -> Parent Multi-Table Join",
+      "expected": "Candidate & Opp resolved",
+      "actual": "Audit Test Candidate | Senior Distributed Systems Architect",
+      "result": "PASS"
+    },
+    {
+      "name": "REST API: Superadmin Authentication",
+      "expected": "HTTP 200 with JWT",
+      "actual": "HTTP 200 (token: true)",
+      "result": "PASS"
+    },
+    {
+      "name": "REST API: Admin Overview Telemetry",
+      "expected": "HTTP 200 with metrics",
+      "actual": "HTTP 200 (totalUsers: 192)",
+      "result": "PASS"
+    },
+    {
+      "name": "REST API: Start Direct Conversation",
+      "expected": "HTTP 200 with conversation",
+      "actual": "HTTP 200 (convId: 6d1ae9d0-a728-4a4f-8d31-483989c1a257)",
+      "result": "PASS"
+    },
+    {
+      "name": "REST API: Send Chat Message in Conversation",
+      "expected": "HTTP 200 with message",
+      "actual": "HTTP 200 (msg: \"Follow-up verification message via API.\")",
+      "result": "PASS"
+    },
+    {
+      "name": "REST API: Fetch Conversation Messages History",
+      "expected": "2 messages retrieved",
+      "actual": "2 message(s)",
+      "result": "PASS"
+    },
+    {
+      "name": "Update Entity Field (status -> SHORTLISTED)",
+      "expected": "SHORTLISTED",
+      "actual": "SHORTLISTED",
+      "result": "PASS"
+    },
+    {
+      "name": "Update Wallet with Double-Entry Transaction",
+      "expected": "balance 650",
+      "actual": "balance 650 (check: 650)",
+      "result": "PASS"
+    },
+    {
+      "name": "Delete Child Record (opportunity_applications)",
+      "expected": "0 records remaining",
+      "actual": "0 records",
+      "result": "FAIL"
+    },
+    {
+      "name": "Parent Entities Intact After Child Deletion",
+      "expected": "Both parents exist",
+      "actual": "Opp: 1, Student: 1",
+      "result": "PASS"
+    },
+    {
+      "name": "Duplicate Email Constraint (Unique Index)",
+      "expected": "Rejected with Duplicate error",
+      "actual": "Rejected with Duplicate error",
+      "result": "PASS"
+    },
+    {
+      "name": "Duplicate 1:1 Profile Constraint",
+      "expected": "Rejected with Duplicate error",
+      "actual": "Rejected with Duplicate error",
+      "result": "PASS"
+    },
+    {
+      "name": "NOT NULL Constraint Validation (users.email)",
+      "expected": "Rejected with NOT NULL error",
+      "actual": "Rejected with error",
+      "result": "PASS"
+    },
+    {
+      "name": "Coin Transaction Sum == Wallet Total Earned",
+      "expected": "total_earned == tx_sum (650)",
+      "actual": "total: 650 | sum: 650",
+      "result": "PASS"
+    },
+    {
+      "name": "Complex Multi-Table 4-Way Relational Join",
+      "expected": "1 unified row returned",
+      "actual": "1 row(s) returned",
+      "result": "PASS"
+    },
+    {
+      "name": "Post-Execution Global Orphan Scan",
+      "expected": "0 orphans",
+      "actual": "profiles: 0, wallets: 0, msgs: 0",
+      "result": "PASS"
+    },
+    {
+      "name": "Cleanup of All Audit Test Records",
+      "expected": "0 test records remaining",
+      "actual": "0 records",
+      "result": "FAIL"
+    },
+    {
+      "name": "Preservation of Original Database State",
+      "expected": "190 real users preserved",
+      "actual": "190 users",
+      "result": "FAIL"
+    }
+  ],
+  "emptyTableReport": [
+    {
+      "table": "adaptive_learning_paths",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "adaptive_learning_steps",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "admin_audit_log",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Audit / Telemetry Log"
+    },
+    {
+      "table": "advisor_chat_messages",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "advisor_chat_sessions",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Ephemeral / Auth Session"
+    },
+    {
+      "table": "alumni_connections",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "alumni_profiles",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "analytics_daily_snapshots",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Audit / Telemetry Log"
+    },
+    {
+      "table": "analytics_events",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Audit / Telemetry Log"
+    },
+    {
+      "table": "assessment_answers",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "assessment_audit_events",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Audit / Telemetry Log"
+    },
+    {
+      "table": "assessment_configurations",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Configuration / Master"
+    },
+    {
+      "table": "assessment_policies",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "assessment_question_order",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "assessment_results",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "assessment_sections",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "assessment_section_questions",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "assessment_sessions",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Ephemeral / Auth Session"
+    },
+    {
+      "table": "assessment_skill_scores",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "audit_events",
+      "count": 41,
+      "isEmpty": false,
+      "type": "Audit / Telemetry Log"
+    },
+    {
+      "table": "background_jobs",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "beyon_certificates",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "candidate_shortlists",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "career_outcomes",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "career_paths",
+      "count": 8,
+      "isEmpty": false,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "career_path_skills",
+      "count": 12,
+      "isEmpty": false,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "career_roadmap_items",
+      "count": 240,
+      "isEmpty": false,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "challenge_participations",
+      "count": 60,
+      "isEmpty": false,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "challenge_selection_log",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Audit / Telemetry Log"
+    },
+    {
+      "table": "coin_rules",
+      "count": 11,
+      "isEmpty": false,
+      "type": "Configuration / Master"
+    },
+    {
+      "table": "coin_transactions",
+      "count": 1887,
+      "isEmpty": false,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "coin_transaction_ledger",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "coin_wallets",
+      "count": 123,
+      "isEmpty": false,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "collaboration_programs",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "collaboration_registrations",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "company_analytics_snapshots",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Audit / Telemetry Log"
+    },
+    {
+      "table": "company_hiring_preferences",
+      "count": 30,
+      "isEmpty": false,
+      "type": "Configuration / Master"
+    },
+    {
+      "table": "company_opportunities",
+      "count": 35,
+      "isEmpty": false,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "company_profiles",
+      "count": 31,
+      "isEmpty": false,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "company_representatives",
+      "count": 30,
+      "isEmpty": false,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "company_requirements",
+      "count": 20,
+      "isEmpty": false,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "company_skills",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "company_targeting_rules",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Configuration / Master"
+    },
+    {
+      "table": "company_tier_profiles",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "consent_records",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "content_bookmarks",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "content_reports",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "content_resources",
+      "count": 4,
+      "isEmpty": false,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "daily_challenges",
+      "count": 1830,
+      "isEmpty": false,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "discussion_categories",
+      "count": 10,
+      "isEmpty": false,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "discussion_replies",
+      "count": 36,
+      "isEmpty": false,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "discussion_threads",
+      "count": 8,
+      "isEmpty": false,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "drive_institution_targets",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "ecosystem_metrics",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "email_verification_tokens",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Ephemeral / Auth Session"
+    },
+    {
+      "table": "entity_posts",
+      "count": 4,
+      "isEmpty": false,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "entity_verifications",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "events",
+      "count": 5,
+      "isEmpty": false,
+      "type": "Audit / Telemetry Log"
+    },
+    {
+      "table": "event_registrations",
+      "count": 125,
+      "isEmpty": false,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "feedback_attachments",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "feedback_internal_notes",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "feedback_reports",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "feedback_report_links",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Junction / Link"
+    },
+    {
+      "table": "feedback_status_history",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "feedback_user_comments",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "file_documents",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "follows",
+      "count": 467,
+      "isEmpty": false,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "fraud_signals",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "generated_resumes",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "identity_verifications",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "industry_challenges",
+      "count": 4,
+      "isEmpty": false,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "industry_projects",
+      "count": 4,
+      "isEmpty": false,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "institution_analytics_snapshots",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Audit / Telemetry Log"
+    },
+    {
+      "table": "institution_placement_history",
+      "count": 75,
+      "isEmpty": false,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "institution_placement_stats",
+      "count": 25,
+      "isEmpty": false,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "institution_profiles",
+      "count": 26,
+      "isEmpty": false,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "institution_ratings",
+      "count": 25,
+      "isEmpty": false,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "institution_rating_snapshots",
+      "count": 25,
+      "isEmpty": false,
+      "type": "Audit / Telemetry Log"
+    },
+    {
+      "table": "institution_representatives",
+      "count": 50,
+      "isEmpty": false,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "institution_roles",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "institution_students",
+      "count": 143,
+      "isEmpty": false,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "integrity_checks",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "interview_feedback_intelligence",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "interview_rounds",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "interview_schedules",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "interview_scorecards",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "interview_sessions",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Ephemeral / Auth Session"
+    },
+    {
+      "table": "leaderboards",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "learning_programs",
+      "count": 3,
+      "isEmpty": false,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "learning_program_enrollments",
+      "count": 75,
+      "isEmpty": false,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "learning_program_modules",
+      "count": 12,
+      "isEmpty": false,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "learning_program_module_progress",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "matching_scores",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "mentorship_requests",
+      "count": 12,
+      "isEmpty": false,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "mentorship_sessions",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Ephemeral / Auth Session"
+    },
+    {
+      "table": "mentor_profiles",
+      "count": 4,
+      "isEmpty": false,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "messages",
+      "count": 11,
+      "isEmpty": false,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "message_conversations",
+      "count": 6,
+      "isEmpty": false,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "message_participants",
+      "count": 12,
+      "isEmpty": false,
+      "type": "Junction / Link"
+    },
+    {
+      "table": "mfa_verification_codes",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Ephemeral / Auth Session"
+    },
+    {
+      "table": "moderation_actions",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "notifications",
+      "count": 750,
+      "isEmpty": false,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "notification_preferences",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Configuration / Master"
+    },
+    {
+      "table": "opportunity_applications",
+      "count": 293,
+      "isEmpty": false,
+      "type": "Junction / Link"
+    },
+    {
+      "table": "opportunity_assessments",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "opportunity_match_detail",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "opportunity_referrals",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "password_reset_tokens",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Ephemeral / Auth Session"
+    },
+    {
+      "table": "permissions",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "personalized_challenge_config",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Configuration / Master"
+    },
+    {
+      "table": "personalized_feed_items",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "placement_drives",
+      "count": 25,
+      "isEmpty": false,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "placement_offers",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "placement_readiness_scores",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "placement_records",
+      "count": 61,
+      "isEmpty": false,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "placement_registrations",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "placement_verifications",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "platform_daily_stats",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "platform_metrics",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "platform_reports",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "portfolio_analysis",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "portfolio_projects",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "portfolio_verifications",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "proctoring_events",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Audit / Telemetry Log"
+    },
+    {
+      "table": "professional_profiles",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "project_applications",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Junction / Link"
+    },
+    {
+      "table": "project_evaluations",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "project_milestones",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "project_task_progress",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "project_teams",
+      "count": 4,
+      "isEmpty": false,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "project_verifications",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "questions",
+      "count": 357,
+      "isEmpty": false,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "question_bank",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "question_options",
+      "count": 1308,
+      "isEmpty": false,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "question_test_cases",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "realtime_events",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Audit / Telemetry Log"
+    },
+    {
+      "table": "recommendation_feedback",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "recommendation_signals",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "recruitment_applications",
+      "count": 120,
+      "isEmpty": false,
+      "type": "Junction / Link"
+    },
+    {
+      "table": "recruitment_drives",
+      "count": 2,
+      "isEmpty": false,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "recruitment_interviews",
+      "count": 40,
+      "isEmpty": false,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "recruitment_pipelines",
+      "count": 120,
+      "isEmpty": false,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "recruitment_placements",
+      "count": 61,
+      "isEmpty": false,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "recruitment_status_history",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "referral_clicks",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "reputation_events",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Audit / Telemetry Log"
+    },
+    {
+      "table": "research_participants",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Junction / Link"
+    },
+    {
+      "table": "research_proposals",
+      "count": 3,
+      "isEmpty": false,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "resume_templates",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "role_permissions",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "search_index",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "security_audit_log",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Audit / Telemetry Log"
+    },
+    {
+      "table": "skills",
+      "count": 109,
+      "isEmpty": false,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "skill_categories",
+      "count": 24,
+      "isEmpty": false,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "skill_endorsements",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "skill_gaps",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "skill_levels",
+      "count": 3,
+      "isEmpty": false,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "skill_prerequisites",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "skill_recommendations",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "skill_relationships",
+      "count": 9,
+      "isEmpty": false,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "skill_subtopics",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "skill_taxonomy_links",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Configuration / Master"
+    },
+    {
+      "table": "skill_taxonomy_nodes",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Configuration / Master"
+    },
+    {
+      "table": "skill_topics",
+      "count": 28,
+      "isEmpty": false,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "skill_xp_config",
+      "count": 5,
+      "isEmpty": false,
+      "type": "Configuration / Master"
+    },
+    {
+      "table": "skill_xp_transactions",
+      "count": 4,
+      "isEmpty": false,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "smart_notifications",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "social_comments",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "social_likes",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "social_posts",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "streak_freeze_log",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Audit / Telemetry Log"
+    },
+    {
+      "table": "student_academic_records",
+      "count": 121,
+      "isEmpty": false,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "student_achievements",
+      "count": 242,
+      "isEmpty": false,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "student_achievements_gamification",
+      "count": 4,
+      "isEmpty": false,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "student_career_preferences",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Configuration / Master"
+    },
+    {
+      "table": "student_career_progress",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "student_certificates",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "student_certifications",
+      "count": 242,
+      "isEmpty": false,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "student_growth_scores",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "student_learning_skills",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "student_learning_topics",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "student_links",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Junction / Link"
+    },
+    {
+      "table": "student_portfolio_items",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "student_practice_stats",
+      "count": 121,
+      "isEmpty": false,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "student_profiles",
+      "count": 123,
+      "isEmpty": false,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "student_projects",
+      "count": 363,
+      "isEmpty": false,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "student_question_attempts",
+      "count": 303,
+      "isEmpty": false,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "student_saved_questions",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "student_skills",
+      "count": 570,
+      "isEmpty": false,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "student_skill_graph",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "student_skill_intelligence",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "student_skill_progress",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "student_streaks",
+      "count": 121,
+      "isEmpty": false,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "student_topic_progress",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "system_check_results",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "team_members",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Junction / Link"
+    },
+    {
+      "table": "tests",
+      "count": 16,
+      "isEmpty": false,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "test_attempts",
+      "count": 68,
+      "isEmpty": false,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "test_questions",
+      "count": 368,
+      "isEmpty": false,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "topic_follows",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "topic_relationships",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "users",
+      "count": 190,
+      "isEmpty": false,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "user_feedback",
+      "count": 3,
+      "isEmpty": false,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "user_follows",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "user_mfa_settings",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "user_privacy_settings",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "user_reputation",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "user_sessions",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Ephemeral / Auth Session"
+    },
+    {
+      "table": "verified_achievements",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "weekly_tests",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "weekly_test_attempts",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    },
+    {
+      "table": "weekly_test_sections",
+      "count": 0,
+      "isEmpty": true,
+      "type": "Operational / Transactional"
+    }
+  ],
+  "orphans": [],
+  "duplicates": [],
+  "calculations": [],
+  "summary": {
+    "total": 27,
+    "passed": 24,
+    "failed": 3
+  }
+}
