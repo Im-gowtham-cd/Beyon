@@ -32,6 +32,8 @@ import { seedOpportunities } from "./modules/08-opportunities.js";
 import { seedApplicationsAndCoins } from "./modules/09-applications.js";
 import { seedNotifications } from "./modules/11-notifications.js";
 import { seedCommunity } from "./modules/12-community.js";
+import { seedInstitutionStudentsAndPlacements } from "./modules/14-institution-students-and-placements.js";
+import { seedRecruitmentAndIntelligence } from "./modules/15-recruitment-pipelines-and-intelligence.js";
 import { validateIntegrity } from "./modules/13-validate.js";
 import { doltQuery, getQueryCount } from "./engine/dolt.js";
 import * as fs from "fs";
@@ -136,6 +138,8 @@ async function runRecruitment() {
 async function runCommunity() {
   await seedNotifications(cfg);
   await seedCommunity(cfg);
+  await seedInstitutionStudentsAndPlacements(cfg);
+  await seedRecruitmentAndIntelligence(cfg);
 }
 
 try {

@@ -9,6 +9,8 @@ import com.beyon.identity.repository.UserRepository;
 import com.beyon.profile.dto.*;
 import com.beyon.profile.model.*;
 import com.beyon.profile.repository.*;
+import com.beyon.institution.model.InstitutionStudent;
+import com.beyon.institution.repository.InstitutionStudentRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,6 +26,7 @@ public class OnboardingService {
     private final StudentProjectRepository studentProjectRepository;
     private final StudentLinkRepository studentLinkRepository;
     private final InstitutionProfileRepository institutionProfileRepository;
+    private final InstitutionStudentRepository institutionStudentRepository;
     private final InstitutionPlacementHistoryRepository institutionPlacementHistoryRepository;
     private final InstitutionRepresentativeRepository institutionRepresentativeRepository;
     private final CompanyProfileRepository companyProfileRepository;
@@ -38,6 +41,7 @@ public class OnboardingService {
                               StudentProjectRepository studentProjectRepository,
                               StudentLinkRepository studentLinkRepository,
                               InstitutionProfileRepository institutionProfileRepository,
+                              InstitutionStudentRepository institutionStudentRepository,
                               InstitutionPlacementHistoryRepository institutionPlacementHistoryRepository,
                               InstitutionRepresentativeRepository institutionRepresentativeRepository,
                               CompanyProfileRepository companyProfileRepository,
@@ -51,6 +55,7 @@ public class OnboardingService {
         this.studentProjectRepository = studentProjectRepository;
         this.studentLinkRepository = studentLinkRepository;
         this.institutionProfileRepository = institutionProfileRepository;
+        this.institutionStudentRepository = institutionStudentRepository;
         this.institutionPlacementHistoryRepository = institutionPlacementHistoryRepository;
         this.institutionRepresentativeRepository = institutionRepresentativeRepository;
         this.companyProfileRepository = companyProfileRepository;
@@ -96,7 +101,23 @@ public class OnboardingService {
         profile.setCompletionPct(calculateStudentCompletion(req));
         studentProfileRepository.save(profile);
 
-        user.setProfileStatus(AccountStatus.COMPLETED);
+        if (req.getInstitution() != null && !req.getInstitution().isBlank()) {
+            institutionProfileRepository.findByInstitutionNameContainingIgnoreCase(req.getInstitution().trim())
+                    .or(() -> institutionProfileRepository.findAll().stream().findFirst())
+                    .ifPresent(inst -> {
+                        InstitutionStudent is = new InstitutionStudent();
+                        is.setInstitutionId(inst.getUserId());
+                        is.setStudentId(userId);
+                        is.setDepartment(req.getDepartment());
+                        is.setBatch(req.getAcademicYear());
+                        is.setPlacementStatus("PENDING_VERIFICATION");
+                        is.setVerified(false);
+                        institutionStudentRepository.save(is);
+                    });
+            user.setProfileStatus(AccountStatus.PENDING_INSTITUTION_VERIFICATION);
+        } else {
+            user.setProfileStatus(AccountStatus.COMPLETED);
+        }
         userRepository.save(user);
 
         if (req.getSkills() != null) {

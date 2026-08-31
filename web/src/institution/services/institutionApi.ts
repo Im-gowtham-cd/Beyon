@@ -6,6 +6,9 @@ export const institutionApi = {
     const q = status ? `?status=${status}` : '';
     return api.get<InstitutionStudent[]>(`/institution/students${q}`);
   },
+  getPendingStudents: () => api.get<any[]>('/institution/students/pending'),
+  verifyStudent: (studentId: string, approved: boolean, notes?: string) =>
+    api.post<any>(`/institution/students/${studentId}/verify`, { approved, notes }),
   addStudent: (studentId: string, department?: string, batch?: string) =>
     api.post<InstitutionStudent>('/institution/students', { studentId, department, batch }),
   updatePlacementStatus: (studentId: string, status: string) =>

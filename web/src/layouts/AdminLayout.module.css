@@ -1,0 +1,141 @@
+﻿.layout {
+  min-height: 100vh;
+  background: #f8fafc;
+  display: flex;
+  flex-direction: column;
+}
+
+.mobileBar {
+  display: none;
+  background: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+  padding: 12px 16px;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 40;
+}
+
+.mobileMenuBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  padding: 6px 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #1e293b;
+  cursor: pointer;
+}
+
+.bodyWrapper {
+  display: flex;
+  flex: 1;
+  min-height: 100vh;
+}
+
+.mainContent {
+  flex: 1;
+  margin-left: 280px;
+  background: #f8fafc;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 24px 32px;
+  transition: margin-left 0.2s ease;
+}
+
+.mainContentCollapsed {
+  margin-left: 76px;
+}
+
+.topUtilityBar {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  border-radius: 0px;
+}
+
+.utilityLeft {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.portalTag {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #eff6ff;
+  color: #1c2d81;
+  border: 1px solid #bfdbfe;
+  padding: 5px 12px;
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.utilityRight {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.utilityBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  padding: 6px 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #334155;
+  cursor: pointer;
+  border-radius: 0px;
+  transition: all 0.15s ease;
+}
+
+.utilityBtn:hover {
+  background: #f1f5f9;
+  border-color: #1c2d81;
+  color: #1c2d81;
+}
+
+.userBadge {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-left: 14px;
+  border-left: 1px solid #e2e8f0;
+}
+
+.userAvatar {
+  width: 32px;
+  height: 32px;
+  background: #1c2d81;
+  color: #fed601;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+  font-size: 0.85rem;
+}
+
+@media (max-width: 900px) {
+  .mobileBar {
+    display: flex;
+  }
+  .mainContent {
+    margin-left: 0;
+    padding: 16px;
+  }
+  .topUtilityBar {
+    padding: 10px 14px;
+  }
+}
