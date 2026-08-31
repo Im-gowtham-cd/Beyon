@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { NavLink, Link } from 'react-router-dom';
 import { useAuth } from '../auth/context/AuthContext';
 import {
@@ -16,6 +16,7 @@ import {
   BarChart2,
   Award,
   Bell,
+  MessageSquare,
   Flame,
   Coins,
   ChevronLeft,
@@ -94,6 +95,7 @@ export function StudentSidebar({
         { to: '/leaderboard', icon: Trophy, label: 'Leaderboard' },
         { to: '/stats', icon: BarChart2, label: 'Analytics & Stats' },
         { to: '/achievements', icon: Award, label: 'Achievements' },
+        { to: '/messages', icon: MessageSquare, label: 'Messages & Outreach' },
         { to: '/notifications', icon: Bell, label: 'Notifications' },
       ],
     },
