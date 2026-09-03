@@ -103,6 +103,7 @@ import { StudentOnboarding } from '../onboarding/pages/student/StudentOnboarding
 import { InstitutionOnboarding } from '../onboarding/pages/institution/InstitutionOnboarding';
 import { CompanyOnboarding } from '../onboarding/pages/company/CompanyOnboarding';
 import { CompletionPage } from '../onboarding/pages/shared/CompletionPage';
+import { AccountRejectedPage } from '../auth/pages/AccountRejectedPage';
 
 export function App() {
   return (
@@ -113,6 +114,7 @@ export function App() {
       <Route path="/verify-email" element={<VerifyEmailPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
+      <Route path="/account-rejected" element={<AccountRejectedPage />} />
       <Route path="/unauthorized" element={<UnauthorizedPage />} />
       <Route path="/403" element={<UnauthorizedPage />} />
 
@@ -127,6 +129,7 @@ export function App() {
         {/* Global Settings & Status */}
         <Route path="/verification-pending" element={<VerificationPendingPage />} />
         <Route path="/account-suspended" element={<AccountSuspendedPage />} />
+        <Route path="/account-rejected" element={<AccountRejectedPage />} />
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="/settings/privacy" element={<PrivacySettingsPage />} />
         <Route path="/settings/sessions" element={<SessionSettingsPage />} />

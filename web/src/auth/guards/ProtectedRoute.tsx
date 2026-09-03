@@ -20,11 +20,27 @@ export function ProtectedRoute() {
 
   const path = location.pathname;
 
-  if (path.startsWith('/onboarding/')) {
+  // Rejection takes absolute priority
+  if (profileStatus === 'REJECTED' || user?.status === 'REJECTED') {
+    if (path !== '/account-rejected') {
+      return <Navigate to="/account-rejected" replace />;
+    }
     return <Outlet />;
   }
 
+  // Account Suspension
+  if (profileStatus === 'SUSPENDED' || user?.status === 'SUSPENDED') {
+    if (path !== '/account-suspended') {
+      return <Navigate to="/account-suspended" replace />;
+    }
+    return <Outlet />;
+  }
+
+  // Account Incomplete onboarding
   if (profileStatus === 'INCOMPLETE') {
+    if (path.startsWith('/onboarding/')) {
+      return <Outlet />;
+    }
     const role = user?.role?.toLowerCase();
     if (role) {
       return <Navigate to={`/onboarding/${role}`} replace />;
@@ -32,14 +48,18 @@ export function ProtectedRoute() {
     return <Navigate to="/login" replace />;
   }
 
-  if (profileStatus === 'SUSPENDED') {
-    return <Navigate to="/account-suspended" replace />;
-  }
-
-  if (profileStatus === 'PENDING_INSTITUTION_VERIFICATION' || profileStatus === 'PENDING_COMPANY_VERIFICATION') {
-    if (!path.startsWith('/verification-pending')) {
-      return <Navigate to="/verification-pending" replace />;
+  // Pending Verification (Super Admin or College Placement)
+  if (
+    profileStatus === 'PENDING_SUPER_ADMIN_VERIFICATION' ||
+    user?.status === 'PENDING_SUPER_ADMIN_VERIFICATION' ||
+    profileStatus === 'PENDING_INSTITUTION_VERIFICATION' ||
+    profileStatus === 'PENDING_COMPANY_VERIFICATION' ||
+    user?.status === 'PENDING_VERIFICATION'
+  ) {
+    if (path.startsWith('/onboarding/complete') || path.startsWith('/verification-pending')) {
+      return <Outlet />;
     }
+    return <Navigate to="/verification-pending" replace />;
   }
 
   return <Outlet />;

@@ -187,6 +187,18 @@ export function CompanyOnboarding() {
         setError('Corporate Legal Name is required');
         return false;
       }
+      if (!form.companyType) {
+        setError('Company Classification is required');
+        return false;
+      }
+      if (!form.industry) {
+        setError('Industry Sector is required');
+        return false;
+      }
+      if (!form.website.trim()) {
+        setError('Official corporate website is required');
+        return false;
+      }
       if (!form.officialEmail.trim() || !form.officialEmail.includes('@')) {
         setError('Valid official corporate email is required');
         return false;

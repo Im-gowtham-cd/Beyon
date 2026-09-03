@@ -163,16 +163,16 @@ public class AuthService {
             throw new UnauthorizedException("Email or password is incorrect");
         }
 
-        if (user.getStatus() == AccountStatus.SUSPENDED) {
-            throw new ForbiddenException("Your account has been suspended");
+        if (user.getStatus() == AccountStatus.SUSPENDED || user.getProfileStatus() == AccountStatus.SUSPENDED) {
+            throw new ForbiddenException("Your account has been suspended by the administrator.");
         }
 
-        if (user.getStatus() == AccountStatus.DEACTIVATED) {
-            throw new ForbiddenException("Your account has been deactivated");
+        if (user.getStatus() == AccountStatus.DEACTIVATED || user.getProfileStatus() == AccountStatus.DEACTIVATED) {
+            throw new ForbiddenException("Your account has been deactivated.");
         }
 
-        if (user.getStatus() == AccountStatus.REJECTED) {
-            throw new ForbiddenException("Your account registration was reviewed and rejected by Super Admin.");
+        if (user.getStatus() == AccountStatus.REJECTED || user.getProfileStatus() == AccountStatus.REJECTED) {
+            throw new ForbiddenException("Your account registration was reviewed and rejected by the Super Administrator.");
         }
 
         rateLimitService.reset(rateLimitKey);

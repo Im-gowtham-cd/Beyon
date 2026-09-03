@@ -11,7 +11,6 @@ import {
   Plus,
   Trash2,
   Check,
-  School,
   Landmark,
 } from 'lucide-react';
 import { useAuth } from '../../../auth/context/AuthContext';
@@ -76,11 +75,11 @@ export function InstitutionOnboarding() {
   const [error, setError] = useState('');
   const [agreeTerms, setAgreeTerms] = useState(false);
 
-  // New Representative Modal/Subform State
+  // New Representative subform
   const [showAddRep, setShowAddRep] = useState(false);
   const [newRep, setNewRep] = useState<InstitutionRepresentativeEntry>({
     name: '',
-    designation: 'Placement Coordinator',
+    designation: 'Department Placement Coordinator',
     email: '',
     phone: '',
     department: 'Computer Science and Engineering',
@@ -108,7 +107,7 @@ export function InstitutionOnboarding() {
     update('representatives', [...(form.representatives || []), newRep]);
     setNewRep({
       name: '',
-      designation: 'Placement Coordinator',
+      designation: 'Department Placement Coordinator',
       email: '',
       phone: '',
       department: 'Computer Science and Engineering',
@@ -119,7 +118,7 @@ export function InstitutionOnboarding() {
   const removeRepresentative = (index: number) => {
     update(
       'representatives',
-      form.representatives.filter((_, i) => i !== index)
+      (form.representatives || []).filter((_, i) => i !== index)
     );
   };
 
@@ -127,15 +126,11 @@ export function InstitutionOnboarding() {
     setError('');
     if (step === 0) {
       if (!form.institutionName.trim()) {
-        setError('College / Institution Legal Name is required');
-        return false;
-      }
-      if (!form.institutionType) {
-        setError('Institution Type & Classification is required');
+        setError('Institution Legal Name is required');
         return false;
       }
       if (!form.institutionCode.trim()) {
-        setError('Institution / AISHE / UGC Code is required');
+        setError('AISHE / UGC Institution Code is required');
         return false;
       }
       if (!form.officialEmail.trim() || !form.officialEmail.includes('@')) {
@@ -143,54 +138,50 @@ export function InstitutionOnboarding() {
         return false;
       }
       if (!form.phone.trim()) {
-        setError('Official contact phone is required');
+        setError('Campus contact phone number is required');
         return false;
       }
       if (!form.website.trim()) {
-        setError('Official campus website URL is required');
+        setError('Official institutional website URL is required');
         return false;
       }
       if (!form.address.trim() || !form.city.trim() || !form.state.trim() || !form.postalCode.trim()) {
-        setError('Campus Street Address, City, State, and Postal Code are required');
+        setError('Full campus street address, city, state, and postal code are required');
         return false;
       }
     } else if (step === 1) {
       if (!form.affiliatedUniversity.trim()) {
-        setError('Affiliating University (e.g. Anna University, VTU) is required');
+        setError('Affiliating University name is required');
         return false;
       }
-      if (!form.accreditationGrade) {
-        setError('NAAC Accreditation Grade is required');
+      if (!form.establishedYear) {
+        setError('Established year is required');
         return false;
       }
-      if (!form.establishedYear.trim()) {
-        setError('Established Year is required');
-        return false;
-      }
-      if (!form.totalStudents.trim()) {
-        setError('Total Student Capacity / Enrollment is required');
+      if (!form.totalStudents) {
+        setError('Total enrolled student strength is required');
         return false;
       }
       if (!form.departmentsOffered || form.departmentsOffered.length === 0) {
-        setError('Please select at least one active department');
+        setError('Please select at least one active department offered');
         return false;
       }
     } else if (step === 2) {
       if (!form.principalName.trim() || !form.principalEmail.trim() || !form.principalPhone.trim()) {
-        setError('Principal / Dean Name, Official Email, and Phone number are required');
+        setError('Principal / Dean details (Name, Email, Phone) are required');
         return false;
       }
       if (!form.placementOfficerName.trim() || !form.placementOfficerEmail.trim() || !form.placementOfficerPhone.trim()) {
-        setError('Head of Placement (TPO) Name, Email, and Phone number are required');
+        setError('Placement Officer details (Name, Email, Phone) are required');
         return false;
       }
       if (!form.placementCellEmail.trim() || !form.placementCellPhone.trim()) {
-        setError('Placement Cell Official Helpdesk Email and Hotline Phone are required');
+        setError('Placement Cell hotline and general email are required');
         return false;
       }
     } else if (step === 3) {
       if (!agreeTerms) {
-        setError('Please certify and agree to the institutional regulatory terms');
+        setError('Please certify and agree to the institutional verification declaration');
         return false;
       }
     }
@@ -225,6 +216,7 @@ export function InstitutionOnboarding() {
 
   return (
     <div className={styles.pageContainer}>
+      {/* ── Top Header ── */}
       <header className={styles.topHeader}>
         <Link to="/" className={styles.brandLink}>
           <div className={styles.brandLogo}>B</div>
@@ -235,7 +227,7 @@ export function InstitutionOnboarding() {
         </Link>
         <div className={styles.headerRight}>
           <div className={styles.rewardBadge}>
-            <School size={14} />
+            <Building2 size={14} />
             <span>Super Admin Verification Queue</span>
           </div>
           <div className={styles.stepIndicatorBadge}>
@@ -244,23 +236,24 @@ export function InstitutionOnboarding() {
         </div>
       </header>
 
+      {/* ── Hero Welcome Banner ── */}
       <div className={styles.heroWrapper}>
         <div className={styles.welcomeHero}>
           <div className={styles.badgeRow}>
             <span className={styles.portalBadge}>
               <Landmark size={13} />
-              <span>Higher-Education Institution Onboarding</span>
+              <span>Higher Education Institution Onboarding</span>
             </span>
             <span className={styles.verifiedBadge}>
               <ShieldCheck size={13} />
-              <span>Accreditation Verification &amp; Placement Authorization</span>
+              <span>AISHE Verification &amp; Institutional Governance</span>
             </span>
           </div>
           <h1 className={styles.welcomeTitle}>
-            {form.institutionName ? form.institutionName : 'Institution & Campus Setup'}
+            {form.institutionName ? form.institutionName : 'Institutional Profile Setup'}
           </h1>
           <p className={styles.welcomeSub}>
-            Complete your institutional profile, academic governance credentials, and placement cell structure to activate company recruitment drives.
+            Complete your academic accreditation, NAAC credentials, and training &amp; placement cell leadership details for Super Admin authorization.
           </p>
 
           <div className={styles.overallProgressBar}>
@@ -272,6 +265,7 @@ export function InstitutionOnboarding() {
         </div>
       </div>
 
+      {/* ── Main Content Container ── */}
       <main className={styles.mainLayout}>
         <div className={styles.stepNavContainer}>
           {STEPS.map((s, idx) => {

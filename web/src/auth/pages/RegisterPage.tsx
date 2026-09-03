@@ -70,7 +70,13 @@ export function RegisterPage() {
       }
     } catch (err) {
       const apiErr = err as ApiError;
-      showToast(apiErr.message || 'Registration failed. Please check your credentials and try again.', true);
+      const msg = apiErr.message || '';
+      if (apiErr.status === 409 || msg.toLowerCase().includes('already exists')) {
+        showToast('An account with this email already exists. Please sign in or use another email.', true);
+        setErrors(prev => ({ ...prev, email: 'This email is already registered' }));
+      } else {
+        showToast(msg || 'Registration failed. Please check your credentials and try again.', true);
+      }
     } finally {
       setLoading(false);
     }
