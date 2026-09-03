@@ -85,6 +85,7 @@ import { InstitutionLayout } from '../layouts/InstitutionLayout';
 import { InstitutionStudentsPage } from '../pages/institution/InstitutionStudentsPage';
 import { InstitutionDrivesPage } from '../pages/institution/InstitutionDrivesPage';
 import { InstitutionPlacementsPage } from '../pages/institution/InstitutionPlacementsPage';
+import { InstitutionCurriculumPage } from '../pages/institution/InstitutionCurriculumPage';
 import { InstitutionProfilePage } from '../pages/institution/InstitutionProfilePage';
 import { CompanyHome } from '../pages/company/CompanyHome';
 import { CompanyLayout } from '../layouts/CompanyLayout';
@@ -170,7 +171,7 @@ export function App() {
             <Route path="/institution/drives" element={<InstitutionDrivesPage />} />
             <Route path="/institution/students" element={<InstitutionStudentsPage />} />
             <Route path="/institution/placements" element={<InstitutionPlacementsPage />} />
-            <Route path="/institution/curriculum" element={<SkillTaxonomyPage />} />
+            <Route path="/institution/curriculum" element={<InstitutionCurriculumPage />} />
             <Route path="/institution/profile" element={<InstitutionProfilePage />} />
             <Route path="/institution/profile/edit" element={<InstitutionProfilePage />} />
             <Route path="/institution/messages" element={<MessagingPage />} />
