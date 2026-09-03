@@ -1,4 +1,4 @@
-﻿package com.beyon.community.controller;
+package com.beyon.community.controller;
 
 import com.beyon.community.service.MessagingService;
 import com.beyon.identity.security.JwtUtil;

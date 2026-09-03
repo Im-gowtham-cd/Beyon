@@ -5,7 +5,7 @@ import {
   Check,
   Building,
 } from 'lucide-react';
-import styles from '../../assessment/pages/AssessmentBuilderPage.module.css';
+import styles from './CandidateDiscoveryPage.module.css';
 
 export function CandidateDiscoveryPage() {
   const [opportunities, setOpportunities] = useState<any[]>([]);
@@ -272,6 +272,21 @@ export function CandidateDiscoveryPage() {
             </div>
           );
         })}
+
+        {filteredCandidates.length === 0 && (
+          <div style={{
+            gridColumn: '1 / -1',
+            padding: '48px 24px',
+            textAlign: 'center',
+            background: '#ffffff',
+            border: '1px solid #e2e8f0',
+            color: '#64748b',
+          }}>
+            <UserCheck size={36} style={{ color: '#1c2d81', margin: '0 auto 12px auto', display: 'block' }} />
+            <h4 style={{ margin: '0 0 6px 0', fontSize: '1rem', fontWeight: 800, color: '#020617' }}>No Candidates Found</h4>
+            <p style={{ margin: 0, fontSize: '0.84rem' }}>Candidates matching your active filter criteria will appear here automatically.</p>
+          </div>
+        )}
       </div>
     </div>
   );

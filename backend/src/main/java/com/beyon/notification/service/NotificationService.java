@@ -12,9 +12,12 @@ import java.util.UUID;
 public class NotificationService {
 
     private final NotificationRepository notificationRepository;
+    private final com.beyon.platform.service.RealtimeService realtimeService;
 
-    public NotificationService(NotificationRepository notificationRepository) {
+    public NotificationService(NotificationRepository notificationRepository,
+                               com.beyon.platform.service.RealtimeService realtimeService) {
         this.notificationRepository = notificationRepository;
+        this.realtimeService = realtimeService;
     }
 
     @Transactional
@@ -26,7 +29,11 @@ public class NotificationService {
         notification.setNotificationType(type);
         notification.setReferenceType(referenceType);
         notification.setReferenceId(referenceId);
-        return notificationRepository.save(notification);
+        Notification saved = notificationRepository.save(notification);
+        try {
+            realtimeService.sendEvent(userId, type != null ? type : "NOTIFICATION", saved);
+        } catch (Exception ignored) {}
+        return saved;
     }
 
     public List<Notification> getNotifications(UUID userId) {

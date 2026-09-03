@@ -1,4 +1,4 @@
-﻿package com.beyon.community.service;
+package com.beyon.community.service;
 
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;

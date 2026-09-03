@@ -16,11 +16,14 @@ public class StreakService {
 
     private final StudentStreakRepository streakRepository;
     private final StudentAchievementBadgeRepository badgeRepository;
+    private final CoinService coinService;
 
     public StreakService(StudentStreakRepository streakRepository,
-                         StudentAchievementBadgeRepository badgeRepository) {
+                         StudentAchievementBadgeRepository badgeRepository,
+                         CoinService coinService) {
         this.streakRepository = streakRepository;
         this.badgeRepository = badgeRepository;
+        this.coinService = coinService;
     }
 
     @Transactional
@@ -63,7 +66,8 @@ public class StreakService {
             badge.setAchievementName(name);
             badge.setDescription(desc);
             badge.setBadgeIcon(icon);
-            badgeRepository.save(badge);
+            StudentAchievementBadge savedBadge = badgeRepository.save(badge);
+            coinService.earnCoins(studentId, key, "BADGE", savedBadge.getId());
         }
     }
 

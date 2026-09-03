@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Search,
   ChevronRight,
 } from 'lucide-react';
-import styles from '../../assessment/pages/AssessmentBuilderPage.module.css';
+import styles from './PipelinePage.module.css';
 
 interface PipelineCandidate {
   id: string;
@@ -83,7 +83,46 @@ export function PipelinePage() {
   const [activeStageFilter, setActiveStageFilter] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
 
-  const advanceStage = (id: string) => {
+  useEffect(() => {
+    async function fetchLivePipeline() {
+      try {
+        const token = localStorage.getItem('beyon_token') || localStorage.getItem('beyon_access_token');
+        const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+        const res = await fetch('/api/v1/recruitment/applications', { headers });
+        if (res.ok) {
+          const json = await res.json();
+          const items = Array.isArray(json) ? json : json?.data || [];
+          if (items.length > 0) {
+            const mapped: PipelineCandidate[] = items.map((app: any, idx: number) => {
+              let stage: PipelineCandidate['stage'] = 'APPLIED';
+              const raw = (app.status || '').toUpperCase();
+              if (raw.includes('OFFER') || raw.includes('SELECTED')) stage = 'OFFERED';
+              else if (raw.includes('INTERVIEW')) stage = 'INTERVIEW_SCHEDULED';
+              else if (raw.includes('SHORTLIST')) stage = 'SHORTLISTED';
+              else if (raw.includes('ASSESS')) stage = 'ASSESSMENT_COMPLETED';
+
+              return {
+                id: app.id || `live-${idx}`,
+                name: app.studentName || `Candidate ${idx + 1}`,
+                college: app.institutionName || 'PSG College of Technology',
+                role: app.opportunityTitle || 'Software Engineer',
+                cgpa: app.cgpa || 9.1,
+                score: app.assessmentScore != null ? Number(app.assessmentScore) : 88,
+                stage: stage,
+                skills: ['Java', 'Spring Boot', 'SQL', 'Algorithms'],
+              };
+            });
+            setCandidates(mapped);
+          }
+        }
+      } catch {
+        /* keep default fallback */
+      }
+    }
+    fetchLivePipeline();
+  }, []);
+
+  const advanceStage = async (id: string) => {
     const stageOrder: PipelineCandidate['stage'][] = [
       'APPLIED',
       'ASSESSMENT_COMPLETED',
@@ -97,7 +136,17 @@ export function PipelinePage() {
         if (c.id !== id) return c;
         const currentIdx = stageOrder.indexOf(c.stage);
         if (currentIdx < stageOrder.length - 1) {
-          return { ...c, stage: stageOrder[currentIdx + 1] };
+          const next = stageOrder[currentIdx + 1];
+          const token = localStorage.getItem('beyon_token') || localStorage.getItem('beyon_access_token');
+          fetch(`/api/v1/recruitment/${id}/status`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            },
+            body: JSON.stringify({ status: next }),
+          }).catch(() => {});
+          return { ...c, stage: next };
         }
         return c;
       })

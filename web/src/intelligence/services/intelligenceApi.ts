@@ -3,8 +3,8 @@ import type { SkillIntelligence, CareerPath, MatchingScore, SkillGap, CareerRead
 
 export const intelligenceApi = {
   getMySkillProfile: async (): Promise<SkillIntelligence[]> => api.get('/student/skills'),
-  evaluateSession: async (sessionId: string): Promise<any[]> => api.post(`/evaluation/session/${sessionId}/evaluate`),
-  updateSkillIntelligence: async (skillId: string): Promise<void> => { await api.post('/evaluation/skill-intelligence/update', { skillId }); },
+  evaluateSession: async (sessionId: string): Promise<any[]> => api.post(`/intelligence/evaluation/session/${sessionId}/evaluate`),
+  updateSkillIntelligence: async (skillId: string): Promise<void> => { await api.post('/intelligence/evaluation/skill-intelligence/update', { skillId }); },
 
   calculateOldMatch: async (opportunityId: string, requiredSkills: string[], minCgpa?: number): Promise<MatchingScore> => api.post('/matching/calculate', { opportunityId, requiredSkills, minCgpa }),
   getRankedCandidates: async (opportunityId: string): Promise<MatchingScore[]> => api.get(`/matching/opportunity/${opportunityId}/ranked`),
