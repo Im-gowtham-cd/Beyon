@@ -19,6 +19,12 @@ public class InterviewController {
         this.jwtUtil = jwtUtil;
     }
 
+    @GetMapping
+    public ResponseEntity<?> getInterviews(HttpServletRequest request) {
+        UUID userId = extractUserId(request);
+        return ResponseEntity.ok(interviewService.getCompanyInterviews(userId));
+    }
+
     @PostMapping("/rounds")
     public ResponseEntity<?> createRound(@RequestBody InterviewRound round) {
         return ResponseEntity.ok(interviewService.createRound(round));

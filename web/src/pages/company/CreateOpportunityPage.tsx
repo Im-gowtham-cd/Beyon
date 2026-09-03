@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
   ArrowLeft,
@@ -7,28 +7,82 @@ import {
   AlertCircle,
   Send,
   Check,
+  Building2,
+  CheckSquare,
+  Square,
 } from 'lucide-react';
 import styles from '../../practice/pages/CreateQuestionPage.module.css';
+
+interface ActiveInstitution {
+  id: string;
+  name: string;
+  code?: string;
+  city?: string;
+  state?: string;
+  grade?: string;
+}
 
 export function CreateOpportunityPage() {
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [activeInstitutions, setActiveInstitutions] = useState<ActiveInstitution[]>([]);
+  const [selectedInstIds, setSelectedInstIds] = useState<string[]>([]);
+  const [loadingInstitutions, setLoadingInstitutions] = useState(false);
 
   const [form, setForm] = useState({
     title: '',
     description: '',
     opportunityType: 'CAMPUS_DRIVE',
-    location: 'Chennai / Bangalore',
+    location: '',
     remote: false,
-    minCgpa: 8.0,
-    eligibleDepartments: 'CSE, IT, ECE, AI & DS',
+    minCgpa: 7.5,
+    eligibleDepartments: 'Computer Science, Information Technology, AI & Data Science, Electronics',
     eligibleGraduationYears: '2026, 2027',
-    requiredSkills: 'Java, Spring Boot, SQL, REST APIs',
-    preferredSkills: 'Docker, AWS, Microservices',
-    minBeyonCoins: 100,
+    requiredSkills: '',
+    preferredSkills: '',
+    minBeyonCoins: 0,
     status: 'PUBLISHED',
   });
+
+  useEffect(() => {
+    async function loadActiveInstitutions() {
+      setLoadingInstitutions(true);
+      try {
+        const token = localStorage.getItem('beyon_token') || localStorage.getItem('beyon_access_token');
+        const res = await fetch('/api/v1/opportunities/active-institutions', {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data.data)) {
+            setActiveInstitutions(data.data);
+            // Default select all active institutions
+            setSelectedInstIds(data.data.map((i: ActiveInstitution) => i.id));
+          }
+        }
+      } catch {
+        /* fallback */
+      } finally {
+        setLoadingInstitutions(false);
+      }
+    }
+    loadActiveInstitutions();
+  }, []);
+
+  const toggleInstitution = (id: string) => {
+    setSelectedInstIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+  };
+
+  const toggleAllInstitutions = () => {
+    if (selectedInstIds.length === activeInstitutions.length) {
+      setSelectedInstIds([]);
+    } else {
+      setSelectedInstIds(activeInstitutions.map((i) => i.id));
+    }
+  };
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -36,6 +90,22 @@ export function CreateOpportunityPage() {
       setError('Job / Placement drive title is required.');
       return;
     }
+
+    if (form.opportunityType === 'CAMPUS_DRIVE' && activeInstitutions.length > 0 && selectedInstIds.length === 0) {
+      setError('Please select at least one verified partner institution for this campus drive.');
+      return;
+    }
+
+    const selectedNames = activeInstitutions
+      .filter((i) => selectedInstIds.includes(i.id))
+      .map((i) => i.name)
+      .join(', ');
+
+    const payload = {
+      ...form,
+      targetInstitutionIds: form.opportunityType === 'CAMPUS_DRIVE' ? selectedInstIds.join(',') : '',
+      targetInstitutionNames: form.opportunityType === 'CAMPUS_DRIVE' ? selectedNames : '',
+    };
 
     setSubmitting(true);
     setError(null);
@@ -47,7 +117,7 @@ export function CreateOpportunityPage() {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(form),
+        body: JSON.stringify(payload),
       });
 
       if (!res.ok) {
@@ -183,6 +253,93 @@ export function CreateOpportunityPage() {
             </div>
           </div>
         </div>
+
+        {/* Campus Drive: Target Verified Partner Institutions */}
+        {form.opportunityType === 'CAMPUS_DRIVE' && (
+          <div className={styles.card} style={{ borderLeft: '4px solid #1c2d81' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+              <div>
+                <h3 className={styles.cardTitle} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Building2 size={18} style={{ color: '#1c2d81' }} />
+                  <span>Target Verified Partner Institutions *</span>
+                </h3>
+                <p className={styles.cardSubtitle}>
+                  Select verified partner universities and colleges where this campus recruitment drive will be published
+                </p>
+              </div>
+              {activeInstitutions.length > 0 && (
+                <button
+                  type="button"
+                  onClick={toggleAllInstitutions}
+                  style={{
+                    fontSize: '0.78rem',
+                    fontWeight: 600,
+                    color: '#1c2d81',
+                    background: '#f1f5f9',
+                    border: '1px solid #cbd5e1',
+                    padding: '4px 10px',
+                    cursor: 'pointer',
+                  }}
+                >
+                  {selectedInstIds.length === activeInstitutions.length ? 'Deselect All' : 'Select All Active'}
+                </button>
+              )}
+            </div>
+
+            {loadingInstitutions ? (
+              <div style={{ padding: '16px', color: '#64748b', fontSize: '0.84rem' }}>
+                Loading verified institutions...
+              </div>
+            ) : activeInstitutions.length === 0 ? (
+              <div
+                style={{
+                  padding: '16px 20px',
+                  background: '#f8fafc',
+                  border: '1px dashed #cbd5e1',
+                  color: '#64748b',
+                  fontSize: '0.84rem',
+                }}
+              >
+                No verified partner institutions available yet. Campus placement drives can only be targeted to institutions verified and approved by the Super Admin.
+              </div>
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '10px', marginTop: '12px' }}>
+                {activeInstitutions.map((inst) => {
+                  const isChecked = selectedInstIds.includes(inst.id);
+                  return (
+                    <div
+                      key={inst.id}
+                      onClick={() => toggleInstitution(inst.id)}
+                      style={{
+                        padding: '10px 14px',
+                        background: isChecked ? '#f0f4ff' : '#ffffff',
+                        border: isChecked ? '1px solid #1c2d81' : '1px solid #e2e8f0',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '10px',
+                        transition: 'all 0.15s ease',
+                      }}
+                    >
+                      <div style={{ color: isChecked ? '#1c2d81' : '#94a3b8', display: 'flex', alignItems: 'center' }}>
+                        {isChecked ? <CheckSquare size={18} /> : <Square size={18} />}
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontWeight: 600, fontSize: '0.86rem', color: '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {inst.name}
+                        </div>
+                        <div style={{ fontSize: '0.74rem', color: '#64748b', marginTop: '2px' }}>
+                          {inst.city ? `${inst.city}, ${inst.state || ''}` : 'Verified Partner'}
+                          {inst.grade ? ` · NAAC ${inst.grade}` : ''}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Candidate Eligibility Criteria */}
         <div className={styles.card}>

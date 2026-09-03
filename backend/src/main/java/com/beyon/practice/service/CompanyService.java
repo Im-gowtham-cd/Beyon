@@ -31,18 +31,48 @@ public class CompanyService {
     private final CoinService coinService;
     private final RecruitmentApplicationRepository recruitmentAppRepo;
 
+    private final com.beyon.profile.repository.InstitutionProfileRepository institutionProfileRepository;
+
     public CompanyService(CompanyOpportunityRepository opportunityRepository,
                           OpportunityApplicationRepository applicationRepository,
                           UserRepository userRepository,
                           StudentProfileRepository studentProfileRepository,
                           CoinService coinService,
-                          RecruitmentApplicationRepository recruitmentAppRepo) {
+                          RecruitmentApplicationRepository recruitmentAppRepo,
+                          com.beyon.profile.repository.InstitutionProfileRepository institutionProfileRepository) {
         this.opportunityRepository = opportunityRepository;
         this.applicationRepository = applicationRepository;
         this.userRepository = userRepository;
         this.studentProfileRepository = studentProfileRepository;
         this.coinService = coinService;
         this.recruitmentAppRepo = recruitmentAppRepo;
+        this.institutionProfileRepository = institutionProfileRepository;
+    }
+
+    public List<Map<String, Object>> getActiveInstitutions() {
+        List<User> activeUsers = userRepository.findByRoleAndStatus(
+                com.beyon.identity.enums.UserRole.INSTITUTION,
+                com.beyon.identity.enums.AccountStatus.ACTIVE
+        );
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (User u : activeUsers) {
+            Map<String, Object> map = new LinkedHashMap<>();
+            map.put("id", u.getId());
+            map.put("name", u.getDisplayName());
+            map.put("email", u.getEmail());
+            institutionProfileRepository.findByUserId(u.getId()).ifPresent(prof -> {
+                if (prof.getInstitutionName() != null && !prof.getInstitutionName().isBlank()) {
+                    map.put("name", prof.getInstitutionName());
+                }
+                map.put("code", prof.getInstitutionCode());
+                map.put("city", prof.getCity());
+                map.put("state", prof.getState());
+                map.put("grade", prof.getAccreditationGrade());
+                map.put("type", prof.getInstitutionType());
+            });
+            result.add(map);
+        }
+        return result;
     }
 
     public List<CompanyOpportunity> getCompanyOpportunities(UUID companyUserId) {

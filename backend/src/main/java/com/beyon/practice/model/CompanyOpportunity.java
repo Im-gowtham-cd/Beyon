@@ -53,6 +53,12 @@ public class CompanyOpportunity {
     @Column(columnDefinition = "varchar(36)")
     private UUID assessmentId;
 
+    @Column(columnDefinition = "TEXT")
+    private String targetInstitutionIds;
+
+    @Column(columnDefinition = "TEXT")
+    private String targetInstitutionNames;
+
     @Column(nullable = false)
     private int applicationCount = 0;
 
@@ -96,6 +102,10 @@ public class CompanyOpportunity {
     public void setMinBeyonCoins(int minBeyonCoins) { this.minBeyonCoins = minBeyonCoins; }
     public UUID getAssessmentId() { return assessmentId; }
     public void setAssessmentId(UUID assessmentId) { this.assessmentId = assessmentId; }
+    public String getTargetInstitutionIds() { return targetInstitutionIds; }
+    public void setTargetInstitutionIds(String targetInstitutionIds) { this.targetInstitutionIds = targetInstitutionIds; }
+    public String getTargetInstitutionNames() { return targetInstitutionNames; }
+    public void setTargetInstitutionNames(String targetInstitutionNames) { this.targetInstitutionNames = targetInstitutionNames; }
     public int getApplicationCount() { return applicationCount; }
     public void setApplicationCount(int applicationCount) { this.applicationCount = applicationCount; }
     public String getStatus() { return status; }

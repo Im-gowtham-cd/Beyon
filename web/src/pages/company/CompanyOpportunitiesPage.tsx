@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   PlusCircle,
@@ -19,18 +19,27 @@ export function CompanyOpportunitiesPage() {
   const [tab, setTab] = useState<'ALL' | 'CAMPUS_DRIVE' | 'FULL_TIME' | 'INTERNSHIP'>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
 
+  const [applicantCount, setApplicantCount] = useState<number>(0);
+
   useEffect(() => {
     async function loadOpportunities() {
       try {
         const token = localStorage.getItem('beyon_token') || localStorage.getItem('beyon_access_token');
         if (token) {
-          const res = await fetch('/api/v1/opportunities', {
-            headers: { Authorization: `Bearer ${token}` },
-          });
+          const [res, appRes] = await Promise.all([
+            fetch('/api/v1/opportunities', { headers: { Authorization: `Bearer ${token}` } }),
+            fetch('/api/v1/recruitment/applications', { headers: { Authorization: `Bearer ${token}` } }).catch(() => null),
+          ]);
           if (res.ok) {
             const data = await res.json();
             if (Array.isArray(data.data)) {
               setOpportunities(data.data);
+            }
+          }
+          if (appRes && appRes.ok) {
+            const appData = await appRes.json();
+            if (Array.isArray(appData.data)) {
+              setApplicantCount(appData.data.length);
             }
           }
         }
@@ -51,12 +60,12 @@ export function CompanyOpportunitiesPage() {
 
     if (!matchesSearch) return false;
     if (tab === 'ALL') return true;
-    if (tab === 'CAMPUS_DRIVE') return opp.title.toLowerCase().includes('drive') || opp.opportunityType === 'CAMPUS_DRIVE';
+    if (tab === 'CAMPUS_DRIVE') return opp.opportunityType === 'CAMPUS_DRIVE' || opp.title.toLowerCase().includes('drive');
     return opp.opportunityType === tab;
   });
 
-  const totalDrives = opportunities.filter(o => o.title.toLowerCase().includes('drive')).length || 18;
-  const totalOpenings = opportunities.length || 32;
+  const totalDrives = opportunities.filter(o => o.opportunityType === 'CAMPUS_DRIVE' || o.title.toLowerCase().includes('drive')).length;
+  const totalOpenings = opportunities.length;
 
   return (
     <div className={styles.page}>
@@ -85,11 +94,11 @@ export function CompanyOpportunitiesPage() {
         </div>
         <div className={styles.statCard}>
           <span className={styles.statLabel}>Total Applicants</span>
-          <span className={styles.statValue} style={{ color: '#0284c7' }}>148</span>
+          <span className={styles.statValue} style={{ color: '#0284c7' }}>{applicantCount}</span>
         </div>
         <div className={styles.statCard}>
-          <span className={styles.statLabel}>Verified Candidate Pool</span>
-          <span className={styles.statValue} style={{ color: '#15803d' }}>100+ Scholars</span>
+          <span className={styles.statLabel}>Verified Candidates</span>
+          <span className={styles.statValue} style={{ color: '#15803d' }}>{applicantCount}</span>
         </div>
       </div>
 

@@ -22,15 +22,24 @@ public class RecruitmentService {
     private final RecruitmentStatusHistoryRepository historyRepository;
     private final CompanyOpportunityRepository opportunityRepository;
     private final NotificationService notificationService;
+    private final com.beyon.identity.repository.UserRepository userRepository;
+    private final com.beyon.profile.repository.StudentProfileRepository studentProfileRepository;
+    private final com.beyon.assessment.repository.AssessmentResultRepository assessmentResultRepository;
 
     public RecruitmentService(RecruitmentApplicationRepository applicationRepository,
                               RecruitmentStatusHistoryRepository historyRepository,
                               CompanyOpportunityRepository opportunityRepository,
-                              NotificationService notificationService) {
+                              NotificationService notificationService,
+                              com.beyon.identity.repository.UserRepository userRepository,
+                              com.beyon.profile.repository.StudentProfileRepository studentProfileRepository,
+                              com.beyon.assessment.repository.AssessmentResultRepository assessmentResultRepository) {
         this.applicationRepository = applicationRepository;
         this.historyRepository = historyRepository;
         this.opportunityRepository = opportunityRepository;
         this.notificationService = notificationService;
+        this.userRepository = userRepository;
+        this.studentProfileRepository = studentProfileRepository;
+        this.assessmentResultRepository = assessmentResultRepository;
     }
 
     public List<RecruitmentApplication> getStudentApplications(UUID studentId) {
@@ -47,6 +56,73 @@ public class RecruitmentService {
 
     public List<RecruitmentApplication> getAllApplications() {
         return applicationRepository.findAll();
+    }
+
+    public List<Map<String, Object>> getEnrichedApplications(UUID userId, String role) {
+        List<RecruitmentApplication> apps;
+        if ("COMPANY".equalsIgnoreCase(role)) {
+            List<CompanyOpportunity> opps = opportunityRepository.findByCompanyUserIdOrderByCreatedAtDesc(userId);
+            if (opps.isEmpty()) {
+                return Collections.emptyList();
+            }
+            Set<UUID> oppIds = new HashSet<>();
+            for (CompanyOpportunity opp : opps) {
+                oppIds.add(opp.getId());
+            }
+            apps = new ArrayList<>();
+            for (RecruitmentApplication a : applicationRepository.findAll()) {
+                if (a.getOpportunityId() != null && oppIds.contains(a.getOpportunityId())) {
+                    apps.add(a);
+                }
+            }
+        } else if ("STUDENT".equalsIgnoreCase(role)) {
+            apps = applicationRepository.findByStudentIdOrderByCreatedAtDesc(userId);
+        } else {
+            apps = applicationRepository.findAll();
+        }
+
+        List<Map<String, Object>> enriched = new ArrayList<>();
+        for (RecruitmentApplication app : apps) {
+            Map<String, Object> map = new LinkedHashMap<>();
+            map.put("id", app.getId());
+            map.put("studentId", app.getStudentId());
+            map.put("opportunityId", app.getOpportunityId());
+            map.put("status", app.getStatus() != null ? app.getStatus() : "APPLIED");
+            map.put("appliedAt", app.getCreatedAt() != null ? app.getCreatedAt().toString() : Instant.now().toString());
+
+            if (app.getOpportunityId() != null) {
+                opportunityRepository.findById(app.getOpportunityId()).ifPresent(opp -> {
+                    map.put("opportunityTitle", opp.getTitle());
+                    map.put("role", opp.getTitle());
+                    map.put("opportunityType", opp.getOpportunityType());
+                });
+            }
+
+            if (app.getStudentId() != null) {
+                userRepository.findById(app.getStudentId()).ifPresent(u -> {
+                    map.put("studentName", u.getDisplayName());
+                    map.put("name", u.getDisplayName());
+                    map.put("studentEmail", u.getEmail());
+                });
+
+                studentProfileRepository.findByUserId(app.getStudentId()).ifPresent(prof -> {
+                    map.put("institutionName", prof.getInstitution());
+                    map.put("college", prof.getInstitution());
+                    map.put("degree", prof.getDegree());
+                    map.put("department", prof.getDepartment());
+                    map.put("batch", prof.getAcademicYear());
+                    map.put("cgpa", prof.getCgpa());
+                });
+
+                List<com.beyon.assessment.model.AssessmentResult> results = assessmentResultRepository.findByStudentIdOrderByCreatedAtDesc(app.getStudentId());
+                if (!results.isEmpty()) {
+                    map.put("assessmentScore", results.get(0).getOverallScore());
+                }
+            }
+
+            enriched.add(map);
+        }
+        return enriched;
     }
 
     @Transactional

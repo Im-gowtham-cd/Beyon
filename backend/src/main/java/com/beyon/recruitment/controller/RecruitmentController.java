@@ -40,8 +40,10 @@ public class RecruitmentController {
     }
 
     @GetMapping("/applications")
-    public ResponseEntity<ApiResponse<List<RecruitmentApplication>>> getAllApplications() {
-        return ResponseEntity.ok(ApiResponse.ok(recruitmentService.getAllApplications()));
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getAllApplications(Authentication auth) {
+        UUID userId = extractUserId(auth);
+        String role = extractRole(auth);
+        return ResponseEntity.ok(ApiResponse.ok(recruitmentService.getEnrichedApplications(userId, role)));
     }
 
     @PutMapping("/{applicationId}/status")
@@ -70,7 +72,16 @@ public class RecruitmentController {
     }
 
     private UUID extractUserId(Authentication auth) {
-        JwtUserDetails details = (JwtUserDetails) auth.getDetails();
-        return UUID.fromString(details.getUserId());
+        if (auth != null && auth.getDetails() instanceof JwtUserDetails details) {
+            return UUID.fromString(details.getUserId());
+        }
+        throw new RuntimeException("Unauthorized");
+    }
+
+    private String extractRole(Authentication auth) {
+        if (auth != null && auth.getDetails() instanceof JwtUserDetails details) {
+            return details.getRole();
+        }
+        return "UNKNOWN";
     }
 }

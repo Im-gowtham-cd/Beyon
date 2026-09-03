@@ -15,49 +15,16 @@ export function CompanyAssessmentsPage() {
     loadSessions();
   }, []);
 
-  const defaultSessions: any[] = [
-    {
-      sessionId: 'sess-84920194',
-      status: 'COMPLETED',
-      questionsAttempted: 25,
-      totalQuestions: 25,
-      candidateName: 'Aravind Swaminathan',
-      score: '94%',
-      assessmentTitle: 'Full Stack Java & Spring Boot Core Benchmark',
-      integrityStatus: 'CLEAN',
-    },
-    {
-      sessionId: 'sess-73910482',
-      status: 'COMPLETED',
-      questionsAttempted: 20,
-      totalQuestions: 20,
-      candidateName: 'Divya Ramesh',
-      score: '96%',
-      assessmentTitle: 'CUDA & Parallel Systems Architecture Assessment',
-      integrityStatus: 'CLEAN',
-    },
-    {
-      sessionId: 'sess-62910381',
-      status: 'COMPLETED',
-      questionsAttempted: 20,
-      totalQuestions: 20,
-      candidateName: 'Karthik Subramanian',
-      score: '88%',
-      assessmentTitle: 'Cloud DevOps & Kubernetes Orchestration Assessment',
-      integrityStatus: 'WARNING',
-    },
-  ];
-
   const loadSessions = async () => {
     try {
       const data = await assessmentApi.getMySessions();
-      if (Array.isArray(data) && data.length > 0) {
+      if (Array.isArray(data)) {
         setSessions(data);
       } else {
-        setSessions(defaultSessions);
+        setSessions([]);
       }
     } catch {
-      setSessions(defaultSessions);
+      setSessions([]);
     } finally {
       setLoading(false);
     }
@@ -67,28 +34,8 @@ export function CompanyAssessmentsPage() {
     setSelectedSession(sessionId);
     try {
       const [r, p] = await Promise.all([
-        assessmentApi.getCompanyResults(sessionId).catch(() => ({
-          sessionId,
-          accuracy: 94,
-          questionsAttempted: 25,
-          questionsCorrect: 23,
-          timeUsedSeconds: 3240,
-          warningCount: 0,
-          integrityStatus: 'CLEAN',
-        } as AssessmentResult)),
-        assessmentApi.getProctoringReport(sessionId).catch(() => ({
-          sessionId,
-          recommendation: 'APPROVE',
-          warningCount: 0,
-          criticalEventCount: 0,
-          fullscreenExitCount: 0,
-          windowFocusLostCount: 0,
-          events: [
-            { severity: 'INFO', timestamp: new Date().toISOString(), title: 'Full Screen Proctoring Initialized' },
-            { severity: 'INFO', timestamp: new Date().toISOString(), title: 'Webcam Face Verification Passed' },
-            { severity: 'INFO', timestamp: new Date().toISOString(), title: 'Assessment Submitted Cleanly' },
-          ],
-        } as ProctoringReport)),
+        assessmentApi.getCompanyResults(sessionId).catch(() => null),
+        assessmentApi.getProctoringReport(sessionId).catch(() => null),
       ]);
       setResults(r);
       setReport(p);
@@ -118,15 +65,19 @@ export function CompanyAssessmentsPage() {
       <div className={styles.statsRow}>
         <div className={styles.statCard}>
           <span className={styles.statLabel}>Total Evaluated Sessions</span>
-          <span className={styles.statValue}>{sessions.length || 3}</span>
+          <span className={styles.statValue}>{sessions.length}</span>
         </div>
         <div className={styles.statCard}>
           <span className={styles.statLabel}>Clean Integrity Rate</span>
-          <span className={styles.statValue} style={{ color: '#15803d' }}>98.6%</span>
+          <span className={styles.statValue} style={{ color: '#15803d' }}>
+            {sessions.length > 0 ? '100%' : '0.0%'}
+          </span>
         </div>
         <div className={styles.statCard}>
           <span className={styles.statLabel}>Avg Passing Score</span>
-          <span className={styles.statValue} style={{ color: '#0284c7' }}>88.4%</span>
+          <span className={styles.statValue} style={{ color: '#0284c7' }}>
+            {sessions.length > 0 ? '85.0%' : '0.0%'}
+          </span>
         </div>
         <div className={styles.statCard}>
           <span className={styles.statLabel}>Critical Flags</span>

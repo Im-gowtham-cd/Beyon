@@ -40,22 +40,24 @@ export function CandidateDiscoveryPage() {
             const mapped = appData.data.map((app: any, idx: number) => ({
               id: app.id || `c-${idx}`,
               studentId: app.studentId,
-              name: app.studentName || `Candidate ${idx + 1}`,
-              college: app.institutionName || 'PSG College of Technology',
-              degree: 'B.E Computer Science',
-              batch: '2026',
-              cgpa: app.cgpa || 9.12,
-              skills: ['Java', 'Spring Boot', 'MySQL', 'REST APIs', 'React'],
-              benchmarkScore: app.assessmentScore || 92,
-              skillMatch: 95,
-              overallScore: 94,
-              avatar: (app.studentName || 'SC').slice(0, 2).toUpperCase(),
+              name: app.studentName || app.name || `Candidate ${idx + 1}`,
+              college: app.institutionName || app.college || 'Partner University',
+              degree: app.degree || app.department || 'Undergraduate',
+              batch: app.batch || '2026',
+              cgpa: app.cgpa || 0,
+              skills: app.skills || ['Core Technical', 'Problem Solving'],
+              benchmarkScore: app.assessmentScore !== undefined ? Number(app.assessmentScore) : null,
+              skillMatch: 90,
+              overallScore: app.assessmentScore || 85,
+              avatar: (app.studentName || app.name || 'CA').slice(0, 2).toUpperCase(),
             }));
             setCandidates(mapped);
+          } else {
+            setCandidates([]);
           }
         }
       } catch {
-        /* fallback */
+        setCandidates([]);
       }
     }
     loadData();
@@ -75,11 +77,17 @@ export function CandidateDiscoveryPage() {
       !searchQuery ||
       c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       c.college.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      c.skills.some((s: string) => s.toLowerCase().includes(searchQuery.toLowerCase()));
+      (Array.isArray(c.skills) && c.skills.some((s: string) => s.toLowerCase().includes(searchQuery.toLowerCase())));
 
     const matchesCgpa = c.cgpa >= minCgpaFilter;
     return matchesSearch && matchesCgpa;
   });
+
+  const scoredCandidates = candidates.filter((c) => c.benchmarkScore !== null && c.benchmarkScore !== undefined);
+  const avgBenchmark =
+    scoredCandidates.length > 0
+      ? (scoredCandidates.reduce((acc, c) => acc + c.benchmarkScore, 0) / scoredCandidates.length).toFixed(1) + '%'
+      : '0.0%';
 
   return (
     <div className={styles.page}>
@@ -95,11 +103,11 @@ export function CandidateDiscoveryPage() {
       <div className={styles.statsRow}>
         <div className={styles.statCard}>
           <span className={styles.statLabel}>Verified Candidate Pool</span>
-          <span className={styles.statValue}>{candidates.length || '120+'} Scholars</span>
+          <span className={styles.statValue}>{candidates.length} Candidates</span>
         </div>
         <div className={styles.statCard}>
           <span className={styles.statLabel}>Avg Benchmark Score</span>
-          <span className={styles.statValue} style={{ color: '#15803d' }}>89.2%</span>
+          <span className={styles.statValue} style={{ color: '#15803d' }}>{avgBenchmark}</span>
         </div>
         <div className={styles.statCard}>
           <span className={styles.statLabel}>Shortlisted for Tech Rounds</span>
@@ -107,7 +115,7 @@ export function CandidateDiscoveryPage() {
         </div>
         <div className={styles.statCard}>
           <span className={styles.statLabel}>Active Opportunities</span>
-          <span className={styles.statValue}>{opportunities.length || 35} Roles</span>
+          <span className={styles.statValue}>{opportunities.length} Roles</span>
         </div>
       </div>
 

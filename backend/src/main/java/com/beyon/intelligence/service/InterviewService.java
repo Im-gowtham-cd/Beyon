@@ -17,13 +17,80 @@ public class InterviewService {
     private final InterviewScheduleRepository scheduleRepo;
     private final InterviewScorecardRepository scorecardRepo;
     private final com.beyon.recruitment.repository.RecruitmentApplicationRepository applicationRepo;
+    private final com.beyon.practice.repository.CompanyOpportunityRepository opportunityRepo;
+    private final com.beyon.identity.repository.UserRepository userRepo;
 
     public InterviewService(InterviewRoundRepository roundRepo, InterviewScheduleRepository scheduleRepo,
-                            InterviewScorecardRepository scorecardRepo, com.beyon.recruitment.repository.RecruitmentApplicationRepository applicationRepo) {
+                            InterviewScorecardRepository scorecardRepo, com.beyon.recruitment.repository.RecruitmentApplicationRepository applicationRepo,
+                            com.beyon.practice.repository.CompanyOpportunityRepository opportunityRepo,
+                            com.beyon.identity.repository.UserRepository userRepo) {
         this.roundRepo = roundRepo;
         this.scheduleRepo = scheduleRepo;
         this.scorecardRepo = scorecardRepo;
         this.applicationRepo = applicationRepo;
+        this.opportunityRepo = opportunityRepo;
+        this.userRepo = userRepo;
+    }
+
+    public List<Map<String, Object>> getCompanyInterviews(UUID companyUserId) {
+        List<com.beyon.practice.model.CompanyOpportunity> opps = opportunityRepo.findByCompanyUserIdOrderByCreatedAtDesc(companyUserId);
+        if (opps.isEmpty()) {
+            return Collections.emptyList();
+        }
+        Set<UUID> oppIds = new HashSet<>();
+        for (com.beyon.practice.model.CompanyOpportunity opp : opps) {
+            oppIds.add(opp.getId());
+        }
+        Map<UUID, com.beyon.recruitment.model.RecruitmentApplication> appMap = new HashMap<>();
+        for (com.beyon.recruitment.model.RecruitmentApplication a : applicationRepo.findAll()) {
+            if (a.getOpportunityId() != null && oppIds.contains(a.getOpportunityId())) {
+                appMap.put(a.getId(), a);
+            }
+        }
+        if (appMap.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<InterviewSchedule> schedules = new ArrayList<>();
+        for (InterviewSchedule s : scheduleRepo.findAll()) {
+            if (appMap.containsKey(s.getApplicationId())) {
+                schedules.add(s);
+            }
+        }
+
+        List<Map<String, Object>> results = new ArrayList<>();
+        for (InterviewSchedule s : schedules) {
+            Map<String, Object> map = new LinkedHashMap<>();
+            map.put("id", s.getId());
+            map.put("applicationId", s.getApplicationId());
+            map.put("status", s.getStatus());
+            map.put("scheduledAt", s.getScheduledAt() != null ? s.getScheduledAt().toString() : "");
+            map.put("durationMinutes", s.getDurationMinutes());
+            map.put("meetingLink", s.getMeetingLink());
+            map.put("location", s.getLocation());
+            map.put("notes", s.getNotes());
+
+            com.beyon.recruitment.model.RecruitmentApplication app = appMap.get(s.getApplicationId());
+            if (app != null) {
+                userRepo.findById(app.getStudentId()).ifPresent(u -> map.put("candidateName", u.getDisplayName()));
+                opportunityRepo.findById(app.getOpportunityId()).ifPresent(opp -> map.put("role", opp.getTitle()));
+            }
+
+            roundRepo.findById(s.getRoundId()).ifPresent(r -> {
+                map.put("roundName", r.getName());
+                map.put("roundType", r.getRoundType());
+            });
+
+            List<InterviewScorecard> cards = scorecardRepo.findByScheduleId(s.getId());
+            if (!cards.isEmpty()) {
+                map.put("score", cards.get(0).getOverallScore());
+                map.put("recommendation", cards.get(0).getRecommendation());
+                map.put("feedback", cards.get(0).getNotes());
+            }
+
+            results.add(map);
+        }
+        return results;
     }
 
     public InterviewRound createRound(InterviewRound round) { return roundRepo.save(round); }

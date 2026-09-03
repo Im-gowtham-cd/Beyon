@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { api } from '../../services/api/client';
 import {
   ArrowLeft,
@@ -38,72 +38,17 @@ export function AssessmentBuilderPage() {
     status: 'PUBLISHED',
   });
 
-  const defaultAssessments = [
-    {
-      id: 'ab-01',
-      title: 'Full Stack Java & Spring Boot Core Benchmark',
-      description: 'Comprehensive evaluation covering Java memory models, Spring Boot REST controllers, JPA concurrency, and SQL optimizations.',
-      category: 'SOFTWARE_ENGINEERING',
-      durationMinutes: 60,
-      totalQuestions: 25,
-      passingScore: 70,
-      coinCost: 300,
-      adaptiveEnabled: true,
-      status: 'PUBLISHED',
-      candidatesEvaluated: 48,
-    },
-    {
-      id: 'ab-02',
-      title: 'CUDA & Parallel Systems Architecture Assessment',
-      description: 'Advanced testing on GPU memory hierarchies, warp divergence, kernel optimization, and PyTorch tensor internals.',
-      category: 'AI_AND_SYSTEMS',
-      durationMinutes: 75,
-      totalQuestions: 20,
-      passingScore: 65,
-      coinCost: 500,
-      adaptiveEnabled: true,
-      status: 'PUBLISHED',
-      candidatesEvaluated: 24,
-    },
-    {
-      id: 'ab-03',
-      title: 'Cloud DevOps & Kubernetes Orchestration Assessment',
-      description: 'Evaluates Docker containerization, Kubernetes manifest configurations, Terraform IaC, and CI/CD pipelines.',
-      category: 'CLOUD_DEVOPS',
-      durationMinutes: 45,
-      totalQuestions: 20,
-      passingScore: 60,
-      coinCost: 200,
-      adaptiveEnabled: false,
-      status: 'PUBLISHED',
-      candidatesEvaluated: 32,
-    },
-    {
-      id: 'ab-04',
-      title: 'Enterprise Cyber Security & Defensive Operations',
-      description: 'Threat modeling, OWASP Top 10 vulnerabilities, SIEM telemetry analysis, and incident response mitigation protocols.',
-      category: 'CYBER_SECURITY',
-      durationMinutes: 60,
-      totalQuestions: 30,
-      passingScore: 75,
-      coinCost: 400,
-      adaptiveEnabled: true,
-      status: 'DRAFT',
-      candidatesEvaluated: 0,
-    },
-  ];
-
   useEffect(() => {
     async function fetchAssessments() {
       try {
         const data = await api.get<any[]>('/assessment-builder/assessments');
-        if (Array.isArray(data) && data.length > 0) {
+        if (Array.isArray(data)) {
           setAssessments(data);
         } else {
-          setAssessments(defaultAssessments);
+          setAssessments([]);
         }
       } catch {
-        setAssessments(defaultAssessments);
+        setAssessments([]);
       } finally {
         setLoading(false);
       }
@@ -196,11 +141,15 @@ export function AssessmentBuilderPage() {
         </div>
         <div className={styles.statCard}>
           <span className={styles.statLabel}>Candidates Evaluated</span>
-          <span className={styles.statValue} style={{ color: '#0284c7' }}>104</span>
+          <span className={styles.statValue} style={{ color: '#0284c7' }}>
+            {assessments.reduce((sum, a) => sum + (Number(a.candidatesEvaluated) || 0), 0)}
+          </span>
         </div>
         <div className={styles.statCard}>
           <span className={styles.statLabel}>Proctoring Integrity</span>
-          <span className={styles.statValue} style={{ color: '#854d0e' }}>99.4%</span>
+          <span className={styles.statValue} style={{ color: '#854d0e' }}>
+            {assessments.length > 0 ? '100%' : '0.0%'}
+          </span>
         </div>
       </div>
 

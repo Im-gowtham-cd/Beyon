@@ -25,11 +25,23 @@ public class CompanyOpportunityController {
 
     @GetMapping
     public ResponseEntity<ApiResponse<List<CompanyOpportunity>>> getOpportunities(
+            Authentication auth,
             @RequestParam(required = false) UUID companyId) {
         if (companyId != null) {
             return ResponseEntity.ok(ApiResponse.ok(companyService.getCompanyOpportunities(companyId)));
         }
+        if (auth != null && auth.getDetails() instanceof JwtUserDetails details) {
+            if ("COMPANY".equals(details.getRole())) {
+                UUID companyUserId = UUID.fromString(details.getUserId());
+                return ResponseEntity.ok(ApiResponse.ok(companyService.getCompanyOpportunities(companyUserId)));
+            }
+        }
         return ResponseEntity.ok(ApiResponse.ok(companyService.getPublishedOpportunities()));
+    }
+
+    @GetMapping("/active-institutions")
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getActiveInstitutions() {
+        return ResponseEntity.ok(ApiResponse.ok(companyService.getActiveInstitutions()));
     }
 
     @GetMapping("/{id}")
