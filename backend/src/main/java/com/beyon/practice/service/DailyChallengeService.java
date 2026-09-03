@@ -11,9 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.time.LocalDate;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 public class DailyChallengeService {
@@ -25,6 +23,7 @@ public class DailyChallengeService {
     private final SkillXpService skillXpService;
     private final AchievementBadgeService badgeService;
     private final PracticeService practiceService;
+    private final org.springframework.jdbc.core.JdbcTemplate jdbcTemplate;
 
     public DailyChallengeService(DailyChallengeRepository challengeRepository,
                                   QuestionRepository questionRepository,
@@ -32,7 +31,8 @@ public class DailyChallengeService {
                                   StreakService streakService,
                                   SkillXpService skillXpService,
                                   AchievementBadgeService badgeService,
-                                  PracticeService practiceService) {
+                                  PracticeService practiceService,
+                                  org.springframework.jdbc.core.JdbcTemplate jdbcTemplate) {
         this.challengeRepository = challengeRepository;
         this.questionRepository = questionRepository;
         this.coinService = coinService;
@@ -40,6 +40,7 @@ public class DailyChallengeService {
         this.skillXpService = skillXpService;
         this.badgeService = badgeService;
         this.practiceService = practiceService;
+        this.jdbcTemplate = jdbcTemplate;
     }
 
     public DailyChallenge getTodayChallenge(UUID studentId) {
@@ -53,18 +54,58 @@ public class DailyChallengeService {
 
     @Transactional
     public DailyChallenge generateChallenge(UUID studentId, LocalDate date) {
-        List<Question> unsolved = questionRepository.findUnsolvedForStudent(studentId, PageRequest.of(0, 20));
-        if (unsolved.isEmpty()) {
-            unsolved = questionRepository.findByStatusInOrderByCreatedAtDesc(List.of("PUBLISHED", "ACTIVE"), PageRequest.of(0, 20));
-        }
-        if (unsolved.isEmpty()) return null;
+        // 1. Collect all skills the student is currently learning or enrolled in
+        List<String> studentSkills = new ArrayList<>();
+        try {
+            List<String> enrolled = jdbcTemplate.queryForList(
+                    "SELECT DISTINCT LOWER(skill_name) FROM student_skills WHERE user_id = ?",
+                    String.class, studentId.toString()
+            );
+            studentSkills.addAll(enrolled);
 
-        Question random = unsolved.get((int) (Math.random() * unsolved.size()));
+            List<String> learning = jdbcTemplate.queryForList(
+                    "SELECT DISTINCT LOWER(s.name) FROM student_learning_topics slt " +
+                    "JOIN skill_topics st ON st.id = slt.topic_id " +
+                    "JOIN skills s ON s.id = st.skill_id WHERE slt.student_id = ?",
+                    String.class, studentId.toString()
+            );
+            studentSkills.addAll(learning);
+        } catch (Exception ignored) {}
+
+        // 2. Query matching unsolved questions for the student's enrolled/learning skills
+        UUID selectedQuestionId = null;
+        if (!studentSkills.isEmpty()) {
+            try {
+                String inSql = String.join("','", studentSkills);
+                List<Map<String, Object>> matchingQuestions = jdbcTemplate.queryForList(
+                        "SELECT q.id FROM questions q " +
+                        "LEFT JOIN skills s ON s.id = q.skill_id " +
+                        "WHERE (LOWER(s.name) IN ('" + inSql + "') OR " +
+                        "LOWER(q.title) REGEXP '" + String.join("|", studentSkills) + "') " +
+                        "AND q.id NOT IN (SELECT question_id FROM daily_challenges WHERE student_id = ? AND status = 'COMPLETED') " +
+                        "ORDER BY RAND() LIMIT 5",
+                        studentId.toString()
+                );
+                if (!matchingQuestions.isEmpty()) {
+                    selectedQuestionId = UUID.fromString(matchingQuestions.get(0).get("id").toString());
+                }
+            } catch (Exception ignored) {}
+        }
+
+        // 3. Fallback to any published question if no specific skill question was found
+        if (selectedQuestionId == null) {
+            List<Question> unsolved = questionRepository.findUnsolvedForStudent(studentId, PageRequest.of(0, 20));
+            if (unsolved.isEmpty()) {
+                unsolved = questionRepository.findByStatusInOrderByCreatedAtDesc(List.of("PUBLISHED", "ACTIVE"), PageRequest.of(0, 20));
+            }
+            if (unsolved.isEmpty()) return null;
+            selectedQuestionId = unsolved.get((int) (Math.random() * unsolved.size())).getId();
+        }
 
         DailyChallenge challenge = new DailyChallenge();
         challenge.setStudentId(studentId);
         challenge.setChallengeDate(date);
-        challenge.setQuestionId(random.getId());
+        challenge.setQuestionId(selectedQuestionId);
         challenge.setStatus("PENDING");
         return challengeRepository.save(challenge);
     }
