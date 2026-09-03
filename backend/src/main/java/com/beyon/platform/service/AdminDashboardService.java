@@ -171,13 +171,16 @@ public class AdminDashboardService {
     }
 
     public List<Map<String, Object>> getRecentActivity() {
-        List<Map<String, Object>> list = new ArrayList<>();
-        list.add(Map.of("id", "act-1", "type", "VERIFICATION", "message", "New student Saranya Roy submitted academic verification for PSG Tech", "time", "10 mins ago", "status", "PENDING"));
-        list.add(Map.of("id", "act-2", "type", "ASSESSMENT", "message", "Aravind Swaminathan completed Backend Microservices Proctored Test (Score: 96%)", "time", "25 mins ago", "status", "SUCCESS"));
-        list.add(Map.of("id", "act-3", "type", "PLACEMENT", "message", "Google Cloud issued 28.5 LPA offer to Sneha Sundaram", "time", "1 hour ago", "status", "SUCCESS"));
-        list.add(Map.of("id", "act-4", "type", "DRIVE", "message", "Microsoft IDC published campus placement slot for 2026 Batch", "time", "2 hours ago", "status", "INFO"));
-        list.add(Map.of("id", "act-5", "type", "COIN_MINT", "message", "Daily Challenge streak reward distributed (1,450 coins to 58 students)", "time", "3 hours ago", "status", "SUCCESS"));
-        return list;
+        try {
+            List<Map<String, Object>> events = jdbcTemplate.queryForList(
+                "SELECT id, event_type AS type, user_email AS userEmail, details AS message, created_at AS time, " +
+                "'SUCCESS' AS status FROM audit_events ORDER BY created_at DESC LIMIT 10"
+            );
+            if (!events.isEmpty()) {
+                return events;
+            }
+        } catch (Exception ignored) {}
+        return Collections.emptyList();
     }
 
     private Long queryCount(String sql) {

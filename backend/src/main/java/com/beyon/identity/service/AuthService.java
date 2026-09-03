@@ -99,8 +99,15 @@ public class AuthService {
         user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
         user.setDisplayName(request.getName());
         user.setRole(request.getRole());
-        user.setStatus(AccountStatus.ACTIVE);
-        user.setProfileStatus(AccountStatus.ACTIVE);
+
+        if (request.getRole() == UserRole.STUDENT) {
+            user.setStatus(AccountStatus.ACTIVE);
+            user.setProfileStatus(AccountStatus.PENDING_INSTITUTION_VERIFICATION);
+        } else {
+            user.setStatus(AccountStatus.PENDING_SUPER_ADMIN_VERIFICATION);
+            user.setProfileStatus(AccountStatus.PENDING_SUPER_ADMIN_VERIFICATION);
+        }
+
         user.setEmailVerified(true);
         User savedUser = userRepository.save(user);
 
@@ -112,7 +119,6 @@ public class AuthService {
             profile.setDegree("B.Tech");
             profile.setDepartment("Computer Science and Engineering");
             profile.setAcademicYear("3rd Year");
-            profile.setInstitution("Engineering College");
             profile.setPlacementPreference(com.beyon.profile.enums.PlacementPreference.PLACEMENT_WILLING);
             profile.setPreferredWorkType(com.beyon.profile.enums.WorkType.ANY);
             profile.setCompletionPct(60);
@@ -163,6 +169,10 @@ public class AuthService {
 
         if (user.getStatus() == AccountStatus.DEACTIVATED) {
             throw new ForbiddenException("Your account has been deactivated");
+        }
+
+        if (user.getStatus() == AccountStatus.REJECTED) {
+            throw new ForbiddenException("Your account registration was reviewed and rejected by Super Admin.");
         }
 
         rateLimitService.reset(rateLimitKey);

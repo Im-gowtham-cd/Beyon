@@ -94,8 +94,46 @@ export function InstitutionHome() {
     ? `NAAC ${profileData.accreditationGrade} Accredited`
     : 'Verified Academic Partner';
 
+  const isPendingVerification =
+    user?.status === 'PENDING_SUPER_ADMIN_VERIFICATION' ||
+    user?.status === 'PENDING_VERIFICATION' ||
+    user?.status === 'PENDING';
+
   return (
     <div className={styles.page}>
+      {isPendingVerification && (
+        <div
+          style={{
+            padding: '16px 20px',
+            background: '#fffbeb',
+            border: '1px solid #fde68a',
+            marginBottom: '20px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '12px',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{ width: '40px', height: '40px', background: '#fef3c7', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#b45309', flexShrink: 0 }}>
+              <ShieldCheck size={22} />
+            </div>
+            <div>
+              <div style={{ fontWeight: 800, color: '#92400e', fontSize: '0.94rem' }}>
+                Account Pending Super Admin Approval
+              </div>
+              <div style={{ fontSize: '0.82rem', color: '#b45309', marginTop: '2px' }}>
+                Your institutional registration is currently in the <strong>Super Admin Verification Queue</strong>. Candidate discovery, corporate drives, and placements will be fully activated upon administrative verification.
+              </div>
+            </div>
+          </div>
+          <span style={{ fontSize: '0.74rem', fontWeight: 800, padding: '4px 10px', background: '#b45309', color: '#ffffff' }}>
+            STATUS: PENDING VERIFICATION
+          </span>
+        </div>
+      )}
+
       {/* Welcome Hero */}
       <section className={styles.welcomeHero}>
         <div className={styles.welcomeInfo}>
