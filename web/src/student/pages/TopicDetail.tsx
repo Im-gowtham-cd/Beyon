@@ -14,7 +14,13 @@ import {
   X,
   AlertCircle,
   Check,
+  Layers,
+  Terminal,
+  Cpu,
+  Code2,
+  Lightbulb,
 } from 'lucide-react';
+import { TOPIC_CONTENT_REGISTRY } from '../data/topicElaborateContent';
 import styles from './SkillExplorer.module.css';
 
 export function TopicDetail() {
@@ -26,10 +32,11 @@ export function TopicDetail() {
 
   const [allSkillTopics, setAllSkillTopics] = useState<any[]>([]);
   const [allLearningTopics, setAllLearningTopics] = useState<any[]>([]);
+  const [topicQuestions, setTopicQuestions] = useState<any[]>([]);
 
   // Knowledge Verification Quiz State
   const [showQuizModal, setShowQuizModal] = useState(false);
-  const [selectedAnswers, setSelectedAnswers] = useState<Record<number, number>>({});
+  const [selectedAnswers, setSelectedAnswers] = useState<Record<string | number, number>>({});
   const [quizSubmitted, setQuizSubmitted] = useState(false);
   const [quizPassed, setQuizPassed] = useState(false);
   const [quizError, setQuizError] = useState<string | null>(null);
@@ -50,6 +57,17 @@ export function TopicDetail() {
       setAllLearningTopics(lt || []);
       const existing = (lt || []).find((l: any) => l.topicId === t.id) || null;
       setLearningEntry(existing);
+
+      if (t?.id) {
+        try {
+          const token = localStorage.getItem('beyon_token') || localStorage.getItem('beyon_access_token');
+          const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+          const qRes = await fetch(`/api/v1/practice/questions?topicId=${t.id}`, { headers }).then(r => r.json()).catch(() => ({ data: [] }));
+          if (qRes?.data && Array.isArray(qRes.data) && qRes.data.length > 0) {
+            setTopicQuestions(qRes.data);
+          }
+        } catch { /* ignore */ }
+      }
     } catch { /* */ }
     setLoading(false);
   }, [skillSlug, topicSlug]);
@@ -95,7 +113,7 @@ export function TopicDetail() {
     } catch { /* */ }
   }
 
-  function handleAnswerSelect(qId: number, optionIdx: number) {
+  function handleAnswerSelect(qId: string | number, optionIdx: number) {
     setSelectedAnswers(prev => ({ ...prev, [qId]: optionIdx }));
     setQuizError(null);
   }
@@ -281,72 +299,219 @@ export function TopicDetail() {
       </div>
 
       {/* Lesson Documentation & Technical Context */}
-      <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '28px', marginBottom: '24px' }}>
-        <h2 style={{ fontSize: '1.2rem', fontWeight: 700, color: '#0f172a', margin: '0 0 16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <BookOpen size={18} color="#1c2d81" /> Architecture &amp; Core Concept Breakdown
-        </h2>
+      {(() => {
+        const elaborateData = topicSlug ? TOPIC_CONTENT_REGISTRY[topicSlug] : null;
 
-        <div style={{ color: '#334155', fontSize: '0.925rem', lineHeight: 1.8 }}>
-          <p>
-            This module covers the core design principles and production standards for <strong>{topic.name}</strong>.
-            Understanding these patterns is essential for technical interviews, coding assessments, and scalable system implementations.
-          </p>
+        if (elaborateData) {
+          return (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', marginBottom: '28px' }}>
+              {/* Main Architectural Overview Card */}
+              <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '28px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+                  <div style={{ background: '#eff6ff', color: '#1c2d81', padding: '10px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <BookOpen size={22} />
+                  </div>
+                  <div>
+                    <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>
+                      Architecture &amp; Core Concept Breakdown
+                    </h2>
+                    <span style={{ fontSize: '0.8rem', color: '#1d4ed8', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                      {elaborateData.badge} • Deep Technical Specification
+                    </span>
+                  </div>
+                </div>
 
-          <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#0f172a', margin: '20px 0 8px' }}>
-            Key Competencies &amp; Industry Standards
-          </h3>
-          <ul style={{ paddingLeft: '20px', margin: '8px 0 16px' }}>
-            <li>Master fundamental syntax, runtime execution model, and memory guarantees.</li>
-            <li>Implement enterprise design patterns and error handling strategies.</li>
-            <li>Analyze time and space complexity bottlenecks during high-throughput workloads.</li>
-            <li>Write clean, testable, and maintainable production code following SOLID principles.</li>
-          </ul>
+                <div style={{ color: '#334155', fontSize: '0.94rem', lineHeight: 1.8, margin: '0 0 24px', background: '#f8fafc', padding: '18px 20px', borderRadius: '6px', borderLeft: '4px solid #1c2d81' }}>
+                  {elaborateData.overview}
+                </div>
 
-          <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#0f172a', margin: '20px 0 8px' }}>
-            Production Blueprint &amp; Code Implementation
-          </h3>
-          <pre style={{ background: '#0f172a', color: '#f8fafc', padding: '16px', borderRadius: '6px', fontFamily: 'monospace', fontSize: '0.85rem', overflowX: 'auto', margin: '12px 0 16px' }}>
-<code>{`// Production Implementation Pattern for ${topic.name}
-public class ${topic.name.replace(/[^a-zA-Z0-9]/g, '')}Handler {
-    private final Logger logger = LoggerFactory.getLogger(getClass());
+                {/* Core Concept Modules */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '22px' }}>
+                  {elaborateData.coreConcepts.map((concept, idx) => (
+                    <div key={idx} style={{ border: '1px solid #e2e8f0', borderRadius: '8px', padding: '22px', background: '#ffffff' }}>
+                      <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0f172a', margin: '0 0 12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <Code2 size={18} color="#1c2d81" /> {concept.heading}
+                      </h3>
+                      <p style={{ color: '#475569', fontSize: '0.915rem', lineHeight: 1.7, margin: '0 0 14px' }}>
+                        {concept.description}
+                      </p>
 
-    public ExecutionResult execute(Context context) {
-        logger.info("Executing validated logic for ${topic.name}...");
-        try {
-            // 1. Validate inputs and state preconditions
-            Objects.requireNonNull(context, "Execution context must not be null");
-            
-            // 2. Perform core high-performance business processing
-            return ExecutionResult.success("Operation verified");
-        } catch (Exception ex) {
-            logger.error("Error during execution", ex);
-            throw new ProcessingException("Failed to process ${topic.name}", ex);
-        }
-    }
-}`}</code>
-          </pre>
-        </div>
-      </div>
+                      {concept.bulletPoints && (
+                        <ul style={{ paddingLeft: '20px', margin: '0 0 16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                          {concept.bulletPoints.map((bp, bpIdx) => (
+                            <li key={bpIdx} style={{ color: '#334155', fontSize: '0.885rem', lineHeight: 1.6 }}>
+                              {bp}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
 
-      {/* Subtopics & Granular Topics */}
-      <h2 style={{ fontSize: '1.15rem', fontWeight: 700, color: '#0f172a', margin: '0 0 16px' }}>
-        Granular Subtopics ({subtopics.length})
-      </h2>
+                      {concept.codeSnippet && (
+                        <div style={{ marginTop: '14px', borderRadius: '6px', overflow: 'hidden', border: '1px solid #1e293b' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#1e293b', color: '#cbd5e1', padding: '8px 14px', fontSize: '0.78rem', fontWeight: 600 }}>
+                            <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <Terminal size={14} color="#38bdf8" /> {concept.codeSnippet.title}
+                            </span>
+                            <span style={{ textTransform: 'uppercase', color: '#94a3b8', fontSize: '0.7rem' }}>{concept.codeSnippet.language}</span>
+                          </div>
+                          <pre style={{ margin: 0, background: '#0f172a', color: '#f8fafc', padding: '16px', fontFamily: 'monospace', fontSize: '0.835rem', overflowX: 'auto', lineHeight: 1.55 }}>
+                            <code>{concept.codeSnippet.code}</code>
+                          </pre>
+                          <div style={{ background: '#0b1120', padding: '8px 14px', fontSize: '0.8rem', color: '#94a3b8', borderTop: '1px solid #1e293b' }}>
+                            💡 {concept.codeSnippet.explanation}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
 
-      {subtopics.length === 0 ? (
-        <div className={styles.emptyState}>
-          <p className={styles.emptyText}>All core concepts are included in the primary lesson overview above.</p>
-        </div>
-      ) : (
-        <div className={styles.skillsGrid}>
-          {subtopics.map(sub => (
-            <div key={sub.id} className={styles.skillCard} style={{ cursor: 'default', background: '#ffffff' }}>
-              <h3 className={styles.skillName} style={{ fontSize: '0.95rem', fontWeight: 700 }}>{sub.name}</h3>
-              {sub.description && <p className={styles.skillDescription} style={{ fontSize: '0.85rem' }}>{sub.description}</p>}
+                {/* Comparison Table */}
+                {elaborateData.comparisons && (
+                  <div style={{ marginTop: '28px' }}>
+                    <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0f172a', margin: '0 0 14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <Cpu size={18} color="#1c2d81" /> {elaborateData.comparisons.title}
+                    </h3>
+                    <div style={{ overflowX: 'auto', border: '1px solid #e2e8f0', borderRadius: '6px' }}>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+                        <thead>
+                          <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+                            {elaborateData.comparisons.headers.map((h, hIdx) => (
+                              <th key={hIdx} style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 700, color: '#1e293b' }}>
+                                {h}
+                              </th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {elaborateData.comparisons.rows.map((row, rIdx) => (
+                            <tr key={rIdx} style={{ borderBottom: rIdx === elaborateData.comparisons!.rows.length - 1 ? 'none' : '1px solid #f1f5f9', background: rIdx % 2 === 0 ? '#ffffff' : '#fafafa' }}>
+                              {row.map((cell, cIdx) => (
+                                <td key={cIdx} style={{ padding: '12px 16px', color: cIdx === 0 ? '#0f172a' : '#475569', fontWeight: cIdx === 0 ? 700 : 400 }}>
+                                  {cell}
+                                </td>
+                              ))}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Granular Subtopics with Technical Explanations & Interview Q&As */}
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', margin: '0 0 16px', flexWrap: 'wrap', gap: '8px' }}>
+                  <h2 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#0f172a', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <Layers size={20} color="#1c2d81" /> Granular Concept Modules &amp; Interview Deep Dives ({subtopics.length})
+                  </h2>
+                  <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 600 }}>
+                    Targeted for Senior SDE &amp; Core Architecture Interviews
+                  </span>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  {subtopics.map((sub, sIdx) => {
+                    const breakdown = elaborateData.subtopicBreakdowns[sub.name];
+                    return (
+                      <div key={sub.id || sIdx} style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '22px', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
+                          <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '26px', height: '26px', borderRadius: '50%', background: '#eff6ff', color: '#1d4ed8', fontWeight: 800, fontSize: '0.8rem' }}>
+                            {sIdx + 1}
+                          </span>
+                          <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: '#0f172a' }}>
+                            {sub.name}
+                          </h3>
+                        </div>
+
+                        <p style={{ color: '#475569', fontSize: '0.915rem', lineHeight: 1.7, margin: '0 0 14px' }}>
+                          {breakdown?.conceptSummary || sub.description || 'Comprehensive conceptual module.'}
+                        </p>
+
+                        {breakdown?.keyPoints && (
+                          <div style={{ margin: '0 0 14px', background: '#f8fafc', padding: '14px 18px', borderRadius: '6px', border: '1px solid #f1f5f9' }}>
+                            <div style={{ fontWeight: 700, fontSize: '0.78rem', color: '#334155', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' }}>
+                              Core Architectural Guarantees:
+                            </div>
+                            <ul style={{ margin: 0, paddingLeft: '18px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                              {breakdown.keyPoints.map((kp, kpIdx) => (
+                                <li key={kpIdx} style={{ fontSize: '0.865rem', color: '#334155', lineHeight: 1.5 }}>{kp}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+
+                        {breakdown?.interviewQA && (
+                          <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '6px', padding: '16px 18px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#15803d', fontWeight: 800, fontSize: '0.825rem', textTransform: 'uppercase', marginBottom: '6px' }}>
+                              <Lightbulb size={15} /> Technical Interview Q&amp;A
+                            </div>
+                            <div style={{ fontWeight: 700, fontSize: '0.9rem', color: '#14532d', marginBottom: '8px' }}>
+                              Q: {breakdown.interviewQA.question}
+                            </div>
+                            <div style={{ fontSize: '0.865rem', color: '#166534', lineHeight: 1.65 }}>
+                              <strong>Architectural Answer:</strong> {breakdown.interviewQA.answer}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
-          ))}
-        </div>
-      )}
+          );
+        }
+
+        return (
+          <>
+            {/* Standard Lesson Documentation & Technical Context */}
+            <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '28px', marginBottom: '24px' }}>
+              <h2 style={{ fontSize: '1.2rem', fontWeight: 700, color: '#0f172a', margin: '0 0 16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <BookOpen size={18} color="#1c2d81" /> Architecture &amp; Core Concept Breakdown
+              </h2>
+
+              <div style={{ color: '#334155', fontSize: '0.925rem', lineHeight: 1.8 }}>
+                <p>
+                  This curriculum module provides in-depth technical analysis and production-grade implementation standards for <strong>{topic.name}</strong>.
+                  Mastering these architectural concepts is critical for SDE coding assessments, system design interviews, and scalable cloud engineering.
+                </p>
+
+                <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#0f172a', margin: '20px 0 8px' }}>
+                  Key Engineering Competencies
+                </h3>
+                <ul style={{ paddingLeft: '20px', margin: '8px 0 16px' }}>
+                  <li>Understand internal runtime execution mechanics, memory layouts, and thread safety.</li>
+                  <li>Design clean, decoupled abstractions using established SOLID principles and GoF design patterns.</li>
+                  <li>Optimize algorithmic efficiency, CPU cache locality, and latency during high-throughput workloads.</li>
+                  <li>Implement robust error handling, boundary validation, and deterministic state transitions.</li>
+                </ul>
+              </div>
+            </div>
+
+            {/* Subtopics & Granular Topics */}
+            <h2 style={{ fontSize: '1.15rem', fontWeight: 700, color: '#0f172a', margin: '0 0 16px' }}>
+              Granular Subtopics ({subtopics.length})
+            </h2>
+
+            {subtopics.length === 0 ? (
+              <div className={styles.emptyState}>
+                <p className={styles.emptyText}>All core concepts are included in the primary lesson overview above.</p>
+              </div>
+            ) : (
+              <div className={styles.skillsGrid}>
+                {subtopics.map(sub => (
+                  <div key={sub.id} className={styles.skillCard} style={{ cursor: 'default', background: '#ffffff' }}>
+                    <h3 className={styles.skillName} style={{ fontSize: '0.95rem', fontWeight: 700 }}>{sub.name}</h3>
+                    {sub.description && <p className={styles.skillDescription} style={{ fontSize: '0.85rem' }}>{sub.description}</p>}
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
+        );
+      })()}
 
       {/* Proctored Certification Callout */}
       {(() => {
@@ -441,32 +606,56 @@ public class ${topic.name.replace(/[^a-zA-Z0-9]/g, '')}Handler {
 
       {/* Knowledge Verification Quiz Modal */}
       {showQuizModal && (() => {
-        const quizQuestions = [
-          {
-            id: 1,
-            question: `What is the primary architectural principle governing ${topic.name}?`,
-            options: [
-              `Enforcing deterministic state management, idempotent execution, and robust boundary validation`,
-              `Disabling input validation and relying exclusively on runtime exception bypasses`,
-              `Storing transient computation variables in unsecured mutable global structures`,
-              `Bypassing connection pooling and spawning unbounded raw threads synchronously`,
-            ],
-            correctIndex: 0,
-            explanation: `Production architectures require strict boundary validation, idempotency, and deterministic state transitions.`,
-          },
-          {
-            id: 2,
-            question: `When optimizing systems implementing ${topic.name} in high-throughput environments, which strategy is recommended?`,
-            options: [
-              `Running unindexed linear table scans across all database queries`,
-              `Implementing asynchronous non-blocking pipelines, connection pooling, and structured telemetry`,
-              `Hardcoding access credentials directly in client-side code constants`,
-              `Disabling all logging and transaction isolation levels entirely`,
-            ],
-            correctIndex: 1,
-            explanation: `High-concurrency systems rely on asynchronous non-blocking pipelines, connection pools, and structured telemetry.`,
-          },
-        ];
+        const activeQuizQuestions = (topicQuestions && topicQuestions.length > 0)
+          ? topicQuestions.map((q: any) => {
+              const optionsList = Array.isArray(q.options) && q.options.length > 0
+                ? q.options.map((o: any) => ({
+                    text: o.optionText || o.text,
+                    isCorrect: o.isCorrect === 1 || o.isCorrect === true || o.correct === true,
+                  }))
+                : [
+                    { text: 'Bypasses boundary validation and ignores thread-safety', isCorrect: false },
+                    { text: 'Follows deterministic language standards and memory safety guarantees', isCorrect: true },
+                    { text: 'Disables transaction isolation levels to maximize raw throughput', isCorrect: false },
+                    { text: 'Bypasses type checking at runtime', isCorrect: false },
+                  ];
+
+              const correctIndex = optionsList.findIndex((o: any) => o.isCorrect);
+
+              return {
+                id: q.id,
+                question: q.title || q.description,
+                options: optionsList.map((o: any) => o.text),
+                correctIndex: correctIndex !== -1 ? correctIndex : 1,
+                explanation: q.explanation || 'Verified against core language and architecture specifications.',
+              };
+            })
+          : [
+              {
+                id: 'fb-1',
+                question: `What is the primary architectural principle governing ${topic.name}?`,
+                options: [
+                  'Disables input validation and relies exclusively on runtime exception bypasses',
+                  'Enforces deterministic state management, memory safety, and robust boundary validation',
+                  'Stores transient computation variables in unsecured mutable global structures',
+                  'Bypasses connection pooling and spawns unbounded raw threads synchronously',
+                ],
+                correctIndex: 1,
+                explanation: 'Production architectures require strict boundary validation, idempotency, and deterministic state transitions.',
+              },
+              {
+                id: 'fb-2',
+                question: `When implementing ${topic.name} in enterprise high-throughput services, which strategy is recommended?`,
+                options: [
+                  'Running unindexed linear table scans across all database queries',
+                  'Hardcoding access credentials directly in client-side code constants',
+                  'Implementing asynchronous non-blocking pipelines, connection pooling, and structured telemetry',
+                  'Disabling all logging and transaction isolation levels entirely',
+                ],
+                correctIndex: 2,
+                explanation: 'High-concurrency systems rely on asynchronous non-blocking pipelines, connection pools, and structured telemetry.',
+              },
+            ];
 
         return (
           <div
@@ -514,7 +703,7 @@ public class ${topic.name.replace(/[^a-zA-Z0-9]/g, '')}Handler {
                       Topic Mastery Knowledge Check
                     </h3>
                     <p style={{ margin: 0, fontSize: '0.78rem', color: '#64748b' }}>
-                      Verify your technical comprehension in {topic.name} to complete the lesson
+                      Verify your technical comprehension in {topic.name} to complete the lesson ({activeQuizQuestions.length} Questions)
                     </p>
                   </div>
                 </div>
@@ -576,11 +765,11 @@ public class ${topic.name.replace(/[^a-zA-Z0-9]/g, '')}Handler {
                       fontSize: '0.85rem',
                     }}
                   >
-                    <strong>1 or more answers were incorrect.</strong> Review the core documentation above and select the correct architectural principles to pass.
+                    <strong>1 or more answers were incorrect.</strong> Review the core documentation above and select the correct answers to pass.
                   </div>
                 )}
 
-                {quizQuestions.map((q, qIndex) => {
+                {activeQuizQuestions.map((q, qIndex) => {
                   const selected = selectedAnswers[q.id];
                   const isWrong = quizSubmitted && !quizPassed && selected !== q.correctIndex;
 
@@ -599,8 +788,9 @@ public class ${topic.name.replace(/[^a-zA-Z0-9]/g, '')}Handler {
                       </div>
 
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                        {q.options.map((opt, optIndex) => {
+                        {q.options.map((opt: string, optIndex: number) => {
                           const isSelected = selected === optIndex;
+                          const optionLetter = String.fromCharCode(65 + optIndex); // A, B, C, D
                           return (
                             <label
                               key={optIndex}
@@ -626,7 +816,12 @@ public class ${topic.name.replace(/[^a-zA-Z0-9]/g, '')}Handler {
                                 onChange={() => handleAnswerSelect(q.id, optIndex)}
                                 style={{ marginTop: '2px' }}
                               />
-                              <span>{opt}</span>
+                              <div>
+                                <strong style={{ color: isSelected ? '#1c2d81' : '#475569', marginRight: '6px' }}>
+                                  {optionLetter}.
+                                </strong>
+                                <span>{opt}</span>
+                              </div>
                             </label>
                           );
                         })}
@@ -669,7 +864,7 @@ public class ${topic.name.replace(/[^a-zA-Z0-9]/g, '')}Handler {
                 </button>
 
                 <button
-                  onClick={() => handleSubmitQuiz(quizQuestions)}
+                  onClick={() => handleSubmitQuiz(activeQuizQuestions)}
                   disabled={quizPassed}
                   style={{
                     display: 'inline-flex',

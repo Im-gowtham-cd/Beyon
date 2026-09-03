@@ -44,6 +44,8 @@ public class SecurityConfig {
                 .requestMatchers("/api/v1/skills/**").permitAll()
                 .requestMatchers("/api/v1/student/**").authenticated()
                 .requestMatchers("/api/v1/questions/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/practice/questions").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/practice/questions/**").permitAll()
                 .requestMatchers("/api/v1/practice/**").authenticated()
                 .requestMatchers("/api/v1/coins/**").authenticated()
                 .requestMatchers("/api/v1/daily-challenge/**").authenticated()

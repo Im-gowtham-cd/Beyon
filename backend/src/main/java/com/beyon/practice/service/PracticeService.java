@@ -43,24 +43,40 @@ public class PracticeService {
     }
 
     public List<Question> getQuestions(UUID skillId, UUID topicId, String difficulty, int page, int size) {
+        List<Question> questions;
         if (skillId != null && difficulty != null) {
-            return questionRepository.findBySkillAndDifficulty(skillId, difficulty, org.springframework.data.domain.PageRequest.of(page, size));
+            questions = questionRepository.findBySkillAndDifficulty(skillId, difficulty, org.springframework.data.domain.PageRequest.of(page, size));
+        } else if (skillId != null) {
+            questions = questionRepository.findBySkillIdPublished(skillId, org.springframework.data.domain.PageRequest.of(page, size));
+        } else if (topicId != null) {
+            questions = questionRepository.findByTopicIdPublished(topicId, org.springframework.data.domain.PageRequest.of(page, size));
+        } else if (difficulty != null) {
+            questions = questionRepository.findByDifficultyPublished(difficulty, org.springframework.data.domain.PageRequest.of(page, size));
+        } else {
+            questions = questionRepository.findByStatusInOrderByCreatedAtDesc(List.of("PUBLISHED", "ACTIVE"), org.springframework.data.domain.PageRequest.of(page, size));
         }
-        if (skillId != null) {
-            return questionRepository.findBySkillIdPublished(skillId, org.springframework.data.domain.PageRequest.of(page, size));
-        }
-        if (topicId != null) {
-            return questionRepository.findByTopicIdPublished(topicId, org.springframework.data.domain.PageRequest.of(page, size));
-        }
-        if (difficulty != null) {
-            return questionRepository.findByDifficultyPublished(difficulty, org.springframework.data.domain.PageRequest.of(page, size));
-        }
-        return questionRepository.findByStatusInOrderByCreatedAtDesc(List.of("PUBLISHED", "ACTIVE"), org.springframework.data.domain.PageRequest.of(page, size));
+        populateOptions(questions);
+        return questions;
     }
 
     public Question getQuestion(UUID questionId) {
-        return questionRepository.findById(questionId)
+        Question question = questionRepository.findById(questionId)
                 .orElseThrow(() -> new ResourceNotFoundException("Question not found"));
+        question.setOptions(optionRepository.findByQuestionIdOrderByDisplayOrder(question.getId()));
+        return question;
+    }
+
+    private void populateOptions(List<Question> questions) {
+        if (questions == null || questions.isEmpty()) return;
+        List<UUID> qIds = questions.stream().map(Question::getId).toList();
+        List<QuestionOption> allOptions = optionRepository.findByQuestionIdIn(qIds);
+        java.util.Map<UUID, List<QuestionOption>> grouped = allOptions.stream()
+                .collect(java.util.stream.Collectors.groupingBy(QuestionOption::getQuestionId));
+        for (Question q : questions) {
+            List<QuestionOption> opts = grouped.getOrDefault(q.getId(), java.util.Collections.emptyList());
+            opts.sort(java.util.Comparator.comparingInt(QuestionOption::getDisplayOrder));
+            q.setOptions(opts);
+        }
     }
 
     @Transactional

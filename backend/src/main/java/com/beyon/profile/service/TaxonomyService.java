@@ -59,7 +59,7 @@ public class TaxonomyService {
     }
 
     public List<Skill> searchSkills(String query, int limit) {
-        List<Skill> skills = skillRepository.searchByName(query.trim(), Math.min(limit, 50));
+        List<Skill> skills = skillRepository.searchByName(query.trim(), org.springframework.data.domain.PageRequest.of(0, Math.min(limit, 50)));
         populateTopicCounts(skills);
         return skills;
     }

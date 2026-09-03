@@ -1,6 +1,7 @@
 package com.beyon.profile.repository;
 
 import com.beyon.profile.model.Skill;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -16,7 +17,7 @@ public interface SkillRepository extends JpaRepository<Skill, UUID> {
     boolean existsByNameIgnoreCase(String name);
 
     @Query(value = "SELECT * FROM skills WHERE is_active = 1 AND (LOWER(name) LIKE CONCAT('%', LOWER(:search), '%') OR LOWER(description) LIKE CONCAT('%', LOWER(:search), '%') OR LOWER(category) LIKE CONCAT('%', LOWER(:search), '%')) ORDER BY name", nativeQuery = true)
-    List<Skill> searchByName(@Param("search") String search, @Param("limit") int limit);
+    List<Skill> searchByName(@Param("search") String search, Pageable pageable);
 
     @Query("SELECT s FROM Skill s WHERE s.active = true AND s.category = :category ORDER BY s.name")
     List<Skill> findByCategory(@Param("category") String category);

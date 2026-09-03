@@ -381,7 +381,7 @@ public class StudentProfileService {
     }
 
     public List<Skill> searchSkills(String search, int limit) {
-        return skillRepository.searchByName(search, Math.min(limit, 50));
+        return skillRepository.searchByName(search, org.springframework.data.domain.PageRequest.of(0, Math.min(limit, 50)));
     }
 
     public List<Skill> getSkillsByCategory(String category) {
