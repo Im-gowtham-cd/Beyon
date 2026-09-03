@@ -56,13 +56,13 @@ public class StudentProfileService {
 
     public StudentProfile getProfile(UUID userId) {
         return studentProfileRepository.findByUserId(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("Student profile not found"));
+                .orElseGet(() -> createDefaultProfile(userId));
     }
 
     @Transactional
     public StudentProfile updateProfile(UUID userId, UpdateStudentProfileRequest req) {
         StudentProfile profile = studentProfileRepository.findByUserId(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("Student profile not found"));
+                .orElseGet(() -> createDefaultProfile(userId));
 
         if (req.getUsername() != null && !req.getUsername().isBlank()) {
             String cleanUsername = req.getUsername().toLowerCase().replaceAll("[^a-z0-9._-]", "");
@@ -91,7 +91,29 @@ public class StudentProfileService {
         if (req.getProfilePhotoUrl() != null) profile.setProfilePhotoUrl(req.getProfilePhotoUrl());
 
         profile.setCompletionPct(calculateCompletion(userId));
-        return studentProfileRepository.save(profile);
+        StudentProfile saved = studentProfileRepository.save(profile);
+
+        userRepository.findById(userId).ifPresent(u -> {
+            u.setProfileStatus(com.beyon.identity.enums.AccountStatus.COMPLETED);
+            u.setStatus(com.beyon.identity.enums.AccountStatus.ACTIVE);
+            userRepository.save(u);
+        });
+
+        return saved;
+    }
+
+    private StudentProfile createDefaultProfile(UUID userId) {
+        StudentProfile sp = new StudentProfile();
+        sp.setUserId(userId);
+        sp.setCountry("India");
+        sp.setDegree("B.Tech");
+        sp.setDepartment("Computer Science and Engineering");
+        sp.setAcademicYear("3rd Year");
+        sp.setInstitution("Engineering College");
+        sp.setPlacementPreference(com.beyon.profile.enums.PlacementPreference.PLACEMENT_WILLING);
+        sp.setPreferredWorkType(com.beyon.profile.enums.WorkType.ANY);
+        sp.setCompletionPct(60);
+        return studentProfileRepository.save(sp);
     }
 
     public List<StudentSkill> getSkills(UUID userId) {

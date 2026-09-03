@@ -63,6 +63,7 @@ public class CoinService {
                 case "7_DAY_STREAK" -> 100;
                 case "30_DAY_STREAK" -> 500;
                 case "ASSESSMENT_COMPLETED" -> 50;
+                case "WELCOME_BONUS", "ONBOARDING_COMPLETED" -> 100;
                 default -> 10;
             };
         }

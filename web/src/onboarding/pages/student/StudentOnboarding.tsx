@@ -100,7 +100,7 @@ const POPULAR_SKILLS = [
 
 export function StudentOnboarding() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, refreshProfileStatus } = useAuth();
   const [step, setStep] = useState(0);
   const [form, setForm] = useState<StudentFormData>({
     ...EMPTY_STUDENT_FORM,
@@ -328,7 +328,10 @@ export function StudentOnboarding() {
     setLoading(true);
     setError('');
     try {
-      // 1. Update Student Profile in Backend
+      // 1. Submit to Onboarding Endpoint (persists profile, skills, projects, certs, links & sets ACTIVE status)
+      await api.post('/onboarding/student', form);
+
+      // 2. Also update profile directly to ensure dual persistence
       await api.put('/student/profile', {
         phone: form.phone,
         gender: form.gender,
@@ -343,11 +346,11 @@ export function StudentOnboarding() {
         aboutMe: form.aboutMe,
       }).catch(() => {});
 
-      // 2. Submit to Onboarding Endpoint
-      await api.post('/onboarding/student', form).catch(() => {});
+      // 3. Refresh profile status in AuthContext so ProtectedRoute knows profile is COMPLETED
+      await refreshProfileStatus().catch(() => {});
 
-      // 3. Navigate to Completion
-      navigate('/onboarding/complete');
+      // 4. Navigate directly to student dashboard
+      navigate('/student/home');
     } catch {
       setError("We encountered an error saving your profile. Your information is preserved; please retry.");
     } finally {
