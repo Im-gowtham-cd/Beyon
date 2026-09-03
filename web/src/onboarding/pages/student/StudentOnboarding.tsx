@@ -362,11 +362,11 @@ export function StudentOnboarding() {
         aboutMe: form.aboutMe,
       }).catch(() => {});
 
-      // 3. Refresh profile status in AuthContext so ProtectedRoute knows profile is COMPLETED
+      // 3. Refresh profile status in AuthContext so ProtectedRoute updates status
       await refreshProfileStatus().catch(() => {});
 
-      // 4. Navigate directly to student dashboard
-      navigate('/student/home');
+      // 4. Navigate to institution verification pending screen
+      navigate('/verification-pending');
     } catch {
       setError("We encountered an error saving your profile. Your information is preserved; please retry.");
     } finally {

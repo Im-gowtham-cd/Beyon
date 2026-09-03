@@ -229,10 +229,10 @@ public class OnboardingController {
             }
         }
 
-        // Mark user account active and profile pending institutional verification
+        // Mark user profile pending institutional verification
         userRepository.findById(userId).ifPresent(u -> {
             u.setProfileStatus(AccountStatus.PENDING_INSTITUTION_VERIFICATION);
-            u.setStatus(AccountStatus.ACTIVE);
+            u.setStatus(AccountStatus.PENDING_VERIFICATION);
             userRepository.save(u);
         });
 
