@@ -189,7 +189,6 @@ export function App() {
             <Route path="/student/skills/:skillSlug" element={<SkillDetail />} />
             <Route path="/student/skills/:skillSlug/:topicSlug" element={<TopicDetail />} />
             <Route path="/practice" element={<PracticePage />} />
-            <Route path="/practice/create" element={<CreateQuestionPage />} />
             <Route path="/practice/:id" element={<QuestionDetailPage />} />
             <Route path="/daily-challenge" element={<DailyChallengePage />} />
             <Route path="/stats" element={<StatsPage />} />
@@ -247,6 +246,8 @@ export function App() {
             <Route path="/admin/institutions" element={<AdminInstitutionsPage />} />
             <Route path="/admin/companies" element={<AdminCompaniesPage />} />
             <Route path="/admin/questions" element={<AdminQuestionsPage />} />
+            <Route path="/admin/questions/create" element={<CreateQuestionPage />} />
+            <Route path="/practice/create" element={<CreateQuestionPage />} />
             <Route path="/admin/economy" element={<AdminEconomyPage />} />
             <Route path="/admin/moderation" element={<AdminModerationPage />} />
             <Route path="/admin/feedback" element={<AdminFeedbackPage />} />

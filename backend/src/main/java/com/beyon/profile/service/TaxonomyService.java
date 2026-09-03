@@ -40,20 +40,49 @@ public class TaxonomyService {
     }
 
     public List<Skill> getSkills() {
-        return skillRepository.findAllActive();
+        List<Skill> skills = skillRepository.findAllActive();
+        populateTopicCounts(skills);
+        return skills;
     }
 
     public List<Skill> getSkillsByCategory(UUID categoryId) {
-        return skillRepository.findByCategoryIdAndActiveTrue(categoryId);
+        List<Skill> skills = skillRepository.findByCategoryIdAndActiveTrue(categoryId);
+        populateTopicCounts(skills);
+        return skills;
     }
 
     public Skill getSkillBySlug(String slug) {
-        return skillRepository.findBySlug(slug)
+        Skill skill = skillRepository.findBySlug(slug)
                 .orElseThrow(() -> new ResourceNotFoundException("Skill not found: " + slug));
+        skill.setTopicCount(getTopicCountForSkill(skill.getId()));
+        return skill;
     }
 
     public List<Skill> searchSkills(String query, int limit) {
-        return skillRepository.searchByName(query, PageRequest.of(0, Math.min(limit, 50)));
+        List<Skill> skills = skillRepository.searchByName(query.trim(), Math.min(limit, 50));
+        populateTopicCounts(skills);
+        return skills;
+    }
+
+    private void populateTopicCounts(List<Skill> skills) {
+        if (skills.isEmpty()) return;
+        try {
+            List<Object[]> counts = skillTopicRepository.countTopicsGroupedBySkill();
+            java.util.Map<UUID, Long> countMap = new java.util.HashMap<>();
+            for (Object[] row : counts) {
+                if (row[0] != null && row[1] != null) {
+                    countMap.put((UUID) row[0], ((Number) row[1]).longValue());
+                }
+            }
+            for (Skill s : skills) {
+                s.setTopicCount(countMap.getOrDefault(s.getId(), 0L).intValue());
+            }
+        } catch (Exception ignored) {
+            // fallback
+            for (Skill s : skills) {
+                s.setTopicCount(getTopicCountForSkill(s.getId()));
+            }
+        }
     }
 
     public List<SkillTopic> getTopicsForSkill(UUID skillId) {

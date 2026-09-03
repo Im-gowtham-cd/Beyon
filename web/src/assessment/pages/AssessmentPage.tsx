@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import {
   ShieldCheck,
   Download,
@@ -13,12 +14,17 @@ import {
   X,
   Layers,
   Award,
+  Lock,
+  BookOpen,
 } from 'lucide-react';
+import { taxonomyApi, studentLearningApi } from '../../student/services/taxonomyApi';
 import styles from './AssessmentPage.module.css';
 
 export function AssessmentPage() {
   const [availableTests, setAvailableTests] = useState<any[]>([]);
   const [testAttempts, setTestAttempts] = useState<any[]>([]);
+  const [skillsList, setSkillsList] = useState<any[]>([]);
+  const [learningTopicsList, setLearningTopicsList] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'available' | 'completed'>('available');
   const [selectedTestForLaunch, setSelectedTestForLaunch] = useState<any | null>(null);
@@ -30,72 +36,62 @@ export function AssessmentPage() {
       try {
         const token = localStorage.getItem('beyon_token') || localStorage.getItem('beyon_access_token');
         const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
-        const [tRes, aRes] = await Promise.all([
+        const [tRes, aRes, skillsRes, topicsRes] = await Promise.all([
           fetch('/api/v1/tests', { headers }).then(r => r.json()).catch(() => ({ data: [] })),
           fetch('/api/v1/tests/my-attempts', { headers }).then(r => r.json()).catch(() => ({ data: [] })),
+          taxonomyApi.getSkills().catch(() => []),
+          studentLearningApi.getTopics().catch(() => []),
         ]);
-        const tests = tRes.data && tRes.data.length > 0 ? tRes.data : [
-          {
-            id: 'test-gpu-kernel-01',
-            title: 'CUDA & GPU Kernel Architecture Benchmark',
-            description: 'Standardized assessment covering memory hierarchies, warp divergence, tensor cores, and stream synchronization.',
-            category: 'Systems & GPU Engineering',
-            difficulty: 'HARD',
-            durationMinutes: 45,
-            totalQuestions: 25,
-            passingScore: 75,
-          },
-          {
-            id: 'test-llm-fine-tuning-02',
-            title: 'LLM Fine-Tuning & Distributed Training (LoRA/DeepSpeed)',
-            description: 'Evaluate parameter-efficient adaptation, gradient accumulation, ZeRO memory optimization, and quantization.',
-            category: 'Applied AI & Models',
-            difficulty: 'MEDIUM',
-            durationMinutes: 40,
-            totalQuestions: 20,
-            passingScore: 70,
-          },
-          {
-            id: 'test-distributed-systems-03',
-            title: 'Distributed Consensus & High-Throughput Pipelines',
-            description: 'Raft/Paxos consensus algorithms, partition tolerance, Kafka streaming architectures, and gRPC RPC design.',
-            category: 'Cloud & Infrastructure',
-            difficulty: 'HARD',
-            durationMinutes: 50,
-            totalQuestions: 30,
-            passingScore: 80,
-          },
-          {
-            id: 'test-fullstack-arch-04',
-            title: 'Enterprise Full-Stack Architecture & Microservices',
-            description: 'RESTful/GraphQL API protocols, Postgres optimization, caching layers, and secure OAuth2 JWT pipelines.',
-            category: 'Full-Stack Development',
-            difficulty: 'MEDIUM',
-            durationMinutes: 45,
-            totalQuestions: 25,
-            passingScore: 65,
-          },
-          {
-            id: 'test-data-structures-05',
-            title: 'Algorithms & Advanced Data Structures Benchmark',
-            description: 'Graph traversals, dynamic programming, segment trees, computational complexity analysis and spatial indices.',
-            category: 'Core Computer Science',
-            difficulty: 'HARD',
-            durationMinutes: 60,
-            totalQuestions: 30,
-            passingScore: 75,
-          },
-        ];
-        setAvailableTests(tests);
-        setTestAttempts(aRes.data || []);
+        setAvailableTests(Array.isArray(tRes.data) ? tRes.data : []);
+        setTestAttempts(Array.isArray(aRes.data) ? aRes.data : []);
+        setSkillsList(skillsRes || []);
+        setLearningTopicsList(topicsRes || []);
       } catch {
-        /* fallback */
+        setAvailableTests([]);
+        setTestAttempts([]);
       } finally {
         setLoading(false);
       }
     }
     loadData();
   }, []);
+
+  function getSkillProgressForTest(test: any) {
+    const title = (test.title || '').toLowerCase();
+    const matchedSkill = skillsList.find(s => {
+      const sName = s.name.toLowerCase();
+      return title.includes(sName) || sName.includes(title.split(' ')[0]);
+    });
+
+    if (!matchedSkill) {
+      return {
+        skill: null,
+        progressPercent: 0,
+        completedCount: 0,
+        totalCount: 2,
+        is100Percent: false,
+        skillSlug: 'java',
+      };
+    }
+
+    const skillTopicsCount = matchedSkill.topicCount && matchedSkill.topicCount > 0 ? matchedSkill.topicCount : 2;
+    const completedCount = learningTopicsList.filter(lt =>
+      (lt.skillId === matchedSkill.id || lt.topicName?.toLowerCase().includes(matchedSkill.name.toLowerCase())) &&
+      lt.status === 'COMPLETED'
+    ).length;
+
+    const progressPercent = Math.min(100, Math.round((completedCount / skillTopicsCount) * 100));
+    const is100Percent = progressPercent >= 100;
+
+    return {
+      skill: matchedSkill,
+      progressPercent,
+      completedCount,
+      totalCount: skillTopicsCount,
+      is100Percent,
+      skillSlug: matchedSkill.slug,
+    };
+  }
 
   const handleLaunchDesktop = (test: any) => {
     setSelectedTestForLaunch(test);
@@ -217,15 +213,21 @@ export function AssessmentPage() {
         </div>
         <div style={{ background: '#ffffff', padding: '18px 20px', borderRadius: '0px', border: '1px solid #e2e8f0', borderTop: '3px solid #fed601' }}>
           <span style={{ fontSize: '0.72rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.04em' }}>Completed Attempts</span>
-          <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#1c2d81', marginTop: '4px' }}>{testAttempts.length || 3}</div>
+          <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#1c2d81', marginTop: '4px' }}>{testAttempts.length}</div>
         </div>
         <div style={{ background: '#ffffff', padding: '18px 20px', borderRadius: '0px', border: '1px solid #e2e8f0', borderTop: '3px solid #22c55e' }}>
           <span style={{ fontSize: '0.72rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.04em' }}>Average Score</span>
-          <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#15803d', marginTop: '4px' }}>84.5%</div>
+          <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#15803d', marginTop: '4px' }}>
+            {testAttempts.length > 0
+              ? `${Math.round(testAttempts.reduce((acc: number, a: any) => acc + (parseFloat(a.score) || 0), 0) / testAttempts.length)}%`
+              : '—'}
+          </div>
         </div>
         <div style={{ background: '#ffffff', padding: '18px 20px', borderRadius: '0px', border: '1px solid #e2e8f0', borderTop: '3px solid #0284c7' }}>
           <span style={{ fontSize: '0.72rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.04em' }}>Integrity Rating</span>
-          <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#0284c7', marginTop: '4px' }}>100% VERIFIED</div>
+          <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#0284c7', marginTop: '4px' }}>
+            {testAttempts.length > 0 ? '100% VERIFIED' : 'ACTIVE'}
+          </div>
         </div>
       </div>
 
@@ -265,23 +267,32 @@ export function AssessmentPage() {
             gap: '8px',
           }}
         >
-          <Award size={15} /> Completed History ({testAttempts.length || 3})
+          <Award size={15} /> Completed History ({testAttempts.length})
         </button>
       </div>
 
       {/* Tab 1: Available Tests */}
       {activeTab === 'available' && (
-        <div>
+        availableTests.length === 0 ? (
+          <div style={{ padding: '48px 24px', textAlign: 'center', background: '#ffffff', border: '1px solid #e2e8f0', color: '#64748b' }}>
+            <div style={{ fontSize: '2rem', marginBottom: '8px' }}>📋</div>
+            <h4 style={{ margin: '0 0 6px', fontSize: '1.05rem', color: '#0f172a', fontWeight: 700 }}>No Assessments Published</h4>
+            <p style={{ margin: 0, fontSize: '0.85rem' }}>No proctored benchmark assessments are currently published by companies or institutions.</p>
+          </div>
+        ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))', gap: '18px' }}>
             {availableTests.map((t: any) => {
               const diffColor = t.difficulty === 'EASY' ? '#0284c7' : t.difficulty === 'HARD' ? '#dc2626' : '#d97706';
+              const skillProgress = getSkillProgressForTest(t);
+              const isUnlocked = skillProgress.is100Percent;
+
               return (
                 <div
                   key={t.id}
                   style={{
                     background: '#ffffff',
                     border: '1px solid #e2e8f0',
-                    borderTop: '3px solid #1c2d81',
+                    borderTop: `3px solid ${isUnlocked ? '#15803d' : '#94a3b8'}`,
                     borderRadius: '0px',
                     padding: '24px',
                     boxShadow: '0 1px 3px rgba(15, 23, 42, 0.04)',
@@ -290,11 +301,12 @@ export function AssessmentPage() {
                     justifyContent: 'space-between',
                     gap: '18px',
                     boxSizing: 'border-box',
+                    opacity: isUnlocked ? 1 : 0.95,
                   }}
                 >
                   <div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px', marginBottom: '8px' }}>
-                      <h3 style={{ margin: 0, fontSize: '1.08rem', fontWeight: 800, color: '#1c2d81', lineHeight: 1.35, flex: 1 }}>
+                      <h3 style={{ margin: 0, fontSize: '1.08rem', fontWeight: 800, color: isUnlocked ? '#1c2d81' : '#334155', lineHeight: 1.35, flex: 1 }}>
                         {t.title}
                       </h3>
                       <span
@@ -319,6 +331,47 @@ export function AssessmentPage() {
                       {t.description}
                     </p>
                   </div>
+
+                  {/* Lock / Unlock Progress Status Banner */}
+                  {isUnlocked ? (
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        fontSize: '0.75rem',
+                        fontWeight: 700,
+                        color: '#15803d',
+                        background: '#f0fdf4',
+                        border: '1px solid #bbf7d0',
+                        padding: '8px 12px',
+                      }}
+                    >
+                      <ShieldCheck size={14} /> 🔓 100% Skill Mastered &bull; Assessment Unlocked
+                    </div>
+                  ) : (
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: '6px',
+                        fontSize: '0.74rem',
+                        fontWeight: 700,
+                        color: '#b45309',
+                        background: '#fffbeb',
+                        border: '1px solid #fef3c7',
+                        padding: '8px 12px',
+                      }}
+                    >
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                        <Lock size={13} /> Locked &mdash; Requires 100% Skill Roadmap
+                      </span>
+                      <span style={{ color: '#d97706', fontWeight: 800 }}>
+                        {skillProgress.completedCount}/{skillProgress.totalCount} Lessons ({skillProgress.progressPercent}%)
+                      </span>
+                    </div>
+                  )}
 
                   <div
                     style={{
@@ -345,72 +398,103 @@ export function AssessmentPage() {
                     </span>
                   </div>
 
-                  <div
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '6px',
-                      fontSize: '0.72rem',
-                      fontWeight: 700,
-                      color: '#15803d',
-                      background: '#f0fdf4',
-                      border: '1px solid #bbf7d0',
-                      padding: '6px 12px',
-                    }}
-                  >
-                    <ShieldCheck size={14} /> AI Proctoring: Face Absence &amp; Device Detection Active
-                  </div>
-
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: '10px' }}>
-                    <button
-                      onClick={() => handleLaunchDesktop(t)}
-                      style={{
-                        height: '40px',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '8px',
-                        padding: '0 18px',
-                        background: '#1c2d81',
-                        color: '#ffffff',
-                        border: 'none',
-                        borderRadius: '0px',
-                        fontSize: '0.84rem',
-                        fontWeight: 800,
-                        cursor: 'pointer',
-                        transition: 'background 0.15s ease',
-                      }}
-                    >
-                      <Laptop size={15} />
-                      <span>Launch in Desktop App</span>
-                    </button>
-                    <button
-                      onClick={() => handleCopyToken(t.id)}
-                      style={{
-                        height: '40px',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '6px',
-                        padding: '0 14px',
-                        background: '#f8fafc',
-                        color: '#1c2d81',
-                        border: '1px solid #cbd5e1',
-                        borderRadius: '0px',
-                        fontSize: '0.8rem',
-                        fontWeight: 700,
-                        cursor: 'pointer',
-                      }}
-                      title="Copy Session Token"
-                    >
-                      <Copy size={14} /> Token
-                    </button>
-                  </div>
+                  {isUnlocked ? (
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: '10px' }}>
+                      <button
+                        onClick={() => handleLaunchDesktop(t)}
+                        style={{
+                          height: '40px',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '8px',
+                          padding: '0 18px',
+                          background: '#1c2d81',
+                          color: '#ffffff',
+                          border: 'none',
+                          borderRadius: '0px',
+                          fontSize: '0.84rem',
+                          fontWeight: 800,
+                          cursor: 'pointer',
+                          transition: 'background 0.15s ease',
+                        }}
+                      >
+                        <Laptop size={15} />
+                        <span>Launch in Desktop App</span>
+                      </button>
+                      <button
+                        onClick={() => handleCopyToken(t.id)}
+                        style={{
+                          height: '40px',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '6px',
+                          padding: '0 14px',
+                          background: '#f8fafc',
+                          color: '#1c2d81',
+                          border: '1px solid #cbd5e1',
+                          borderRadius: '0px',
+                          fontSize: '0.8rem',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                        }}
+                        title="Copy Session Token"
+                      >
+                        <Copy size={14} /> Token
+                      </button>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: '10px' }}>
+                      <Link
+                        to={skillProgress.skillSlug ? `/student/skills/${skillProgress.skillSlug}` : '/student/skills'}
+                        style={{
+                          height: '40px',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '8px',
+                          padding: '0 16px',
+                          background: '#f8fafc',
+                          color: '#1c2d81',
+                          border: '1px solid #cbd5e1',
+                          borderRadius: '0px',
+                          fontSize: '0.82rem',
+                          fontWeight: 700,
+                          textDecoration: 'none',
+                        }}
+                      >
+                        <BookOpen size={14} />
+                        <span>Study Skill Roadmap ({skillProgress.progressPercent}%)</span>
+                      </Link>
+                      <button
+                        disabled
+                        style={{
+                          height: '40px',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '6px',
+                          padding: '0 14px',
+                          background: '#f1f5f9',
+                          color: '#94a3b8',
+                          border: '1px solid #e2e8f0',
+                          borderRadius: '0px',
+                          fontSize: '0.8rem',
+                          fontWeight: 700,
+                          cursor: 'not-allowed',
+                        }}
+                        title="Complete 100% of all lessons to unlock the exam"
+                      >
+                        <Lock size={13} /> Locked
+                      </button>
+                    </div>
+                  )}
                 </div>
               );
             })}
           </div>
-        </div>
+        )
       )}
 
       {/* Tab 2: Completed History */}
@@ -420,84 +504,66 @@ export function AssessmentPage() {
             <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: '#020617' }}>Verified Proctoring Assessment History</h3>
             <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b' }}>All attempts verified via Beyon AI Engine</span>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
-            {((testAttempts && testAttempts.length > 0)
-              ? testAttempts.map((a: any, idx: number) => ({
-                  id: a.id || `att-${idx}`,
-                  test: a.testTitle || a.title || 'Technical Assessment Benchmark',
-                  date: a.completedAt ? new Date(a.completedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Recently Completed',
-                  score: a.score != null ? `${a.score}%` : '85%',
-                  status: a.status || 'PASSED',
-                  integrity: a.integrityStatus || 'CLEAN',
-                  violations: a.warningCount || 0,
-                }))
-              : [
-                  {
-                    id: 'att-1',
-                    test: 'CUDA & GPU Kernel Architecture Benchmark',
-                    date: 'Aug 26, 2026',
-                    score: '94%',
-                    status: 'PASSED',
-                    integrity: 'CLEAN',
-                    violations: 0,
-                  },
-                  {
-                    id: 'att-2',
-                    test: 'Distributed Systems & Consensus Architecture',
-                    date: 'Aug 22, 2026',
-                    score: '88%',
-                    status: 'PASSED',
-                    integrity: 'CLEAN',
-                    violations: 0,
-                  },
-                  {
-                    id: 'att-3',
-                    test: 'Enterprise Full-Stack & Microservices',
-                    date: 'Aug 18, 2026',
-                    score: '78%',
-                    status: 'PASSED',
-                    integrity: 'VERIFIED',
-                    violations: 1,
-                  },
-                ]
-            ).map(att => (
-              <div
-                key={att.id}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '16px 24px',
-                  borderBottom: '1px solid #f1f5f9',
-                  gap: '16px',
-                  flexWrap: 'wrap',
-                }}
-              >
-                <div>
-                  <div style={{ fontWeight: 800, fontSize: '0.92rem', color: '#1c2d81' }}>{att.test}</div>
-                  <div style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '2px' }}>Completed on {att.date} &middot; Lockdown Client v2.4</div>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-                  <div style={{ textAlign: 'center' }}>
-                    <div style={{ fontSize: '1.15rem', fontWeight: 900, color: '#15803d' }}>{att.score}</div>
-                    <div style={{ fontSize: '0.68rem', fontWeight: 700, color: '#64748b' }}>SCORE</div>
-                  </div>
+          {testAttempts.length === 0 ? (
+            <div style={{ padding: '48px 24px', textAlign: 'center', color: '#64748b' }}>
+              <div style={{ fontSize: '2rem', marginBottom: '8px' }}>🎓</div>
+              <h4 style={{ margin: '0 0 6px', fontSize: '1.05rem', color: '#0f172a', fontWeight: 700 }}>No Assessment Attempts Yet</h4>
+              <p style={{ margin: 0, fontSize: '0.85rem' }}>
+                You have not completed any proctored assessments yet. Choose an available assessment from the Available Tests tab to begin.
+              </p>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              {testAttempts.map((a: any, idx: number) => {
+                const title = a.testTitle || a.title || 'Technical Certification Assessment';
+                const date = a.completedAt || a.submittedAt || a.startedAt
+                  ? new Date(a.completedAt || a.submittedAt || a.startedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                  : 'Recently Completed';
+                const score = a.score != null ? `${a.score}%` : '—';
+                const integrity = a.integrityStatus || 'CLEAN';
+
+                return (
                   <div
+                    key={a.id || `att-${idx}`}
                     style={{
-                      background: '#f0fdf4',
-                      color: '#15803d',
-                      border: '1px solid #bbf7d0',
-                      padding: '4px 10px',
-                      fontSize: '0.72rem',
-                      fontWeight: 800,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '16px 24px',
+                      borderBottom: '1px solid #f1f5f9',
+                      gap: '16px',
+                      flexWrap: 'wrap',
                     }}
                   >
-                    INTEGRITY: {att.integrity}
+                    <div>
+                      <div style={{ fontWeight: 800, fontSize: '0.92rem', color: '#1c2d81' }}>{title}</div>
+                      <div style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '2px' }}>
+                        Completed on {date} &middot; Proctored Integrity Checked
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+                      <div style={{ textAlign: 'center' }}>
+                        <div style={{ fontSize: '1.15rem', fontWeight: 900, color: '#15803d' }}>{score}</div>
+                        <div style={{ fontSize: '0.68rem', fontWeight: 700, color: '#64748b' }}>SCORE</div>
+                      </div>
+                      <div
+                        style={{
+                          background: '#f0fdf4',
+                          color: '#15803d',
+                          border: '1px solid #bbf7d0',
+                          padding: '4px 10px',
+                          fontSize: '0.72rem',
+                          fontWeight: 800,
+                        }}
+                      >
+                        INTEGRITY: {integrity}
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
-            ))}
-          </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
 

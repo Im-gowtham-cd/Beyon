@@ -31,5 +31,8 @@ export const studentLearningApi = {
   updateStatus: (id: string, status: string) =>
     api.put<StudentLearningTopic>(`/student/learning/${id}/status`, { status }),
   removeTopic: (id: string) => api.delete<void>(`/student/learning/${id}`),
+  getSkills: () => api.get<Array<{ id: string; userId: string; skillId: string; skillName: string; status: string }>>('/student/learning/skills'),
+  addSkill: (skillId: string, skillName: string) => api.post<{ id: string; userId: string; skillId: string; skillName: string; status: string }>('/student/learning/skills', { skillId, skillName }),
+  removeSkill: (skillId: string) => api.delete<void>(`/student/learning/skills/${skillId}`),
   getProgress: () => api.get<StudentSkillProgress[]>('/student/learning/progress'),
 };

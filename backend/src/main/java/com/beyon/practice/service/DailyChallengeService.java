@@ -4,6 +4,7 @@ import com.beyon.common.exception.ConflictException;
 import com.beyon.practice.model.DailyChallenge;
 import com.beyon.practice.model.Question;
 import com.beyon.practice.repository.DailyChallengeRepository;
+import com.beyon.practice.repository.QuestionOptionRepository;
 import com.beyon.practice.repository.QuestionRepository;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -25,8 +26,11 @@ public class DailyChallengeService {
     private final PracticeService practiceService;
     private final org.springframework.jdbc.core.JdbcTemplate jdbcTemplate;
 
+    private final QuestionOptionRepository optionRepository;
+
     public DailyChallengeService(DailyChallengeRepository challengeRepository,
                                   QuestionRepository questionRepository,
+                                  QuestionOptionRepository optionRepository,
                                   CoinService coinService,
                                   StreakService streakService,
                                   SkillXpService skillXpService,
@@ -35,12 +39,253 @@ public class DailyChallengeService {
                                   org.springframework.jdbc.core.JdbcTemplate jdbcTemplate) {
         this.challengeRepository = challengeRepository;
         this.questionRepository = questionRepository;
+        this.optionRepository = optionRepository;
         this.coinService = coinService;
         this.streakService = streakService;
         this.skillXpService = skillXpService;
         this.badgeService = badgeService;
         this.practiceService = practiceService;
         this.jdbcTemplate = jdbcTemplate;
+    }
+
+    public List<Map<String, Object>> getRecommendedDailySet(UUID studentId, int count) {
+        int targetCount = count > 0 ? Math.min(count, 20) : 15;
+
+        // 1. Gather student's wished skills and enrolled learning topics
+        List<String> studentSkills = new ArrayList<>();
+        try {
+            List<String> wished = jdbcTemplate.queryForList(
+                    "SELECT DISTINCT LOWER(skill_name) FROM student_learning_skills WHERE user_id = ?",
+                    String.class, studentId.toString()
+            );
+            studentSkills.addAll(wished);
+
+            List<String> enrolledSkills = jdbcTemplate.queryForList(
+                    "SELECT DISTINCT LOWER(skill_name) FROM student_skills WHERE user_id = ?",
+                    String.class, studentId.toString()
+            );
+            studentSkills.addAll(enrolledSkills);
+
+            List<String> learningTopics = jdbcTemplate.queryForList(
+                    "SELECT DISTINCT LOWER(s.name) FROM student_learning_topics slt " +
+                    "JOIN skill_topics st ON st.id = slt.topic_id " +
+                    "JOIN skills s ON s.id = st.skill_id WHERE slt.student_id = ?",
+                    String.class, studentId.toString()
+            );
+            studentSkills.addAll(learningTopics);
+        } catch (Exception ignored) {}
+
+        List<Map<String, Object>> selectedQuestions = new ArrayList<>();
+        Set<String> addedIds = new HashSet<>();
+
+        // 2. Query questions matching wished skills & ongoing courses
+        if (!studentSkills.isEmpty()) {
+            try {
+                String inSql = String.join("','", studentSkills);
+                List<Map<String, Object>> matched = jdbcTemplate.queryForList(
+                        "SELECT q.id, q.title, q.description, q.difficulty, q.question_type, s.name as skill_name " +
+                        "FROM questions q " +
+                        "LEFT JOIN skills s ON s.id = q.skill_id " +
+                        "WHERE (LOWER(s.name) IN ('" + inSql + "') OR LOWER(q.title) REGEXP '" + String.join("|", studentSkills) + "') " +
+                        "AND (q.status = 'PUBLISHED' OR q.status = 'ACTIVE') " +
+                        "ORDER BY RAND() LIMIT " + targetCount
+                );
+                for (Map<String, Object> row : matched) {
+                    String id = row.get("id").toString();
+                    if (addedIds.add(id)) {
+                        selectedQuestions.add(row);
+                    }
+                }
+            } catch (Exception ignored) {}
+        }
+
+        // 3. If fewer than targetCount, supplement with other published active questions
+        if (selectedQuestions.size() < targetCount) {
+            int remaining = targetCount - selectedQuestions.size();
+            try {
+                List<Map<String, Object>> fallback = jdbcTemplate.queryForList(
+                        "SELECT q.id, q.title, q.description, q.difficulty, q.question_type, s.name as skill_name " +
+                        "FROM questions q " +
+                        "LEFT JOIN skills s ON s.id = q.skill_id " +
+                        "WHERE (q.status = 'PUBLISHED' OR q.status = 'ACTIVE') " +
+                        "ORDER BY RAND() LIMIT " + remaining
+                );
+                for (Map<String, Object> row : fallback) {
+                    String id = row.get("id").toString();
+                    if (addedIds.add(id)) {
+                        selectedQuestions.add(row);
+                    }
+                }
+            } catch (Exception ignored) {}
+        }
+
+        // 4. Attach options and metadata to each question
+        return buildQuestionSetResponse(selectedQuestions, "DAILY_SPRINT");
+    }
+
+    public List<Map<String, Object>> getReviseRecallSet(UUID studentId, int count) {
+        int targetCount = count > 0 ? Math.min(count, 15) : 10;
+
+        // 1. Gather student's COMPLETED topics & mastered skills
+        List<String> completedSkills = new ArrayList<>();
+        try {
+            List<String> completed = jdbcTemplate.queryForList(
+                    "SELECT DISTINCT LOWER(s.name) FROM student_learning_topics slt " +
+                    "JOIN skill_topics st ON st.id = slt.topic_id " +
+                    "JOIN skills s ON s.id = st.skill_id " +
+                    "WHERE slt.student_id = ? AND slt.status = 'COMPLETED'",
+                    String.class, studentId.toString()
+            );
+            completedSkills.addAll(completed);
+
+            List<String> profileSkills = jdbcTemplate.queryForList(
+                    "SELECT DISTINCT LOWER(skill_name) FROM student_skills WHERE user_id = ? AND proficiency_level IN ('INTERMEDIATE', 'ADVANCED', 'EXPERT')",
+                    String.class, studentId.toString()
+            );
+            completedSkills.addAll(profileSkills);
+        } catch (Exception ignored) {}
+
+        List<Map<String, Object>> selectedQuestions = new ArrayList<>();
+        Set<String> addedIds = new HashSet<>();
+
+        if (!completedSkills.isEmpty()) {
+            try {
+                String inSql = String.join("','", completedSkills);
+                List<Map<String, Object>> matched = jdbcTemplate.queryForList(
+                        "SELECT q.id, q.title, q.description, q.difficulty, q.question_type, s.name as skill_name " +
+                        "FROM questions q " +
+                        "LEFT JOIN skills s ON s.id = q.skill_id " +
+                        "WHERE (LOWER(s.name) IN ('" + inSql + "') OR LOWER(q.title) REGEXP '" + String.join("|", completedSkills) + "') " +
+                        "AND (q.status = 'PUBLISHED' OR q.status = 'ACTIVE') " +
+                        "ORDER BY RAND() LIMIT " + targetCount
+                );
+                for (Map<String, Object> row : matched) {
+                    String id = row.get("id").toString();
+                    if (addedIds.add(id)) {
+                        selectedQuestions.add(row);
+                    }
+                }
+            } catch (Exception ignored) {}
+        }
+
+        // If not enough completed, pull foundational computer science questions for active recall
+        if (selectedQuestions.size() < targetCount) {
+            int remaining = targetCount - selectedQuestions.size();
+            try {
+                List<Map<String, Object>> fallback = jdbcTemplate.queryForList(
+                        "SELECT q.id, q.title, q.description, q.difficulty, q.question_type, s.name as skill_name " +
+                        "FROM questions q " +
+                        "LEFT JOIN skills s ON s.id = q.skill_id " +
+                        "WHERE (q.status = 'PUBLISHED' OR q.status = 'ACTIVE') " +
+                        "ORDER BY RAND() LIMIT " + remaining
+                );
+                for (Map<String, Object> row : fallback) {
+                    String id = row.get("id").toString();
+                    if (addedIds.add(id)) {
+                        selectedQuestions.add(row);
+                    }
+                }
+            } catch (Exception ignored) {}
+        }
+
+        return buildQuestionSetResponse(selectedQuestions, "ACTIVE_RECALL");
+    }
+
+    private List<Map<String, Object>> buildQuestionSetResponse(List<Map<String, Object>> rawQuestions, String mode) {
+        if (rawQuestions.isEmpty()) return Collections.emptyList();
+
+        List<UUID> qIds = rawQuestions.stream()
+                .map(r -> UUID.fromString(r.get("id").toString()))
+                .toList();
+
+        List<com.beyon.practice.model.QuestionOption> allOptions = optionRepository.findByQuestionIdIn(qIds);
+        Map<UUID, List<Map<String, Object>>> optionsByQ = new HashMap<>();
+
+        for (var opt : allOptions) {
+            optionsByQ.computeIfAbsent(opt.getQuestionId(), k -> new ArrayList<>()).add(Map.of(
+                    "id", opt.getId().toString(),
+                    "optionText", opt.getOptionText(),
+                    "displayOrder", opt.getDisplayOrder(),
+                    "isCorrect", opt.isCorrect(),
+                    "explanation", opt.getExplanation() != null ? opt.getExplanation() : ""
+            ));
+        }
+
+        List<Map<String, Object>> result = new ArrayList<>();
+        int index = 1;
+        for (Map<String, Object> q : rawQuestions) {
+            UUID qId = UUID.fromString(q.get("id").toString());
+            Map<String, Object> item = new LinkedHashMap<>(q);
+            item.put("index", index++);
+            item.put("options", optionsByQ.getOrDefault(qId, Collections.emptyList()));
+            item.put("xpReward", "HARD".equals(q.get("difficulty")) ? 35 : 25);
+            item.put("coinReward", 10);
+            if ("ACTIVE_RECALL".equals(mode)) {
+                int retention = 75 + (int)(Math.random() * 20);
+                item.put("retentionScore", retention);
+                item.put("recallStage", retention > 85 ? "SOLID" : "NEEDS_REFRESH");
+                item.put("lastReviewed", "3 days ago");
+            }
+            result.add(item);
+        }
+        return result;
+    }
+
+    @Transactional
+    public Map<String, Object> submitSprintQuestion(UUID studentId, UUID questionId, UUID selectedOptionId, Integer timeSpent) {
+        boolean correct = false;
+        String explanation = "Review the core concepts in the practice arena.";
+
+        if (selectedOptionId != null) {
+            var optOpt = optionRepository.findById(selectedOptionId);
+            if (optOpt.isPresent()) {
+                correct = optOpt.get().isCorrect();
+                if (optOpt.get().getExplanation() != null && !optOpt.get().getExplanation().isBlank()) {
+                    explanation = optOpt.get().getExplanation();
+                }
+            }
+        }
+
+        int xpEarned = correct ? 25 : 5;
+        int coinsEarned = correct ? 10 : 0;
+
+        if (correct) {
+            coinService.earnCoins(studentId, "DAILY_SPRINT_QUESTION_CORRECT", "DAILY_SPRINT", questionId);
+            streakService.recordActivity(studentId);
+            questionRepository.findById(questionId).ifPresent(q -> {
+                practiceService.updateStats(studentId, q, true, timeSpent != null ? timeSpent : 30);
+                if (q.getSkillId() != null) {
+                    skillXpService.earnXp(studentId, q.getSkillId(), xpEarned, "DAILY_SPRINT", questionId, "Daily sprint question: " + q.getTitle());
+                }
+            });
+        }
+
+        return Map.of(
+                "correct", correct,
+                "explanation", explanation,
+                "xpEarned", xpEarned,
+                "coinsEarned", coinsEarned
+        );
+    }
+
+    @Transactional
+    public Map<String, Object> claimSprintBonus(UUID studentId, String sessionType, double scorePercentage) {
+        if (scorePercentage < 35.0) {
+            return Map.of(
+                    "success", false,
+                    "coinsAwarded", 0,
+                    "message", "Score at least 35% to claim the 50 Beyon Coins completion bonus."
+            );
+        }
+
+        coinService.earnCoins(studentId, "DAILY_COMPLETION_BONUS", sessionType != null ? sessionType : "DAILY_SPRINT", UUID.randomUUID());
+        streakService.recordActivity(studentId);
+
+        return Map.of(
+                "success", true,
+                "coinsAwarded", 50,
+                "message", "Congratulations! 50 Beyon Coins have been credited to your wallet."
+        );
     }
 
     public DailyChallenge getTodayChallenge(UUID studentId) {
@@ -54,7 +299,6 @@ public class DailyChallengeService {
 
     @Transactional
     public DailyChallenge generateChallenge(UUID studentId, LocalDate date) {
-        // 1. Collect all skills the student is currently learning or enrolled in
         List<String> studentSkills = new ArrayList<>();
         try {
             List<String> enrolled = jdbcTemplate.queryForList(
@@ -72,7 +316,6 @@ public class DailyChallengeService {
             studentSkills.addAll(learning);
         } catch (Exception ignored) {}
 
-        // 2. Query matching unsolved questions for the student's enrolled/learning skills
         UUID selectedQuestionId = null;
         if (!studentSkills.isEmpty()) {
             try {
@@ -92,7 +335,6 @@ public class DailyChallengeService {
             } catch (Exception ignored) {}
         }
 
-        // 3. Fallback to any published question if no specific skill question was found
         if (selectedQuestionId == null) {
             List<Question> unsolved = questionRepository.findUnsolvedForStudent(studentId, PageRequest.of(0, 20));
             if (unsolved.isEmpty()) {
@@ -136,16 +378,10 @@ public class DailyChallengeService {
 
         DailyChallenge saved = challengeRepository.save(challenge);
         if (correct) {
-            // 1. Award coins
             coinService.earnCoins(studentId, "DAILY_CHALLENGE_COMPLETED", "DAILY_CHALLENGE", challengeId);
-
-            // 2. Advance streak
             streakService.recordActivity(studentId);
-
-            // 3. Award achievement badge
             badgeService.awardBadge(studentId, "LEARNING_STARTER");
 
-            // 4. Update practice stats and XP if question exists
             if (challenge.getQuestionId() != null) {
                 questionRepository.findById(challenge.getQuestionId()).ifPresent(q -> {
                     practiceService.updateStats(studentId, q, true, timeSpent);

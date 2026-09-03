@@ -8,4 +8,5 @@ import java.util.UUID;
 
 public interface QuestionOptionRepository extends JpaRepository<QuestionOption, UUID> {
     List<QuestionOption> findByQuestionIdOrderByDisplayOrder(UUID questionId);
+    List<QuestionOption> findByQuestionIdIn(List<UUID> questionIds);
 }

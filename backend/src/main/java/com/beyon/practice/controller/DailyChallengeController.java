@@ -34,6 +34,44 @@ public class DailyChallengeController {
         return ResponseEntity.ok(ApiResponse.ok(dailyChallengeService.startChallenge(studentId, id)));
     }
 
+    @GetMapping("/set")
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getDailySet(
+            Authentication auth,
+            @RequestParam(defaultValue = "15") int count) {
+        UUID studentId = extractUserId(auth);
+        return ResponseEntity.ok(ApiResponse.ok(dailyChallengeService.getRecommendedDailySet(studentId, count)));
+    }
+
+    @GetMapping("/recall-set")
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getReviseRecallSet(
+            Authentication auth,
+            @RequestParam(defaultValue = "10") int count) {
+        UUID studentId = extractUserId(auth);
+        return ResponseEntity.ok(ApiResponse.ok(dailyChallengeService.getReviseRecallSet(studentId, count)));
+    }
+
+    @PostMapping("/submit-sprint")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> submitSprint(
+            Authentication auth,
+            @RequestBody Map<String, Object> body) {
+        UUID studentId = extractUserId(auth);
+        UUID questionId = UUID.fromString(body.get("questionId").toString());
+        UUID selectedOptionId = body.get("selectedOptionId") != null && !body.get("selectedOptionId").toString().isBlank()
+                ? UUID.fromString(body.get("selectedOptionId").toString()) : null;
+        Integer timeSpent = body.get("timeSpentSeconds") != null ? ((Number) body.get("timeSpentSeconds")).intValue() : 30;
+        return ResponseEntity.ok(ApiResponse.ok(dailyChallengeService.submitSprintQuestion(studentId, questionId, selectedOptionId, timeSpent)));
+    }
+
+    @PostMapping("/claim-bonus")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> claimBonus(
+            Authentication auth,
+            @RequestBody Map<String, Object> body) {
+        UUID studentId = extractUserId(auth);
+        String sessionType = (String) body.getOrDefault("sessionType", "DAILY_SPRINT");
+        Number scoreNum = (Number) body.getOrDefault("scorePercentage", 0);
+        return ResponseEntity.ok(ApiResponse.ok(dailyChallengeService.claimSprintBonus(studentId, sessionType, scoreNum.doubleValue())));
+    }
+
     @PostMapping("/{id}/complete")
     public ResponseEntity<ApiResponse<DailyChallenge>> complete(Authentication auth, @PathVariable UUID id, @RequestBody Map<String, Object> body) {
         UUID studentId = extractUserId(auth);

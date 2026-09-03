@@ -42,6 +42,12 @@ export const dailyChallengeApi = {
   complete: (id: string, correct: boolean, timeSpentSeconds?: number) =>
     api.post<DailyChallenge>(`/daily-challenge/${id}/complete`, { correct, timeSpentSeconds }),
   getHistory: () => api.get<DailyChallenge[]>('/daily-challenge/history'),
+  getDailySet: (count = 15) => api.get<any[]>(`/daily-challenge/set?count=${count}`),
+  getRecallSet: (count = 10) => api.get<any[]>(`/daily-challenge/recall-set?count=${count}`),
+  submitSprint: (data: { questionId: string; selectedOptionId: string; timeSpentSeconds?: number }) =>
+    api.post<{ correct: boolean; explanation: string; xpEarned: number; coinsEarned: number }>('/daily-challenge/submit-sprint', data),
+  claimBonus: (data: { sessionType: string; scorePercentage: number }) =>
+    api.post<{ success: boolean; coinsAwarded: number; message: string }>('/daily-challenge/claim-bonus', data),
 };
 
 export const coinApi = {

@@ -49,6 +49,27 @@ public class StudentLearningController {
         return ResponseEntity.ok(ApiResponse.ok(null));
     }
 
+    @GetMapping("/skills")
+    public ResponseEntity<ApiResponse<List<com.beyon.profile.model.StudentLearningSkill>>> getLearningSkills(Authentication auth) {
+        UUID studentId = extractUserId(auth);
+        return ResponseEntity.ok(ApiResponse.ok(studentLearningService.getLearningSkills(studentId)));
+    }
+
+    @PostMapping("/skills")
+    public ResponseEntity<ApiResponse<com.beyon.profile.model.StudentLearningSkill>> addLearningSkill(Authentication auth, @RequestBody Map<String, String> body) {
+        UUID studentId = extractUserId(auth);
+        UUID skillId = body.get("skillId") != null && !body.get("skillId").isBlank() ? UUID.fromString(body.get("skillId")) : null;
+        String skillName = body.get("skillName");
+        return ResponseEntity.ok(ApiResponse.ok(studentLearningService.addLearningSkill(studentId, skillId, skillName)));
+    }
+
+    @DeleteMapping("/skills/{skillId}")
+    public ResponseEntity<ApiResponse<Void>> removeLearningSkill(Authentication auth, @PathVariable UUID skillId) {
+        UUID studentId = extractUserId(auth);
+        studentLearningService.removeLearningSkill(studentId, skillId);
+        return ResponseEntity.ok(ApiResponse.ok(null));
+    }
+
     @GetMapping("/progress")
     public ResponseEntity<ApiResponse<List<StudentSkillProgress>>> getProgress(Authentication auth) {
         UUID studentId = extractUserId(auth);

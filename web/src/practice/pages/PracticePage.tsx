@@ -1,15 +1,19 @@
-﻿import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { practiceApi, questionApi } from '../services/practiceApi';
+import { useAuth } from '../../auth/context/AuthContext';
 import type { Question } from '../types/practice';
 import { PlusCircle, ArrowRight } from 'lucide-react';
 import styles from './PracticePages.module.css';
 
 export function PracticePage() {
+  const { user } = useAuth();
   const [questions, setQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState(true);
   const [difficulty, setDifficulty] = useState('');
   const [stats, setStats] = useState({ total: 0, easy: 0, medium: 0, hard: 0 });
+
+  const isStaffOrAdmin = user?.role === 'ADMIN' || user?.role === 'INSTITUTION' || user?.role === 'COMPANY';
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -41,25 +45,27 @@ export function PracticePage() {
             Solve multiple-choice, SQL, and coding challenges across domain topics.
           </p>
         </div>
-        <Link
-          to="/practice/create"
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '8px',
-            background: 'linear-gradient(135deg, #1c2d81 0%, #253cac 100%)',
-            color: '#ffffff',
-            padding: '10px 18px',
-            borderRadius: '0px',
-            fontWeight: 600,
-            fontSize: '0.84rem',
-            textDecoration: 'none',
-            boxShadow: '0 2px 6px rgba(28, 45, 129, 0.2)',
-          }}
-        >
-          <PlusCircle size={16} />
-          <span>Create New Question</span>
-        </Link>
+        {isStaffOrAdmin && (
+          <Link
+            to="/practice/create"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              background: 'linear-gradient(135deg, #1c2d81 0%, #253cac 100%)',
+              color: '#ffffff',
+              padding: '10px 18px',
+              borderRadius: '0px',
+              fontWeight: 600,
+              fontSize: '0.84rem',
+              textDecoration: 'none',
+              boxShadow: '0 2px 6px rgba(28, 45, 129, 0.2)',
+            }}
+          >
+            <PlusCircle size={16} />
+            <span>Create New Question</span>
+          </Link>
+        )}
       </div>
 
       <div className={styles.statsRow}>
