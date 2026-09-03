@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import {
-  Building2,
   GraduationCap,
   ShieldCheck,
   UserCheck,
@@ -12,6 +11,18 @@ import {
   Trash2,
   Check,
   Landmark,
+  Sparkles,
+  CheckCircle2,
+  HelpCircle,
+  Building2,
+  MapPin,
+  Globe,
+  Phone,
+  Mail,
+  Award,
+  BookOpen,
+  User,
+  Users,
 } from 'lucide-react';
 import { useAuth } from '../../../auth/context/AuthContext';
 import { api } from '../../../services/api/client';
@@ -20,10 +31,10 @@ import { EMPTY_INSTITUTION_FORM } from '../../types/onboarding';
 import styles from '../student/StudentOnboarding.module.css';
 
 const STEPS = [
-  { label: 'Campus Details', sub: 'AISHE code & location', icon: Landmark },
+  { label: 'Campus Details', sub: 'AISHE code & address', icon: Landmark },
   { label: 'Academic Governance', sub: 'NAAC, NIRF & programs', icon: GraduationCap },
-  { label: 'Leadership & Placement', sub: 'Principal & placement cell', icon: UserCheck },
-  { label: 'Review & Verify', sub: 'Submit for Super Admin review', icon: ShieldCheck },
+  { label: 'Leadership & TPO', sub: 'Principal & placement cell', icon: UserCheck },
+  { label: 'Review & Verify', sub: 'Super Admin review', icon: ShieldCheck },
 ];
 
 const INSTITUTION_TYPES = [
@@ -75,7 +86,7 @@ export function InstitutionOnboarding() {
   const [error, setError] = useState('');
   const [agreeTerms, setAgreeTerms] = useState(false);
 
-  // New Representative subform
+  // Coordinator Subform
   const [showAddRep, setShowAddRep] = useState(false);
   const [newRep, setNewRep] = useState<InstitutionRepresentativeEntry>({
     name: '',
@@ -103,8 +114,12 @@ export function InstitutionOnboarding() {
   };
 
   const addRepresentative = () => {
-    if (!newRep.name.trim() || !newRep.email.trim()) return;
-    update('representatives', [...(form.representatives || []), newRep]);
+    if (!newRep.name || !newRep.email) {
+      setError('Please provide at least coordinator name and official email.');
+      return;
+    }
+    const current = form.representatives || [];
+    update('representatives', [...current, { ...newRep }]);
     setNewRep({
       name: '',
       designation: 'Department Placement Coordinator',
@@ -113,75 +128,65 @@ export function InstitutionOnboarding() {
       department: 'Computer Science and Engineering',
     });
     setShowAddRep(false);
+    setError('');
   };
 
-  const removeRepresentative = (index: number) => {
-    update(
-      'representatives',
-      (form.representatives || []).filter((_, i) => i !== index)
-    );
+  const removeRepresentative = (idx: number) => {
+    const current = form.representatives || [];
+    update('representatives', current.filter((_, i) => i !== idx));
   };
 
-  const validateStep = (): boolean => {
+  const validateStep = () => {
     setError('');
     if (step === 0) {
       if (!form.institutionName.trim()) {
-        setError('Institution Legal Name is required');
+        setError('Please enter your official institution name.');
         return false;
       }
       if (!form.institutionCode.trim()) {
-        setError('AISHE / UGC Institution Code is required');
+        setError('Please provide your AISHE / UGC / AICTE institution code.');
         return false;
       }
-      if (!form.officialEmail.trim() || !form.officialEmail.includes('@')) {
-        setError('Valid official institutional email is required');
+      if (!form.officialEmail.trim()) {
+        setError('Please provide your official institutional email.');
         return false;
       }
-      if (!form.phone.trim()) {
-        setError('Campus contact phone number is required');
+      if (!form.address.trim() || !form.city.trim() || !form.state.trim()) {
+        setError('Please complete the campus address, city, and state.');
         return false;
       }
-      if (!form.website.trim()) {
-        setError('Official institutional website URL is required');
-        return false;
-      }
-      if (!form.address.trim() || !form.city.trim() || !form.state.trim() || !form.postalCode.trim()) {
-        setError('Full campus street address, city, state, and postal code are required');
-        return false;
-      }
-    } else if (step === 1) {
+    }
+    if (step === 1) {
       if (!form.affiliatedUniversity.trim()) {
-        setError('Affiliating University name is required');
+        setError('Please specify the affiliating university or governing board.');
         return false;
       }
       if (!form.establishedYear) {
-        setError('Established year is required');
+        setError('Please enter the established year.');
         return false;
       }
       if (!form.totalStudents) {
-        setError('Total enrolled student strength is required');
+        setError('Please enter total student capacity.');
         return false;
       }
       if (!form.departmentsOffered || form.departmentsOffered.length === 0) {
-        setError('Please select at least one active department offered');
+        setError('Please select at least one active department offered on campus.');
         return false;
       }
-    } else if (step === 2) {
-      if (!form.principalName.trim() || !form.principalEmail.trim() || !form.principalPhone.trim()) {
-        setError('Principal / Dean details (Name, Email, Phone) are required');
+    }
+    if (step === 2) {
+      if (!form.principalName.trim() || !form.principalEmail.trim()) {
+        setError('Please provide Principal / Dean leadership contact details.');
         return false;
       }
-      if (!form.placementOfficerName.trim() || !form.placementOfficerEmail.trim() || !form.placementOfficerPhone.trim()) {
-        setError('Placement Officer details (Name, Email, Phone) are required');
+      if (!form.placementOfficerName.trim() || !form.placementOfficerEmail.trim()) {
+        setError('Please provide Training & Placement Officer (TPO) contact details.');
         return false;
       }
-      if (!form.placementCellEmail.trim() || !form.placementCellPhone.trim()) {
-        setError('Placement Cell hotline and general email are required');
-        return false;
-      }
-    } else if (step === 3) {
+    }
+    if (step === 3) {
       if (!agreeTerms) {
-        setError('Please certify and agree to the institutional verification declaration');
+        setError('Please certify that the institutional credentials are accurate.');
         return false;
       }
     }
@@ -190,13 +195,13 @@ export function InstitutionOnboarding() {
 
   const handleNext = () => {
     if (validateStep()) {
-      setStep((prev) => Math.min(prev + 1, STEPS.length - 1));
+      setStep((prev) => Math.min(STEPS.length - 1, prev + 1));
     }
   };
 
   const handlePrev = () => {
     setError('');
-    setStep((prev) => Math.max(prev - 1, 0));
+    setStep((prev) => Math.max(0, prev - 1));
   };
 
   const handleSubmit = async () => {
@@ -214,24 +219,28 @@ export function InstitutionOnboarding() {
     }
   };
 
+  const progressPercent = Math.round(((step + 1) / STEPS.length) * 100);
+  const currentStepData = STEPS[step];
+  const StepIcon = currentStepData.icon;
+
   return (
     <div className={styles.pageContainer}>
-      {/* ── Top Header ── */}
+      {/* ── Top Platform Header ── */}
       <header className={styles.topHeader}>
         <Link to="/" className={styles.brandLink}>
           <div className={styles.brandLogo}>B</div>
           <div className={styles.brandTextGroup}>
-            <span className={styles.brandName}>Beyon</span>
-            <span className={styles.brandTag}>College Profile Setup</span>
+            <span className={styles.brandName}>BEYON</span>
+            <span className={styles.brandTag}>Institution Onboarding</span>
           </div>
         </Link>
         <div className={styles.headerRight}>
           <div className={styles.rewardBadge}>
-            <Building2 size={14} />
+            <ShieldCheck size={14} color="#b45309" />
             <span>Super Admin Verification Queue</span>
           </div>
           <div className={styles.stepIndicatorBadge}>
-            Step <span className={styles.stepHighlight}>{step + 1}</span> of {STEPS.length}
+            <span className={styles.stepHighlight}>Step {step + 1}</span> of {STEPS.length} ({progressPercent}%)
           </div>
         </div>
       </header>
@@ -240,754 +249,863 @@ export function InstitutionOnboarding() {
       <div className={styles.heroWrapper}>
         <div className={styles.welcomeHero}>
           <div className={styles.badgeRow}>
-            <span className={styles.portalBadge}>
-              <Landmark size={13} />
-              <span>Higher Education Institution Onboarding</span>
-            </span>
-            <span className={styles.verifiedBadge}>
-              <ShieldCheck size={13} />
-              <span>AISHE Verification &amp; Institutional Governance</span>
-            </span>
+            <div className={styles.portalBadge}>
+              <Sparkles size={12} />
+              Higher Education Institution Portal
+            </div>
+            <div className={styles.verifiedBadge}>
+              <CheckCircle2 size={12} />
+              AISHE &amp; NAAC Institutional Verification
+            </div>
           </div>
           <h1 className={styles.welcomeTitle}>
-            {form.institutionName ? form.institutionName : 'Institutional Profile Setup'}
+            {form.institutionName ? form.institutionName : 'Setup Institutional Campus Profile'}
           </h1>
           <p className={styles.welcomeSub}>
-            Complete your academic accreditation, NAAC credentials, and training &amp; placement cell leadership details for Super Admin authorization.
+            Complete your academic accreditation, NAAC credentials, and training &amp; placement cell leadership details for Super Admin platform authorization and corporate drive scheduling.
           </p>
-
-          <div className={styles.overallProgressBar}>
-            <div
-              className={styles.overallProgressFill}
-              style={{ width: `${((step + 1) / STEPS.length) * 100}%` }}
-            />
+          <div className={styles.progressStrip}>
+            <div className={styles.progressBarFill} style={{ width: `${progressPercent}%` }} />
           </div>
         </div>
       </div>
 
-      {/* ── Main Content Container ── */}
-      <main className={styles.mainLayout}>
-        <div className={styles.stepNavContainer}>
-          {STEPS.map((s, idx) => {
-            const Icon = s.icon;
-            const isCompleted = idx < step;
-            const isCurrent = idx === step;
-            return (
-              <div
-                key={s.label}
-                className={`${styles.stepNavItem} ${isCurrent ? styles.activeStep : ''} ${
-                  isCompleted ? styles.completedStep : ''
-                }`}
-                onClick={() => {
-                  if (idx < step) setStep(idx);
-                }}
-              >
-                <div className={styles.stepNavIcon}>
-                  {isCompleted ? <Check size={16} /> : <Icon size={16} />}
-                </div>
-                <div className={styles.stepNavText}>
-                  <span className={styles.stepNavLabel}>{s.label}</span>
-                  <span className={styles.stepNavSub}>{s.sub}</span>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        {error && (
-          <div className={styles.errorBanner}>
-            <AlertCircle size={18} />
-            <span>{error}</span>
+      {/* ── Main Workspace Grid (Split Grid) ── */}
+      <div className={styles.mainWorkspace}>
+        {/* ── Left Sticky Sidebar Guide ── */}
+        <aside className={styles.asideGuide}>
+          {/* Active Step Info Card */}
+          <div className={styles.currentStepInfoCard}>
+            <span className={styles.stepNumLabel}>
+              <StepIcon size={14} /> Step {step + 1}
+            </span>
+            <h3 className={styles.stepHeading}>{currentStepData.label}</h3>
+            <p className={styles.stepDesc}>
+              {step === 0 && 'Provide your official legal campus identity, AISHE regulatory code, and physical location.'}
+              {step === 1 && 'Record your affiliating university, NAAC accreditation, NIRF ranking, and active engineering departments.'}
+              {step === 2 && 'Register authorized campus leadership, Training & Placement Officer (TPO), and departmental coordinators.'}
+              {step === 3 && 'Perform a final audit of all campus credentials before submission for Super Admin verification.'}
+            </p>
           </div>
-        )}
 
-        {/* ── STEP 1: Campus Details ── */}
-        {step === 0 && (
-          <div className={styles.stepCard}>
-            <div className={styles.cardHeader}>
-              <div className={styles.cardHeaderIcon}>
-                <Building2 size={20} />
-              </div>
-              <div>
-                <h2 className={styles.cardTitle}>Campus Identity &amp; Contact Details</h2>
-                <p className={styles.cardSubtitle}>
-                  Provide official legal identity and administrative contact information.
-                </p>
-              </div>
-            </div>
-
-            <div className={styles.formGrid}>
-              <div className={`${styles.formGroup} ${styles.colSpan2}`}>
-                <label className={styles.formLabel}>
-                  Institution / College Legal Name <span className={styles.req}>*</span>
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g., PSG College of Technology, Coimbatore"
-                  value={form.institutionName}
-                  onChange={(e) => update('institutionName', e.target.value)}
-                  className={styles.textInput}
-                />
-              </div>
-
-              <div className={styles.formGroup}>
-                <label className={styles.formLabel}>
-                  Institution Type &amp; Classification <span className={styles.req}>*</span>
-                </label>
-                <select
-                  value={form.institutionType}
-                  onChange={(e) => update('institutionType', e.target.value)}
-                  className={styles.selectInput}
-                >
-                  {INSTITUTION_TYPES.map((t) => (
-                    <option key={t} value={t}>
-                      {t}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className={styles.formGroup}>
-                <label className={styles.formLabel}>
-                  AISHE / UGC / AICTE Code <span className={styles.req}>*</span>
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g., C-16524 / AISHE-TN-2024"
-                  value={form.institutionCode}
-                  onChange={(e) => update('institutionCode', e.target.value)}
-                  className={styles.textInput}
-                />
-              </div>
-
-              <div className={styles.formGroup}>
-                <label className={styles.formLabel}>
-                  Official Institutional Email <span className={styles.req}>*</span>
-                </label>
-                <input
-                  type="email"
-                  placeholder="e.g., principal@psgtech.edu"
-                  value={form.officialEmail}
-                  onChange={(e) => update('officialEmail', e.target.value)}
-                  className={styles.textInput}
-                />
-              </div>
-
-              <div className={styles.formGroup}>
-                <label className={styles.formLabel}>
-                  Campus Phone / Administrative Board <span className={styles.req}>*</span>
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g., +91 422 2572177"
-                  value={form.phone}
-                  onChange={(e) => update('phone', e.target.value)}
-                  className={styles.textInput}
-                />
-              </div>
-
-              <div className={`${styles.formGroup} ${styles.colSpan2}`}>
-                <label className={styles.formLabel}>
-                  Official Institutional Website URL <span className={styles.req}>*</span>
-                </label>
-                <input
-                  type="url"
-                  placeholder="e.g., https://www.psgtech.edu"
-                  value={form.website}
-                  onChange={(e) => update('website', e.target.value)}
-                  className={styles.textInput}
-                />
-              </div>
-
-              <div className={`${styles.formGroup} ${styles.colSpan2}`}>
-                <label className={styles.formLabel}>
-                  Full Campus Street Address <span className={styles.req}>*</span>
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g., Avinashi Road, Peelamedu"
-                  value={form.address}
-                  onChange={(e) => update('address', e.target.value)}
-                  className={styles.textInput}
-                />
-              </div>
-
-              <div className={styles.formGroup}>
-                <label className={styles.formLabel}>
-                  City <span className={styles.req}>*</span>
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g., Coimbatore"
-                  value={form.city}
-                  onChange={(e) => update('city', e.target.value)}
-                  className={styles.textInput}
-                />
-              </div>
-
-              <div className={styles.formGroup}>
-                <label className={styles.formLabel}>
-                  State <span className={styles.req}>*</span>
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g., Tamil Nadu"
-                  value={form.state}
-                  onChange={(e) => update('state', e.target.value)}
-                  className={styles.textInput}
-                />
-              </div>
-
-              <div className={styles.formGroup}>
-                <label className={styles.formLabel}>
-                  Postal PIN Code <span className={styles.req}>*</span>
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g., 641004"
-                  value={form.postalCode}
-                  onChange={(e) => update('postalCode', e.target.value)}
-                  className={styles.textInput}
-                />
-              </div>
-
-              <div className={styles.formGroup}>
-                <label className={styles.formLabel}>
-                  Country <span className={styles.req}>*</span>
-                </label>
-                <input
-                  type="text"
-                  value={form.country}
-                  onChange={(e) => update('country', e.target.value)}
-                  className={styles.textInput}
-                />
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* ── STEP 2: Academic Governance & NAAC ── */}
-        {step === 1 && (
-          <div className={styles.stepCard}>
-            <div className={styles.cardHeader}>
-              <div className={styles.cardHeaderIcon}>
-                <GraduationCap size={20} />
-              </div>
-              <div>
-                <h2 className={styles.cardTitle}>Academic Governance, NAAC &amp; Departments</h2>
-                <p className={styles.cardSubtitle}>
-                  Accreditation credentials and undergraduate/postgraduate departments offered.
-                </p>
-              </div>
-            </div>
-
-            <div className={styles.formGrid}>
-              <div className={`${styles.formGroup} ${styles.colSpan2}`}>
-                <label className={styles.formLabel}>
-                  Affiliating University <span className={styles.req}>*</span>
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g., Anna University, Chennai"
-                  value={form.affiliatedUniversity}
-                  onChange={(e) => update('affiliatedUniversity', e.target.value)}
-                  className={styles.textInput}
-                />
-              </div>
-
-              <div className={styles.formGroup}>
-                <label className={styles.formLabel}>
-                  NAAC Accreditation Grade <span className={styles.req}>*</span>
-                </label>
-                <select
-                  value={form.accreditationGrade}
-                  onChange={(e) => update('accreditationGrade', e.target.value)}
-                  className={styles.selectInput}
-                >
-                  {NAAC_GRADES.map((g) => (
-                    <option key={g} value={g}>
-                      {g}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className={styles.formGroup}>
-                <label className={styles.formLabel}>NIRF National Ranking Band</label>
-                <input
-                  type="text"
-                  placeholder="e.g., Rank 45 / Rank Band 51-100"
-                  value={form.nirfRank}
-                  onChange={(e) => update('nirfRank', e.target.value)}
-                  className={styles.textInput}
-                />
-              </div>
-
-              <div className={styles.formGroup}>
-                <label className={styles.formLabel}>
-                  Established Year <span className={styles.req}>*</span>
-                </label>
-                <input
-                  type="number"
-                  placeholder="e.g., 1951"
-                  value={form.establishedYear}
-                  onChange={(e) => update('establishedYear', e.target.value)}
-                  className={styles.textInput}
-                />
-              </div>
-
-              <div className={styles.formGroup}>
-                <label className={styles.formLabel}>
-                  Total Student Capacity / Strength <span className={styles.req}>*</span>
-                </label>
-                <input
-                  type="number"
-                  placeholder="e.g., 8500"
-                  value={form.totalStudents}
-                  onChange={(e) => update('totalStudents', e.target.value)}
-                  className={styles.textInput}
-                />
-              </div>
-
-              <div className={`${styles.formGroup} ${styles.colSpan2}`}>
-                <label className={styles.formLabel}>
-                  Active Academic Departments Offered <span className={styles.req}>*</span>
-                </label>
-                <p style={{ fontSize: '0.8rem', color: '#64748b', margin: '0 0 10px' }}>
-                  Select the departments eligible to participate in campus drives and skill assessments.
-                </p>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                  {DEPARTMENTS_LIST.map((dept) => {
-                    const isSelected = form.departmentsOffered?.includes(dept);
-                    return (
-                      <button
-                        type="button"
-                        key={dept}
-                        onClick={() => toggleDepartment(dept)}
-                        style={{
-                          padding: '6px 14px',
-                          background: isSelected ? '#1c2d81' : '#ffffff',
-                          color: isSelected ? '#ffffff' : '#1e293b',
-                          border: isSelected ? '1px solid #1c2d81' : '1px solid #cbd5e1',
-                          fontSize: '0.82rem',
-                          fontWeight: 600,
-                          cursor: 'pointer',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '6px',
-                        }}
-                      >
-                        {isSelected && <Check size={14} />}
-                        <span>{dept}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* ── STEP 3: Leadership & Placement Cell ── */}
-        {step === 2 && (
-          <div className={styles.stepCard}>
-            <div className={styles.cardHeader}>
-              <div className={styles.cardHeaderIcon}>
-                <UserCheck size={20} />
-              </div>
-              <div>
-                <h2 className={styles.cardTitle}>Campus Leadership &amp; Training &amp; Placement Cell</h2>
-                <p className={styles.cardSubtitle}>
-                  Authorized institutional contacts for drive scheduling and credential verification.
-                </p>
-              </div>
-            </div>
-
-            {/* Principal / Dean Info */}
-            <div style={{ marginBottom: '24px', background: '#f8fafc', padding: '16px', border: '1px solid #e2e8f0' }}>
-              <h3 style={{ fontSize: '0.95rem', fontWeight: 800, color: '#1c2d81', margin: '0 0 12px' }}>
-                1. Head of Institution (Principal / Director / Dean)
-              </h3>
-              <div className={styles.formGrid}>
-                <div className={styles.formGroup}>
-                  <label className={styles.formLabel}>
-                    Principal / Director Full Name <span className={styles.req}>*</span>
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="e.g., Dr. K. Prakasan"
-                    value={form.principalName}
-                    onChange={(e) => update('principalName', e.target.value)}
-                    className={styles.textInput}
-                  />
-                </div>
-                <div className={styles.formGroup}>
-                  <label className={styles.formLabel}>
-                    Official Email <span className={styles.req}>*</span>
-                  </label>
-                  <input
-                    type="email"
-                    placeholder="e.g., principal@psgtech.edu"
-                    value={form.principalEmail}
-                    onChange={(e) => update('principalEmail', e.target.value)}
-                    className={styles.textInput}
-                  />
-                </div>
-                <div className={styles.formGroup}>
-                  <label className={styles.formLabel}>
-                    Direct Contact Phone <span className={styles.req}>*</span>
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="e.g., +91 422 2572177"
-                    value={form.principalPhone}
-                    onChange={(e) => update('principalPhone', e.target.value)}
-                    className={styles.textInput}
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Placement Officer Info */}
-            <div style={{ marginBottom: '24px', background: '#f8fafc', padding: '16px', border: '1px solid #e2e8f0' }}>
-              <h3 style={{ fontSize: '0.95rem', fontWeight: 800, color: '#1c2d81', margin: '0 0 12px' }}>
-                2. Training &amp; Placement Officer (TPO / Placement Head)
-              </h3>
-              <div className={styles.formGrid}>
-                <div className={styles.formGroup}>
-                  <label className={styles.formLabel}>
-                    Placement Officer Full Name <span className={styles.req}>*</span>
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="e.g., Dr. R. Suresh Kumar"
-                    value={form.placementOfficerName}
-                    onChange={(e) => update('placementOfficerName', e.target.value)}
-                    className={styles.textInput}
-                  />
-                </div>
-                <div className={styles.formGroup}>
-                  <label className={styles.formLabel}>
-                    TPO Official Email <span className={styles.req}>*</span>
-                  </label>
-                  <input
-                    type="email"
-                    placeholder="e.g., placement@psgtech.edu"
-                    value={form.placementOfficerEmail}
-                    onChange={(e) => update('placementOfficerEmail', e.target.value)}
-                    className={styles.textInput}
-                  />
-                </div>
-                <div className={styles.formGroup}>
-                  <label className={styles.formLabel}>
-                    TPO Mobile / Phone <span className={styles.req}>*</span>
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="e.g., +91 98422 12345"
-                    value={form.placementOfficerPhone}
-                    onChange={(e) => update('placementOfficerPhone', e.target.value)}
-                    className={styles.textInput}
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Placement Cell Desk */}
-            <div style={{ marginBottom: '24px', background: '#f8fafc', padding: '16px', border: '1px solid #e2e8f0' }}>
-              <h3 style={{ fontSize: '0.95rem', fontWeight: 800, color: '#1c2d81', margin: '0 0 12px' }}>
-                3. Placement Cell Official Helpdesk
-              </h3>
-              <div className={styles.formGrid}>
-                <div className={styles.formGroup}>
-                  <label className={styles.formLabel}>
-                    Placement Cell Desk Email <span className={styles.req}>*</span>
-                  </label>
-                  <input
-                    type="email"
-                    placeholder="e.g., placements@psgtech.edu"
-                    value={form.placementCellEmail}
-                    onChange={(e) => update('placementCellEmail', e.target.value)}
-                    className={styles.textInput}
-                  />
-                </div>
-                <div className={styles.formGroup}>
-                  <label className={styles.formLabel}>
-                    Placement Cell Hotline <span className={styles.req}>*</span>
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="e.g., +91 422 2578899"
-                    value={form.placementCellPhone}
-                    onChange={(e) => update('placementCellPhone', e.target.value)}
-                    className={styles.textInput}
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Additional Representatives */}
-            <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                <h3 style={{ fontSize: '0.95rem', fontWeight: 800, color: '#1c2d81', margin: 0 }}>
-                  4. Department Placement Coordinators &amp; Staff ({form.representatives?.length || 0})
-                </h3>
-                <button
-                  type="button"
-                  onClick={() => setShowAddRep(true)}
-                  style={{
-                    padding: '6px 14px',
-                    background: '#ffffff',
-                    border: '1px solid #1c2d81',
-                    color: '#1c2d81',
-                    fontSize: '0.78rem',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '4px',
-                  }}
-                >
-                  <Plus size={14} /> Add Coordinator
-                </button>
-              </div>
-
-              {showAddRep && (
-                <div style={{ background: '#f1f5f9', border: '1px solid #cbd5e1', padding: '16px', marginBottom: '16px' }}>
-                  <div className={styles.formGrid}>
-                    <div className={styles.formGroup}>
-                      <label className={styles.formLabel}>Coordinator Name</label>
-                      <input
-                        type="text"
-                        placeholder="e.g., Prof. Anand M."
-                        value={newRep.name}
-                        onChange={(e) => setNewRep({ ...newRep, name: e.target.value })}
-                        className={styles.textInput}
-                      />
-                    </div>
-                    <div className={styles.formGroup}>
-                      <label className={styles.formLabel}>Designation</label>
-                      <input
-                        type="text"
-                        placeholder="e.g., Assistant Professor / CSE Coordinator"
-                        value={newRep.designation}
-                        onChange={(e) => setNewRep({ ...newRep, designation: e.target.value })}
-                        className={styles.textInput}
-                      />
-                    </div>
-                    <div className={styles.formGroup}>
-                      <label className={styles.formLabel}>Email</label>
-                      <input
-                        type="email"
-                        placeholder="e.g., anand.cse@psgtech.edu"
-                        value={newRep.email}
-                        onChange={(e) => setNewRep({ ...newRep, email: e.target.value })}
-                        className={styles.textInput}
-                      />
-                    </div>
-                    <div className={styles.formGroup}>
-                      <label className={styles.formLabel}>Department</label>
-                      <select
-                        value={newRep.department}
-                        onChange={(e) => setNewRep({ ...newRep, department: e.target.value })}
-                        className={styles.selectInput}
-                      >
-                        {DEPARTMENTS_LIST.map((d) => (
-                          <option key={d} value={d}>
-                            {d}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-                  <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
-                    <button
-                      type="button"
-                      onClick={addRepresentative}
-                      style={{ padding: '6px 14px', background: '#1c2d81', color: '#ffffff', border: 'none', fontWeight: 700, fontSize: '0.78rem', cursor: 'pointer' }}
-                    >
-                      Save Coordinator
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setShowAddRep(false)}
-                      style={{ padding: '6px 12px', background: '#ffffff', border: '1px solid #cbd5e1', color: '#64748b', fontSize: '0.78rem', cursor: 'pointer' }}
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {form.representatives && form.representatives.length > 0 && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  {form.representatives.map((rep, idx) => (
+          {/* Vertical Step Roadmap */}
+          <div className={styles.stepTrackerCard}>
+            <div className={styles.trackerTitle}>Onboarding Roadmap</div>
+            <div className={styles.trackerList}>
+              {STEPS.map((s, idx) => {
+                const isCompleted = idx < step;
+                const isActive = idx === step;
+                const SIcon = s.icon;
+                return (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => {
+                      if (idx < step) setStep(idx);
+                    }}
+                    disabled={idx > step}
+                    className={`${styles.trackerItem} ${isActive ? styles.trackerItemActive : ''} ${
+                      isCompleted ? styles.trackerItemCompleted : ''
+                    } ${idx > step ? styles.trackerItemDisabled : ''}`}
+                  >
                     <div
-                      key={idx}
-                      style={{
-                        padding: '10px 14px',
-                        background: '#ffffff',
-                        border: '1px solid #e2e8f0',
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                      }}
+                      className={`${styles.trackerIconBox} ${
+                        isActive ? styles.trackerIconBoxActive : ''
+                      } ${isCompleted ? styles.trackerIconBoxCompleted : ''}`}
                     >
-                      <div>
-                        <strong style={{ color: '#0f172a', fontSize: '0.86rem' }}>{rep.name}</strong>
-                        <span style={{ fontSize: '0.76rem', color: '#64748b', marginLeft: '8px' }}>
-                          ({rep.designation} &middot; {rep.department})
-                        </span>
-                        <div style={{ fontSize: '0.74rem', color: '#94a3b8', marginTop: '2px' }}>
-                          {rep.email} {rep.phone && `&middot; ${rep.phone}`}
-                        </div>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => removeRepresentative(idx)}
-                        style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer' }}
-                      >
-                        <Trash2 size={16} />
-                      </button>
+                      {isCompleted ? <Check size={14} /> : <SIcon size={14} />}
                     </div>
-                  ))}
-                </div>
-              )}
+                    <div className={styles.trackerLabelGroup}>
+                      <span className={`${styles.trackerStepName} ${isActive ? styles.trackerStepNameActive : ''}`}>
+                        {s.label}
+                      </span>
+                      <span className={styles.trackerStepSub}>{s.sub}</span>
+                    </div>
+                  </button>
+                );
+              })}
             </div>
           </div>
-        )}
 
-        {/* ── STEP 4: Review & Super Admin Verification ── */}
-        {step === 3 && (
-          <div className={styles.stepCard}>
-            <div className={styles.cardHeader}>
-              <div className={styles.cardHeaderIcon}>
-                <ShieldCheck size={20} />
-              </div>
-              <div>
-                <h2 className={styles.cardTitle}>Review Credentials &amp; Super Admin Verification</h2>
-                <p className={styles.cardSubtitle}>
-                  Please review your campus details before submitting for Super Admin authorization.
-                </p>
-              </div>
+          {/* Verification Advisory Tip Card */}
+          <div className={styles.benefitsCard}>
+            <div className={styles.benefitsTitle}>
+              <HelpCircle size={14} color="#1c2d81" /> Institutional Standards
             </div>
+            <ul className={styles.benefitsList}>
+              <li className={styles.benefitItem}>
+                <Award size={14} className={styles.benefitIcon} />
+                <span>Verified <strong>AISHE Code</strong> unlocks autonomous drive hosting.</span>
+              </li>
+              <li className={styles.benefitItem}>
+                <Building2 size={14} className={styles.benefitIcon} />
+                <span>Direct integration with <strong>120+ corporate recruiters</strong>.</span>
+              </li>
+              <li className={styles.benefitItem}>
+                <BookOpen size={14} className={styles.benefitIcon} />
+                <span>AI-powered curriculum syllabus &amp; industry skill taxonomy.</span>
+              </li>
+              <li className={styles.benefitItem}>
+                <ShieldCheck size={14} className={styles.benefitIcon} />
+                <span>Super Admin verified placement and offer audit ledgers.</span>
+              </li>
+            </ul>
+          </div>
+        </aside>
 
-            {/* Verification Process Notice */}
-            <div style={{ background: '#fefce8', border: '1px solid #fef08a', padding: '16px', marginBottom: '20px' }}>
-              <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
-                <ShieldCheck size={20} color="#b45309" style={{ flexShrink: 0, marginTop: '2px' }} />
-                <div>
-                  <strong style={{ color: '#854d0e', fontSize: '0.88rem', display: 'block', marginBottom: '4px' }}>
-                    Super Admin Institutional Verification Protocol
-                  </strong>
-                  <p style={{ fontSize: '0.82rem', color: '#713f12', margin: 0, lineHeight: 1.5 }}>
-                    Upon submission, your account will enter the state <code>PENDING_SUPER_ADMIN_VERIFICATION</code>. The Super Administrator (`superadmin@beyon.io`) will inspect your AISHE code, affiliating university status, and placement contact records. Once authorized, your campus drive and student placement workflows will immediately become ACTIVE.
+        {/* ── Right Content Form Card ── */}
+        <main className={styles.formCard}>
+          {error && (
+            <div className={styles.errorAlert}>
+              <span className={styles.errorText}>
+                <AlertCircle size={18} />
+                {error}
+              </span>
+              <button type="button" onClick={() => setError('')} className={styles.dismissBtn}>
+                Dismiss
+              </button>
+            </div>
+          )}
+
+          {/* ═════════ STEP 0: CAMPUS IDENTITY & LOCATION ═════════ */}
+          {step === 0 && (
+            <div className={styles.sectionBlock}>
+              <div className={styles.sectionHeader}>
+                <div className={styles.sectionIconBox}>
+                  <Landmark size={20} />
+                </div>
+                <div className={styles.sectionTitleGroup}>
+                  <h2 className={styles.sectionTitle}>1. Campus Identity &amp; Administrative Details</h2>
+                  <p className={styles.sectionSubtitle}>
+                    Official legal identity and communication channels verified by the Super Administrator.
                   </p>
                 </div>
               </div>
-            </div>
 
-            {/* Summary Review Grid */}
-            <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', padding: '20px', marginBottom: '20px' }}>
-              <h3 style={{ fontSize: '0.95rem', fontWeight: 800, color: '#1c2d81', margin: '0 0 14px' }}>
-                Institutional Profile Summary
-              </h3>
+              <div className={styles.fieldsGrid}>
+                <div className={`${styles.fieldGroup} ${styles.fieldGroupFull}`}>
+                  <label className={styles.fieldLabel} htmlFor="instName">
+                    <Building2 size={13} /> Institution / College Legal Name <span className={styles.requiredAsterisk}>*</span>
+                  </label>
+                  <input
+                    id="instName"
+                    type="text"
+                    placeholder="e.g., PSG College of Technology, Coimbatore"
+                    value={form.institutionName}
+                    onChange={(e) => update('institutionName', e.target.value)}
+                    className={styles.textInput}
+                  />
+                  <span className={styles.fieldHint}>Official registered name under UGC / AICTE records</span>
+                </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '14px', fontSize: '0.84rem' }}>
-                <div>
-                  <span style={{ color: '#64748b', display: 'block', fontSize: '0.74rem', textTransform: 'uppercase', fontWeight: 700 }}>Institution Legal Name</span>
-                  <strong style={{ color: '#0f172a' }}>{form.institutionName}</strong>
+                <div className={styles.fieldGroup}>
+                  <label className={styles.fieldLabel} htmlFor="instType">
+                    Institution Classification <span className={styles.requiredAsterisk}>*</span>
+                  </label>
+                  <select
+                    id="instType"
+                    value={form.institutionType}
+                    onChange={(e) => update('institutionType', e.target.value)}
+                    className={styles.selectInput}
+                  >
+                    {INSTITUTION_TYPES.map((t) => (
+                      <option key={t} value={t}>
+                        {t}
+                      </option>
+                    ))}
+                  </select>
                 </div>
-                <div>
-                  <span style={{ color: '#64748b', display: 'block', fontSize: '0.74rem', textTransform: 'uppercase', fontWeight: 700 }}>Type &amp; Status</span>
-                  <strong style={{ color: '#0f172a' }}>{form.institutionType} ({form.autonomousStatus})</strong>
+
+                <div className={styles.fieldGroup}>
+                  <label className={styles.fieldLabel} htmlFor="instCode">
+                    AISHE / UGC / AICTE Code <span className={styles.requiredAsterisk}>*</span>
+                  </label>
+                  <input
+                    id="instCode"
+                    type="text"
+                    placeholder="e.g., C-16524 / AISHE-TN-2024"
+                    value={form.institutionCode}
+                    onChange={(e) => update('institutionCode', e.target.value)}
+                    className={styles.textInput}
+                  />
+                  <span className={styles.fieldHint}>Regulatory institution identification code</span>
                 </div>
-                <div>
-                  <span style={{ color: '#64748b', display: 'block', fontSize: '0.74rem', textTransform: 'uppercase', fontWeight: 700 }}>AISHE / Code</span>
-                  <strong style={{ color: '#0f172a' }}>{form.institutionCode}</strong>
+
+                <div className={styles.fieldGroup}>
+                  <label className={styles.fieldLabel} htmlFor="instEmail">
+                    <Mail size={13} /> Official Institutional Email <span className={styles.requiredAsterisk}>*</span>
+                  </label>
+                  <input
+                    id="instEmail"
+                    type="email"
+                    placeholder="e.g., principal@psgtech.edu"
+                    value={form.officialEmail}
+                    onChange={(e) => update('officialEmail', e.target.value)}
+                    className={styles.textInput}
+                  />
                 </div>
-                <div>
-                  <span style={{ color: '#64748b', display: 'block', fontSize: '0.74rem', textTransform: 'uppercase', fontWeight: 700 }}>Affiliating University</span>
-                  <strong style={{ color: '#0f172a' }}>{form.affiliatedUniversity}</strong>
+
+                <div className={styles.fieldGroup}>
+                  <label className={styles.fieldLabel} htmlFor="instPhone">
+                    <Phone size={13} /> Administrative Board Phone <span className={styles.requiredAsterisk}>*</span>
+                  </label>
+                  <input
+                    id="instPhone"
+                    type="tel"
+                    placeholder="e.g., +91 422 2572177"
+                    value={form.phone}
+                    onChange={(e) => update('phone', e.target.value)}
+                    className={styles.textInput}
+                  />
                 </div>
-                <div>
-                  <span style={{ color: '#64748b', display: 'block', fontSize: '0.74rem', textTransform: 'uppercase', fontWeight: 700 }}>NAAC Grade &amp; NIRF</span>
-                  <strong style={{ color: '#0f172a' }}>Grade {form.accreditationGrade} {form.nirfRank && `(${form.nirfRank})`}</strong>
+
+                <div className={`${styles.fieldGroup} ${styles.fieldGroupFull}`}>
+                  <label className={styles.fieldLabel} htmlFor="instWeb">
+                    <Globe size={13} /> Official Institutional Website URL <span className={styles.requiredAsterisk}>*</span>
+                  </label>
+                  <input
+                    id="instWeb"
+                    type="url"
+                    placeholder="e.g., https://www.psgtech.edu"
+                    value={form.website}
+                    onChange={(e) => update('website', e.target.value)}
+                    className={styles.textInput}
+                  />
                 </div>
-                <div>
-                  <span style={{ color: '#64748b', display: 'block', fontSize: '0.74rem', textTransform: 'uppercase', fontWeight: 700 }}>Established Year &amp; Capacity</span>
-                  <strong style={{ color: '#0f172a' }}>Est. {form.establishedYear} &middot; {form.totalStudents} Students</strong>
+
+                <div className={`${styles.fieldGroup} ${styles.fieldGroupFull}`}>
+                  <label className={styles.fieldLabel} htmlFor="instAddress">
+                    <MapPin size={13} /> Full Campus Physical Street Address <span className={styles.requiredAsterisk}>*</span>
+                  </label>
+                  <input
+                    id="instAddress"
+                    type="text"
+                    placeholder="e.g., Avinashi Road, Peelamedu"
+                    value={form.address}
+                    onChange={(e) => update('address', e.target.value)}
+                    className={styles.textInput}
+                  />
                 </div>
-                <div>
-                  <span style={{ color: '#64748b', display: 'block', fontSize: '0.74rem', textTransform: 'uppercase', fontWeight: 700 }}>Campus Location</span>
-                  <strong style={{ color: '#0f172a' }}>{form.address}, {form.city}, {form.state} - {form.postalCode}</strong>
+
+                <div className={styles.fieldGroup}>
+                  <label className={styles.fieldLabel} htmlFor="city">
+                    City <span className={styles.requiredAsterisk}>*</span>
+                  </label>
+                  <input
+                    id="city"
+                    type="text"
+                    placeholder="e.g., Coimbatore"
+                    value={form.city}
+                    onChange={(e) => update('city', e.target.value)}
+                    className={styles.textInput}
+                  />
                 </div>
-                <div>
-                  <span style={{ color: '#64748b', display: 'block', fontSize: '0.74rem', textTransform: 'uppercase', fontWeight: 700 }}>Principal &amp; TPO Contacts</span>
-                  <strong style={{ color: '#0f172a' }}>{form.principalName} &middot; {form.placementOfficerName}</strong>
+
+                <div className={styles.fieldGroup}>
+                  <label className={styles.fieldLabel} htmlFor="state">
+                    State / Province <span className={styles.requiredAsterisk}>*</span>
+                  </label>
+                  <input
+                    id="state"
+                    type="text"
+                    placeholder="e.g., Tamil Nadu"
+                    value={form.state}
+                    onChange={(e) => update('state', e.target.value)}
+                    className={styles.textInput}
+                  />
+                </div>
+
+                <div className={styles.fieldGroup}>
+                  <label className={styles.fieldLabel} htmlFor="pin">
+                    Postal PIN Code <span className={styles.requiredAsterisk}>*</span>
+                  </label>
+                  <input
+                    id="pin"
+                    type="text"
+                    placeholder="e.g., 641004"
+                    value={form.postalCode}
+                    onChange={(e) => update('postalCode', e.target.value)}
+                    className={styles.textInput}
+                  />
+                </div>
+
+                <div className={styles.fieldGroup}>
+                  <label className={styles.fieldLabel} htmlFor="country">
+                    Country <span className={styles.requiredAsterisk}>*</span>
+                  </label>
+                  <input
+                    id="country"
+                    type="text"
+                    value={form.country}
+                    onChange={(e) => update('country', e.target.value)}
+                    className={styles.textInput}
+                  />
                 </div>
               </div>
-
-              <div style={{ marginTop: '16px', borderTop: '1px solid #e2e8f0', paddingTop: '12px' }}>
-                <span style={{ color: '#64748b', display: 'block', fontSize: '0.74rem', textTransform: 'uppercase', fontWeight: 700, marginBottom: '6px' }}>Active Departments ({form.departmentsOffered?.length || 0})</span>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                  {form.departmentsOffered?.map((dept) => (
-                    <span key={dept} style={{ padding: '3px 8px', background: '#eff6ff', color: '#1d4ed8', fontSize: '0.74rem', fontWeight: 600, border: '1px solid #bfdbfe' }}>
-                      {dept}
-                    </span>
-                  ))}
-                </div>
-              </div>
             </div>
-
-            {/* Terms Agreement */}
-            <label style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', cursor: 'pointer', marginBottom: '20px' }}>
-              <input
-                type="checkbox"
-                checked={agreeTerms}
-                onChange={(e) => setAgreeTerms(e.target.checked)}
-                style={{ width: '18px', height: '18px', marginTop: '2px', cursor: 'pointer' }}
-              />
-              <span style={{ fontSize: '0.84rem', color: '#334155', lineHeight: 1.4 }}>
-                I certify under regulatory penalty that the institutional information, AISHE codes, NAAC accreditation, and placement contact details provided are accurate and authorized by campus leadership for Super Admin validation.
-              </span>
-            </label>
-          </div>
-        )}
-
-        {/* ── Navigation Buttons Footer ── */}
-        <div className={styles.navActionsRow}>
-          {step > 0 ? (
-            <button type="button" onClick={handlePrev} className={styles.prevBtn}>
-              <ChevronLeft size={16} />
-              <span>Previous Step</span>
-            </button>
-          ) : <div />}
-
-          {step < STEPS.length - 1 ? (
-            <button type="button" onClick={handleNext} className={styles.nextBtn}>
-              <span>Continue to {STEPS[step + 1].label}</span>
-              <ChevronRight size={16} />
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={handleSubmit}
-              disabled={loading || !agreeTerms}
-              className={styles.submitBtn}
-            >
-              {loading ? (
-                <span>Submitting Credentials...</span>
-              ) : (
-                <>
-                  <ShieldCheck size={18} />
-                  <span>Submit for Super Admin Verification</span>
-                </>
-              )}
-            </button>
           )}
-        </div>
-      </main>
+
+          {/* ═════════ STEP 1: ACADEMIC GOVERNANCE & NAAC ═════════ */}
+          {step === 1 && (
+            <div className={styles.sectionBlock}>
+              <div className={styles.sectionHeader}>
+                <div className={styles.sectionIconBox}>
+                  <GraduationCap size={20} />
+                </div>
+                <div className={styles.sectionTitleGroup}>
+                  <h2 className={styles.sectionTitle}>2. Academic Governance &amp; Accreditation</h2>
+                  <p className={styles.sectionSubtitle}>
+                    Accreditation metrics and undergraduate/postgraduate engineering departments offered on campus.
+                  </p>
+                </div>
+              </div>
+
+              <div className={styles.fieldsGrid}>
+                <div className={`${styles.fieldGroup} ${styles.fieldGroupFull}`}>
+                  <label className={styles.fieldLabel} htmlFor="affUniv">
+                    Affiliating University / Governing Board <span className={styles.requiredAsterisk}>*</span>
+                  </label>
+                  <input
+                    id="affUniv"
+                    type="text"
+                    placeholder="e.g., Anna University, Chennai"
+                    value={form.affiliatedUniversity}
+                    onChange={(e) => update('affiliatedUniversity', e.target.value)}
+                    className={styles.textInput}
+                  />
+                  <span className={styles.fieldHint}>State, Central, or Deemed governing body</span>
+                </div>
+
+                <div className={styles.fieldGroup}>
+                  <label className={styles.fieldLabel} htmlFor="naac">
+                    NAAC Accreditation Grade <span className={styles.requiredAsterisk}>*</span>
+                  </label>
+                  <select
+                    id="naac"
+                    value={form.accreditationGrade}
+                    onChange={(e) => update('accreditationGrade', e.target.value)}
+                    className={styles.selectInput}
+                  >
+                    {NAAC_GRADES.map((g) => (
+                      <option key={g} value={g}>
+                        Grade {g}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className={styles.fieldGroup}>
+                  <label className={styles.fieldLabel} htmlFor="nirf">
+                    NIRF National Ranking Band
+                  </label>
+                  <input
+                    id="nirf"
+                    type="text"
+                    placeholder="e.g., Rank 63 / Band 51-100"
+                    value={form.nirfRank}
+                    onChange={(e) => update('nirfRank', e.target.value)}
+                    className={styles.textInput}
+                  />
+                </div>
+
+                <div className={styles.fieldGroup}>
+                  <label className={styles.fieldLabel} htmlFor="estYear">
+                    Established Year <span className={styles.requiredAsterisk}>*</span>
+                  </label>
+                  <input
+                    id="estYear"
+                    type="number"
+                    placeholder="e.g., 1951"
+                    value={form.establishedYear}
+                    onChange={(e) => update('establishedYear', e.target.value)}
+                    className={styles.textInput}
+                  />
+                </div>
+
+                <div className={styles.fieldGroup}>
+                  <label className={styles.fieldLabel} htmlFor="totStud">
+                    Total Student Enrollment Capacity <span className={styles.requiredAsterisk}>*</span>
+                  </label>
+                  <input
+                    id="totStud"
+                    type="number"
+                    placeholder="e.g., 8500"
+                    value={form.totalStudents}
+                    onChange={(e) => update('totalStudents', e.target.value)}
+                    className={styles.textInput}
+                  />
+                </div>
+
+                <div className={`${styles.fieldGroup} ${styles.fieldGroupFull}`}>
+                  <label className={styles.fieldLabel}>
+                    Active Academic Departments Offered on Campus <span className={styles.requiredAsterisk}>*</span>
+                  </label>
+                  <span className={styles.fieldHint} style={{ marginBottom: '8px' }}>
+                    Select all engineering &amp; technology branches active for recruitment drives:
+                  </span>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '8px' }}>
+                    {DEPARTMENTS_LIST.map((dept) => {
+                      const isSelected = form.departmentsOffered?.includes(dept);
+                      return (
+                        <button
+                          type="button"
+                          key={dept}
+                          onClick={() => toggleDepartment(dept)}
+                          style={{
+                            padding: '10px 14px',
+                            background: isSelected ? '#1c2d81' : '#ffffff',
+                            color: isSelected ? '#ffffff' : '#334155',
+                            border: isSelected ? '1px solid #1c2d81' : '1px solid #cbd5e1',
+                            fontSize: '0.82rem',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            textAlign: 'left',
+                            borderRadius: '0px',
+                            transition: 'all 0.15s ease',
+                          }}
+                        >
+                          <div
+                            style={{
+                              width: '16px',
+                              height: '16px',
+                              borderRadius: '0px',
+                              background: isSelected ? '#fed601' : '#f1f5f9',
+                              color: isSelected ? '#1c2d81' : 'transparent',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '11px',
+                              fontWeight: 900,
+                              flexShrink: 0,
+                            }}
+                          >
+                            ✓
+                          </div>
+                          <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            {dept}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ═════════ STEP 2: LEADERSHIP & PLACEMENT CELL ═════════ */}
+          {step === 2 && (
+            <div className={styles.sectionBlock}>
+              <div className={styles.sectionHeader}>
+                <div className={styles.sectionIconBox}>
+                  <UserCheck size={20} />
+                </div>
+                <div className={styles.sectionTitleGroup}>
+                  <h2 className={styles.sectionTitle}>3. Campus Leadership &amp; Training &amp; Placement Cell</h2>
+                  <p className={styles.sectionSubtitle}>
+                    Designate institutional authorities for recruitment drives, schedule approvals, and scholar audits.
+                  </p>
+                </div>
+              </div>
+
+              {/* 1. Principal / Dean */}
+              <div style={{ background: '#ffffff', padding: '18px 20px', border: '1px solid #cbd5e1', borderLeft: '4px solid #1c2d81' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
+                  <User size={16} color="#1c2d81" />
+                  <h3 style={{ fontSize: '0.92rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>
+                    Head of Institution (Principal / Director / Dean)
+                  </h3>
+                </div>
+                <div className={styles.fieldsGrid}>
+                  <div className={styles.fieldGroup}>
+                    <label className={styles.fieldLabel}>
+                      Principal / Director Name <span className={styles.requiredAsterisk}>*</span>
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g., Dr. K. Prakasan"
+                      value={form.principalName}
+                      onChange={(e) => update('principalName', e.target.value)}
+                      className={styles.textInput}
+                    />
+                  </div>
+                  <div className={styles.fieldGroup}>
+                    <label className={styles.fieldLabel}>
+                      Principal Email <span className={styles.requiredAsterisk}>*</span>
+                    </label>
+                    <input
+                      type="email"
+                      placeholder="e.g., principal@psgtech.edu"
+                      value={form.principalEmail}
+                      onChange={(e) => update('principalEmail', e.target.value)}
+                      className={styles.textInput}
+                    />
+                  </div>
+                  <div className={styles.fieldGroup}>
+                    <label className={styles.fieldLabel}>Direct Contact Phone</label>
+                    <input
+                      type="tel"
+                      placeholder="e.g., +91 422 2572177"
+                      value={form.principalPhone}
+                      onChange={(e) => update('principalPhone', e.target.value)}
+                      className={styles.textInput}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* 2. Training & Placement Officer */}
+              <div style={{ background: '#ffffff', padding: '18px 20px', border: '1px solid #cbd5e1', borderLeft: '4px solid #15803d' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
+                  <UserCheck size={16} color="#15803d" />
+                  <h3 style={{ fontSize: '0.92rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>
+                    Head of Training &amp; Placement (TPO)
+                  </h3>
+                </div>
+                <div className={styles.fieldsGrid}>
+                  <div className={styles.fieldGroup}>
+                    <label className={styles.fieldLabel}>
+                      TPO / Placement Head Name <span className={styles.requiredAsterisk}>*</span>
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g., Dr. R. Suresh Kumar"
+                      value={form.placementOfficerName}
+                      onChange={(e) => update('placementOfficerName', e.target.value)}
+                      className={styles.textInput}
+                    />
+                  </div>
+                  <div className={styles.fieldGroup}>
+                    <label className={styles.fieldLabel}>
+                      TPO Official Email <span className={styles.requiredAsterisk}>*</span>
+                    </label>
+                    <input
+                      type="email"
+                      placeholder="e.g., placement@psgtech.edu"
+                      value={form.placementOfficerEmail}
+                      onChange={(e) => update('placementOfficerEmail', e.target.value)}
+                      className={styles.textInput}
+                    />
+                  </div>
+                  <div className={styles.fieldGroup}>
+                    <label className={styles.fieldLabel}>TPO Direct Mobile</label>
+                    <input
+                      type="tel"
+                      placeholder="e.g., +91 98422 12345"
+                      value={form.placementOfficerPhone}
+                      onChange={(e) => update('placementOfficerPhone', e.target.value)}
+                      className={styles.textInput}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* 3. Department Placement Coordinators */}
+              <div style={{ background: '#ffffff', padding: '18px 20px', border: '1px solid #cbd5e1' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <Users size={16} color="#1c2d81" />
+                    <h3 style={{ fontSize: '0.92rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>
+                      Department Placement Coordinators ({form.representatives?.length || 0})
+                    </h3>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowAddRep(true)}
+                    className={styles.backButton}
+                    style={{ padding: '6px 14px', fontSize: '0.78rem' }}
+                  >
+                    <Plus size={14} /> Add Coordinator
+                  </button>
+                </div>
+
+                {showAddRep && (
+                  <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', padding: '16px', marginBottom: '16px' }}>
+                    <div className={styles.fieldsGrid}>
+                      <div className={styles.fieldGroup}>
+                        <label className={styles.fieldLabel}>Coordinator Name</label>
+                        <input
+                          type="text"
+                          placeholder="e.g., Prof. Anand M."
+                          value={newRep.name}
+                          onChange={(e) => setNewRep({ ...newRep, name: e.target.value })}
+                          className={styles.textInput}
+                        />
+                      </div>
+                      <div className={styles.fieldGroup}>
+                        <label className={styles.fieldLabel}>Designation</label>
+                        <input
+                          type="text"
+                          placeholder="e.g., Assistant Professor / CSE Coordinator"
+                          value={newRep.designation}
+                          onChange={(e) => setNewRep({ ...newRep, designation: e.target.value })}
+                          className={styles.textInput}
+                        />
+                      </div>
+                      <div className={styles.fieldGroup}>
+                        <label className={styles.fieldLabel}>Official Email</label>
+                        <input
+                          type="email"
+                          placeholder="e.g., anand.cse@psgtech.edu"
+                          value={newRep.email}
+                          onChange={(e) => setNewRep({ ...newRep, email: e.target.value })}
+                          className={styles.textInput}
+                        />
+                      </div>
+                      <div className={styles.fieldGroup}>
+                        <label className={styles.fieldLabel}>Department</label>
+                        <select
+                          value={newRep.department}
+                          onChange={(e) => setNewRep({ ...newRep, department: e.target.value })}
+                          className={styles.selectInput}
+                        >
+                          {DEPARTMENTS_LIST.map((d) => (
+                            <option key={d} value={d}>
+                              {d}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
+                      <button
+                        type="button"
+                        onClick={addRepresentative}
+                        className={styles.nextButton}
+                        style={{ padding: '8px 16px', fontSize: '0.8rem' }}
+                      >
+                        Save Coordinator
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setShowAddRep(false)}
+                        className={styles.backButton}
+                        style={{ padding: '8px 14px', fontSize: '0.8rem' }}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {form.representatives && form.representatives.length > 0 && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {form.representatives.map((rep, idx) => (
+                      <div
+                        key={idx}
+                        style={{
+                          padding: '12px 16px',
+                          background: '#f8fafc',
+                          border: '1px solid #e2e8f0',
+                          borderLeft: '3px solid #1c2d81',
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                        }}
+                      >
+                        <div>
+                          <strong style={{ color: '#0f172a', fontSize: '0.88rem' }}>{rep.name}</strong>
+                          <span style={{ fontSize: '0.76rem', color: '#64748b', marginLeft: '8px' }}>
+                            ({rep.designation} &middot; {rep.department})
+                          </span>
+                          <div style={{ fontSize: '0.74rem', color: '#94a3b8', marginTop: '2px' }}>
+                            {rep.email} {rep.phone && `&middot; ${rep.phone}`}
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => removeRepresentative(idx)}
+                          style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer' }}
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* ═════════ STEP 3: REVIEW & VERIFY ═════════ */}
+          {step === 3 && (
+            <div className={styles.sectionBlock}>
+              <div className={styles.sectionHeader}>
+                <div className={styles.sectionIconBox}>
+                  <ShieldCheck size={20} />
+                </div>
+                <div className={styles.sectionTitleGroup}>
+                  <h2 className={styles.sectionTitle}>4. Review Credentials &amp; Super Admin Verification</h2>
+                  <p className={styles.sectionSubtitle}>
+                    Review your campus profile details before final submission for Super Admin platform authorization.
+                  </p>
+                </div>
+              </div>
+
+              {/* Protocol Callout */}
+              <div className={styles.rewardCallout}>
+                <div className={styles.rewardCalloutIcon}>
+                  <ShieldCheck size={24} />
+                </div>
+                <div>
+                  <h4 className={styles.rewardCalloutTitle}>Super Administrator Verification Protocol</h4>
+                  <p className={styles.rewardCalloutText}>
+                    Upon submission, your institution enters <code>PENDING_SUPER_ADMIN_VERIFICATION</code>. The Super Administrator (`superadmin@beyon.io`) inspects your AISHE code, affiliating university status, and placement cell leadership before enabling corporate recruitment drives.
+                  </p>
+                </div>
+              </div>
+
+              {/* Review Summary Grid */}
+              <div className={styles.reviewGrid}>
+                <div className={styles.reviewCard}>
+                  <div className={styles.reviewCardHeader}>
+                    <span className={styles.reviewCardTitle}>
+                      <Building2 size={13} /> Campus Identity
+                    </span>
+                    <button type="button" onClick={() => setStep(0)} className={styles.editLinkBtn}>
+                      Edit
+                    </button>
+                  </div>
+                  <div className={styles.reviewRowsList}>
+                    <div className={styles.reviewRow}>
+                      <span className={styles.reviewLabel}>Institution Name</span>
+                      <span className={styles.reviewValue}>{form.institutionName}</span>
+                    </div>
+                    <div className={styles.reviewRow}>
+                      <span className={styles.reviewLabel}>Type</span>
+                      <span className={styles.reviewValue}>{form.institutionType}</span>
+                    </div>
+                    <div className={styles.reviewRow}>
+                      <span className={styles.reviewLabel}>AISHE / UGC Code</span>
+                      <span className={styles.reviewValue}>{form.institutionCode}</span>
+                    </div>
+                    <div className={styles.reviewRow}>
+                      <span className={styles.reviewLabel}>Official Email</span>
+                      <span className={styles.reviewValue}>{form.officialEmail}</span>
+                    </div>
+                    <div className={styles.reviewRow}>
+                      <span className={styles.reviewLabel}>Location</span>
+                      <span className={styles.reviewValue}>{form.city}, {form.state}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className={styles.reviewCard}>
+                  <div className={styles.reviewCardHeader}>
+                    <span className={styles.reviewCardTitle}>
+                      <GraduationCap size={13} /> Academic Metrics
+                    </span>
+                    <button type="button" onClick={() => setStep(1)} className={styles.editLinkBtn}>
+                      Edit
+                    </button>
+                  </div>
+                  <div className={styles.reviewRowsList}>
+                    <div className={styles.reviewRow}>
+                      <span className={styles.reviewLabel}>Affiliating Board</span>
+                      <span className={styles.reviewValue}>{form.affiliatedUniversity}</span>
+                    </div>
+                    <div className={styles.reviewRow}>
+                      <span className={styles.reviewLabel}>NAAC Grade</span>
+                      <span className={styles.reviewValue}>Grade {form.accreditationGrade}</span>
+                    </div>
+                    <div className={styles.reviewRow}>
+                      <span className={styles.reviewLabel}>NIRF Ranking</span>
+                      <span className={styles.reviewValue}>{form.nirfRank || 'N/A'}</span>
+                    </div>
+                    <div className={styles.reviewRow}>
+                      <span className={styles.reviewLabel}>Total Enrollment</span>
+                      <span className={styles.reviewValue}>{form.totalStudents} Students</span>
+                    </div>
+                    <div className={styles.reviewRow}>
+                      <span className={styles.reviewLabel}>Active Departments</span>
+                      <span className={styles.reviewValue}>{form.departmentsOffered?.length || 0} Branches</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className={styles.reviewCard} style={{ gridColumn: '1 / -1' }}>
+                  <div className={styles.reviewCardHeader}>
+                    <span className={styles.reviewCardTitle}>
+                      <UserCheck size={13} /> Leadership &amp; TPO Contacts
+                    </span>
+                    <button type="button" onClick={() => setStep(2)} className={styles.editLinkBtn}>
+                      Edit
+                    </button>
+                  </div>
+                  <div className={styles.reviewRowsList}>
+                    <div className={styles.reviewRow}>
+                      <span className={styles.reviewLabel}>Head of Institution</span>
+                      <span className={styles.reviewValue}>{form.principalName} ({form.principalEmail})</span>
+                    </div>
+                    <div className={styles.reviewRow}>
+                      <span className={styles.reviewLabel}>Placement Officer (TPO)</span>
+                      <span className={styles.reviewValue}>{form.placementOfficerName} ({form.placementOfficerEmail})</span>
+                    </div>
+                    <div className={styles.reviewRow}>
+                      <span className={styles.reviewLabel}>Department Coordinators</span>
+                      <span className={styles.reviewValue}>{form.representatives?.length || 0} Staff Appointed</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Compliance Checkbox */}
+              <label style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', cursor: 'pointer', background: '#ffffff', padding: '16px', border: '1px solid #cbd5e1' }}>
+                <input
+                  type="checkbox"
+                  checked={agreeTerms}
+                  onChange={(e) => setAgreeTerms(e.target.checked)}
+                  style={{ width: '18px', height: '18px', marginTop: '2px', cursor: 'pointer', accentColor: '#1c2d81' }}
+                />
+                <span style={{ fontSize: '0.84rem', color: '#334155', lineHeight: 1.5 }}>
+                  I certify under regulatory penalty that the institutional information, AISHE codes, NAAC accreditation, and placement contact details provided are authentic and authorized by campus leadership for Super Admin validation.
+                </span>
+              </label>
+            </div>
+          )}
+
+          {/* ── Navigation Footer Actions ── */}
+          <div className={styles.navigationFooter}>
+            {step > 0 ? (
+              <button type="button" onClick={handlePrev} className={styles.backButton}>
+                <ChevronLeft size={16} />
+                <span>Previous Step</span>
+              </button>
+            ) : <div />}
+
+            <span className={styles.stepCounterText}>
+              Step {step + 1} of {STEPS.length}
+            </span>
+
+            {step < STEPS.length - 1 ? (
+              <button type="button" onClick={handleNext} className={styles.nextButton}>
+                <span>Continue to {STEPS[step + 1].label}</span>
+                <ChevronRight size={16} />
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={handleSubmit}
+                disabled={loading || !agreeTerms}
+                className={styles.nextButton}
+                style={{ background: '#15803d', borderColor: '#15803d' }}
+              >
+                {loading ? (
+                  <span>Submitting Credentials...</span>
+                ) : (
+                  <>
+                    <ShieldCheck size={18} />
+                    <span>Submit for Super Admin Verification</span>
+                  </>
+                )}
+              </button>
+            )}
+          </div>
+        </main>
+      </div>
     </div>
   );
 }

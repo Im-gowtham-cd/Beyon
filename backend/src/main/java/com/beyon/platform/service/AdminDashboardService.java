@@ -113,7 +113,7 @@ public class AdminDashboardService {
                 "ip.placement_rate AS placementRate, ip.average_package AS avgPackage, u.status, u.profile_status AS profileStatus, " +
                 "ip.created_at AS createdAt " +
                 "FROM institution_profiles ip " +
-                "LEFT JOIN users u ON u.id = ip.user_id " +
+                "INNER JOIN users u ON u.id = ip.user_id " +
                 "ORDER BY ip.created_at DESC"
             );
         } catch (Exception e) {
@@ -128,7 +128,7 @@ public class AdminDashboardService {
                 "cp.city, cp.state, cp.company_type AS tier, " +
                 "u.status, u.email, cp.created_at AS createdAt " +
                 "FROM company_profiles cp " +
-                "LEFT JOIN users u ON u.id = cp.user_id " +
+                "INNER JOIN users u ON u.id = cp.user_id " +
                 "ORDER BY cp.created_at DESC"
             );
         } catch (Exception e) {
