@@ -146,9 +146,25 @@ export function StudentOnboarding() {
   const [newSkillCategory, setNewSkillCategory] = useState('Languages');
   const [newSkillProficiency, setNewSkillProficiency] = useState<'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED' | 'EXPERT'>('INTERMEDIATE');
 
-  // Pre-load existing profile data if available
+  // Registered Institutions list from Beyon DB
+  const [registeredInstitutions, setRegisteredInstitutions] = useState<any[]>([]);
+  const [isCustomInstitution, setIsCustomInstitution] = useState(false);
+
+  // Pre-load existing profile data and registered institutions
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    async function loadInstitutions() {
+      try {
+        const res = await api.get('/onboarding/institutions');
+        const list = Array.isArray((res as any)?.data) ? (res as any).data : Array.isArray(res) ? res : [];
+        setRegisteredInstitutions(list);
+      } catch {
+        /* fallback */
+      }
+    }
+    loadInstitutions();
+
     async function loadExistingProfile() {
       try {
         const res = await api.get('/student/profile');
@@ -626,17 +642,68 @@ export function StudentOnboarding() {
               <div className={styles.fieldsGrid}>
                 <div className={styles.fieldGroup} style={{ gridColumn: '1 / -1' }}>
                   <label className={styles.fieldLabel} htmlFor="institution">
-                    <Building2 size={13} /> College / University Name <span className={styles.requiredAsterisk}>*</span>
+                    <Building2 size={13} /> Select Registered College / University <span className={styles.requiredAsterisk}>*</span>
                   </label>
-                  <input
-                    id="institution"
-                    type="text"
-                    className={styles.textInput}
-                    placeholder="e.g. PSG College of Technology, Coimbatore"
-                    value={form.institution}
-                    onChange={e => update('institution', e.target.value)}
-                  />
-                  <span className={styles.fieldHint}>Must match your official institutional email domain</span>
+
+                  {registeredInstitutions.length > 0 ? (
+                    <>
+                      <select
+                        id="institution"
+                        className={styles.selectInput}
+                        value={isCustomInstitution ? '__CUSTOM__' : form.institution}
+                        onChange={e => {
+                          const val = e.target.value;
+                          if (val === '__CUSTOM__') {
+                            setIsCustomInstitution(true);
+                            update('institution', '');
+                          } else {
+                            setIsCustomInstitution(false);
+                            update('institution', val);
+                          }
+                        }}
+                      >
+                        <option value="">-- Select your registered college in Beyon --</option>
+                        {registeredInstitutions.map((inst: any) => (
+                          <option key={inst.id || inst.name} value={inst.name}>
+                            {inst.name} {inst.city ? `(${inst.city}, ${inst.state || ''})` : ''} {inst.grade ? `[NAAC ${inst.grade}]` : ''}
+                          </option>
+                        ))}
+                        <option value="__CUSTOM__">+ Other / Enter College Name Manually</option>
+                      </select>
+
+                      {isCustomInstitution && (
+                        <div style={{ marginTop: '8px' }}>
+                          <input
+                            type="text"
+                            className={styles.textInput}
+                            placeholder="Enter your college / institution name"
+                            value={form.institution}
+                            onChange={e => update('institution', e.target.value)}
+                            autoFocus
+                          />
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <input
+                      id="institution"
+                      type="text"
+                      className={styles.textInput}
+                      placeholder="e.g. Beyon Engineering College, Coimbatore"
+                      value={form.institution}
+                      onChange={e => update('institution', e.target.value)}
+                    />
+                  )}
+
+                  <span className={styles.fieldHint}>
+                    {form.institution && registeredInstitutions.some((i: any) => i.name === form.institution) ? (
+                      <span style={{ color: '#15803d', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                        ✓ Verified Beyon Campus Partner &middot; Automatic Placement Roster Synchronization
+                      </span>
+                    ) : (
+                      'Choose from verified Beyon institutions or enter your institution name'
+                    )}
+                  </span>
                 </div>
 
                 <div className={styles.fieldGroup}>

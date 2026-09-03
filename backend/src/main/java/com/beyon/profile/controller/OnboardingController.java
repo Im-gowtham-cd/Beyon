@@ -38,6 +38,7 @@ public class OnboardingController {
     private final StudentLinkRepository studentLinkRepository;
     private final InstitutionStudentRepository institutionStudentRepository;
     private final CoinService coinService;
+    private final org.springframework.jdbc.core.JdbcTemplate jdbcTemplate;
 
     public OnboardingController(UserRepository userRepository,
                                 StudentProfileRepository studentProfileRepository,
@@ -48,7 +49,8 @@ public class OnboardingController {
                                 StudentCertificationRepository studentCertificationRepository,
                                 StudentLinkRepository studentLinkRepository,
                                 InstitutionStudentRepository institutionStudentRepository,
-                                CoinService coinService) {
+                                CoinService coinService,
+                                org.springframework.jdbc.core.JdbcTemplate jdbcTemplate) {
         this.userRepository = userRepository;
         this.studentProfileRepository = studentProfileRepository;
         this.companyProfileRepository = companyProfileRepository;
@@ -59,6 +61,20 @@ public class OnboardingController {
         this.studentLinkRepository = studentLinkRepository;
         this.institutionStudentRepository = institutionStudentRepository;
         this.coinService = coinService;
+        this.jdbcTemplate = jdbcTemplate;
+    }
+
+    @GetMapping("/institutions")
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getRegisteredInstitutions() {
+        List<Map<String, Object>> institutions = jdbcTemplate.queryForList(
+                "SELECT ip.id, ip.user_id AS userId, ip.institution_name AS name, ip.institution_code AS code, " +
+                "ip.institution_type AS type, ip.city, ip.state, ip.accreditation_grade AS grade, " +
+                "ip.accreditations AS accreditations " +
+                "FROM institution_profiles ip " +
+                "INNER JOIN users u ON u.id = ip.user_id " +
+                "ORDER BY ip.institution_name ASC"
+        );
+        return ResponseEntity.ok(ApiResponse.ok(institutions));
     }
 
     @PostMapping("/student")
