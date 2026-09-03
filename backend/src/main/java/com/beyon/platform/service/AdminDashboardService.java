@@ -39,14 +39,15 @@ public class AdminDashboardService {
             Long totalStudents = queryCount("SELECT COUNT(*) FROM users WHERE role = 'STUDENT'");
             Long totalInstitutions = queryCount("SELECT COUNT(*) FROM users WHERE role = 'INSTITUTION'");
             Long totalCompanies = queryCount("SELECT COUNT(*) FROM users WHERE role = 'COMPANY'");
-            Long totalAssessments = queryCount("SELECT COUNT(*) FROM assessments");
-            Long totalTestAttempts = queryCount("SELECT COUNT(*) FROM test_sessions");
+            Long totalAssessments = queryCount("SELECT COUNT(*) FROM tests");
+            Long totalTestAttempts = queryCount("SELECT COUNT(*) FROM assessment_audit_events");
             Long totalApplications = queryCount("SELECT COUNT(*) FROM recruitment_applications");
-            Long totalPlacements = queryCount("SELECT COUNT(*) FROM recruitment_placements");
-            Long totalQuestions = queryCount("SELECT COUNT(*) FROM practice_questions");
+            Long totalPlacements = queryCount("SELECT COUNT(*) FROM recruitment_applications WHERE status = 'SELECTED' OR status = 'OFFERED'");
+            Long totalQuestions = queryCount("SELECT COUNT(*) FROM questions");
             Long totalOpportunities = queryCount("SELECT COUNT(*) FROM company_opportunities");
             Long totalCoinsEarned = querySum("SELECT SUM(balance) FROM coin_wallets");
-            Long pendingVerifications = queryCount("SELECT COUNT(*) FROM users WHERE profile_status LIKE 'PENDING%'");
+            Long totalCoinsSpent = querySum("SELECT SUM(total_spent) FROM coin_wallets");
+            Long pendingVerifications = queryCount("SELECT COUNT(*) FROM users WHERE status = 'PENDING_SUPER_ADMIN_VERIFICATION'");
 
             result.put("totalUsers", totalUsers != null ? totalUsers : 0);
             result.put("activeUsers", activeUsers != null ? activeUsers : 0);
@@ -60,18 +61,23 @@ public class AdminDashboardService {
             result.put("totalQuestions", totalQuestions != null ? totalQuestions : 0);
             result.put("totalOpportunities", totalOpportunities != null ? totalOpportunities : 0);
             result.put("totalCoinsEarned", totalCoinsEarned != null ? totalCoinsEarned : 0);
-            result.put("totalCoinsSpent", 38500L);
+            result.put("totalCoinsSpent", totalCoinsSpent != null ? totalCoinsSpent : 0);
             result.put("pendingVerifications", pendingVerifications != null ? pendingVerifications : 0);
             result.put("systemUptime", "99.98%");
             result.put("databaseEngine", "Dolt SQL Server v1.40.0");
         } catch (Exception e) {
-            result.put("totalUsers", 190);
-            result.put("activeUsers", 185);
-            result.put("activeInstitutions", 25);
-            result.put("activeCompanies", 30);
-            result.put("totalAssessments", 16);
-            result.put("totalApplications", 293);
-            result.put("totalPlacements", 61);
+            result.put("totalUsers", 0);
+            result.put("activeUsers", 0);
+            result.put("activeInstitutions", 0);
+            result.put("activeCompanies", 0);
+            result.put("totalAssessments", 0);
+            result.put("totalApplications", 0);
+            result.put("totalPlacements", 0);
+            result.put("totalQuestions", 0);
+            result.put("totalOpportunities", 0);
+            result.put("totalCoinsEarned", 0);
+            result.put("totalCoinsSpent", 0);
+            result.put("pendingVerifications", 0);
         }
         return result;
     }

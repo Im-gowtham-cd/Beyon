@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Users, Building2, Briefcase, Server, Database, RefreshCw, Award } from 'lucide-react';
 import styles from './AdminHome.module.css';
 
@@ -37,10 +37,10 @@ export function AdminDashboardPage() {
     fetchTelemetry();
   }, []);
 
-  const totalUsers = overview?.totalUsers || 190;
-  const activeInstitutions = overview?.activeInstitutions || 29;
-  const activeCompanies = overview?.activeCompanies || 34;
-  const totalPlacements = overview?.totalPlacements || 61;
+  const totalUsers = overview?.totalUsers ?? 0;
+  const activeInstitutions = overview?.activeInstitutions ?? 0;
+  const activeCompanies = overview?.activeCompanies ?? 0;
+  const totalPlacements = overview?.totalPlacements ?? 0;
 
   return (
     <div className={styles.page}>
