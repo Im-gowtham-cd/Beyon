@@ -39,6 +39,11 @@ public class RecruitmentController {
         return ResponseEntity.ok(ApiResponse.ok(recruitmentService.getDriveApplications(driveId)));
     }
 
+    @GetMapping("/applications")
+    public ResponseEntity<ApiResponse<List<RecruitmentApplication>>> getAllApplications() {
+        return ResponseEntity.ok(ApiResponse.ok(recruitmentService.getAllApplications()));
+    }
+
     @PutMapping("/{applicationId}/status")
     public ResponseEntity<ApiResponse<RecruitmentApplication>> updateStatus(
             Authentication auth,

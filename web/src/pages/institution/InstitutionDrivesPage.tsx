@@ -6,7 +6,7 @@ import {
   Check,
   Users,
 } from 'lucide-react';
-import styles from '../../assessment/pages/AssessmentBuilderPage.module.css';
+import styles from './InstitutionDrivesPage.module.css';
 
 interface InstitutionalDrive {
   id: string;

@@ -212,6 +212,22 @@ bun run dev:all
 
 ---
 
+## 🔐 Test Accounts & Quick Login Credentials
+
+All test accounts share the universal password: **`BeyonTest!2026#Super`**
+
+| Portal | URL Path | Login Email | Role | Notes |
+|---|---|---|:---:|---|
+| **Super Admin Portal** | `http://localhost:5173/admin/home` | `superadmin@example.beyon.test` | `ADMIN` | Full root access, metrics & audit log |
+| **Institution (TPO) Portal** | `http://localhost:5173/institution/home` | `institution.admin@example.beyon.test` | `INSTITUTION` | Campus drives, student batch roster |
+| **Corporate Recruiter Portal** | `http://localhost:5173/company/home` | `recruiter@example.beyon.test` | `COMPANY` | Microsoft IDC recruiter, pipeline |
+| **Student Workspace** | `http://localhost:5173/student/home` | `student.strong@example.beyon.test` | `STUDENT` | High performer, CGPA 9.10, verified |
+| **Direct Messaging Hub** | `http://localhost:5173/institution/messages` | `institution.admin@example.beyon.test` | Cross-Role | Real-time chat across all roles |
+
+> For the complete directory of personas, exam candidates, college admins, and recruiters, see [docs/TEST_ACCOUNTS.md](docs/TEST_ACCOUNTS.md).
+
+---
+
 ## Database Seeding Commands
 
 ```bash

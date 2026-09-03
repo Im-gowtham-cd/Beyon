@@ -421,35 +421,46 @@ export function AssessmentPage() {
             <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b' }}>All attempts verified via Beyon AI Engine</span>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column' }}>
-            {[
-              {
-                id: 'att-1',
-                test: 'CUDA & GPU Kernel Architecture Benchmark',
-                date: 'Aug 26, 2026',
-                score: '94%',
-                status: 'PASSED',
-                integrity: 'CLEAN',
-                violations: 0,
-              },
-              {
-                id: 'att-2',
-                test: 'Distributed Systems & Consensus Architecture',
-                date: 'Aug 22, 2026',
-                score: '88%',
-                status: 'PASSED',
-                integrity: 'CLEAN',
-                violations: 0,
-              },
-              {
-                id: 'att-3',
-                test: 'Enterprise Full-Stack & Microservices',
-                date: 'Aug 18, 2026',
-                score: '78%',
-                status: 'PASSED',
-                integrity: 'VERIFIED',
-                violations: 1,
-              },
-            ].map(att => (
+            {((testAttempts && testAttempts.length > 0)
+              ? testAttempts.map((a: any, idx: number) => ({
+                  id: a.id || `att-${idx}`,
+                  test: a.testTitle || a.title || 'Technical Assessment Benchmark',
+                  date: a.completedAt ? new Date(a.completedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Recently Completed',
+                  score: a.score != null ? `${a.score}%` : '85%',
+                  status: a.status || 'PASSED',
+                  integrity: a.integrityStatus || 'CLEAN',
+                  violations: a.warningCount || 0,
+                }))
+              : [
+                  {
+                    id: 'att-1',
+                    test: 'CUDA & GPU Kernel Architecture Benchmark',
+                    date: 'Aug 26, 2026',
+                    score: '94%',
+                    status: 'PASSED',
+                    integrity: 'CLEAN',
+                    violations: 0,
+                  },
+                  {
+                    id: 'att-2',
+                    test: 'Distributed Systems & Consensus Architecture',
+                    date: 'Aug 22, 2026',
+                    score: '88%',
+                    status: 'PASSED',
+                    integrity: 'CLEAN',
+                    violations: 0,
+                  },
+                  {
+                    id: 'att-3',
+                    test: 'Enterprise Full-Stack & Microservices',
+                    date: 'Aug 18, 2026',
+                    score: '78%',
+                    status: 'PASSED',
+                    integrity: 'VERIFIED',
+                    violations: 1,
+                  },
+                ]
+            ).map(att => (
               <div
                 key={att.id}
                 style={{
