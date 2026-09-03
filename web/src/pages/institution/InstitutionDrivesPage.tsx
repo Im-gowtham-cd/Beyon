@@ -49,76 +49,22 @@ export function InstitutionDrivesPage() {
       const data = Array.isArray(res) ? res : (res as any)?.data || [];
       const mapped: InstitutionalDrive[] = data.map((d: any, idx: number) => ({
         id: d.id || `drv-${idx}`,
-        companyName: d.companyName || d.company?.name || 'Enterprise Partner',
-        role: d.title || d.role || 'Software Development Engineer',
-        driveType: (d.driveType || (idx % 2 === 0 ? 'ON_CAMPUS' : 'VIRTUAL_PLACEMENT')) as any,
-        packageLpa: Number(d.packageLpa || d.ctcLpa || 14.5),
-        eligibleBatch: d.eligibleBatch || '2025 - 2026',
-        eligibleDepts: d.eligibleDepts || 'CSE, IT, ECE, AI&DS',
-        minCgpa: Number(d.minCgpa || 7.0),
-        status: (d.status || (idx === 0 ? 'PENDING_APPROVAL' : 'APPROVED')) as any,
-        applicantCount: Number(d.applicantCount || 42 + idx * 18),
-        maxSlots: Number(d.maxSlots || 120),
-        interviewDate: d.interviewDate || 'October 24, 2026',
-        description: d.description || 'Comprehensive campus recruitment drive comprising online proctored coding assessment, technical system design rounds, and HR interviews.',
-        location: d.location || 'Main Auditorium & Virtual Lab 3',
+        companyName: d.companyName || d.company?.name || 'Corporate Partner',
+        role: d.title || d.role || 'Campus Placement Drive',
+        driveType: (d.driveType || 'ON_CAMPUS') as any,
+        packageLpa: Number(d.packageLpa || d.ctcLpa || 0),
+        eligibleBatch: d.eligibleBatch || '2026',
+        eligibleDepts: d.eligibleDepts || 'All Streams',
+        minCgpa: Number(d.minCgpa || 0),
+        status: (d.status || 'APPROVED') as any,
+        applicantCount: Number(d.applicantCount || 0),
+        maxSlots: d.maxSlots ? Number(d.maxSlots) : undefined,
+        interviewDate: d.interviewDate || 'Scheduled on Confirmation',
+        description: d.description || 'Recruitment drive for campus batch students.',
+        location: d.location || 'Campus / Online Testing',
       }));
 
-      // If empty in DB, provide default active institutional placement slots
-      if (mapped.length === 0) {
-        setDrives([
-          {
-            id: 'drv-default-1',
-            companyName: 'Microsoft Corporation',
-            role: 'Software Engineering Associate',
-            driveType: 'ON_CAMPUS',
-            packageLpa: 28.5,
-            eligibleBatch: '2026 Graduating Batch',
-            eligibleDepts: 'CSE, IT, ECE, Data Science',
-            minCgpa: 8.0,
-            status: 'APPROVED',
-            applicantCount: 84,
-            maxSlots: 150,
-            interviewDate: 'Nov 12 - 14, 2026',
-            description: 'Core campus placement drive for Azure Cloud and AI platform engineering teams.',
-            location: 'Main Auditorium / Computer Center',
-          },
-          {
-            id: 'drv-default-2',
-            companyName: 'Amazon Web Services',
-            role: 'Cloud Support & DevOps Specialist',
-            driveType: 'ON_CAMPUS',
-            packageLpa: 22.0,
-            eligibleBatch: '2026 Graduating Batch',
-            eligibleDepts: 'All Engineering Disciplines',
-            minCgpa: 7.5,
-            status: 'PENDING_APPROVAL',
-            applicantCount: 112,
-            maxSlots: 200,
-            interviewDate: 'Dec 02, 2026',
-            description: 'Recruitment drive for Enterprise Cloud infrastructure and Solutions Architecture.',
-            location: 'Virtual Proctored Assessment',
-          },
-          {
-            id: 'drv-default-3',
-            companyName: 'Infosys Limited - Power Programmer',
-            role: 'Specialist Programmer (L3)',
-            driveType: 'VIRTUAL_PLACEMENT',
-            packageLpa: 14.5,
-            eligibleBatch: '2025 - 2026',
-            eligibleDepts: 'CSE, IT, ECE, EEE, Mech',
-            minCgpa: 7.0,
-            status: 'APPROVED',
-            applicantCount: 165,
-            maxSlots: 250,
-            interviewDate: 'Oct 28, 2026',
-            description: 'Elite programming track hiring with algorithmic assessment rounds.',
-            location: 'Online Beyon Proctored Terminal',
-          },
-        ]);
-      } else {
-        setDrives(mapped);
-      }
+      setDrives(mapped);
     } catch {
       setDrives([]);
     } finally {
@@ -301,7 +247,7 @@ export function InstitutionDrivesPage() {
           <Building2 size={44} style={{ color: '#94a3b8' }} />
           <h3 className={styles.emptyTitle}>No Placement Drives Found</h3>
           <p className={styles.emptyText}>
-            No incoming drives match the active filter criteria. Incoming recruitment slots from verified corporate partners will appear here.
+            No campus placement drives are currently scheduled in the system. When recruitment slots are published by corporate partners, they will appear here for slot approval and batch enrollment.
           </p>
         </div>
       ) : (
@@ -309,7 +255,7 @@ export function InstitutionDrivesPage() {
           {filteredDrives.map((d) => {
             const isApproved = d.status === 'APPROVED';
             const isPending = d.status === 'PENDING_APPROVAL';
-            const progressPct = d.maxSlots ? Math.min(100, Math.round((d.applicantCount / d.maxSlots) * 100)) : 60;
+            const progressPct = d.maxSlots ? Math.min(100, Math.round((d.applicantCount / d.maxSlots) * 100)) : 0;
 
             return (
               <div key={d.id} className={styles.driveCard}>
@@ -379,9 +325,11 @@ export function InstitutionDrivesPage() {
                       </span>
                       <span style={{ color: '#64748b' }}>{d.maxSlots ? `${d.maxSlots} Slots Capacity` : 'Open'}</span>
                     </div>
-                    <div className={styles.progressBar}>
-                      <div className={styles.progressFill} style={{ width: `${progressPct}%` }} />
-                    </div>
+                    {d.maxSlots && (
+                      <div className={styles.progressBar}>
+                        <div className={styles.progressFill} style={{ width: `${progressPct}%` }} />
+                      </div>
+                    )}
                   </div>
 
                   {/* Date & Location */}
@@ -511,55 +459,22 @@ export function InstitutionDrivesPage() {
                   Total Enrolled Candidates: {rosterModalDrive.applicantCount}
                 </span>
                 <span style={{ fontSize: '0.78rem', color: '#15803d', fontWeight: 600 }}>
-                  ✓ All Verified by Institution Cell
+                  ✓ Live Database Verification
                 </span>
               </div>
 
-              <div style={{ border: '1px solid #e2e8f0', borderRadius: '0px', overflow: 'hidden' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem' }}>
-                  <thead>
-                    <tr style={{ background: '#f1f5f9', borderBottom: '1px solid #cbd5e1', textAlign: 'left' }}>
-                      <th style={{ padding: '10px 12px', fontWeight: 700, color: '#334155' }}>Student Name</th>
-                      <th style={{ padding: '10px 12px', fontWeight: 700, color: '#334155' }}>Roll / USN</th>
-                      <th style={{ padding: '10px 12px', fontWeight: 700, color: '#334155' }}>Department</th>
-                      <th style={{ padding: '10px 12px', fontWeight: 700, color: '#334155' }}>CGPA</th>
-                      <th style={{ padding: '10px 12px', fontWeight: 700, color: '#334155' }}>Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {[
-                      { name: 'Aditya Sharma', usn: '19CSE042', dept: 'Computer Science', cgpa: 8.9, stage: 'Assessment Passed' },
-                      { name: 'Priya Sundaram', usn: '19IT018', dept: 'Information Tech', cgpa: 9.1, stage: 'Shortlisted' },
-                      { name: 'Rahul Varma', usn: '19ECE077', dept: 'Electronics & Comm', cgpa: 8.4, stage: 'Registered' },
-                      { name: 'Sneha Patel', usn: '19CSE110', dept: 'Computer Science', cgpa: 8.7, stage: 'Interview Ready' },
-                      { name: 'Karthik Raja', usn: '19AI029', dept: 'Artificial Intelligence', cgpa: 8.6, stage: 'Registered' },
-                    ].map((s, i) => (
-                      <tr key={i} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                        <td style={{ padding: '10px 12px', fontWeight: 700, color: '#0f172a' }}>{s.name}</td>
-                        <td style={{ padding: '10px 12px', color: '#64748b' }}><code>{s.usn}</code></td>
-                        <td style={{ padding: '10px 12px', color: '#334155' }}>{s.dept}</td>
-                        <td style={{ padding: '10px 12px', fontWeight: 700, color: '#15803d' }}>{s.cgpa}</td>
-                        <td style={{ padding: '10px 12px' }}>
-                          <span style={{ fontSize: '0.72rem', padding: '2px 8px', background: '#eff6ff', color: '#1c2d81', fontWeight: 700 }}>
-                            {s.stage}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              {rosterModalDrive.applicantCount === 0 ? (
+                <div style={{ padding: '30px', textAlign: 'center', color: '#64748b', fontSize: '0.85rem' }}>
+                  No candidate registrations have been submitted for this drive slot yet.
+                </div>
+              ) : (
+                <div style={{ padding: '20px', textAlign: 'center', color: '#64748b', fontSize: '0.85rem' }}>
+                  {rosterModalDrive.applicantCount} candidate applications are recorded in the recruitment pipeline.
+                </div>
+              )}
             </div>
 
             <div className={styles.modalFooter}>
-              <button
-                className={styles.btnPrimary}
-                onClick={() => {
-                  alert(`Exporting candidate roster CSV for ${rosterModalDrive.companyName}...`);
-                }}
-              >
-                <span>Export Candidate Roster (CSV)</span>
-              </button>
               <button className={styles.btnSecondary} onClick={() => setRosterModalDrive(null)}>
                 Close
               </button>

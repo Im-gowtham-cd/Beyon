@@ -1,246 +1,70 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   BookOpen,
   Search,
-  Sparkles,
   TrendingUp,
   Award,
   Layers,
-  Download,
   FileCheck2,
   ChevronRight,
   X,
   ShieldCheck,
   Brain,
   Code2,
-  Server,
-  Shield,
+  RefreshCw,
 } from 'lucide-react';
+import { api } from '../../services/api/client';
 import styles from './InstitutionCurriculumPage.module.css';
 
-interface CurriculumSkill {
+interface RealDBSkill {
   id: string;
   name: string;
-  category: string;
-  domain: string;
-  description: string;
-  industryDemand: 'HIGH' | 'VERY_HIGH' | 'MEDIUM' | 'LOW';
-  avgSalaryRange: string;
-  syllabusMapping: 'CORE_SEMESTER_COURSE' | 'RECOMMENDED_ELECTIVE' | 'INDUSTRY_ADDON' | 'LAB_PROJECT';
-  semesterMapped: string;
-  assessmentQuestionsCount: number;
-  gapStatus: 'ALIGNED' | 'NEEDS_UPGRADE' | 'GAP_DETECTED';
+  slug: string;
+  category: string | null;
+  description: string | null;
+  isActive?: boolean;
 }
 
 export function InstitutionCurriculumPage() {
-  const [domain, setDomain] = useState<string>('CSE');
+  const [skills, setSkills] = useState<RealDBSkill[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [selectedSkill, setSelectedSkill] = useState<CurriculumSkill | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [selectedSkill, setSelectedSkill] = useState<RealDBSkill | null>(null);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
 
-  const skillsData: Record<string, CurriculumSkill[]> = {
-    CSE: [
-      {
-        id: 'sk-cse-1',
-        name: 'Data Structures & Algorithmic Complexity',
-        category: 'Algorithms & Core Computing',
-        domain: 'Computer Science & Engineering',
-        description: 'Advanced trees, graphs, dynamic programming, topological sort, amortized analysis, and memory optimization in C++ & Java.',
-        industryDemand: 'VERY_HIGH',
-        avgSalaryRange: '₹14 - 32 LPA',
-        syllabusMapping: 'CORE_SEMESTER_COURSE',
-        semesterMapped: 'Semester 3 (CS201)',
-        assessmentQuestionsCount: 142,
-        gapStatus: 'ALIGNED',
-      },
-      {
-        id: 'sk-cse-2',
-        name: 'Distributed Systems & Microservices Architecture',
-        category: 'System Design & Infrastructure',
-        domain: 'Computer Science & Engineering',
-        description: 'CAP Theorem, consensus protocols (Raft), message queues (Kafka, RabbitMQ), gRPC communication, and containerized orchestration.',
-        industryDemand: 'VERY_HIGH',
-        avgSalaryRange: '₹18 - 38 LPA',
-        syllabusMapping: 'INDUSTRY_ADDON',
-        semesterMapped: 'Recommended 7th Sem Elective',
-        assessmentQuestionsCount: 88,
-        gapStatus: 'NEEDS_UPGRADE',
-      },
-      {
-        id: 'sk-cse-3',
-        name: 'Database Internals, Indexing & Distributed SQL',
-        category: 'Data Engineering & Persistence',
-        domain: 'Computer Science & Engineering',
-        description: 'B+ Tree indexing, query planner optimizations, ACID isolation levels (MVCC), Dolt versioning, and sharded MySQL architecture.',
-        industryDemand: 'HIGH',
-        avgSalaryRange: '₹12 - 28 LPA',
-        syllabusMapping: 'CORE_SEMESTER_COURSE',
-        semesterMapped: 'Semester 4 (CS402)',
-        assessmentQuestionsCount: 96,
-        gapStatus: 'ALIGNED',
-      },
-      {
-        id: 'sk-cse-4',
-        name: 'Operating System Kernel & Memory Virtualization',
-        category: 'Systems & Runtime',
-        domain: 'Computer Science & Engineering',
-        description: 'Process scheduling, POSIX threads, virtual memory paging, page replacement algorithms, and deadlock resolution.',
-        industryDemand: 'HIGH',
-        avgSalaryRange: '₹12 - 24 LPA',
-        syllabusMapping: 'CORE_SEMESTER_COURSE',
-        semesterMapped: 'Semester 4 (CS401)',
-        assessmentQuestionsCount: 74,
-        gapStatus: 'ALIGNED',
-      },
-      {
-        id: 'sk-cse-5',
-        name: 'Compiler Design & AST Code Generation',
-        category: 'Theoretical Computer Science',
-        domain: 'Computer Science & Engineering',
-        description: 'Lexical analysis, LR parsing, intermediate representations, register allocation, and LLVM toolchain.',
-        industryDemand: 'MEDIUM',
-        avgSalaryRange: '₹10 - 22 LPA',
-        syllabusMapping: 'CORE_SEMESTER_COURSE',
-        semesterMapped: 'Semester 6 (CS602)',
-        assessmentQuestionsCount: 52,
-        gapStatus: 'ALIGNED',
-      },
-    ],
-    AI: [
-      {
-        id: 'sk-ai-1',
-        name: 'Deep Learning & Transformer Architectures (LLMs)',
-        category: 'Artificial Intelligence & Neural Nets',
-        domain: 'Artificial Intelligence & Data Science',
-        description: 'Self-attention mechanisms, multi-head attention, PyTorch distributed training, LoRA fine-tuning, and quantized model deployment.',
-        industryDemand: 'VERY_HIGH',
-        avgSalaryRange: '₹20 - 45 LPA',
-        syllabusMapping: 'RECOMMENDED_ELECTIVE',
-        semesterMapped: 'Semester 6 (AI603)',
-        assessmentQuestionsCount: 110,
-        gapStatus: 'NEEDS_UPGRADE',
-      },
-      {
-        id: 'sk-ai-2',
-        name: 'Retrieval-Augmented Generation (RAG) & Vector DBs',
-        category: 'Generative AI & Search',
-        domain: 'Artificial Intelligence & Data Science',
-        description: 'Dense embeddings, HNSW vector indexing (pgvector, Milvus), hybrid semantic search, chunking strategies, and re-ranking pipelines.',
-        industryDemand: 'VERY_HIGH',
-        avgSalaryRange: '₹18 - 40 LPA',
-        syllabusMapping: 'INDUSTRY_ADDON',
-        semesterMapped: 'Industry Add-on Module',
-        assessmentQuestionsCount: 64,
-        gapStatus: 'GAP_DETECTED',
-      },
-      {
-        id: 'sk-ai-3',
-        name: 'Computer Vision & Real-Time Object Detection',
-        category: 'Vision Intelligence',
-        domain: 'Artificial Intelligence & Data Science',
-        description: 'CNN architectures, YOLOv8/v10 inference, OpenCV video stream pipelines, image segmentation, and edge AI deployment.',
-        industryDemand: 'HIGH',
-        avgSalaryRange: '₹14 - 30 LPA',
-        syllabusMapping: 'CORE_SEMESTER_COURSE',
-        semesterMapped: 'Semester 5 (AI502)',
-        assessmentQuestionsCount: 82,
-        gapStatus: 'ALIGNED',
-      },
-      {
-        id: 'sk-ai-4',
-        name: 'Feature Engineering & Classical Statistical ML',
-        category: 'Applied Machine Learning',
-        domain: 'Artificial Intelligence & Data Science',
-        description: 'Random Forests, XGBoost, PCA dimensionality reduction, cross-validation tuning, and Scikit-Learn pipelines.',
-        industryDemand: 'HIGH',
-        avgSalaryRange: '₹12 - 25 LPA',
-        syllabusMapping: 'CORE_SEMESTER_COURSE',
-        semesterMapped: 'Semester 4 (AI401)',
-        assessmentQuestionsCount: 95,
-        gapStatus: 'ALIGNED',
-      },
-    ],
-    CLOUD: [
-      {
-        id: 'sk-cld-1',
-        name: 'Kubernetes Cluster Administration & GitOps',
-        category: 'Cloud Native & Orchestration',
-        domain: 'Cloud & DevOps Infrastructure',
-        description: 'Kubelet architectures, ingress controllers, Helm charts, ArgoCD automated deployment, and pod autoscaling policies.',
-        industryDemand: 'VERY_HIGH',
-        avgSalaryRange: '₹16 - 36 LPA',
-        syllabusMapping: 'RECOMMENDED_ELECTIVE',
-        semesterMapped: 'Semester 7 (IT702)',
-        assessmentQuestionsCount: 78,
-        gapStatus: 'NEEDS_UPGRADE',
-      },
-      {
-        id: 'sk-cld-2',
-        name: 'Infrastructure as Code (Terraform & AWS CDK)',
-        category: 'Automated Provisioning',
-        domain: 'Cloud & DevOps Infrastructure',
-        description: 'Declarative state files, multi-region VPC topologies, IAM security policies, and CI/CD automated cloud runners.',
-        industryDemand: 'HIGH',
-        avgSalaryRange: '₹14 - 30 LPA',
-        syllabusMapping: 'INDUSTRY_ADDON',
-        semesterMapped: 'Industry Add-on Module',
-        assessmentQuestionsCount: 58,
-        gapStatus: 'GAP_DETECTED',
-      },
-      {
-        id: 'sk-cld-3',
-        name: 'Cloud Networking, VPC Peering & DNS Routing',
-        category: 'Enterprise Cloud',
-        domain: 'Cloud & DevOps Infrastructure',
-        description: 'Subnet CIDR partitioning, NAT gateways, route tables, load balancer SSL termination, and Cloudflare CDN caching.',
-        industryDemand: 'HIGH',
-        avgSalaryRange: '₹12 - 26 LPA',
-        syllabusMapping: 'CORE_SEMESTER_COURSE',
-        semesterMapped: 'Semester 5 (IT504)',
-        assessmentQuestionsCount: 67,
-        gapStatus: 'ALIGNED',
-      },
-    ],
-    SECURITY: [
-      {
-        id: 'sk-sec-1',
-        name: 'Zero-Trust Authentication & OAuth2 / OpenID Connect',
-        category: 'Application Security',
-        domain: 'Cyber Security & Cryptography',
-        description: 'JWT validation, cryptographic signatures (RS256), PKCE authorization flows, IDOR mitigation, and Spring Security filters.',
-        industryDemand: 'VERY_HIGH',
-        avgSalaryRange: '₹16 - 35 LPA',
-        syllabusMapping: 'CORE_SEMESTER_COURSE',
-        semesterMapped: 'Semester 6 (CS604)',
-        assessmentQuestionsCount: 84,
-        gapStatus: 'ALIGNED',
-      },
-      {
-        id: 'sk-sec-2',
-        name: 'Network Penetration Testing & Web Vulnerability Audits',
-        category: 'Offensive Security & Red Teaming',
-        domain: 'Cyber Security & Cryptography',
-        description: 'OWASP Top 10 vulnerabilities, SQL injection prevention, XSS/CSRF exploits, Burp Suite intercepting, and CVE scanning.',
-        industryDemand: 'HIGH',
-        avgSalaryRange: '₹14 - 32 LPA',
-        syllabusMapping: 'RECOMMENDED_ELECTIVE',
-        semesterMapped: 'Semester 7 (CS705)',
-        assessmentQuestionsCount: 72,
-        gapStatus: 'ALIGNED',
-      },
-    ],
+  const fetchSkills = async () => {
+    setLoading(true);
+    try {
+      const res = await api.get<RealDBSkill[]>('/skills');
+      const data = Array.isArray(res) ? res : (res as any)?.data || [];
+      setSkills(data);
+    } catch {
+      setSkills([]);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const currentSkills = skillsData[domain] || skillsData.CSE;
+  useEffect(() => {
+    fetchSkills();
+  }, []);
 
-  const filteredSkills = currentSkills.filter((s) => {
-    return (
+  // Compute distinct categories from real DB rows
+  const categories = Array.from(
+    new Set(skills.map((s) => s.category).filter((c): c is string => Boolean(c && c.trim())))
+  );
+
+  const filteredSkills = skills.filter((s) => {
+    const matchesSearch =
       !searchQuery ||
       s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      s.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      s.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      s.semesterMapped.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+      (s.category && s.category.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (s.description && s.description.toLowerCase().includes(searchQuery.toLowerCase()));
+
+    const matchesCategory = selectedCategory === 'ALL' || s.category === selectedCategory;
+
+    return matchesSearch && matchesCategory;
   });
 
   const handleExportGapReport = () => {
@@ -262,14 +86,14 @@ export function InstitutionCurriculumPage() {
           </span>
           <h1 className={styles.title}>Academic Curriculum &amp; Industry Skill Taxonomy</h1>
           <p className={styles.subtitle}>
-            Benchmark campus engineering syllabus against top corporate hiring assessments and discover real-time skill demand.
+            Benchmark campus engineering syllabus against database skill taxonomies and explore competency demands.
           </p>
         </div>
 
         <div className={styles.headerActions}>
-          <button className={styles.btnSecondary} onClick={() => alert('Syncing live industry taxonomy updates from Dolt DB...')}>
-            <Sparkles size={14} style={{ color: '#d97706' }} />
-            <span>Sync Industry Taxonomy</span>
+          <button className={styles.btnSecondary} onClick={fetchSkills}>
+            <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
+            <span>Refresh Taxonomy</span>
           </button>
           <button className={styles.btnPrimary} onClick={handleExportGapReport}>
             <FileCheck2 size={14} />
@@ -308,74 +132,73 @@ export function InstitutionCurriculumPage() {
             </div>
           </div>
           <span className={styles.statValue} style={{ color: '#1c2d81' }}>
-            420 Skills
+            {skills.length} Skills
           </span>
-          <span className={styles.statSubtext}>Across 5 engineering disciplines</span>
+          <span className={styles.statSubtext}>Verified in Dolt database</span>
         </div>
 
         <div className={styles.statCard}>
           <div className={styles.statCardTop}>
-            <span className={styles.statLabel}>High Demand Skills</span>
+            <span className={styles.statLabel}>Skill Domains</span>
             <div className={styles.statIcon} style={{ color: '#15803d', background: '#f0fdf4' }}>
               <TrendingUp size={16} />
             </div>
           </div>
           <span className={styles.statValue} style={{ color: '#15803d' }}>
-            154 Units
+            {categories.length} Categories
           </span>
-          <span className={styles.statSubtext}>Critical hiring demand in Tier-1 firms</span>
+          <span className={styles.statSubtext}>Active academic clusters</span>
         </div>
 
         <div className={styles.statCard}>
           <div className={styles.statCardTop}>
-            <span className={styles.statLabel}>Curriculum Alignment</span>
+            <span className={styles.statLabel}>Active Skill Nodes</span>
             <div className={styles.statIcon} style={{ color: '#0284c7', background: '#f0f9ff' }}>
               <Award size={16} />
             </div>
           </div>
           <span className={styles.statValue} style={{ color: '#0284c7' }}>
-            88.4% Match
+            {skills.filter((s) => s.isActive !== false).length} Active
           </span>
-          <span className={styles.statSubtext}>AICTE Model Syllabus benchmark</span>
+          <span className={styles.statSubtext}>Available for evaluation</span>
         </div>
 
         <div className={styles.statCard}>
           <div className={styles.statCardTop}>
-            <span className={styles.statLabel}>Avg Industry CTC Anchor</span>
+            <span className={styles.statLabel}>Taxonomy Source</span>
             <div className={styles.statIcon} style={{ color: '#b45309', background: '#fef3c7' }}>
               <Brain size={16} />
             </div>
           </div>
-          <span className={styles.statValue} style={{ color: '#b45309' }}>
-            ₹18.5 LPA
+          <span className={styles.statValue} style={{ color: '#b45309', fontSize: '1.25rem' }}>
+            Dolt DB
           </span>
-          <span className={styles.statSubtext}>Median package for top aligned skills</span>
+          <span className={styles.statSubtext}>Live version-controlled ledger</span>
         </div>
       </div>
 
-      {/* Domain Selection Tabs */}
+      {/* Dynamic Category Bar */}
       <div className={styles.domainBar}>
-        {[
-          { key: 'CSE', label: 'Computer Science & Engg', icon: Code2 },
-          { key: 'AI', label: 'AI & Data Science', icon: Brain },
-          { key: 'CLOUD', label: 'Cloud & DevOps Systems', icon: Server },
-          { key: 'SECURITY', label: 'Cyber Security & Cryptography', icon: Shield },
-        ].map((d) => {
-          const Icon = d.icon;
-          return (
-            <button
-              key={d.key}
-              className={`${styles.domainChip} ${domain === d.key ? styles.domainActive : ''}`}
-              onClick={() => setDomain(d.key)}
-            >
-              <Icon size={14} />
-              <span>{d.label}</span>
-            </button>
-          );
-        })}
+        <button
+          className={`${styles.domainChip} ${selectedCategory === 'ALL' ? styles.domainActive : ''}`}
+          onClick={() => setSelectedCategory('ALL')}
+        >
+          <Code2 size={14} />
+          <span>All Domains ({skills.length})</span>
+        </button>
+
+        {categories.map((cat) => (
+          <button
+            key={cat}
+            className={`${styles.domainChip} ${selectedCategory === cat ? styles.domainActive : ''}`}
+            onClick={() => setSelectedCategory(cat)}
+          >
+            <span>{cat}</span>
+          </button>
+        ))}
       </div>
 
-      {/* Main Grid: Skills List + Sidebar Analysis */}
+      {/* Main Grid */}
       <div className={styles.layoutGrid}>
         {/* Left Column: Skills Nodes */}
         <div className={styles.skillsCard}>
@@ -385,106 +208,73 @@ export function InstitutionCurriculumPage() {
               <input
                 type="text"
                 className={styles.searchInput}
-                placeholder="Search skills, course codes, syllabus mappings..."
+                placeholder="Search skills in database..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
             <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 600 }}>
-              Showing {filteredSkills.length} competencies
+              Showing {filteredSkills.length} of {skills.length} DB records
             </span>
           </div>
 
-          <div className={styles.skillNodesList}>
-            {filteredSkills.map((s) => (
-              <div key={s.id} className={styles.skillNode} onClick={() => setSelectedSkill(s)}>
-                <div className={styles.skillNodeLeft}>
-                  <span className={styles.skillCategoryTag}>{s.category}</span>
-                  <h3 className={styles.skillName}>{s.name}</h3>
-                  <p className={styles.skillDesc}>{s.description}</p>
+          {filteredSkills.length === 0 ? (
+            <div style={{ padding: '40px 20px', textAlign: 'center', color: '#64748b' }}>
+              <p style={{ margin: 0, fontSize: '0.9rem' }}>No skills found matching the current search criteria.</p>
+            </div>
+          ) : (
+            <div className={styles.skillNodesList}>
+              {filteredSkills.map((s) => (
+                <div key={s.id} className={styles.skillNode} onClick={() => setSelectedSkill(s)}>
+                  <div className={styles.skillNodeLeft}>
+                    <span className={styles.skillCategoryTag}>{s.category || 'General Technology'}</span>
+                    <h3 className={styles.skillName}>{s.name}</h3>
+                    {s.description ? (
+                      <p className={styles.skillDesc}>{s.description}</p>
+                    ) : (
+                      <p className={styles.skillDesc}>Verified competency node in Dolt skill ledger.</p>
+                    )}
 
-                  <div className={styles.skillNodeMeta}>
-                    <span
-                      className={`${styles.demandTag} ${
-                        s.industryDemand === 'VERY_HIGH' || s.industryDemand === 'HIGH'
-                          ? styles.demandHigh
-                          : s.industryDemand === 'MEDIUM'
-                          ? styles.demandMedium
-                          : styles.demandLow
-                      }`}
-                    >
-                      {s.industryDemand.replace('_', ' ')} DEMAND
-                    </span>
-
-                    <span className={styles.salaryPill}>Avg CTC: {s.avgSalaryRange}</span>
-
-                    <span className={styles.syllabusStatusPill}>
-                      📚 {s.semesterMapped}
-                    </span>
-
-                    <span style={{ fontSize: '0.74rem', color: '#64748b', fontWeight: 600 }}>
-                      ⚡ {s.assessmentQuestionsCount} Questions Linked
-                    </span>
+                    <div className={styles.skillNodeMeta}>
+                      <span className={styles.salaryPill}>Slug: {s.slug}</span>
+                      <span className={styles.syllabusStatusPill}>
+                        ID: <code>{s.id.slice(0, 8)}...</code>
+                      </span>
+                    </div>
                   </div>
-                </div>
 
-                <ChevronRight size={18} style={{ color: '#94a3b8', flexShrink: 0 }} />
-              </div>
-            ))}
-          </div>
+                  <ChevronRight size={18} style={{ color: '#94a3b8', flexShrink: 0 }} />
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
-        {/* Right Sidebar: Department Syllabus Audit */}
+        {/* Right Sidebar */}
         <div className={styles.sidebarCard}>
           <h3 className={styles.sidebarTitle}>
             <Award size={18} style={{ color: '#1c2d81' }} />
-            <span>Syllabus Gap Breakdown</span>
+            <span>Curriculum Governance</span>
           </h3>
 
-          <div className={styles.gapItem}>
-            <div className={styles.gapItemTop}>
-              <span>Core Algorithms &amp; DS</span>
-              <span className={styles.gapScore}>96% Aligned</span>
-            </div>
-            <div className={styles.progressBar}>
-              <div className={styles.progressFill} style={{ width: '96%', background: '#15803d' }} />
-            </div>
+          <div style={{ fontSize: '0.82rem', color: '#334155', lineHeight: 1.5 }}>
+            All competencies listed in this matrix are synced live from the <strong>Dolt version-controlled skills ledger</strong>.
           </div>
 
           <div className={styles.gapItem}>
             <div className={styles.gapItemTop}>
-              <span>Distributed Systems &amp; Kafka</span>
-              <span className={`${styles.gapScore} ${styles.gapScoreWarning}`}>64% (Elective Gap)</span>
+              <span>Database Ledger Status</span>
+              <span className={styles.gapScore}>Synced</span>
             </div>
             <div className={styles.progressBar}>
-              <div className={styles.progressFill} style={{ width: '64%', background: '#b45309' }} />
-            </div>
-          </div>
-
-          <div className={styles.gapItem}>
-            <div className={styles.gapItemTop}>
-              <span>Generative AI &amp; LLM RAG</span>
-              <span className={`${styles.gapScore} ${styles.gapScoreWarning}`}>52% (Add-on Gap)</span>
-            </div>
-            <div className={styles.progressBar}>
-              <div className={styles.progressFill} style={{ width: '52%', background: '#dc2626' }} />
-            </div>
-          </div>
-
-          <div className={styles.gapItem}>
-            <div className={styles.gapItemTop}>
-              <span>Database MVCC &amp; SQL</span>
-              <span className={styles.gapScore}>91% Aligned</span>
-            </div>
-            <div className={styles.progressBar}>
-              <div className={styles.progressFill} style={{ width: '91%', background: '#15803d' }} />
+              <div className={styles.progressFill} style={{ width: '100%', background: '#15803d' }} />
             </div>
           </div>
 
           <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', padding: '12px', fontSize: '0.78rem', color: '#1e3a8a', lineHeight: 1.5 }}>
-            <strong>💡 Placement Office Recommendation:</strong>
+            <strong>💡 Academic Council Integration:</strong>
             <div style={{ marginTop: '4px' }}>
-              Incorporate <em>RAG &amp; Vector Databases</em> as an official 6th-semester micro-credit course to boost Tier-1 corporate shortlist rates by an estimated +22%.
+              Use the export tool to map these skills into course outcomes (CO-PO mapping) for NBA and NAAC accreditation portfolios.
             </div>
           </div>
         </div>
@@ -496,7 +286,7 @@ export function InstitutionCurriculumPage() {
           <div className={styles.modalBox} onClick={(e) => e.stopPropagation()}>
             <div className={styles.modalHeader}>
               <div>
-                <span className={styles.sectionTag}>{selectedSkill.category}</span>
+                <span className={styles.sectionTag}>{selectedSkill.category || 'Competency Node'}</span>
                 <h3 className={styles.modalTitle}>{selectedSkill.name}</h3>
               </div>
               <button className={styles.modalClose} onClick={() => setSelectedSkill(null)}>
@@ -507,54 +297,32 @@ export function InstitutionCurriculumPage() {
             <div className={styles.modalBody}>
               <div>
                 <h4 style={{ margin: '0 0 6px', fontSize: '0.88rem', fontWeight: 800, color: '#0f172a' }}>
-                  Industry Competency Description
+                  Description &amp; Metadata
                 </h4>
                 <p style={{ margin: 0, fontSize: '0.84rem', color: '#475569', lineHeight: 1.5 }}>
-                  {selectedSkill.description}
+                  {selectedSkill.description || 'Verified technology skill recorded in platform database.'}
                 </p>
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', background: '#f8fafc', padding: '14px', border: '1px solid #e2e8f0' }}>
                 <div>
-                  <span style={{ fontSize: '0.7rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 700 }}>Industry Demand</span>
-                  <div style={{ fontSize: '0.86rem', fontWeight: 800, color: '#15803d' }}>
-                    {selectedSkill.industryDemand.replace('_', ' ')}
-                  </div>
+                  <span style={{ fontSize: '0.7rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 700 }}>Database ID</span>
+                  <div style={{ fontSize: '0.8rem', fontFamily: 'monospace', color: '#1c2d81' }}>{selectedSkill.id}</div>
                 </div>
                 <div>
-                  <span style={{ fontSize: '0.7rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 700 }}>Market CTC Benchmark</span>
-                  <div style={{ fontSize: '0.86rem', fontWeight: 800, color: '#1c2d81' }}>
-                    {selectedSkill.avgSalaryRange}
-                  </div>
+                  <span style={{ fontSize: '0.7rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 700 }}>URL Slug</span>
+                  <div style={{ fontSize: '0.86rem', fontWeight: 700, color: '#0f172a' }}>{selectedSkill.slug}</div>
                 </div>
                 <div style={{ gridColumn: 'span 2' }}>
-                  <span style={{ fontSize: '0.7rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 700 }}>Academic Mapping</span>
+                  <span style={{ fontSize: '0.7rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 700 }}>Category Cluster</span>
                   <div style={{ fontSize: '0.84rem', fontWeight: 700, color: '#0f172a' }}>
-                    {selectedSkill.semesterMapped} ({selectedSkill.syllabusMapping.replace(/_/g, ' ')})
+                    {selectedSkill.category || 'Unassigned Category'}
                   </div>
                 </div>
-              </div>
-
-              <div>
-                <h4 style={{ margin: '0 0 6px', fontSize: '0.88rem', fontWeight: 800, color: '#0f172a' }}>
-                  Corporate Hiring Test Alignment
-                </h4>
-                <p style={{ margin: 0, fontSize: '0.82rem', color: '#475569' }}>
-                  This competency is actively tested in <strong>{selectedSkill.assessmentQuestionsCount}</strong> verified technical questions used by enterprise partners including Microsoft, Amazon, Google, and Cisco.
-                </p>
               </div>
             </div>
 
             <div className={styles.modalFooter}>
-              <button
-                className={styles.btnPrimary}
-                onClick={() => {
-                  alert(`Exporting syllabus alignment recommendations for ${selectedSkill.name}...`);
-                }}
-              >
-                <Download size={14} />
-                <span>Export Module Syllabus (PDF)</span>
-              </button>
               <button className={styles.btnSecondary} onClick={() => setSelectedSkill(null)}>
                 Close
               </button>

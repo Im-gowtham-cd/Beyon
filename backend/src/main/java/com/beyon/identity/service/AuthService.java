@@ -100,14 +100,8 @@ public class AuthService {
         user.setDisplayName(request.getName());
         user.setRole(request.getRole());
 
-        if (request.getRole() == UserRole.STUDENT) {
-            user.setStatus(AccountStatus.ACTIVE);
-            user.setProfileStatus(AccountStatus.PENDING_INSTITUTION_VERIFICATION);
-        } else {
-            user.setStatus(AccountStatus.PENDING_SUPER_ADMIN_VERIFICATION);
-            user.setProfileStatus(AccountStatus.PENDING_SUPER_ADMIN_VERIFICATION);
-        }
-
+        user.setStatus(AccountStatus.PENDING_VERIFICATION);
+        user.setProfileStatus(AccountStatus.INCOMPLETE);
         user.setEmailVerified(true);
         User savedUser = userRepository.save(user);
 

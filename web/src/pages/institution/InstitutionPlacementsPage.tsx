@@ -11,6 +11,7 @@ import {
   ShieldCheck,
   X,
   Layers,
+  RefreshCw,
 } from 'lucide-react';
 import { institutionApi } from '../../institution/services/institutionApi';
 import styles from './InstitutionPlacementsPage.module.css';
@@ -36,10 +37,12 @@ export function InstitutionPlacementsPage() {
   const [pkgFilter, setPkgFilter] = useState('ALL');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [searchQuery, setSearchQuery] = useState('');
+  const [loading, setLoading] = useState(true);
   const [selectedRecord, setSelectedRecord] = useState<PlacementRecord | null>(null);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
 
   const fetchPlacements = async () => {
+    setLoading(true);
     try {
       const res = await institutionApi.getStudents();
       const students = Array.isArray(res) ? res : (res as any)?.data || [];
@@ -48,97 +51,23 @@ export function InstitutionPlacementsPage() {
         .map((s: any, idx: number) => ({
           id: s.id || `pl-${idx}`,
           studentName: s.displayName || s.name || `Scholar ${s.studentId?.slice(0, 6) || idx + 1}`,
-          rollNo: s.registrationNumber || s.rollNo || `2022CSE${String(100 + idx)}`,
-          dept: s.department || (idx % 3 === 0 ? 'Computer Science & Engg' : idx % 3 === 1 ? 'Information Technology' : 'Electronics & Comm'),
-          companyName: s.companyName || (idx % 4 === 0 ? 'Google' : idx % 4 === 1 ? 'Microsoft' : idx % 4 === 2 ? 'Amazon' : 'Cisco Systems'),
+          rollNo: s.registrationNumber || s.rollNo || s.studentId?.slice(0, 8).toUpperCase() || 'UNREGISTERED',
+          dept: s.department || 'Engineering',
+          companyName: s.companyName || 'Corporate Partner',
           roleTitle: s.targetRole || 'Software Development Engineer',
-          packageLpa: Number(s.packageLpa || (idx % 4 === 0 ? 32.5 : idx % 4 === 1 ? 26.0 : idx % 4 === 2 ? 19.5 : 14.0)),
-          offerDate: s.offerDate || 'Oct 14, 2026',
-          offerType: (idx % 3 === 0 ? 'FTE' : idx % 3 === 1 ? 'PPO' : 'GET') as any,
+          packageLpa: Number(s.packageLpa || s.ctcLpa || 0),
+          offerDate: s.offerDate || 'Recent Session',
+          offerType: (s.offerType || 'FTE') as any,
           verified: Boolean(s.verified !== false),
-          offerLetterRef: `OL-2026-${String(idx + 101).padStart(4, '0')}`,
-          cgpa: Number(s.cgpa || 8.6),
+          offerLetterRef: s.offerLetterRef || `OL-${String(idx + 101).padStart(4, '0')}`,
+          cgpa: s.cgpa ? Number(s.cgpa) : undefined,
         }));
 
-      if (placed.length === 0) {
-        // High quality institutional defaults
-        setRecords([
-          {
-            id: 'pl-1',
-            studentName: 'Aravind Swaminathan',
-            rollNo: '2022CSE104',
-            dept: 'Computer Science & Engg',
-            companyName: 'Microsoft Corporation',
-            roleTitle: 'Software Engineer (Azure Platform)',
-            packageLpa: 28.5,
-            offerDate: 'Oct 12, 2026',
-            offerType: 'FTE',
-            verified: true,
-            offerLetterRef: 'MSFT-IND-2026-881',
-            cgpa: 9.2,
-          },
-          {
-            id: 'pl-2',
-            studentName: 'Sneha Nandakumar',
-            rollNo: '2022IT045',
-            dept: 'Information Technology',
-            companyName: 'Amazon Web Services',
-            roleTitle: 'Cloud Architect Associate',
-            packageLpa: 22.0,
-            offerDate: 'Oct 18, 2026',
-            offerType: 'FTE',
-            verified: true,
-            offerLetterRef: 'AWS-2026-CAMP-092',
-            cgpa: 8.9,
-          },
-          {
-            id: 'pl-3',
-            studentName: 'Rohan Deshmukh',
-            rollNo: '2022ECE089',
-            dept: 'Electronics & Comm',
-            companyName: 'Qualcomm India',
-            roleTitle: 'Embedded Systems Engineer',
-            packageLpa: 19.5,
-            offerDate: 'Nov 01, 2026',
-            offerType: 'PPO',
-            verified: true,
-            offerLetterRef: 'QCOM-PPO-2026-114',
-            cgpa: 8.7,
-          },
-          {
-            id: 'pl-4',
-            studentName: 'Divya Bharathi',
-            rollNo: '2022AI012',
-            dept: 'Artificial Intelligence & Data',
-            companyName: 'Adobe Systems',
-            roleTitle: 'Member of Technical Staff',
-            packageLpa: 24.0,
-            offerDate: 'Nov 04, 2026',
-            offerType: 'FTE',
-            verified: true,
-            offerLetterRef: 'ADBE-MTS-2026-55',
-            cgpa: 9.4,
-          },
-          {
-            id: 'pl-5',
-            studentName: 'Karthik Balakrishnan',
-            rollNo: '2022CSE198',
-            dept: 'Computer Science & Engg',
-            companyName: 'Cisco Systems',
-            roleTitle: 'Network Software Engineer',
-            packageLpa: 16.5,
-            offerDate: 'Nov 10, 2026',
-            offerType: 'GET',
-            verified: true,
-            offerLetterRef: 'CSCO-GET-2026-302',
-            cgpa: 8.3,
-          },
-        ]);
-      } else {
-        setRecords(placed);
-      }
+      setRecords(placed);
     } catch {
       setRecords([]);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -203,6 +132,10 @@ export function InstitutionPlacementsPage() {
         </div>
 
         <div className={styles.headerActions}>
+          <button className={styles.btnSecondary} onClick={fetchPlacements}>
+            <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
+            <span>Refresh Ledger</span>
+          </button>
           <button className={styles.btnSecondary} onClick={() => handleExport('CSV')}>
             <Download size={14} />
             <span>Export CSV</span>
@@ -246,7 +179,7 @@ export function InstitutionPlacementsPage() {
           <span className={styles.statValue} style={{ color: '#15803d' }}>
             {totalOffers} Placed
           </span>
-          <span className={styles.statSubtext}>100% Verified by Placement Cell</span>
+          <span className={styles.statSubtext}>Verified by Placement Cell</span>
         </div>
 
         <div className={styles.statCard}>
@@ -259,7 +192,7 @@ export function InstitutionPlacementsPage() {
           <span className={styles.statValue} style={{ color: '#1c2d81' }}>
             {highestLpa} LPA
           </span>
-          <span className={styles.statSubtext}>Apex campus recruitment tier</span>
+          <span className={styles.statSubtext}>Peak corporate offer recorded</span>
         </div>
 
         <div className={styles.statCard}>
@@ -272,7 +205,7 @@ export function InstitutionPlacementsPage() {
           <span className={styles.statValue} style={{ color: '#0284c7' }}>
             {avgLpa} LPA
           </span>
-          <span className={styles.statSubtext}>Mean CTC across engineering cohort</span>
+          <span className={styles.statSubtext}>Mean CTC across verified placements</span>
         </div>
 
         <div className={styles.statCard}>
@@ -285,7 +218,7 @@ export function InstitutionPlacementsPage() {
           <span className={styles.statValue} style={{ color: '#b45309' }}>
             {uniqueCompanies} Corporates
           </span>
-          <span className={styles.statSubtext}>Verified enterprise recruiters</span>
+          <span className={styles.statSubtext}>Distinct partner entities</span>
         </div>
       </div>
 
@@ -354,9 +287,9 @@ export function InstitutionPlacementsPage() {
           {filtered.length === 0 ? (
             <div className={styles.emptyState}>
               <Award size={40} style={{ color: '#94a3b8' }} />
-              <h3 className={styles.emptyTitle}>No Placement Records Found</h3>
+              <h3 className={styles.emptyTitle}>No Placement Records in Database</h3>
               <p className={styles.emptyText}>
-                No verified records match the active filter criteria. Adjust the department or package filter to view records.
+                No student placement offers are currently recorded. As enrolled students complete recruitment drives and receive verified corporate offers, their audit entries will appear here.
               </p>
             </div>
           ) : (
@@ -483,7 +416,7 @@ export function InstitutionPlacementsPage() {
                 </div>
                 <span className={styles.verifiedPill}>
                   <CheckCircle2 size={12} />
-                  <span>Verified by Placement Cell</span>
+                  <span>Verified in Database</span>
                 </span>
               </div>
 
@@ -494,7 +427,7 @@ export function InstitutionPlacementsPage() {
                 </div>
                 <div>
                   <span style={{ fontSize: '0.7rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 700 }}>Academic CGPA</span>
-                  <div style={{ fontSize: '0.86rem', fontWeight: 700, color: '#15803d' }}>{selectedRecord.cgpa || 8.8} CGPA</div>
+                  <div style={{ fontSize: '0.86rem', fontWeight: 700, color: '#15803d' }}>{selectedRecord.cgpa ? `${selectedRecord.cgpa} CGPA` : 'N/A'}</div>
                 </div>
                 <div>
                   <span style={{ fontSize: '0.7rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 700 }}>Recruiter Entity</span>

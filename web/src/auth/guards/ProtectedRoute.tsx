@@ -36,11 +36,13 @@ export function ProtectedRoute() {
     return <Outlet />;
   }
 
+  // Onboarding routes MUST always be accessible for profile setup
+  if (path.startsWith('/onboarding/')) {
+    return <Outlet />;
+  }
+
   // Account Incomplete onboarding
   if (profileStatus === 'INCOMPLETE') {
-    if (path.startsWith('/onboarding/')) {
-      return <Outlet />;
-    }
     const role = user?.role?.toLowerCase();
     if (role) {
       return <Navigate to={`/onboarding/${role}`} replace />;
@@ -51,15 +53,14 @@ export function ProtectedRoute() {
   // Pending Verification (Super Admin or College Placement)
   if (
     profileStatus === 'PENDING_SUPER_ADMIN_VERIFICATION' ||
-    user?.status === 'PENDING_SUPER_ADMIN_VERIFICATION' ||
     profileStatus === 'PENDING_INSTITUTION_VERIFICATION' ||
     profileStatus === 'PENDING_COMPANY_VERIFICATION' ||
-    user?.status === 'PENDING_VERIFICATION'
+    profileStatus === 'PENDING_VERIFICATION'
   ) {
-    if (path.startsWith('/onboarding/complete') || path.startsWith('/verification-pending')) {
-      return <Outlet />;
+    if (!path.startsWith('/verification-pending')) {
+      return <Navigate to="/verification-pending" replace />;
     }
-    return <Navigate to="/verification-pending" replace />;
+    return <Outlet />;
   }
 
   return <Outlet />;
