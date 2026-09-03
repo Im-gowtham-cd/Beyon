@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../auth/context/AuthContext';
 import {
@@ -26,15 +26,17 @@ export function CompanyHome() {
   const navigate = useNavigate();
   const [profileData, setProfileData] = useState<any>(null);
   const [opportunities, setOpportunities] = useState<any[]>([]);
+  const [applicants, setApplicants] = useState<any[]>([]);
 
   useEffect(() => {
     async function loadData() {
       try {
         const token = localStorage.getItem('beyon_token') || localStorage.getItem('beyon_access_token');
         if (token) {
-          const [profRes, oppRes] = await Promise.all([
+          const [profRes, oppRes, appRes] = await Promise.all([
             fetch('/api/v1/profile', { headers: { Authorization: `Bearer ${token}` } }).catch(() => null),
             fetch('/api/v1/opportunities', { headers: { Authorization: `Bearer ${token}` } }).catch(() => null),
+            fetch('/api/v1/recruitment/applications', { headers: { Authorization: `Bearer ${token}` } }).catch(() => null),
           ]);
           if (profRes && profRes.ok) {
             const p = await profRes.json();
@@ -44,6 +46,12 @@ export function CompanyHome() {
             const o = await oppRes.json();
             if (Array.isArray(o.data)) {
               setOpportunities(o.data);
+            }
+          }
+          if (appRes && appRes.ok) {
+            const a = await appRes.json();
+            if (Array.isArray(a.data)) {
+              setApplicants(a.data);
             }
           }
         }
@@ -57,63 +65,15 @@ export function CompanyHome() {
   const companyName = profileData?.companyName || user?.name || 'Enterprise Recruiter';
   const recruiterName = user?.name?.split(' ')[0] || 'Recruiter';
 
-  const recentApplicants = [
-    {
-      id: 'c-01',
-      name: 'Aravind Swaminathan',
-      college: 'PSG College of Technology',
-      role: 'Full Stack Engineer (Placement Drive)',
-      cgpa: '9.34',
-      score: '94%',
-      skills: 'React, Node.js, Spring Boot, MySQL',
-      status: 'SHORTLISTED',
-      appliedAt: '2 hours ago',
-    },
-    {
-      id: 'c-02',
-      name: 'Divya Ramesh',
-      college: 'College of Engineering, Guindy',
-      role: 'AI / CUDA Kernel Optimization',
-      cgpa: '9.18',
-      score: '96%',
-      skills: 'C++, CUDA, PyTorch, Linux',
-      status: 'INTERVIEW_SCHEDULED',
-      appliedAt: '5 hours ago',
-    },
-    {
-      id: 'c-03',
-      name: 'Karthik Subramanian',
-      college: 'Vellore Institute of Technology',
-      role: 'Cloud DevOps & Platform Engineer',
-      cgpa: '8.82',
-      score: '88%',
-      skills: 'AWS, Docker, Kubernetes, Terraform',
-      status: 'APPLIED',
-      appliedAt: 'Today',
-    },
-    {
-      id: 'c-04',
-      name: 'Pooja Narayanan',
-      college: 'Sri Sivasubramaniya Nadar College',
-      role: 'Cybersecurity Analyst',
-      cgpa: '9.05',
-      score: '91%',
-      skills: 'Network Security, SIEM, Python, OWASP',
-      status: 'SHORTLISTED',
-      appliedAt: 'Yesterday',
-    },
-    {
-      id: 'c-05',
-      name: 'Rahul Venkat',
-      college: 'Amrita Vishwa Vidyapeetham',
-      role: 'Data Engineer & ETL Pipelines',
-      cgpa: '8.65',
-      score: '84%',
-      skills: 'PostgreSQL, Apache Spark, Python',
-      status: 'APPLIED',
-      appliedAt: 'Yesterday',
-    },
-  ];
+  const shortlistedCount = applicants.filter(
+    (a) => a.status === 'SHORTLISTED' || a.status === 'INTERVIEW_SCHEDULED'
+  ).length;
+
+  const validScores = applicants.filter((a) => a.assessmentScore !== undefined && a.assessmentScore !== null);
+  const avgScore =
+    validScores.length > 0
+      ? (validScores.reduce((sum, a) => sum + Number(a.assessmentScore), 0) / validScores.length).toFixed(1) + '%'
+      : '0.0%';
 
   return (
     <div className={styles.page}>
@@ -142,18 +102,20 @@ export function CompanyHome() {
           <div className={styles.statMetric}>
             <span className={styles.statMetricLabel}>Active Openings</span>
             <span className={`${styles.statMetricValue} ${styles.blueVal}`}>
-              {opportunities.length || 32}
+              {opportunities.length}
             </span>
           </div>
           <div className={styles.statDivider} />
           <div className={styles.statMetric}>
             <span className={styles.statMetricLabel}>Total Applicants</span>
-            <span className={styles.statMetricValue}>148</span>
+            <span className={styles.statMetricValue}>{applicants.length}</span>
           </div>
           <div className={styles.statDivider} />
           <div className={styles.statMetric}>
             <span className={styles.statMetricLabel}>Offer Acceptance</span>
-            <span className={`${styles.statMetricValue} ${styles.greenVal}`}>92.4%</span>
+            <span className={`${styles.statMetricValue} ${styles.greenVal}`}>
+              {applicants.filter(a => a.status === 'OFFERED' || a.status === 'ACCEPTED').length > 0 ? '100%' : '0.0%'}
+            </span>
           </div>
         </div>
       </section>
@@ -167,9 +129,9 @@ export function CompanyHome() {
               <Briefcase size={16} />
             </div>
           </div>
-          <div className={styles.kpiValue}>{opportunities.length || 32}</div>
+          <div className={styles.kpiValue}>{opportunities.length}</div>
           <span className={styles.kpiSub}>
-            <TrendingUp size={14} /> +4 posted this week
+            <TrendingUp size={14} /> {opportunities.length} active opportunities
           </span>
         </div>
 
@@ -180,9 +142,9 @@ export function CompanyHome() {
               <Users size={16} />
             </div>
           </div>
-          <div className={styles.kpiValue}>148</div>
+          <div className={styles.kpiValue}>{applicants.length}</div>
           <span className={styles.kpiSub}>
-            <Check size={14} /> 100% Verified Scholars
+            <Check size={14} /> {applicants.length} Total Applicants
           </span>
         </div>
 
@@ -193,9 +155,9 @@ export function CompanyHome() {
               <UserCheck size={16} />
             </div>
           </div>
-          <div className={styles.kpiValue}>36</div>
+          <div className={styles.kpiValue}>{shortlistedCount}</div>
           <span className={styles.kpiSub}>
-            <Calendar size={14} /> 12 scheduled today
+            <Calendar size={14} /> {shortlistedCount} in evaluation
           </span>
         </div>
 
@@ -206,7 +168,7 @@ export function CompanyHome() {
               <Award size={16} />
             </div>
           </div>
-          <div className={styles.kpiValue}>84.2%</div>
+          <div className={styles.kpiValue}>{avgScore}</div>
           <span className={styles.kpiSub}>
             <ShieldCheck size={14} /> 100% Proctored Integrity
           </span>
@@ -248,7 +210,7 @@ export function CompanyHome() {
             <h2 className={styles.sectionTitle}>
               <ListChecks size={18} style={{ color: '#1c2d81' }} /> Live Candidate Application Stream
             </h2>
-            <span className={styles.sectionMeta}>{recentApplicants.length} Recent Applicants</span>
+            <span className={styles.sectionMeta}>{applicants.length} Total Applicants</span>
           </div>
 
           <div className={styles.tableCard}>
@@ -265,37 +227,68 @@ export function CompanyHome() {
                 </tr>
               </thead>
               <tbody>
-                {recentApplicants.map((app) => (
-                  <tr key={app.id}>
-                    <td>
-                      <div className={styles.candidateName}>{app.name}</div>
-                      <div style={{ fontSize: '0.72rem', color: '#64748b' }}>{app.appliedAt}</div>
-                    </td>
-                    <td>{app.role}</td>
-                    <td>{app.college}</td>
-                    <td><strong>{app.cgpa}</strong></td>
-                    <td>
-                      <span style={{ color: '#15803d', fontWeight: 600 }}>{app.score}</span>
-                    </td>
-                    <td>
-                      <span className={`${styles.statusBadge} ${
-                        app.status === 'SHORTLISTED' ? styles.statusShortlisted :
-                        app.status === 'INTERVIEW_SCHEDULED' ? styles.statusInterview :
-                        styles.statusApplied
-                      }`}>
-                        {app.status.replace('_', ' ')}
-                      </span>
-                    </td>
-                    <td>
-                      <button
-                        className={styles.actionBtn}
-                        onClick={() => navigate('/company/pipeline')}
+                {applicants.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} style={{ textAlign: 'center', padding: '48px 16px', color: '#64748b' }}>
+                      <div style={{ fontWeight: 600, fontSize: '0.94rem', color: '#1e293b', marginBottom: '6px' }}>
+                        No candidate applications received yet
+                      </div>
+                      <div style={{ fontSize: '0.82rem', maxWidth: '420px', margin: '0 auto 16px' }}>
+                        When students apply to your opportunities and complete technical assessments, their verified profiles and benchmark scores will appear here in real-time.
+                      </div>
+                      <Link
+                        to="/company/opportunities/create"
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          background: '#1c2d81',
+                          color: '#ffffff',
+                          padding: '6px 14px',
+                          fontSize: '0.8rem',
+                          fontWeight: 600,
+                          textDecoration: 'none',
+                        }}
                       >
-                        Review
-                      </button>
+                        <PlusCircle size={14} /> Create Opportunity Drive
+                      </Link>
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  applicants.map((app) => (
+                    <tr key={app.id}>
+                      <td>
+                        <div className={styles.candidateName}>{app.studentName || app.name || 'Candidate'}</div>
+                        <div style={{ fontSize: '0.72rem', color: '#64748b' }}>{app.appliedAt || 'Recent'}</div>
+                      </td>
+                      <td>{app.opportunityTitle || app.role || 'General Application'}</td>
+                      <td>{app.institutionName || app.college || 'Engineering College'}</td>
+                      <td><strong>{app.cgpa || '-'}</strong></td>
+                      <td>
+                        <span style={{ color: '#15803d', fontWeight: 600 }}>
+                          {app.assessmentScore !== undefined ? `${app.assessmentScore}%` : 'Pending'}
+                        </span>
+                      </td>
+                      <td>
+                        <span className={`${styles.statusBadge} ${
+                          app.status === 'SHORTLISTED' ? styles.statusShortlisted :
+                          app.status === 'INTERVIEW_SCHEDULED' ? styles.statusInterview :
+                          styles.statusApplied
+                        }`}>
+                          {app.status ? app.status.replace('_', ' ') : 'APPLIED'}
+                        </span>
+                      </td>
+                      <td>
+                        <button
+                          className={styles.actionBtn}
+                          onClick={() => navigate('/company/pipeline')}
+                        >
+                          Review
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
@@ -309,34 +302,28 @@ export function CompanyHome() {
               <Briefcase size={18} style={{ color: '#1c2d81' }} />
               <h4>Active Campus Drives</h4>
             </div>
-            <div className={styles.drivesList}>
-              <div className={styles.driveItem}>
-                <div className={styles.driveItemTitle}>2026 Batch Software Engineering Drive</div>
-                <div className={styles.driveItemMeta}>
-                  <span>Target: CSE &amp; IT</span>
-                  <span>42 Applicants</span>
-                </div>
+            {opportunities.length === 0 ? (
+              <div style={{ padding: '16px 0', fontSize: '0.82rem', color: '#64748b' }}>
+                No active recruitment drives created yet.
               </div>
-              <div className={styles.driveItem}>
-                <div className={styles.driveItemTitle}>GPU &amp; AI Systems Engineering Internship</div>
-                <div className={styles.driveItemMeta}>
-                  <span>Target: AI &amp; ECE</span>
-                  <span>28 Applicants</span>
-                </div>
+            ) : (
+              <div className={styles.drivesList}>
+                {opportunities.slice(0, 4).map((opp) => (
+                  <div key={opp.id} className={styles.driveItem}>
+                    <div className={styles.driveItemTitle}>{opp.title}</div>
+                    <div className={styles.driveItemMeta}>
+                      <span>{opp.jobType || 'Full-time'}</span>
+                      <span>{opp.location || 'Remote/Campus'}</span>
+                    </div>
+                  </div>
+                ))}
               </div>
-              <div className={styles.driveItem}>
-                <div className={styles.driveItemTitle}>Cloud DevOps Graduate Trainee</div>
-                <div className={styles.driveItemMeta}>
-                  <span>Target: All B.E/B.Tech</span>
-                  <span>19 Applicants</span>
-                </div>
-              </div>
-            </div>
+            )}
             <Link
               to="/company/opportunities"
               style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '0.78rem', color: '#1c2d81', fontWeight: 600, marginTop: '12px', textDecoration: 'none' }}
             >
-              <span>Manage All Drives</span>
+              <span>Manage Opportunities</span>
               <ArrowRight size={14} />
             </Link>
           </div>
@@ -345,36 +332,16 @@ export function CompanyHome() {
           <div className={styles.sideCard}>
             <div className={styles.sideCardHeader}>
               <Brain size={18} style={{ color: '#1c2d81' }} />
-              <h4>AI Matched Scholars</h4>
+              <h4>Candidate Intelligence</h4>
             </div>
-            <div className={styles.talentList}>
-              <div className={styles.talentItem}>
-                <div className={styles.talentInfo}>
-                  <div className={styles.talentName}>Siddharth Mohan</div>
-                  <div className={styles.talentSub}>CUDA &middot; PyTorch &middot; 9.42 CGPA</div>
-                </div>
-                <span className={styles.matchBadge}>98% Match</span>
-              </div>
-              <div className={styles.talentItem}>
-                <div className={styles.talentInfo}>
-                  <div className={styles.talentName}>Ananya Krishnan</div>
-                  <div className={styles.talentSub}>Spring Boot &middot; AWS &middot; 9.25 CGPA</div>
-                </div>
-                <span className={styles.matchBadge}>95% Match</span>
-              </div>
-              <div className={styles.talentItem}>
-                <div className={styles.talentInfo}>
-                  <div className={styles.talentName}>Manoj Varman</div>
-                  <div className={styles.talentSub}>Kubernetes &middot; Go &middot; 9.10 CGPA</div>
-                </div>
-                <span className={styles.matchBadge}>92% Match</span>
-              </div>
+            <div style={{ padding: '12px 0', fontSize: '0.82rem', color: '#64748b', lineHeight: 1.5 }}>
+              AI skill-matching activates automatically when candidates submit code solutions and proctored benchmark tests.
             </div>
             <Link
               to="/company/candidates"
-              style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '0.78rem', color: '#1c2d81', fontWeight: 600, marginTop: '12px', textDecoration: 'none' }}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '0.78rem', color: '#1c2d81', fontWeight: 600, marginTop: '8px', textDecoration: 'none' }}
             >
-              <span>Search All 100+ Candidates</span>
+              <span>Explore Talent Discovery</span>
               <ArrowRight size={14} />
             </Link>
           </div>

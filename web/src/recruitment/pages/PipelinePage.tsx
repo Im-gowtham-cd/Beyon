@@ -17,68 +17,7 @@ interface PipelineCandidate {
 }
 
 export function PipelinePage() {
-  const [candidates, setCandidates] = useState<PipelineCandidate[]>([
-    {
-      id: 'p-01',
-      name: 'Aravind Swaminathan',
-      college: 'PSG College of Technology',
-      role: 'Full Stack Java Engineer',
-      cgpa: 9.34,
-      score: 94,
-      stage: 'SHORTLISTED',
-      skills: ['Java', 'Spring Boot', 'MySQL'],
-    },
-    {
-      id: 'p-02',
-      name: 'Divya Ramesh',
-      college: 'College of Engineering, Guindy',
-      role: 'CUDA AI Kernel Engineer',
-      cgpa: 9.18,
-      score: 96,
-      stage: 'INTERVIEW_SCHEDULED',
-      skills: ['CUDA', 'PyTorch', 'C++'],
-    },
-    {
-      id: 'p-03',
-      name: 'Karthik Subramanian',
-      college: 'Vellore Institute of Technology',
-      role: 'Cloud Platform DevOps',
-      cgpa: 8.82,
-      score: 88,
-      stage: 'ASSESSMENT_COMPLETED',
-      skills: ['Docker', 'Kubernetes', 'AWS'],
-    },
-    {
-      id: 'p-04',
-      name: 'Pooja Narayanan',
-      college: 'Sri Sivasubramaniya Nadar College',
-      role: 'Cybersecurity Operations',
-      cgpa: 9.05,
-      score: 91,
-      stage: 'SHORTLISTED',
-      skills: ['Network Security', 'Python', 'SIEM'],
-    },
-    {
-      id: 'p-05',
-      name: 'Rahul Venkat',
-      college: 'Amrita Vishwa Vidyapeetham',
-      role: 'Data Pipeline Specialist',
-      cgpa: 8.65,
-      score: 84,
-      stage: 'APPLIED',
-      skills: ['PostgreSQL', 'Spark', 'Python'],
-    },
-    {
-      id: 'p-06',
-      name: 'Manoj Varman',
-      college: 'Thiagarajar College of Engineering',
-      role: 'Full Stack Engineer',
-      cgpa: 9.10,
-      score: 92,
-      stage: 'OFFERED',
-      skills: ['React', 'Node.js', 'Go'],
-    },
-  ]);
+  const [candidates, setCandidates] = useState<PipelineCandidate[]>([]);
 
   const [activeStageFilter, setActiveStageFilter] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState('');

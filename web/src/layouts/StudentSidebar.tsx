@@ -38,23 +38,25 @@ export function StudentSidebar({
   onToggleCollapse,
 }: StudentSidebarProps) {
   const { user } = useAuth();
-  const [coins, setCoins] = useState<number>(250);
-  const [streak, setStreak] = useState<number>(18);
+  const [coins, setCoins] = useState<number>(0);
+  const [streak, setStreak] = useState<number>(0);
 
   useEffect(() => {
     async function fetchStats() {
       try {
         const token = localStorage.getItem('beyon_token') || localStorage.getItem('beyon_access_token');
         if (!token) return;
-        const res = await fetch('/api/v1/practice/stats', {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        if (res.ok) {
-          const data = await res.json();
-          if (data.data) {
-            if (data.data.currentStreak !== undefined) setStreak(data.data.currentStreak);
-            if (data.data.coinsBalance !== undefined) setCoins(data.data.coinsBalance);
-          }
+        const [coinRes, streakRes] = await Promise.all([
+          fetch('/api/v1/coins/balance', { headers: { Authorization: `Bearer ${token}` } }).catch(() => null),
+          fetch('/api/v1/gamification/streak', { headers: { Authorization: `Bearer ${token}` } }).catch(() => null),
+        ]);
+        if (coinRes && coinRes.ok) {
+          const coinData = await coinRes.json();
+          setCoins(coinData.data ?? 0);
+        }
+        if (streakRes && streakRes.ok) {
+          const streakData = await streakRes.json();
+          setStreak(streakData.data?.currentStreak ?? 0);
         }
       } catch {
         /* fallback */

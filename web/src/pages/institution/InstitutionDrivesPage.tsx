@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Search,
   Calendar,
@@ -6,6 +6,7 @@ import {
   Check,
   Users,
 } from 'lucide-react';
+import { institutionApi } from '../../institution/services/institutionApi';
 import styles from './InstitutionDrivesPage.module.css';
 
 interface InstitutionalDrive {
@@ -23,70 +24,45 @@ interface InstitutionalDrive {
 }
 
 export function InstitutionDrivesPage() {
-  const [drives, setDrives] = useState<InstitutionalDrive[]>([
-    {
-      id: 'drv-01',
-      companyName: 'NVIDIA GPU Acceleration Lab',
-      role: 'CUDA & Parallel Systems Architecture Engineer',
-      driveType: 'ON_CAMPUS',
-      packageLpa: 28.5,
-      eligibleBatch: '2026',
-      eligibleDepts: 'CSE, AI & DS, ECE',
-      minCgpa: 8.5,
-      status: 'APPROVED',
-      applicantCount: 28,
-      interviewDate: 'Sept 14, 2026',
-    },
-    {
-      id: 'drv-02',
-      companyName: 'Amazon Web Services (AWS)',
-      role: 'Cloud Platform & Infrastructure Engineer',
-      driveType: 'ON_CAMPUS',
-      packageLpa: 22.0,
-      eligibleBatch: '2026',
-      eligibleDepts: 'All Engineering Streams',
-      minCgpa: 8.0,
-      status: 'APPROVED',
-      applicantCount: 64,
-      interviewDate: 'Sept 18, 2026',
-    },
-    {
-      id: 'drv-03',
-      companyName: 'Qualcomm Wireless Technologies',
-      role: 'Embedded Systems & Firmware Specialist',
-      driveType: 'ON_CAMPUS',
-      packageLpa: 19.5,
-      eligibleBatch: '2026',
-      eligibleDepts: 'ECE, CSE, IT',
-      minCgpa: 8.0,
-      status: 'APPROVED',
-      applicantCount: 38,
-      interviewDate: 'Sept 22, 2026',
-    },
-    {
-      id: 'drv-04',
-      companyName: 'Enterprise Cloud Technologies',
-      role: 'Full Stack Java & Spring Boot Trainee',
-      driveType: 'VIRTUAL_PLACEMENT',
-      packageLpa: 16.0,
-      eligibleBatch: '2026, 2027',
-      eligibleDepts: 'CSE, IT, AI & DS',
-      minCgpa: 7.5,
-      status: 'PENDING_APPROVAL',
-      applicantCount: 52,
-      interviewDate: 'Slot Pending Approval',
-    },
-  ]);
-
+  const [drives, setDrives] = useState<InstitutionalDrive[]>([]);
   const [tab, setTab] = useState<'ALL' | 'APPROVED' | 'PENDING_APPROVAL'>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
 
-  const approveDrive = (id: string) => {
-    setDrives((prev) =>
-      prev.map((d) =>
-        d.id === id ? { ...d, status: 'APPROVED', interviewDate: 'Sept 28, 2026' } : d
-      )
-    );
+  useEffect(() => {
+    async function load() {
+      try {
+        const res = await institutionApi.getDrives();
+        const data = Array.isArray(res) ? res : (res as any)?.data || [];
+        const mapped = data.map((d: any) => ({
+          id: d.id,
+          companyName: d.companyName || 'Corporate Partner',
+          role: d.title || d.role || 'Campus Placement Drive',
+          driveType: (d.driveType || 'ON_CAMPUS') as any,
+          packageLpa: d.packageLpa || d.ctcLpa || 0,
+          eligibleBatch: d.eligibleBatch || '2026',
+          eligibleDepts: d.eligibleDepts || 'All Streams',
+          minCgpa: d.minCgpa || 0,
+          status: (d.status || 'APPROVED') as any,
+          applicantCount: d.applicantCount || 0,
+          interviewDate: d.interviewDate || 'Scheduled on Confirmation',
+        }));
+        setDrives(mapped);
+      } catch {
+        setDrives([]);
+      }
+    }
+    load();
+  }, []);
+
+  const approveDrive = async (id: string) => {
+    try {
+      await institutionApi.approveDrive(id).catch(() => {});
+      setDrives((prev) =>
+        prev.map((d) =>
+          d.id === id ? { ...d, status: 'APPROVED', interviewDate: 'Confirmed by Placement Cell' } : d
+        )
+      );
+    } catch {}
   };
 
   const filteredDrives = drives.filter((d) => {
@@ -180,175 +156,185 @@ export function InstitutionDrivesPage() {
       </div>
 
       {/* Drives Grid */}
-      <div className={styles.grid}>
-        {filteredDrives.map((d) => (
-          <div key={d.id} className={styles.card}>
-            <div>
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'flex-start',
-                  marginBottom: '8px',
-                  gap: '12px',
-                }}
-              >
-                <div>
+      {filteredDrives.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: '64px 20px', background: '#ffffff', border: '1px solid #e2e8f0', margin: '20px 0' }}>
+          <Building2 size={40} style={{ color: '#94a3b8', margin: '0 auto 12px' }} />
+          <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#0f172a', marginBottom: '4px' }}>No Campus Drives Found</h3>
+          <p style={{ fontSize: '0.82rem', color: '#64748b', maxWidth: '440px', margin: '0 auto' }}>
+            Incoming recruitment drives from partner enterprises will appear here for slot confirmation and batch authorization.
+          </p>
+        </div>
+      ) : (
+        <div className={styles.grid}>
+          {filteredDrives.map((d) => (
+            <div key={d.id} className={styles.card}>
+              <div>
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'flex-start',
+                    marginBottom: '8px',
+                    gap: '12px',
+                  }}
+                >
+                  <div>
+                    <span
+                      style={{
+                        fontSize: '0.72rem',
+                        fontWeight: 600,
+                        color: '#1c2d81',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.04em',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                      }}
+                    >
+                      <Building2 size={12} />
+                      <span>{d.companyName}</span>
+                    </span>
+                    <h3
+                      style={{
+                        margin: '4px 0 0',
+                        fontSize: '1.08rem',
+                        fontWeight: 800,
+                        color: '#0f172a',
+                        lineHeight: 1.35,
+                      }}
+                    >
+                      {d.role}
+                    </h3>
+                  </div>
                   <span
                     style={{
                       fontSize: '0.72rem',
                       fontWeight: 600,
+                      padding: '3px 8px',
+                      borderRadius: '0px',
+                      whiteSpace: 'nowrap',
+                      flexShrink: 0,
+                      background: d.status === 'APPROVED' ? '#dcfce7' : '#fef3c7',
+                      color: d.status === 'APPROVED' ? '#15803d' : '#b45309',
+                      border: `1px solid ${d.status === 'APPROVED' ? '#bbf7d0' : '#fde68a'}`,
+                    }}
+                  >
+                    {d.status.replace('_', ' ')}
+                  </span>
+                </div>
+
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', margin: '10px 0' }}>
+                  <span
+                    style={{
+                      fontSize: '0.76rem',
+                      fontWeight: 700,
+                      color: '#15803d',
+                      background: '#f0fdf4',
+                      border: '1px solid #bbf7d0',
+                      padding: '3px 8px',
+                      borderRadius: '0px',
+                    }}
+                  >
+                    {d.packageLpa} LPA CTC
+                  </span>
+                  <span
+                    style={{
+                      fontSize: '0.76rem',
+                      fontWeight: 400,
+                      color: '#475569',
+                      background: '#f8fafc',
+                      border: '1px solid #e2e8f0',
+                      padding: '3px 8px',
+                      borderRadius: '0px',
+                    }}
+                  >
+                    Min {d.minCgpa} CGPA
+                  </span>
+                  <span
+                    style={{
+                      fontSize: '0.76rem',
+                      fontWeight: 400,
+                      color: '#0284c7',
+                      background: '#f0f9ff',
+                      border: '1px solid #bae6fd',
+                      padding: '3px 8px',
+                      borderRadius: '0px',
+                    }}
+                  >
+                    Class of {d.eligibleBatch}
+                  </span>
+                </div>
+
+                <div style={{ fontSize: '0.76rem', color: '#64748b', marginTop: '6px', fontWeight: 400 }}>
+                  <span style={{ fontWeight: 600, color: '#334155' }}>Eligible:</span> {d.eligibleDepts}
+                </div>
+              </div>
+
+              <div
+                style={{
+                  paddingTop: '12px',
+                  borderTop: '1px solid #f1f5f9',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  flexWrap: 'wrap',
+                  gap: '10px',
+                }}
+              >
+                <span
+                  style={{
+                    fontSize: '0.76rem',
+                    color: '#64748b',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                    fontWeight: 400,
+                  }}
+                >
+                  <Calendar size={13} style={{ color: '#1c2d81' }} />
+                  <span>{d.interviewDate}</span>
+                </span>
+
+                {d.status === 'PENDING_APPROVAL' ? (
+                  <button
+                    style={{
+                      padding: '6px 14px',
+                      background: '#1c2d81',
+                      color: '#ffffff',
+                      border: '1px solid #1c2d81',
+                      fontSize: '0.76rem',
+                      fontWeight: 600,
+                      borderRadius: '0px',
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                    }}
+                    onClick={() => approveDrive(d.id)}
+                  >
+                    <Check size={13} />
+                    <span>Approve Drive Slot</span>
+                  </button>
+                ) : (
+                  <span
+                    style={{
+                      fontSize: '0.76rem',
+                      fontWeight: 600,
                       color: '#1c2d81',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.04em',
                       display: 'inline-flex',
                       alignItems: 'center',
                       gap: '4px',
                     }}
                   >
-                    <Building2 size={12} />
-                    <span>{d.companyName}</span>
+                    <Users size={13} />
+                    <span>{d.applicantCount} Candidates Registered</span>
                   </span>
-                  <h3
-                    style={{
-                      margin: '4px 0 0',
-                      fontSize: '1.08rem',
-                      fontWeight: 800,
-                      color: '#0f172a',
-                      lineHeight: 1.35,
-                    }}
-                  >
-                    {d.role}
-                  </h3>
-                </div>
-                <span
-                  style={{
-                    fontSize: '0.72rem',
-                    fontWeight: 600,
-                    padding: '3px 8px',
-                    borderRadius: '0px',
-                    whiteSpace: 'nowrap',
-                    flexShrink: 0,
-                    background: d.status === 'APPROVED' ? '#dcfce7' : '#fef3c7',
-                    color: d.status === 'APPROVED' ? '#15803d' : '#b45309',
-                    border: `1px solid ${d.status === 'APPROVED' ? '#bbf7d0' : '#fde68a'}`,
-                  }}
-                >
-                  {d.status.replace('_', ' ')}
-                </span>
-              </div>
-
-              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', margin: '10px 0' }}>
-                <span
-                  style={{
-                    fontSize: '0.76rem',
-                    fontWeight: 600,
-                    color: '#15803d',
-                    background: '#f0fdf4',
-                    border: '1px solid #bbf7d0',
-                    padding: '3px 8px',
-                    borderRadius: '0px',
-                  }}
-                >
-                  {d.packageLpa} LPA CTC
-                </span>
-                <span
-                  style={{
-                    fontSize: '0.76rem',
-                    fontWeight: 400,
-                    color: '#475569',
-                    background: '#f8fafc',
-                    border: '1px solid #e2e8f0',
-                    padding: '3px 8px',
-                    borderRadius: '0px',
-                  }}
-                >
-                  Min {d.minCgpa} CGPA
-                </span>
-                <span
-                  style={{
-                    fontSize: '0.76rem',
-                    fontWeight: 400,
-                    color: '#0284c7',
-                    background: '#f0f9ff',
-                    border: '1px solid #bae6fd',
-                    padding: '3px 8px',
-                    borderRadius: '0px',
-                  }}
-                >
-                  Class of {d.eligibleBatch}
-                </span>
-              </div>
-
-              <div style={{ fontSize: '0.76rem', color: '#64748b', marginTop: '6px', fontWeight: 400 }}>
-                <span style={{ fontWeight: 600, color: '#334155' }}>Eligible:</span> {d.eligibleDepts}
+                )}
               </div>
             </div>
-
-            <div
-              style={{
-                paddingTop: '12px',
-                borderTop: '1px solid #f1f5f9',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                flexWrap: 'wrap',
-                gap: '10px',
-              }}
-            >
-              <span
-                style={{
-                  fontSize: '0.76rem',
-                  color: '#64748b',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '5px',
-                  fontWeight: 400,
-                }}
-              >
-                <Calendar size={13} style={{ color: '#1c2d81' }} />
-                <span>{d.interviewDate}</span>
-              </span>
-
-              {d.status === 'PENDING_APPROVAL' ? (
-                <button
-                  style={{
-                    padding: '6px 14px',
-                    background: '#1c2d81',
-                    color: '#ffffff',
-                    border: '1px solid #1c2d81',
-                    fontSize: '0.76rem',
-                    fontWeight: 600,
-                    borderRadius: '0px',
-                    cursor: 'pointer',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '4px',
-                  }}
-                  onClick={() => approveDrive(d.id)}
-                >
-                  <Check size={13} />
-                  <span>Approve Drive Slot</span>
-                </button>
-              ) : (
-                <span
-                  style={{
-                    fontSize: '0.76rem',
-                    fontWeight: 600,
-                    color: '#1c2d81',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '4px',
-                  }}
-                >
-                  <Users size={13} />
-                  <span>{d.applicantCount} Candidates Registered</span>
-                </span>
-              )}
-            </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
