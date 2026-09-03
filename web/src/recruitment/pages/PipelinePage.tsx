@@ -43,19 +43,21 @@ export function PipelinePage() {
               return {
                 id: app.id || `live-${idx}`,
                 name: app.studentName || `Candidate ${idx + 1}`,
-                college: app.institutionName || 'PSG College of Technology',
+                college: app.institutionName || 'Campus Partner',
                 role: app.opportunityTitle || 'Software Engineer',
-                cgpa: app.cgpa || 9.1,
-                score: app.assessmentScore != null ? Number(app.assessmentScore) : 88,
+                cgpa: app.cgpa || 0,
+                score: app.assessmentScore != null ? Number(app.assessmentScore) : 0,
                 stage: stage,
-                skills: ['Java', 'Spring Boot', 'SQL', 'Algorithms'],
+                skills: app.skills || ['Core Technical', 'Problem Solving'],
               };
             });
             setCandidates(mapped);
+          } else {
+            setCandidates([]);
           }
         }
       } catch {
-        /* keep default fallback */
+        setCandidates([]);
       }
     }
     fetchLivePipeline();

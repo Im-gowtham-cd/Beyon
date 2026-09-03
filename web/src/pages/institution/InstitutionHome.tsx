@@ -68,9 +68,15 @@ export function InstitutionHome() {
   const activeDrivesCount = drives.length;
   const pendingCount = pendingStudents.length;
 
+  const placedPackages = students
+    .map((s) => Number(s.packageLpa || s.ctcLpa))
+    .filter((p) => !isNaN(p) && p > 0);
+  const avgPackage = placedPackages.length > 0 ? (placedPackages.reduce((a, b) => a + b, 0) / placedPackages.length).toFixed(1) : null;
+  const maxPackage = placedPackages.length > 0 ? Math.max(...placedPackages).toFixed(1) : null;
+
   const deptMap = new Map<string, { count: number; totalCgpa: number; placed: number }>();
   students.forEach((s) => {
-    const d = s.department || 'General';
+    const d = s.department || 'Unassigned Department';
     const entry = deptMap.get(d) || { count: 0, totalCgpa: 0, placed: 0 };
     entry.count += 1;
     if (s.cgpa) entry.totalCgpa += Number(s.cgpa);
@@ -84,6 +90,10 @@ export function InstitutionHome() {
     avgCgpa: val.count > 0 ? (val.totalCgpa / val.count).toFixed(2) : '-',
   }));
 
+  const accreditationLabel = profileData?.accreditationGrade
+    ? `NAAC ${profileData.accreditationGrade} Accredited`
+    : 'Verified Academic Partner';
+
   return (
     <div className={styles.page}>
       {/* Welcome Hero */}
@@ -96,7 +106,7 @@ export function InstitutionHome() {
             </span>
             <span className={styles.verifiedBadge}>
               <ShieldCheck size={13} />
-              <span>NAAC A++ &middot; NIRF Verified Partner</span>
+              <span>{accreditationLabel}</span>
             </span>
           </div>
           <h1 className={styles.welcomeTitle}>
@@ -160,9 +170,11 @@ export function InstitutionHome() {
               <ShieldCheck size={16} />
             </div>
           </div>
-          <div className={styles.kpiValue}>{metrics?.averagePackage ? `₹${Number(metrics.averagePackage).toFixed(1)} LPA` : '₹14.2 LPA'}</div>
+          <div className={styles.kpiValue}>
+            {avgPackage ? `₹${avgPackage} LPA` : 'No placement data yet'}
+          </div>
           <span className={styles.kpiSub}>
-            <CheckCircle2 size={14} /> Highest: ₹48.0 LPA
+            <CheckCircle2 size={14} /> {maxPackage ? `Highest: ₹${maxPackage} LPA` : 'Awaiting verified offers'}
           </span>
         </div>
 
@@ -247,9 +259,9 @@ export function InstitutionHome() {
                     <tr key={s.id}>
                       <td><code>{s.studentId?.slice(0, 8).toUpperCase()}</code></td>
                       <td>
-                        <div className={styles.studentName}>{s.department || 'Computer Science and Engineering'}</div>
+                        <div className={styles.studentName}>{s.department || 'Unassigned Department'}</div>
                       </td>
-                      <td style={{ fontWeight: 400 }}>{s.batch || '2022-2026'}</td>
+                      <td style={{ fontWeight: 400 }}>{s.batch || 'Current Batch'}</td>
                       <td>
                         <span style={{ fontSize: '0.76rem', color: s.placementStatus === 'PLACED' ? '#15803d' : '#1c2d81', fontWeight: 600 }}>
                           {s.placementStatus || 'UNPLACED'}

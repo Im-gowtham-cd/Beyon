@@ -37,13 +37,46 @@ export function InstitutionProfilePage() {
     loadProfile();
   }, []);
 
-  const instName = profileData?.profile?.institutionName || user?.name || 'PSG College of Technology';
-  const initials = instName
-    .split(' ')
-    .map((p: string) => p[0])
-    .join('')
-    .slice(0, 2)
-    .toUpperCase() || 'CT';
+  const profile = profileData?.profile || {};
+  const instName = profile.institutionName || user?.name || 'Not provided';
+  const initials =
+    instName !== 'Not provided'
+      ? instName
+          .split(' ')
+          .map((p: string) => p[0])
+          .join('')
+          .slice(0, 2)
+          .toUpperCase()
+      : 'IN';
+
+  const institutionType = profile.institutionType || 'Higher Education';
+  const location =
+    [profile.city, profile.state, profile.country].filter(Boolean).join(', ') || 'Not provided';
+  const website = profile.website || 'Not provided';
+  const enrolledCount = profile.totalStudents ? `${profile.totalStudents} Enrolled Scholars` : 'Not provided';
+
+  const overview =
+    profile.about ||
+    profile.description ||
+    (profile.institutionName
+      ? `${profile.institutionName} institutional talent & placement operations hub.`
+      : 'No institutional overview provided yet.');
+
+  const naacAccreditation = profile.accreditationGrade
+    ? `Grade ${profile.accreditationGrade}`
+    : profile.accreditations || 'Not provided';
+  const nirfRank = profile.nirfRank ? `Rank #${profile.nirfRank}` : 'Not provided';
+  const affiliatingUniversity = profile.affiliatedUniversity || 'Not provided';
+  const autonomyStatus =
+    profile.autonomyStatus ||
+    (profile.institutionType && profile.institutionType.toLowerCase().includes('autonomous')
+      ? 'Autonomous'
+      : 'Not provided');
+
+  const officeEmail = profile.officialEmail || user?.email || 'Not provided';
+  const phone = profile.phone || 'Not provided';
+  const campusAddress = profile.address || (location !== 'Not provided' ? location : 'Not provided');
+  const representatives = profileData?.representatives || [];
 
   return (
     <div className={styles.page}>
@@ -55,10 +88,12 @@ export function InstitutionProfilePage() {
 
         <div className={styles.headerInfo}>
           <div className={styles.badgeRow}>
-            <span className={styles.tierBadge}>NAAC A++ Autonomous Institute</span>
+            <span className={styles.tierBadge}>
+              {profile.accreditationGrade ? `NAAC ${profile.accreditationGrade}` : institutionType}
+            </span>
             <span className={styles.verifiedBadge}>
               <ShieldCheck size={13} />
-              <span>NIRF Ranked #53</span>
+              <span>{profile.nirfRank ? `NIRF Ranked #${profile.nirfRank}` : 'Verified Academic Partner'}</span>
             </span>
           </div>
 
@@ -66,16 +101,16 @@ export function InstitutionProfilePage() {
 
           <div className={styles.companyMeta}>
             <span className={styles.metaItem}>
-              <GraduationCap size={14} /> Autonomous Higher Education
+              <GraduationCap size={14} /> {institutionType}
             </span>
             <span className={styles.metaItem}>
-              <MapPin size={14} /> Coimbatore, Tamil Nadu, India
+              <MapPin size={14} /> {location}
             </span>
             <span className={styles.metaItem}>
-              <Globe size={14} /> https://psgtech.edu
+              <Globe size={14} /> {website}
             </span>
             <span className={styles.metaItem}>
-              <Users size={14} /> 1,420 Enrolled Engineering Scholars
+              <Users size={14} /> {enrolledCount}
             </span>
           </div>
         </div>
@@ -90,9 +125,7 @@ export function InstitutionProfilePage() {
               <Info size={18} style={{ color: '#1c2d81' }} />
               <span>Institutional Overview</span>
             </h3>
-            <p className={styles.cardText}>
-              Premier autonomous technological institution established in 1951, accredited with NAAC A++ and ranked among the Top 100 Engineering Institutions in India by NIRF. Known for academic excellence, state-of-the-art research laboratories, and verified corporate placement outcomes.
-            </p>
+            <p className={styles.cardText}>{overview}</p>
           </div>
 
           {/* Academic Accreditations & Key Ratings */}
@@ -104,19 +137,19 @@ export function InstitutionProfilePage() {
             <div className={styles.infoGrid}>
               <div className={styles.infoItem}>
                 <span className={styles.infoLabel}>NAAC Accreditation</span>
-                <span className={styles.infoValue}>Grade A++ (Score 3.78)</span>
+                <span className={styles.infoValue}>{naacAccreditation}</span>
               </div>
               <div className={styles.infoItem}>
                 <span className={styles.infoLabel}>NIRF National Ranking</span>
-                <span className={styles.infoValue}>Rank #53 (Engineering)</span>
+                <span className={styles.infoValue}>{nirfRank}</span>
               </div>
               <div className={styles.infoItem}>
                 <span className={styles.infoLabel}>Affiliating University</span>
-                <span className={styles.infoValue}>Anna University, Chennai</span>
+                <span className={styles.infoValue}>{affiliatingUniversity}</span>
               </div>
               <div className={styles.infoItem}>
                 <span className={styles.infoLabel}>Autonomy Status</span>
-                <span className={styles.infoValue}>UGC Conferred Autonomous</span>
+                <span className={styles.infoValue}>{autonomyStatus}</span>
               </div>
             </div>
           </div>
@@ -132,15 +165,15 @@ export function InstitutionProfilePage() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <div className={styles.infoItem}>
                 <span className={styles.infoLabel}>Office Email</span>
-                <span className={styles.infoValue}>placement@psgtech.edu</span>
+                <span className={styles.infoValue}>{officeEmail}</span>
               </div>
               <div className={styles.infoItem}>
                 <span className={styles.infoLabel}>Placement Hotline</span>
-                <span className={styles.infoValue}>+91 422 257 2177</span>
+                <span className={styles.infoValue}>{phone}</span>
               </div>
               <div className={styles.infoItem}>
                 <span className={styles.infoLabel}>Campus Address</span>
-                <span className={styles.infoValue}>Avinashi Road, Peelamedu, Coimbatore - 641004</span>
+                <span className={styles.infoValue}>{campusAddress}</span>
               </div>
             </div>
           </div>
@@ -151,10 +184,46 @@ export function InstitutionProfilePage() {
               <span>Authorized Placement Officers</span>
             </h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              <div style={{ padding: '8px 12px', background: '#f8fafc', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                <span style={{ fontSize: '0.84rem', fontWeight: 600, color: '#0f172a' }}>{user?.name || 'Dr. R. Rajesh Kumar'}</span>
-                <span style={{ fontSize: '0.74rem', color: '#64748b' }}>Head of Training &amp; Corporate Relations</span>
-              </div>
+              {representatives.length > 0 ? (
+                representatives.map((rep: any, idx: number) => (
+                  <div
+                    key={rep.id || idx}
+                    style={{
+                      padding: '8px 12px',
+                      background: '#f8fafc',
+                      border: '1px solid #e2e8f0',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '2px',
+                    }}
+                  >
+                    <span style={{ fontSize: '0.84rem', fontWeight: 600, color: '#0f172a' }}>
+                      {rep.name || rep.fullName || 'Authorized Officer'}
+                    </span>
+                    <span style={{ fontSize: '0.74rem', color: '#64748b' }}>
+                      {rep.designation || rep.role || 'Placement Representative'}
+                    </span>
+                  </div>
+                ))
+              ) : (
+                <div
+                  style={{
+                    padding: '8px 12px',
+                    background: '#f8fafc',
+                    border: '1px solid #e2e8f0',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '2px',
+                  }}
+                >
+                  <span style={{ fontSize: '0.84rem', fontWeight: 600, color: '#0f172a' }}>
+                    {user?.name || 'Primary Administrator'}
+                  </span>
+                  <span style={{ fontSize: '0.74rem', color: '#64748b' }}>
+                    Authorized Institutional Representative
+                  </span>
+                </div>
+              )}
             </div>
           </div>
         </div>

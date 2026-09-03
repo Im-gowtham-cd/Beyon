@@ -1,6 +1,7 @@
-﻿import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { NavLink, Link } from 'react-router-dom';
 import { useAuth } from '../auth/context/AuthContext';
+import { institutionApi } from '../institution/services/institutionApi';
 import {
   LayoutDashboard,
   LineChart,
@@ -30,7 +31,26 @@ export function InstitutionSidebar({
   onToggleCollapse,
 }: InstitutionSidebarProps) {
   const { user } = useAuth();
-  const [enrolledCount] = useState<number>(1420);
+  const [enrolledCount, setEnrolledCount] = useState<number>(0);
+  const [activeDrivesCount, setActiveDrivesCount] = useState<number>(0);
+
+  useEffect(() => {
+    async function loadStats() {
+      try {
+        const [studentsRes, drivesRes] = await Promise.all([
+          institutionApi.getStudents().catch(() => []),
+          institutionApi.getDrives().catch(() => []),
+        ]);
+        const sList = Array.isArray(studentsRes) ? studentsRes : (studentsRes as any)?.data || [];
+        const dList = Array.isArray(drivesRes) ? drivesRes : (drivesRes as any)?.data || [];
+        setEnrolledCount(sList.length);
+        setActiveDrivesCount(dList.length);
+      } catch {
+        /* fallback */
+      }
+    }
+    loadStats();
+  }, []);
 
   const navSections = [
     {
@@ -38,13 +58,25 @@ export function InstitutionSidebar({
       items: [
         { to: '/institution/home', icon: LayoutDashboard, label: 'Executive Dashboard' },
         { to: '/institution/analytics', icon: LineChart, label: 'Institutional Analytics' },
-        { to: '/institution/drives', icon: Briefcase, label: 'Placement Drives', badge: '18 Active', badgeType: 'primary' },
+        {
+          to: '/institution/drives',
+          icon: Briefcase,
+          label: 'Placement Drives',
+          badge: activeDrivesCount > 0 ? `${activeDrivesCount} Active` : undefined,
+          badgeType: 'primary',
+        },
       ],
     },
     {
       title: 'Student Cohorts & Verification',
       items: [
-        { to: '/institution/students', icon: Users, label: 'Student Cohort Roster', badge: `${enrolledCount}`, badgeType: 'gold' },
+        {
+          to: '/institution/students',
+          icon: Users,
+          label: 'Student Cohort Roster',
+          badge: enrolledCount > 0 ? `${enrolledCount}` : undefined,
+          badgeType: 'gold',
+        },
         { to: '/institution/placements', icon: Award, label: 'Placement Records & Offers' },
         { to: '/institution/curriculum', icon: BookOpen, label: 'Skill Matrix & Tracks' },
       ],
@@ -58,13 +90,14 @@ export function InstitutionSidebar({
     },
   ];
 
-  const instName = user?.name || 'PSG College of Technology';
-  const initials = instName
-    .split(' ')
-    .map((p: string) => p[0])
-    .join('')
-    .slice(0, 2)
-    .toUpperCase() || 'CT';
+  const instName = user?.name || 'Institution Partner';
+  const initials =
+    instName
+      .split(' ')
+      .map((p: string) => p[0])
+      .join('')
+      .slice(0, 2)
+      .toUpperCase() || 'IN';
 
   return (
     <aside
@@ -104,7 +137,7 @@ export function InstitutionSidebar({
             <span className={styles.instName} title={instName}>{instName}</span>
             <span className={styles.instRole}>
               <ShieldCheck size={12} />
-              <span>NAAC A++ Accredited</span>
+              <span>Campus Command</span>
             </span>
           </div>
         </div>
@@ -154,8 +187,10 @@ export function InstitutionSidebar({
           <div className={styles.accreditationPill}>
             <GraduationCap size={16} style={{ color: '#1c2d81', flexShrink: 0 }} />
             <div>
-              <div style={{ fontSize: '0.74rem', fontWeight: 800, color: '#0f172a' }}>NIRF Rank #53</div>
-              <div style={{ fontSize: '0.66rem', color: '#64748b' }}>Verified Academic Partner</div>
+              <div style={{ fontSize: '0.74rem', fontWeight: 800, color: '#0f172a' }}>
+                {activeDrivesCount > 0 ? `${activeDrivesCount} Active Drives` : 'Verified Institution'}
+              </div>
+              <div style={{ fontSize: '0.66rem', color: '#64748b' }}>Institutional Talent Hub</div>
             </div>
           </div>
         </div>
