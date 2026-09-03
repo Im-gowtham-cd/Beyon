@@ -58,10 +58,10 @@ export function RegisterPage() {
       try {
         const loginRes = await authApi.login({ email, password });
         login(loginRes.accessToken, loginRes.user);
-        showToast('Registration successful! Redirecting to dashboard...');
+        showToast('Account created! Proceeding to setup your profile...');
         setTimeout(() => {
-          navigate(`/${role.toLowerCase()}/home`);
-        }, 600);
+          navigate(`/onboarding/${role.toLowerCase()}`);
+        }, 500);
       } catch {
         showToast('Registration successful! Please sign in.');
         setTimeout(() => {
