@@ -54,7 +54,7 @@ public class CoinService {
             dailyLimit = rule.getDailyLimit();
         } else {
             amount = switch (action) {
-                case "DAILY_CHALLENGE_COMPLETED" -> 50;
+                case "DAILY_COMPLETION_BONUS", "DAILY_CHALLENGE_COMPLETED" -> 100;
                 case "WEEKEND_TEST_COMPLETED" -> 100;
                 case "QUESTION_SOLVED_HARD" -> 25;
                 case "QUESTION_SOLVED_MEDIUM" -> 10;

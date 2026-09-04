@@ -14,6 +14,8 @@ import {
   RotateCcw,
   Zap,
   HelpCircle,
+  Lightbulb,
+  Trophy,
 } from 'lucide-react';
 import styles from './PracticePages.module.css';
 
@@ -44,8 +46,14 @@ export function DailyChallengePage() {
   const [recallQuestions, setRecallQuestions] = useState<SprintQuestion[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState<string>('');
-  const [questionResults, setQuestionResults] = useState<Record<string, { correct: boolean; explanation: string; selectedId: string }>>({});
   const [loading, setLoading] = useState(true);
+  const [questionResults, setQuestionResults] = useState<Record<string, {
+    correct: boolean;
+    explanation: string;
+    selectedId: string;
+    correctOptionId?: string;
+    correctOptionText?: string;
+  }>>({});
   const [submitting, setSubmitting] = useState(false);
   const [sessionXP, setSessionXP] = useState(0);
   const [sessionCoins, setSessionCoins] = useState(0);
@@ -94,7 +102,10 @@ export function DailyChallengePage() {
       });
 
       const isCorrect = res?.correct ?? false;
-      const explanation = res?.explanation || 'Review the core architectural principles in the study modules.';
+      const correctOptObj = currentQuestion.options.find(o => o.isCorrect || o.id === res?.correctOptionId);
+      const correctOptionId = res?.correctOptionId || correctOptObj?.id;
+      const correctOptionText = res?.correctOptionText || correctOptObj?.optionText;
+      const explanation = res?.explanation || correctOptObj?.explanation || 'Review the core architectural principles in the study modules.';
       
       setQuestionResults(prev => ({
         ...prev,
@@ -102,6 +113,8 @@ export function DailyChallengePage() {
           correct: isCorrect,
           explanation,
           selectedId: selectedOption,
+          correctOptionId,
+          correctOptionText,
         },
       }));
 
@@ -110,12 +123,15 @@ export function DailyChallengePage() {
         setSessionCoins(prev => prev + (res?.coinsEarned || 10));
       }
     } catch {
+      const correctOptObj = currentQuestion.options.find(o => o.isCorrect);
       setQuestionResults(prev => ({
         ...prev,
         [currentQuestion.id]: {
           correct: true,
-          explanation: 'Standard verified technical principle.',
+          explanation: correctOptObj?.explanation || 'Standard verified technical principle.',
           selectedId: selectedOption,
+          correctOptionId: correctOptObj?.id,
+          correctOptionText: correctOptObj?.optionText,
         },
       }));
       setSessionXP(prev => prev + 25);
@@ -146,8 +162,7 @@ export function DailyChallengePage() {
   const answeredCount = activeSet.filter(q => questionResults[q.id]).length;
   const correctCount = activeSet.filter(q => questionResults[q.id]?.correct).length;
   const scorePct = activeSet.length > 0 ? (correctCount / activeSet.length) * 100 : 0;
-  const requiredCorrectForBonus = Math.ceil(activeSet.length * 0.35);
-  const eligibleForBonus = scorePct >= 35.0;
+  const eligibleForBonus = activeSet.length > 0 && correctCount === activeSet.length;
   const isBonusClaimed = !!claimedBonus[activeTab];
 
   async function handleClaimCoins() {
@@ -160,15 +175,15 @@ export function DailyChallengePage() {
       });
       if (res?.success) {
         setClaimedBonus(prev => ({ ...prev, [activeTab]: true }));
-        setSessionCoins(prev => prev + 50);
-        setClaimMessage('🎉 50 Beyon Coins successfully claimed & credited to your wallet!');
+        setSessionCoins(prev => prev + 100);
+        setClaimMessage('100 Beyon Coins successfully claimed & credited to your wallet!');
       } else {
         setClaimMessage(res?.message || 'Unable to claim bonus');
       }
     } catch {
       setClaimedBonus(prev => ({ ...prev, [activeTab]: true }));
-      setSessionCoins(prev => prev + 50);
-      setClaimMessage('🎉 50 Beyon Coins successfully claimed & credited to your wallet!');
+      setSessionCoins(prev => prev + 100);
+      setClaimMessage('100 Beyon Coins successfully claimed & credited to your wallet!');
     } finally {
       setClaiming(false);
     }
@@ -235,7 +250,7 @@ export function DailyChallengePage() {
           }}
         >
           <Target size={16} />
-          <span>🎯 Daily Challenge Sprint ({sprintQuestions.length} Questions)</span>
+          <span>Daily Challenge Sprint ({sprintQuestions.length} Questions)</span>
         </button>
 
         <button
@@ -255,11 +270,11 @@ export function DailyChallengePage() {
           }}
         >
           <Brain size={16} />
-          <span>🧠 Revise &amp; Recall ({recallQuestions.length} Questions)</span>
+          <span>Revise &amp; Recall ({recallQuestions.length} Questions)</span>
         </button>
       </div>
 
-      {/* 50 Coins Reward & 35% Score Threshold Banner */}
+      {/* 100 Coins Reward & 100% Score Threshold Banner */}
       <div style={{
         background: eligibleForBonus ? '#fefce8' : '#f8fafc',
         border: eligibleForBonus ? '1.5px solid #facc15' : '1px solid #e2e8f0',
@@ -282,14 +297,13 @@ export function DailyChallengePage() {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: '1.25rem',
             flexShrink: 0,
           }}>
-            🪙
+            <Coins size={22} color={eligibleForBonus ? '#854d0e' : '#64748b'} />
           </div>
           <div>
             <div style={{ fontWeight: 800, color: eligibleForBonus ? '#854d0e' : '#1e293b', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span>50 Beyon Coins Completion Reward</span>
+              <span>100 Beyon Coins Completion Reward</span>
               <span style={{
                 background: eligibleForBonus ? '#22c55e' : '#64748b',
                 color: '#ffffff',
@@ -298,11 +312,11 @@ export function DailyChallengePage() {
                 padding: '2px 8px',
                 borderRadius: '12px',
               }}>
-                {eligibleForBonus ? '35% Threshold Achieved!' : `Target: 35% Score (${requiredCorrectForBonus} Correct)`}
+                {eligibleForBonus ? '100% Perfect Score Achieved!' : `Target: 100% Score (${activeSet.length} of ${activeSet.length} Correct)`}
               </span>
             </div>
             <div style={{ fontSize: '0.82rem', color: '#64748b', marginTop: '2px' }}>
-              Current Accuracy: <strong>{Math.round(scorePct)}%</strong> ({correctCount} / {activeSet.length} correct) &bull; Score at least 35% to unlock the 50 coin reward.
+              Current Accuracy: <strong>{Math.round(scorePct)}%</strong> ({correctCount} / {activeSet.length} correct) &bull; A 100% perfect score is required to unlock the 100 coin reward.
             </div>
           </div>
         </div>
@@ -310,7 +324,7 @@ export function DailyChallengePage() {
         <div>
           {isBonusClaimed ? (
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#dcfce7', color: '#15803d', border: '1px solid #86efac', padding: '8px 18px', borderRadius: '6px', fontWeight: 700, fontSize: '0.85rem' }}>
-              <CheckCircle2 size={16} /> 50 Coins Claimed!
+              <CheckCircle2 size={16} /> 100 Coins Claimed!
             </div>
           ) : (
             <button
@@ -333,7 +347,7 @@ export function DailyChallengePage() {
               }}
             >
               <Coins size={16} />
-              <span>{claiming ? 'Crediting Coins...' : 'Claim 50 Coins Bonus'}</span>
+              <span>{claiming ? 'Crediting Coins...' : 'Claim 100 Coins Bonus'}</span>
             </button>
           )}
         </div>
@@ -350,8 +364,9 @@ export function DailyChallengePage() {
       {activeTab === 'sprint' ? (
         <div style={{ background: '#f8fafc', border: '1px solid #cbd5e1', borderLeft: '4px solid #1c2d81', padding: '14px 18px', borderRadius: '4px', marginBottom: '20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
           <div>
-            <div style={{ fontWeight: 700, color: '#1e293b', fontSize: '0.9rem' }}>
-              🎯 Recommended From Your Wishlist &amp; Ongoing Tracks
+            <div style={{ fontWeight: 700, color: '#1e293b', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Target size={16} color="#1c2d81" />
+              <span>Recommended From Your Wishlist &amp; Ongoing Tracks</span>
             </div>
             <div style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '2px' }}>
               These 15 questions target your active wishlisted technologies and enrolled courses to build coding fluency.
@@ -364,8 +379,9 @@ export function DailyChallengePage() {
       ) : (
         <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderLeft: '4px solid #16a34a', padding: '14px 18px', borderRadius: '4px', marginBottom: '20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
           <div>
-            <div style={{ fontWeight: 700, color: '#166534', fontSize: '0.9rem' }}>
-              🧠 Spaced Repetition &amp; Active Recall Practice
+            <div style={{ fontWeight: 700, color: '#166534', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Brain size={16} color="#166534" />
+              <span>Spaced Repetition &amp; Active Recall Practice</span>
             </div>
             <div style={{ fontSize: '0.8rem', color: '#15803d', marginTop: '2px' }}>
               Practicing completed skills &amp; finished lessons regularly protects your long-term memory and prevents decay.
@@ -492,11 +508,12 @@ export function DailyChallengePage() {
                       marginBottom: '8px',
                     };
 
+                    const isCorrectOpt = opt.isCorrect || opt.id === currentResult?.correctOptionId;
                     if (isSelected && !isSubmitted) {
                       optStyle.background = '#eff6ff';
                       optStyle.border = '1.5px solid #1c2d81';
                     } else if (isSubmitted) {
-                      if (opt.isCorrect) {
+                      if (isCorrectOpt) {
                         optStyle.background = '#dcfce7';
                         optStyle.border = '1.5px solid #22c55e';
                         optStyle.color = '#15803d';
@@ -514,9 +531,9 @@ export function DailyChallengePage() {
                         onClick={() => !isSubmitted && setSelectedOption(opt.id)}
                         disabled={isSubmitted}
                       >
-                        <span style={{ fontWeight: 800, color: '#1c2d81' }}>{letter}.</span>
+                        <span style={{ fontWeight: 800, color: isSubmitted && isCorrectOpt ? '#15803d' : '#1c2d81' }}>{letter}.</span>
                         <span style={{ flex: 1 }}>{opt.optionText}</span>
-                        {isSubmitted && opt.isCorrect && <CheckCircle2 size={16} color="#15803d" />}
+                        {isSubmitted && isCorrectOpt && <CheckCircle2 size={16} color="#15803d" />}
                         {isSubmitted && isSelected && !currentResult.correct && <XCircle size={16} color="#b91c1c" />}
                       </button>
                     );
@@ -596,24 +613,105 @@ export function DailyChallengePage() {
               </div>
 
               {/* Explanation & Technical Feedback */}
-              {currentResult && (
-                <div style={{ marginTop: '20px', padding: '16px', background: currentResult.correct ? '#f0fdf4' : '#fef2f2', border: currentResult.correct ? '1px solid #bbf7d0' : '1px solid #fecaca', borderRadius: '6px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 700, color: currentResult.correct ? '#15803d' : '#b91c1c', marginBottom: '6px' }}>
-                    {currentResult.correct ? <CheckCircle2 size={16} /> : <XCircle size={16} />}
-                    <span>{currentResult.correct ? 'Correct! (+25 XP & +10 Coins Earned)' : 'Incorrect Solution'}</span>
+              {currentResult && (() => {
+                const correctOpt = currentQuestion.options.find(o => o.isCorrect || o.id === currentResult.correctOptionId);
+                const correctIndex = correctOpt ? currentQuestion.options.indexOf(correctOpt) : -1;
+                const correctLetter = correctIndex >= 0 ? String.fromCharCode(65 + correctIndex) : '';
+                const correctText = currentResult.correctOptionText || correctOpt?.optionText || 'Verified technical solution.';
+
+                return (
+                  <div style={{
+                    marginTop: '20px',
+                    padding: '18px 20px',
+                    background: currentResult.correct ? '#f0fdf4' : '#fef2f2',
+                    border: currentResult.correct ? '1.5px solid #86efac' : '1.5px solid #fecaca',
+                    borderRadius: '8px',
+                  }}>
+                    {/* Header */}
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      fontWeight: 800,
+                      color: currentResult.correct ? '#15803d' : '#b91c1c',
+                      fontSize: '0.98rem',
+                      marginBottom: '12px',
+                    }}>
+                      {currentResult.correct ? <CheckCircle2 size={18} /> : <XCircle size={18} />}
+                      <span>{currentResult.correct ? 'Correct Solution! (+25 XP & +10 Coins Earned)' : 'Incorrect Solution'}</span>
+                    </div>
+
+                    {/* If incorrect, explicitly reveal the correct answer */}
+                    {!currentResult.correct && (
+                      <div style={{
+                        background: '#ffffff',
+                        border: '1.5px solid #86efac',
+                        borderLeft: '5px solid #22c55e',
+                        borderRadius: '6px',
+                        padding: '12px 16px',
+                        marginBottom: '12px',
+                        boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                      }}>
+                        <div style={{
+                          fontSize: '0.78rem',
+                          fontWeight: 800,
+                          color: '#15803d',
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.04em',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          marginBottom: '4px',
+                        }}>
+                          <CheckCircle2 size={15} /> Correct Answer:
+                        </div>
+                        <div style={{ fontSize: '0.95rem', fontWeight: 700, color: '#14532d', lineHeight: 1.4 }}>
+                          {correctLetter ? `Option ${correctLetter}: ` : ''}{correctText}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Concept and Explanation breakdown */}
+                    <div style={{
+                      background: '#ffffff',
+                      border: currentResult.correct ? '1px solid #bbf7d0' : '1px solid #fed7aa',
+                      borderLeft: currentResult.correct ? '4px solid #16a34a' : '4px solid #f97316',
+                      borderRadius: '6px',
+                      padding: '12px 16px',
+                      boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                    }}>
+                      <div style={{
+                        fontSize: '0.78rem',
+                        fontWeight: 800,
+                        color: currentResult.correct ? '#166534' : '#c2410c',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.04em',
+                        marginBottom: '6px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                      }}>
+                        <Lightbulb size={15} />
+                        <span>Technical Solution &amp; Concept Breakdown:</span>
+                      </div>
+                      <div style={{ fontSize: '0.88rem', color: '#334155', lineHeight: 1.6 }}>
+                        {currentResult.explanation}
+                      </div>
+                    </div>
                   </div>
-                  <div style={{ fontSize: '0.85rem', color: '#334155', lineHeight: 1.5 }}>
-                    <strong>Concept:</strong> {currentResult.explanation}
-                  </div>
-                </div>
-              )}
+                );
+              })()}
             </div>
           )}
 
           {/* Session Complete Celebration Banner */}
           {isFinished && (
             <div style={{ marginTop: '24px', background: 'linear-gradient(135deg, #1c2d81 0%, #253cac 100%)', color: '#ffffff', padding: '24px', borderRadius: '8px', textAlign: 'center' }}>
-              <div style={{ fontSize: '2rem', marginBottom: '6px' }}>🏆</div>
+              <div style={{ marginBottom: '12px', display: 'flex', justifyContent: 'center' }}>
+                <div style={{ background: 'rgba(254, 214, 1, 0.2)', padding: '14px', borderRadius: '50%', display: 'inline-flex' }}>
+                  <Trophy size={40} color="#fed601" />
+                </div>
+              </div>
               <h3 style={{ margin: '0 0 6px', fontSize: '1.25rem', fontWeight: 800 }}>
                 Daily Challenge Set Completed!
               </h3>

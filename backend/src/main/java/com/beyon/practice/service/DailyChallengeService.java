@@ -234,15 +234,36 @@ public class DailyChallengeService {
     @Transactional
     public Map<String, Object> submitSprintQuestion(UUID studentId, UUID questionId, UUID selectedOptionId, Integer timeSpent) {
         boolean correct = false;
-        String explanation = "Review the core concepts in the practice arena.";
 
-        if (selectedOptionId != null) {
-            var optOpt = optionRepository.findById(selectedOptionId);
-            if (optOpt.isPresent()) {
-                correct = optOpt.get().isCorrect();
-                if (optOpt.get().getExplanation() != null && !optOpt.get().getExplanation().isBlank()) {
-                    explanation = optOpt.get().getExplanation();
-                }
+        List<com.beyon.practice.model.QuestionOption> options = optionRepository.findByQuestionId(questionId);
+        com.beyon.practice.model.QuestionOption correctOpt = options.stream()
+                .filter(com.beyon.practice.model.QuestionOption::isCorrect)
+                .findFirst()
+                .orElse(null);
+
+        com.beyon.practice.model.QuestionOption selectedOpt = selectedOptionId != null
+                ? options.stream().filter(o -> o.getId().equals(selectedOptionId)).findFirst().orElse(null)
+                : null;
+
+        if (selectedOpt != null) {
+            correct = selectedOpt.isCorrect();
+        }
+
+        String explanation = null;
+        if (correctOpt != null && correctOpt.getExplanation() != null && !correctOpt.getExplanation().isBlank()) {
+            explanation = correctOpt.getExplanation();
+        } else if (selectedOpt != null && selectedOpt.getExplanation() != null && !selectedOpt.getExplanation().isBlank()) {
+            explanation = selectedOpt.getExplanation();
+        }
+
+        if (explanation == null || explanation.isBlank()) {
+            var qOpt = questionRepository.findById(questionId);
+            if (qOpt.isPresent() && qOpt.get().getDescription() != null && !qOpt.get().getDescription().isBlank()) {
+                explanation = qOpt.get().getDescription();
+            } else if (correctOpt != null) {
+                explanation = "The correct answer is: " + correctOpt.getOptionText();
+            } else {
+                explanation = "Review the core concepts in the practice arena.";
             }
         }
 
@@ -260,21 +281,25 @@ public class DailyChallengeService {
             });
         }
 
-        return Map.of(
-                "correct", correct,
-                "explanation", explanation,
-                "xpEarned", xpEarned,
-                "coinsEarned", coinsEarned
-        );
+        Map<String, Object> resp = new LinkedHashMap<>();
+        resp.put("correct", correct);
+        resp.put("explanation", explanation);
+        resp.put("xpEarned", xpEarned);
+        resp.put("coinsEarned", coinsEarned);
+        if (correctOpt != null) {
+            resp.put("correctOptionId", correctOpt.getId().toString());
+            resp.put("correctOptionText", correctOpt.getOptionText());
+        }
+        return resp;
     }
 
     @Transactional
     public Map<String, Object> claimSprintBonus(UUID studentId, String sessionType, double scorePercentage) {
-        if (scorePercentage < 35.0) {
+        if (scorePercentage < 100.0) {
             return Map.of(
                     "success", false,
                     "coinsAwarded", 0,
-                    "message", "Score at least 35% to claim the 50 Beyon Coins completion bonus."
+                    "message", "A perfect score of 100% is required to claim the 100 Beyon Coins completion bonus."
             );
         }
 
@@ -283,8 +308,8 @@ public class DailyChallengeService {
 
         return Map.of(
                 "success", true,
-                "coinsAwarded", 50,
-                "message", "Congratulations! 50 Beyon Coins have been credited to your wallet."
+                "coinsAwarded", 100,
+                "message", "Congratulations! 100 Beyon Coins have been credited to your wallet."
         );
     }
 
