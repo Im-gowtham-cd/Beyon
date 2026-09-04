@@ -18,7 +18,7 @@ public class AssessmentSession {
     @Column(name = "student_id", nullable = false)
     private UUID studentId;
 
-    @Column(name = "opportunity_id", nullable = false)
+    @Column(name = "opportunity_id")
     private UUID opportunityId;
 
     @Column(name = "policy_id")

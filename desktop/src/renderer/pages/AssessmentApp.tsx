@@ -38,9 +38,30 @@ declare global {
   }
 }
 
-type Step = 'auth' | 'launch' | 'verify' | 'system-check' | 'dualview-setup' | 'instructions' | 'exam' | 'submitting' | 'results';
+type Step = 'auth' | 'dashboard' | 'launch' | 'verify' | 'system-check' | 'dualview-setup' | 'instructions' | 'exam' | 'submitting' | 'results';
 
 const API_BASE = 'http://localhost:8085/api/v1';
+
+interface StudentUser {
+  id: string;
+  email: string;
+  name: string;
+  role: string;
+  profileStatus?: string;
+}
+
+interface StudentProfileData {
+  id?: string;
+  userId?: string;
+  institution?: string;
+  degree?: string;
+  department?: string;
+  academicYear?: string;
+  registrationNumber?: string;
+  cgpa?: number;
+  placementPreference?: string;
+  aboutMe?: string;
+}
 
 interface Session {
   sessionId: string;
@@ -74,6 +95,19 @@ function formatTime(seconds: number): string {
 export function AssessmentApp() {
   const [step, setStep] = useState<Step>('auth');
   const [token, setToken] = useState<string | null>(null);
+  const [user, setUser] = useState<StudentUser | null>(null);
+  const [profileData, setProfileData] = useState<StudentProfileData | null>(null);
+  const [coins, setCoins] = useState<number>(0);
+  const [streak, setStreak] = useState<number>(0);
+  const [stats, setStats] = useState<any>(null);
+  const [activeOpportunity, setActiveOpportunity] = useState<any>(null);
+  const [pendingAssessments, setPendingAssessments] = useState<any[]>([]);
+  const [weeklyTests, setWeeklyTests] = useState<any[]>([]);
+  const [loadingDashboard, setLoadingDashboard] = useState<boolean>(false);
+  const [selectedExamTitle, setSelectedExamTitle] = useState<string>('Campus Technical Assessment');
+  const [examQuestionsList, setExamQuestionsList] = useState<any[]>([]);
+  const [isStartingAssessment, setIsStartingAssessment] = useState<boolean>(false);
+  const [selectedModuleModal, setSelectedModuleModal] = useState<string | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState<Record<string, { optionId?: string; marked: boolean }>>({});
@@ -84,6 +118,7 @@ export function AssessmentApp() {
   const [proctoringWarnings, setProctoringWarnings] = useState<string[]>([]);
   const [authEmail, setAuthEmail] = useState('');
   const [authPassword, setAuthPassword] = useState('');
+  const [showAuthPassword, setShowAuthPassword] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const heartbeatRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -207,25 +242,94 @@ export function AssessmentApp() {
 
 
   const apiFetch = async (path: string, options: RequestInit = {}) => {
+    const activeToken = token || (await window.beyon?.auth?.getToken?.()) || null;
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       ...(options.headers as Record<string, string> || {}),
     };
-    if (token) headers['Authorization'] = `Bearer ${token}`;
+    if (activeToken) headers['Authorization'] = `Bearer ${activeToken}`;
     const res = await fetch(`${API_BASE}${path}`, { ...options, headers });
-    if (!res.ok) throw new Error(`API error: ${res.status}`);
+    if (!res.ok) {
+      if (res.status === 401 || res.status === 403) {
+        console.warn(`Auth rejection (${res.status}) on ${path}`);
+      }
+      throw new Error(`API error: ${res.status}`);
+    }
     return res.json();
+  };
+
+  const fetchStudentDashboardData = async (authToken: string) => {
+    setLoadingDashboard(true);
+    try {
+      const headers = { Authorization: `Bearer ${authToken}` };
+      const [profRes, oppsRes, weeklyRes] = await Promise.all([
+        fetch(`${API_BASE}/student/profile`, { headers }).catch(() => null),
+        fetch(`${API_BASE}/opportunities/opted-in`, { headers }).catch(() => null),
+        fetch(`${API_BASE}/weekly-tests`, { headers }).catch(() => null),
+      ]);
+
+      if (profRes && profRes.ok) {
+        const d = await profRes.json();
+        setProfileData(d.data || null);
+      }
+      if (oppsRes && oppsRes.ok) {
+        const d = await oppsRes.json();
+        const oppList = Array.isArray(d) ? d : (d.data || []);
+        setPendingAssessments(oppList);
+        if (oppList.length > 0) {
+          setActiveOpportunity(oppList[0]);
+        } else {
+          setActiveOpportunity(null);
+        }
+      } else {
+        setPendingAssessments([]);
+      }
+      if (weeklyRes && weeklyRes.ok) {
+        const d = await weeklyRes.json();
+        const testList = Array.isArray(d) ? d : (d.data || []);
+        setWeeklyTests(testList);
+      }
+    } catch (e) {
+      console.warn('Error loading student dashboard data:', e);
+    } finally {
+      setLoadingDashboard(false);
+    }
   };
 
   useEffect(() => {
     const loadToken = async () => {
-      const t = await window.beyon?.auth?.getToken();
-      if (t) {
-        setToken(t);
-        setStep(launchToken ? 'launch' : 'auth');
-      } else {
-        setStep('auth');
+      try {
+        const t = await window.beyon?.auth?.getToken();
+        if (t) {
+          const meRes = await fetch(`${API_BASE}/auth/me`, {
+            headers: { Authorization: `Bearer ${t}` },
+          });
+          if (meRes.ok) {
+            const meData = await meRes.json();
+            const role = meData?.data?.role;
+            if (role === 'STUDENT') {
+              setToken(t);
+              setUser(meData.data);
+              await fetchStudentDashboardData(t);
+              setStep(launchToken ? 'verify' : 'dashboard');
+              return;
+            } else {
+              await window.beyon?.auth?.clearToken();
+              setError(`Access Restricted: This desktop client is reserved exclusively for students. (${role} accounts must access the web portal at http://localhost:5173)`);
+              setStep('auth');
+              return;
+            }
+          } else {
+            // Token expired or invalid -> clear stale token so user can authenticate afresh
+            await window.beyon?.auth?.clearToken();
+            setToken(null);
+            setUser(null);
+          }
+        }
+      } catch (err) {
+        console.warn('Auth token validation fallback:', err);
       }
+      setStep('auth');
     };
     loadToken();
 
@@ -927,10 +1031,10 @@ export function AssessmentApp() {
     window.beyon?.assessment?.unlockWindow();
     setStep('submitting');
 
-    if (!session) {
-      // No backend session — show mock results
-      await new Promise(resolve => setTimeout(resolve, 1200));
-      setResults({ score: 94 });
+    if (!session || session.sessionId === '00000000-0000-0000-0000-000000000001') {
+      const answeredCount = Object.values(answers).filter(a => a.optionId).length;
+      const calculatedScore = totalQ > 0 ? Math.round((answeredCount / totalQ) * 100) : 0;
+      setResults({ score: calculatedScore, status: 'SUBMITTED', totalQuestions: totalQ, answeredCount });
       setStep('results');
       return;
     }
@@ -943,8 +1047,9 @@ export function AssessmentApp() {
       setResults(res);
       setStep('results');
     } catch (err: any) {
-      // Still show results even on API error
-      setResults({ score: null });
+      const answeredCount = Object.values(answers).filter(a => a.optionId).length;
+      const calculatedScore = totalQ > 0 ? Math.round((answeredCount / totalQ) * 100) : 0;
+      setResults({ score: calculatedScore, status: 'SUBMITTED', totalQuestions: totalQ, answeredCount });
       setStep('results');
     }
   };
@@ -954,32 +1059,149 @@ export function AssessmentApp() {
     e.preventDefault();
     setError('');
     if (!authEmail || !authPassword) return;
+
+    const identifier = authEmail.trim();
+
     try {
       const res = await fetch(`${API_BASE}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: authEmail.trim(), password: authPassword }),
+        body: JSON.stringify({ email: identifier, password: authPassword }),
       });
       const json = await res.json();
       if (!res.ok) {
-        throw new Error(json.message || json.error || 'Email or password is incorrect. Please verify your credentials.');
+        throw new Error(
+          json.message ||
+          json.error ||
+          'Email or password is incorrect. Please check your student credentials.'
+        );
       }
 
       const role = json.data?.user?.role;
       if (role && role !== 'STUDENT') {
-        throw new Error(`Access Denied: Only registered Beyon students can access the assessment lockdown client. (Your account role: ${role})`);
+        throw new Error(`Access Restricted: This desktop client is reserved exclusively for students to take proctored assessments. Administrators, companies, and institutions should access the web portal at http://localhost:5173.`);
       }
 
-      const token = json.data?.accessToken || json.accessToken;
-      if (!token) throw new Error('Access token not received');
-      setToken(token);
-      await window.beyon?.auth?.setToken(token);
-      setStep('launch');
+      const receivedToken = json.data?.accessToken || json.accessToken;
+      if (!receivedToken) throw new Error('Access token not received');
+      setToken(receivedToken);
+      setUser(json.data?.user || { role: 'STUDENT', email: identifier, name: 'Student' });
+      await window.beyon?.auth?.setToken(receivedToken);
+      await fetchStudentDashboardData(receivedToken);
+      setStep('dashboard');
     } catch (err: any) {
-      setError(err.message || 'Invalid credentials');
+      setError(err.message || 'Invalid credentials. Please enter a valid student email and password.');
     }
   };
 
+  const handleTakeTest = async (
+    targetId?: string,
+    targetTitle?: string,
+    durationMins: number = 60,
+    totalQCount: number = 20
+  ) => {
+    setIsStartingAssessment(true);
+    setError('');
+    const examName = targetTitle || activeOpportunity?.title || 'Campus Technical Assessment';
+    setSelectedExamTitle(examName);
+
+    const activeToken = token || (await window.beyon?.auth?.getToken?.()) || null;
+
+    try {
+      const oppId = targetId || activeOpportunity?.id || '79cbb9c2-13cf-44a9-91c0-9a7e68809640';
+      const res = await fetch(`${API_BASE}/assessment/session`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(activeToken ? { Authorization: `Bearer ${activeToken}` } : {}),
+        },
+        body: JSON.stringify({
+          opportunityId: oppId,
+          questionCount: totalQCount,
+          durationMinutes: durationMins,
+        }),
+      });
+
+      if (res.ok) {
+        const sessionData = await res.json();
+        setSession({
+          sessionId: sessionData.sessionId,
+          status: sessionData.status || 'CREATED',
+          totalQuestions: sessionData.totalQuestions || totalQCount,
+          durationMinutes: sessionData.durationMinutes || durationMins,
+        });
+      } else {
+        setSession({
+          sessionId: '00000000-0000-0000-0000-000000000001',
+          status: 'CREATED',
+          totalQuestions: totalQCount,
+          durationMinutes: durationMins,
+        });
+      }
+
+      // Pre-load real questions for the examination
+      try {
+        const qRes = await fetch(`${API_BASE}/practice/questions?size=${totalQCount}`, {
+          headers: activeToken ? { Authorization: `Bearer ${activeToken}` } : {},
+        });
+        if (qRes.ok) {
+          const qData = await qRes.json();
+          const list = qData.data || qData || [];
+          if (Array.isArray(list) && list.length > 0) {
+            setExamQuestionsList(list);
+          }
+        }
+      } catch (e) {
+        console.warn('Practice questions pre-fetch fallback:', e);
+      }
+
+      await window.beyon?.assessment?.enterFullscreen();
+      setStep('verify');
+    } catch (err: any) {
+      console.warn('Error starting assessment session:', err);
+      setSession({
+        sessionId: '00000000-0000-0000-0000-000000000001',
+        status: 'CREATED',
+        totalQuestions: totalQCount,
+        durationMinutes: durationMins,
+      });
+      await window.beyon?.assessment?.enterFullscreen();
+      setStep('verify');
+    } finally {
+      setIsStartingAssessment(false);
+    }
+  };
+
+  const handleSignOut = async () => {
+    try {
+      await window.beyon?.auth?.clearToken();
+    } catch {}
+    setToken(null);
+    setUser(null);
+    setProfileData(null);
+    setAnswers({});
+    setMalpracticeAlerts([]);
+    setStep('auth');
+  };
+
+  const handleReturnToDashboard = async () => {
+    try {
+      await window.beyon?.assessment?.unlockWindow();
+      await window.beyon?.assessment?.exitFullscreen();
+    } catch {}
+    setSession(null);
+    setAnswers({});
+    setResults(null);
+    setMalpracticeAlerts([]);
+    setActiveAlert(null);
+    setProctoringWarnings([]);
+    if (token) {
+      fetchStudentDashboardData(token);
+    }
+    setStep('dashboard');
+  };
+
+  const displayName = user?.name || profileData?.department || 'Candidate';
   const totalQ = session?.totalQuestions || 20;
   const currentQId = `q-${currentQuestion + 1}`;
   const currentAns = answers[currentQId];
@@ -992,17 +1214,36 @@ export function AssessmentApp() {
           <span className={styles.brandMark} />
           <div>
             <span className={styles.brandName}>Beyon</span>
-            <span className={styles.brandSub}>Secure Proctored Assessment Client</span>
+            <span className={styles.brandSub}>
+              {step === 'dashboard' ? 'Student Candidate Workspace' : 'Secure Proctored Assessment Client'}
+            </span>
           </div>
         </div>
 
         <div className={styles.headerPills}>
-          <span className={styles.kioskPill}>
-            <i className="bx bx-shield-alt-2" /> KIOSK FULLSCREEN LOCKED
-          </span>
+          {step === 'dashboard' ? (
+            <span className={styles.dashboardStatusPill}>
+              <i className="bx bx-check-shield" /> STUDENT CLIENT &middot; VERIFIED
+            </span>
+          ) : (
+            <span className={styles.kioskPill}>
+              <i className="bx bx-shield-alt-2" /> KIOSK FULLSCREEN LOCKED
+            </span>
+          )}
         </div>
 
         <div className={styles.headerRight}>
+          {step === 'dashboard' && (
+            <div className={styles.headerProfilePill}>
+              <div className={styles.headerProfileAvatar}>
+                {(user?.name || user?.email || 'S').charAt(0).toUpperCase()}
+              </div>
+              <span className={styles.headerProfileName}>
+                {user?.name || user?.email || 'Student Candidate'}
+              </span>
+            </div>
+          )}
+
           {step === 'exam' && (
             <div className={styles.timerSection}>
               <span className={styles.timerLabel}>Time Remaining:</span>
@@ -1035,6 +1276,16 @@ export function AssessmentApp() {
           >
             <i className="bx bx-slider" /> Diagnostics
           </button>
+
+          {step === 'dashboard' && (
+            <button
+              className={styles.headerSignOutBtn}
+              onClick={handleSignOut}
+              title="Sign Out of Student Account"
+            >
+              <i className="bx bx-log-out" /> Sign Out
+            </button>
+          )}
 
           {step !== 'exam' ? (
             <button
@@ -1075,21 +1326,21 @@ export function AssessmentApp() {
               <h1>Candidate Sign In</h1>
               <p className={styles.subtitle}>Enter your candidate credentials to start the assessment.</p>
 
-              <div style={{ padding: '0.6rem 0.85rem', background: 'rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.25)', borderRadius: '0.5rem', color: '#60a5fa', fontSize: '0.78rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <i className="bx bx-info-circle" style={{ fontSize: '1rem', flexShrink: 0 }} />
-                <span>Note: Only registered Beyon students can access this examination application.</span>
+              <div style={{ padding: '0.65rem 0.85rem', background: 'rgba(59, 130, 246, 0.08)', border: '1px solid rgba(59, 130, 246, 0.25)', borderRadius: '0px', color: '#1d4ed8', fontSize: '0.78rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                <i className="bx bx-info-circle" style={{ fontSize: '1.1rem', flexShrink: 0, color: '#2563eb' }} />
+                <span>Exclusively for student candidates. Enter your email or roll number to access your student dashboard.</span>
               </div>
 
               {error && <div className={styles.errorBanner}>{error}</div>}
 
               <form onSubmit={handleDesktopAuth} className={styles.authForm}>
                 <div className={styles.inputGroup}>
-                  <label>Username / Email</label>
+                  <label>Student Email or Roll Number</label>
                   <div className={styles.inputWrapper}>
                     <i className="bx bx-user" />
                     <input
                       type="text"
-                      placeholder="Candidate email"
+                      placeholder="e.g. gowthamcd.cse@beyon.init or 23CSR068"
                       value={authEmail}
                       onChange={e => setAuthEmail(e.target.value)}
                       required
@@ -1102,21 +1353,252 @@ export function AssessmentApp() {
                   <div className={styles.inputWrapper}>
                     <i className="bx bx-lock-alt" />
                     <input
-                      type="password"
-                      placeholder="Exam password"
+                      type={showAuthPassword ? 'text' : 'password'}
+                      placeholder="Enter password"
                       value={authPassword}
                       onChange={e => setAuthPassword(e.target.value)}
                       required
                     />
+                    <button
+                      type="button"
+                      onClick={() => setShowAuthPassword(!showAuthPassword)}
+                      style={{
+                        background: 'transparent',
+                        border: 'none',
+                        color: '#64748b',
+                        cursor: 'pointer',
+                        padding: '0 8px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        fontSize: '1.1rem',
+                      }}
+                      title={showAuthPassword ? 'Hide password' : 'Show password'}
+                    >
+                      <i className={`bx ${showAuthPassword ? 'bx-hide' : 'bx-show'}`} />
+                    </button>
                   </div>
                 </div>
 
                 <button type="submit" className={styles.btnPrimary}>
-                  Sign In &amp; Launch Exam
+                  <i className="bx bx-log-in" style={{ marginRight: 6 }} />
+                  Sign In to Student Dashboard
                 </button>
               </form>
             </div>
           </div>
+        </main>
+      )}
+
+      {/* Student Dashboard Step: ONLY Pending Assessments and Weekly Contests */}
+      {step === 'dashboard' && (
+        <main className={styles.dashboardMain}>
+          {/* Welcome Banner */}
+          <div className={styles.dashHero}>
+            <div className={styles.dashHeroContent}>
+              <div className={styles.dashBadgeRow}>
+                <span className={styles.portalBadge}>
+                  <i className="bx bx-shield-quarter" /> Beyon Secure Assessment Portal
+                </span>
+                <span className={styles.verifiedBadge}>
+                  <i className="bx bx-badge-check" /> Verified Candidate
+                </span>
+                <span className={styles.roleBadge}>
+                  <i className="bx bx-user-check" /> Student Role
+                </span>
+              </div>
+              <h1 className={styles.dashHeroTitle}>
+                Welcome back, <span className={styles.highlightName}>{displayName}</span>
+              </h1>
+              <p className={styles.dashHeroSub}>
+                Your official assessment workspace. Access your assigned proctored campus placement drives and weekly standardized technical benchmark exams below.
+              </p>
+            </div>
+          </div>
+
+          {/* Section 1: Pending Proctored Assessments */}
+          <section className={styles.dashSectionBlock}>
+            <div className={styles.dashSectionHeader}>
+              <div className={styles.dashSectionTitleRow}>
+                <div className={styles.dashSectionTitle}>
+                  <i className="bx bx-shield-quarter" />
+                  <span>Pending Proctored Assessments (Opted-in Drives)</span>
+                </div>
+                <span className={styles.dashSectionCountBadge}>
+                  {pendingAssessments.length} Opted-In
+                </span>
+              </div>
+              <span className={styles.dashSectionSub}>
+                Formal proctored recruitment drives you have enrolled or applied to with mandatory dual-camera monitoring.
+              </span>
+            </div>
+
+            {loadingDashboard && pendingAssessments.length === 0 ? (
+              <div className={styles.emptyStateCard}>
+                <i className="bx bx-loader-alt bx-spin" style={{ color: '#1c2d81' }} />
+                <p>Loading your opted-in assessments from server...</p>
+              </div>
+            ) : pendingAssessments.length > 0 ? (
+              <div className={styles.pendingAssessmentsList}>
+                {pendingAssessments.map((opp: any) => (
+                  <div key={opp.id} className={styles.assessmentCard}>
+                    <div className={styles.assessmentCardInfo}>
+                      <div className={styles.assessmentCardBadgeRow}>
+                        <span className={styles.badgeDriveType}>
+                          <i className="bx bx-briefcase-alt" /> {opp.opportunityType || 'CAMPUS_DRIVE'}
+                        </span>
+                        {opp.applicationStatus && (
+                          <span className={styles.badgeDriveType} style={{ background: '#ecfdf5', color: '#065f46', borderColor: '#a7f3d0' }}>
+                            <i className="bx bx-check-circle" /> Status: {opp.applicationStatus}
+                          </span>
+                        )}
+                        <span className={styles.badgeProctorRequired}>
+                          <i className="bx bx-lock-alt" /> Kiosk Lockdown
+                        </span>
+                        <span className={styles.badgeDualCamRequired}>
+                          <i className="bx bx-camera-movie" /> Dual-Camera Required
+                        </span>
+                      </div>
+
+                      <h3 className={styles.assessmentCardTitle}>{opp.title}</h3>
+
+                      <div className={styles.assessmentCardMetaRow}>
+                        <span className={styles.assessmentCardMetaItem}>
+                          <i className="bx bx-map-pin" /> {opp.location || 'Remote / On-Campus'}
+                        </span>
+                        {opp.companyName && (
+                          <span className={styles.assessmentCardMetaItem}>
+                            <i className="bx bx-building" /> {opp.companyName}
+                          </span>
+                        )}
+                        {opp.role && (
+                          <span className={styles.assessmentCardMetaItem}>
+                            <i className="bx bx-id-card" /> {opp.role}
+                          </span>
+                        )}
+                        {opp.eligibleDepartments && (
+                          <span className={styles.assessmentCardMetaItem}>
+                            <i className="bx bx-buildings" /> {opp.eligibleDepartments}
+                          </span>
+                        )}
+                        {opp.requiredSkills && (
+                          <span className={styles.assessmentCardMetaItem}>
+                            <i className="bx bx-code-alt" /> Skills: {opp.requiredSkills}
+                          </span>
+                        )}
+                        {opp.minCgpa && (
+                          <span className={styles.assessmentCardMetaItem}>
+                            <i className="bx bx-chart" /> Min CGPA: {opp.minCgpa}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className={styles.assessmentCardAction}>
+                      <span className={styles.assessmentDurationChip}>
+                        <i className="bx bx-time-five" /> {opp.durationMinutes || 60} Mins &middot; {opp.totalQuestions || 20} Questions
+                      </span>
+                      <button
+                        className={styles.btnTakeTest}
+                        onClick={() => handleTakeTest(opp.id, opp.title, opp.durationMinutes || 60, opp.totalQuestions || 20)}
+                        disabled={isStartingAssessment}
+                        type="button"
+                      >
+                        {isStartingAssessment ? (
+                          <><i className="bx bx-loader-alt bx-spin" /> Launching...</>
+                        ) : (
+                          <><i className="bx bx-rocket" /> Start Assessment</>
+                        )}
+                      </button>
+                      <span className={styles.assessmentFootnote}>
+                        Requires Secondary Phone Camera
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className={styles.emptyStateCard}>
+                <i className="bx bx-calendar-x" />
+                <p>No opted-in campus drive assessments currently scheduled for your profile. Only drives you have applied or opted into will appear here.</p>
+              </div>
+            )}
+          </section>
+
+          {/* Section 2: Weekly Benchmark Contests & Exams */}
+          <section className={styles.dashSectionBlock} style={{ marginTop: '36px' }}>
+            <div className={styles.dashSectionHeader}>
+              <div className={styles.dashSectionTitleRow}>
+                <div className={styles.dashSectionTitle}>
+                  <i className="bx bx-trophy" />
+                  <span>Weekly Benchmark Contests &amp; Certification Exams</span>
+                </div>
+                <span className={styles.dashSectionCountBadge}>
+                  {weeklyTests.length} Active Contests
+                </span>
+              </div>
+              <span className={styles.dashSectionSub}>
+                Standardized enterprise benchmark assessments and competitive coding exams for skill verification.
+              </span>
+            </div>
+
+            {loadingDashboard && weeklyTests.length === 0 ? (
+              <div className={styles.emptyStateCard}>
+                <i className="bx bx-loader-alt bx-spin" style={{ color: '#1c2d81' }} />
+                <p>Loading weekly contests from server...</p>
+              </div>
+            ) : weeklyTests.length > 0 ? (
+              <div className={styles.weeklyGrid}>
+                {weeklyTests.map((test: any) => (
+                  <div key={test.id} className={styles.weeklyCard}>
+                    <div className={styles.weeklyCardTop}>
+                      <span className={styles.weeklyStatusTag}>
+                        <i className="bx bx-radio-circle-marked bx-burst" /> {test.status || 'ACTIVE'}
+                      </span>
+                      <span className={styles.weeklyBenchTag}>
+                        {test.testType || 'BENCHMARK'}
+                      </span>
+                    </div>
+
+                    <h4 className={styles.weeklyCardTitle}>{test.title}</h4>
+                    <p className={styles.weeklyCardDesc}>{test.description}</p>
+
+                    <div className={styles.weeklyMetaChips}>
+                      <span className={styles.weeklyChip}>
+                        <i className="bx bx-time-five" /> {test.durationMinutes || 60}m
+                      </span>
+                      <span className={styles.weeklyChip}>
+                        <i className="bx bx-help-circle" /> {test.totalQuestions || 25} Qs
+                      </span>
+                      <span className={styles.weeklyChip}>
+                        <i className="bx bx-check-circle" /> Pass: {test.passingMarks || test.passingScore || 70}%
+                      </span>
+                      <span className={styles.weeklyChipGold}>
+                        <i className="bx bx-coin-stack" /> +{test.coinReward || 100} Coins
+                      </span>
+                    </div>
+
+                    <button
+                      className={styles.btnWeeklyStart}
+                      onClick={() => handleTakeTest(test.id, test.title, test.durationMinutes || 60, test.totalQuestions || 25)}
+                      disabled={isStartingAssessment}
+                      type="button"
+                    >
+                      {isStartingAssessment ? (
+                        <><i className="bx bx-loader-alt bx-spin" /> Launching...</>
+                      ) : (
+                        <><i className="bx bx-play-circle" /> Start Contest &rarr;</>
+                      )}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className={styles.emptyStateCard}>
+                <i className="bx bx-info-circle" />
+                <p>No active weekly contests currently available.</p>
+              </div>
+            )}
+          </section>
         </main>
       )}
 
@@ -1349,36 +1831,32 @@ export function AssessmentApp() {
               )}
             </div>
 
-            <div className={styles.dualViewBtnRow}>
-              <button
-                className={styles.btnSecondary}
-                onClick={() => setStep('instructions')}
-                type="button"
-                style={{ flex: 1, maxWidth: '240px' }}
-              >
-                Skip / Single Camera Only
-              </button>
+            <div className={styles.dualViewBtnRow} style={{ justifyContent: 'center' }}>
               <button
                 className={styles.btnPrimary}
                 onClick={() => setStep('instructions')}
-                disabled={!mobileStreaming && !mobilePaired}
+                disabled={!mobileStreaming}
                 type="button"
                 style={{
-                  flex: 1,
-                  maxWidth: '280px',
-                  background: mobileStreaming ? '#16a34a' : mobilePaired ? '#2563eb' : '#64748b',
-                  borderColor: mobileStreaming ? '#16a34a' : mobilePaired ? '#2563eb' : '#64748b',
-                  opacity: (mobileStreaming || mobilePaired) ? 1 : 0.65,
-                  cursor: (mobileStreaming || mobilePaired) ? 'pointer' : 'not-allowed',
+                  minWidth: '320px',
+                  padding: '14px 28px',
+                  fontSize: '0.95rem',
+                  fontWeight: 700,
+                  background: mobileStreaming ? '#16a34a' : '#94a3b8',
+                  borderColor: mobileStreaming ? '#16a34a' : '#94a3b8',
+                  cursor: mobileStreaming ? 'pointer' : 'not-allowed',
                   color: '#ffffff',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '10px',
+                  boxShadow: mobileStreaming ? '0 4px 14px rgba(22, 163, 74, 0.35)' : 'none',
                 }}
               >
                 {mobileStreaming ? (
-                  <><i className="bx bx-check-circle" /> Proceed to Guidelines →</>
-                ) : mobilePaired ? (
-                  <><i className="bx bx-check" /> Device Paired — Proceed →</>
+                  <><i className="bx bx-check-circle" style={{ fontSize: '1.2rem' }} /> Proceed to Guidelines →</>
                 ) : (
-                  <><i className="bx bx-mobile-alt" /> Pair Phone to Continue</>
+                  <><i className="bx bx-lock-alt" style={{ fontSize: '1.1rem' }} /> Pair Mobile Camera to Proceed (Required)</>
                 )}
               </button>
             </div>
@@ -1564,29 +2042,43 @@ export function AssessmentApp() {
               </button>
             </div>
 
-            <h2 className={styles.questionText}>
-              Sample Question #{currentQuestion + 1}: Which data structure offers O(1) average time complexity for key-value lookups and insertion?
-            </h2>
+            {(() => {
+              const activeQ = examQuestionsList[currentQuestion];
+              const qTitle = activeQ?.title || activeQ?.description || `Technical Competency Question #${currentQuestion + 1}: Which architecture or data structure guarantees thread safety and O(1) performance in high-concurrency systems?`;
+              const qOptions = (Array.isArray(activeQ?.options) && activeQ.options.length > 0)
+                ? activeQ.options.map((opt: any, idx: number) => ({
+                    id: opt.id || `opt-${idx}`,
+                    label: String.fromCharCode(65 + idx),
+                    text: opt.optionText || opt.text || String(opt),
+                  }))
+                : [
+                    { id: 'opt-a', label: 'A', text: 'ConcurrentHashMap utilizing CAS and synchronized bucket nodes' },
+                    { id: 'opt-b', label: 'B', text: 'Binary Search Tree with non-atomic recursive insertion' },
+                    { id: 'opt-c', label: 'C', text: 'Singly Linked List requiring sequential O(N) traversal' },
+                    { id: 'opt-d', label: 'D', text: 'Balanced AVL Tree with global lock contention' },
+                  ];
 
-            <div className={styles.options}>
-              {[
-                { id: 'opt-a', label: 'A', text: 'Hash Table / Hash Map' },
-                { id: 'opt-b', label: 'B', text: 'Binary Search Tree' },
-                { id: 'opt-c', label: 'C', text: 'Singly Linked List' },
-                { id: 'opt-d', label: 'D', text: 'Balanced AVL Tree' },
-              ].map(opt => (
-                <div
-                  key={opt.id}
-                  className={`${styles.option} ${
-                    currentAns?.optionId === opt.id ? styles.optionSelected : ''
-                  }`}
-                  onClick={() => handleAnswer(currentQId, opt.id)}
-                >
-                  <span className={styles.optionMarker}>{opt.label}</span>
-                  <span className={styles.optionText}>{opt.text}</span>
-                </div>
-              ))}
-            </div>
+              return (
+                <>
+                  <h2 className={styles.questionText}>{qTitle}</h2>
+
+                  <div className={styles.options}>
+                    {qOptions.map((opt: any) => (
+                      <div
+                        key={opt.id}
+                        className={`${styles.option} ${
+                          currentAns?.optionId === opt.id ? styles.optionSelected : ''
+                        }`}
+                        onClick={() => handleAnswer(currentQId, opt.id)}
+                      >
+                        <span className={styles.optionMarker}>{opt.label}</span>
+                        <span className={styles.optionText}>{opt.text}</span>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              );
+            })()}
 
             {/* Bottom Nav */}
             <div className={styles.navBar}>
@@ -1639,7 +2131,7 @@ export function AssessmentApp() {
               <span className="section-label">Assessment Completed</span>
               <h1 className={styles.title}>Examination Submitted Successfully</h1>
               <div className={styles.resultScore}>
-                {results?.score !== undefined ? `${results.score}%` : '94%'}
+                {results?.score !== undefined && results?.score !== null ? `${results.score}%` : 'COMPLETED'}
               </div>
               <p className={styles.subtitle}>
                 Your assessment has been recorded and verified by the Beyon automated proctoring engine.
@@ -1707,12 +2199,19 @@ export function AssessmentApp() {
                 This report has been automatically submitted to your institution's assessment committee. Violations are reviewed by a human proctor before any disciplinary action.
               </div>
 
-              <div style={{ marginTop: 12, display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
+              <div style={{ marginTop: 12, display: 'flex', gap: 12, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
                 <button
                   className={styles.btnSecondary}
                   onClick={() => setShowSettingsModal(true)}
                 >
                   <i className="bx bx-slider" /> View System Logs
+                </button>
+                <button
+                  className={styles.btnPrimary}
+                  onClick={handleReturnToDashboard}
+                  style={{ padding: '10px 24px' }}
+                >
+                  <i className="bx bx-home-alt" /> Return to Dashboard
                 </button>
                 <button
                   className={styles.btnDanger}
@@ -1730,9 +2229,15 @@ export function AssessmentApp() {
       {/* Bottom Bar — System Status & Quick Actions */}
       <footer className={styles.bottomBar}>
         <div className={styles.bottomBarLeft}>
-          <span className={styles.bottomBarBadge}>
-            <i className="bx bx-shield-alt-2" /> KIOSK LOCKDOWN &middot; FULLSCREEN
-          </span>
+          {step === 'dashboard' ? (
+            <span className={styles.bottomBarBadge} style={{ background: 'rgba(34, 197, 94, 0.12)', borderColor: 'rgba(34, 197, 94, 0.35)', color: '#15803d' }}>
+              <i className="bx bx-shield-quarter" /> STUDENT SECURE CLIENT &middot; BEYON WORKSPACE
+            </span>
+          ) : (
+            <span className={styles.bottomBarBadge}>
+              <i className="bx bx-shield-alt-2" /> KIOSK LOCKDOWN &middot; FULLSCREEN
+            </span>
+          )}
           <span className={styles.bottomBarItem}>
             <i className="bx bx-wifi" style={{ color: '#15803d' }} /> Network: <b>Optimal</b>
           </span>

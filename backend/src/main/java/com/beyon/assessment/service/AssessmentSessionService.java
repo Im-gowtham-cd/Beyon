@@ -56,7 +56,9 @@ public class AssessmentSessionService {
             return existing.get();
         }
 
-        Optional<AssessmentPolicy> policy = policyRepository.findByOpportunityId(opportunityId);
+        Optional<AssessmentPolicy> policy = opportunityId != null 
+                ? policyRepository.findByOpportunityId(opportunityId) 
+                : Optional.empty();
 
         AssessmentSession session = new AssessmentSession();
         session.setApplicationId(applicationId);
@@ -165,7 +167,7 @@ public class AssessmentSessionService {
         AssessmentSession session = sessionRepository.findById(sessionId)
                 .orElseThrow(() -> new RuntimeException("Session not found"));
 
-        if (!"SYSTEM_CHECK".equals(session.getStatus()) && !"LAUNCHED".equals(session.getStatus()) && !"VERIFYING".equals(session.getStatus())) {
+        if (!"CREATED".equals(session.getStatus()) && !"SYSTEM_CHECK".equals(session.getStatus()) && !"LAUNCHED".equals(session.getStatus()) && !"VERIFYING".equals(session.getStatus())) {
             throw new RuntimeException("Session not ready to start. Current status: " + session.getStatus());
         }
 
@@ -262,8 +264,8 @@ public class AssessmentSessionService {
         AssessmentSession session = sessionRepository.findById(sessionId)
                 .orElseThrow(() -> new RuntimeException("Session not found"));
 
-        if (!"IN_PROGRESS".equals(session.getStatus())) {
-            throw new RuntimeException("Session not in progress");
+        if ("SUBMITTED".equals(session.getStatus()) || "TERMINATED".equals(session.getStatus())) {
+            return session;
         }
 
         List<AssessmentAnswer> answers = answerRepository.findBySessionIdOrderByCreatedAt(sessionId);

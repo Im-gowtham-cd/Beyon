@@ -149,8 +149,18 @@ public class AuthService {
             throw new UnauthorizedException("Too many login attempts. Please try again later.");
         }
 
-        User user = userRepository.findByEmail(request.getEmail().toLowerCase())
+        String identifier = request.getEmail() != null ? request.getEmail().trim() : "";
+        User user = userRepository.findByEmail(identifier.toLowerCase())
                 .orElse(null);
+
+        if (user == null && !identifier.isEmpty()) {
+            StudentProfile profile = studentProfileRepository.findByRegistrationNumberIgnoreCase(identifier)
+                    .or(() -> studentProfileRepository.findByUsername(identifier))
+                    .orElse(null);
+            if (profile != null && profile.getUserId() != null) {
+                user = userRepository.findById(profile.getUserId()).orElse(null);
+            }
+        }
 
         boolean matches = false;
         if (user != null) {

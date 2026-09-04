@@ -246,6 +246,41 @@ public class CompanyService {
         return applicationRepository.findByStudentIdOrderByUpdatedAtDesc(studentId);
     }
 
+    public List<Map<String, Object>> getOptedInOpportunities(UUID studentId) {
+        List<OpportunityApplication> apps = applicationRepository.findByStudentIdOrderByUpdatedAtDesc(studentId);
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (OpportunityApplication app : apps) {
+            opportunityRepository.findById(app.getOpportunityId()).ifPresent(opp -> {
+                Map<String, Object> map = new LinkedHashMap<>();
+                map.put("id", opp.getId());
+                map.put("applicationId", app.getId());
+                map.put("title", opp.getTitle());
+                String companyName = "Beyon Partner";
+                if (opp.getCompanyUserId() != null) {
+                    var companyUser = userRepository.findById(opp.getCompanyUserId()).orElse(null);
+                    if (companyUser != null && companyUser.getDisplayName() != null) {
+                        companyName = companyUser.getDisplayName();
+                    }
+                }
+                map.put("companyName", companyName);
+                map.put("role", opp.getTitle());
+                map.put("opportunityType", opp.getOpportunityType());
+                map.put("location", opp.getLocation());
+                map.put("eligibleDepartments", opp.getEligibleDepartments());
+                map.put("requiredSkills", opp.getRequiredSkills());
+                map.put("minCgpa", opp.getMinCgpa());
+                map.put("durationMinutes", 60);
+                map.put("totalQuestions", 20);
+                map.put("applicationStatus", app.getStatus());
+                map.put("assessmentScore", app.getAssessmentScore());
+                map.put("appliedAt", app.getAppliedAt());
+                map.put("status", opp.getStatus());
+                result.add(map);
+            });
+        }
+        return result;
+    }
+
     public List<OpportunityApplication> getOpportunityApplications(UUID opportunityId) {
         return applicationRepository.findByOpportunityId(opportunityId);
     }

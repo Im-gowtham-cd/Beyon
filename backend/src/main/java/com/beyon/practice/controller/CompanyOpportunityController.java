@@ -79,6 +79,12 @@ public class CompanyOpportunityController {
         return ResponseEntity.ok(ApiResponse.ok(companyService.getApplications(studentId)));
     }
 
+    @GetMapping("/opted-in")
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getOptedInOpportunities(Authentication auth) {
+        UUID studentId = extractUserId(auth);
+        return ResponseEntity.ok(ApiResponse.ok(companyService.getOptedInOpportunities(studentId)));
+    }
+
     private UUID extractUserId(Authentication auth) {
         JwtUserDetails details = (JwtUserDetails) auth.getDetails();
         return UUID.fromString(details.getUserId());
