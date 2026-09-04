@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { assessmentApi } from '../services/assessmentApi';
 import type { AssessmentSession, AssessmentResult, ProctoringReport } from '../types/assessment';
 import { ShieldCheck, FileText } from 'lucide-react';
 import styles from './AssessmentBuilderPage.module.css';
 
 export function CompanyAssessmentsPage() {
+  const navigate = useNavigate();
   const [sessions, setSessions] = useState<AssessmentSession[]>([]);
   const [selectedSession, setSelectedSession] = useState<string | null>(null);
   const [results, setResults] = useState<AssessmentResult | null>(null);
@@ -135,13 +137,23 @@ export function CompanyAssessmentsPage() {
                 </div>
               </div>
 
-              <button
-                className={styles.btnPrimary}
-                onClick={() => viewResults(session.sessionId)}
-              >
-                <FileText size={15} />
-                <span>Audit Results &amp; Proctor Logs</span>
-              </button>
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                <button
+                  className={styles.btnSecondary}
+                  onClick={() => navigate(`/company/assessments/${session.sessionId}/proctoring`)}
+                  title="Open full DualView multi-camera incident & risk audit"
+                >
+                  <ShieldCheck size={15} color="#2563eb" />
+                  <span>DualView Audit</span>
+                </button>
+                <button
+                  className={styles.btnPrimary}
+                  onClick={() => viewResults(session.sessionId)}
+                >
+                  <FileText size={15} />
+                  <span>Audit Results</span>
+                </button>
+              </div>
             </div>
           ))}
         </div>

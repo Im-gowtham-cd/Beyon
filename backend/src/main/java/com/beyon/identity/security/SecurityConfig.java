@@ -15,9 +15,9 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableWebSecurity
 public class SecurityConfig {
 
-    private final JwtAuthFilter jwtAuthFilter;
+    private final com.beyon.identity.security.JwtAuthFilter jwtAuthFilter;
 
-    public SecurityConfig(JwtAuthFilter jwtAuthFilter) {
+    public SecurityConfig(com.beyon.identity.security.JwtAuthFilter jwtAuthFilter) {
         this.jwtAuthFilter = jwtAuthFilter;
     }
 
@@ -64,7 +64,8 @@ public class SecurityConfig {
                 .requestMatchers("/api/v1/assessment/launch").permitAll()
                 .requestMatchers("/api/v1/assessment/session").authenticated()
                 .requestMatchers("/api/v1/assessment/**").authenticated()
-                .requestMatchers("/api/v1/proctoring/**").authenticated()
+                .requestMatchers("/api/v1/proctoring/**").permitAll()
+                .requestMatchers("/api/v1/evidence/**").permitAll()
                 .requestMatchers("/api/v1/assessment-policies/**").authenticated()
                 .requestMatchers("/api/v1/evaluation/**").authenticated()
                 .requestMatchers("/api/v1/matching/**").authenticated()

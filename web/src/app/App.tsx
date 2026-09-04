@@ -34,6 +34,7 @@ import { NotificationsPage } from '../notification/pages/NotificationsPage';
 import { MyApplicationsPage } from '../recruitment/pages/MyApplicationsPage';
 import { AssessmentPage } from '../assessment/pages/AssessmentPage';
 import { CompanyAssessmentsPage } from '../assessment/pages/CompanyAssessmentsPage';
+import { ProctoringReportPage } from '../assessment/pages/ProctoringReportPage';
 import { SkillProfilePage } from '../intelligence/pages/SkillProfilePage';
 import { CareerPathsPage } from '../intelligence/pages/CareerPathsPage';
 import { CollaborationHubPage } from '../intelligence/pages/CollaborationHubPage';
@@ -105,11 +106,13 @@ import { InstitutionOnboarding } from '../onboarding/pages/institution/Instituti
 import { CompanyOnboarding } from '../onboarding/pages/company/CompanyOnboarding';
 import { CompletionPage } from '../onboarding/pages/shared/CompletionPage';
 import { AccountRejectedPage } from '../auth/pages/AccountRejectedPage';
+import { MobileProctorApp } from '../proctor/MobileProctorApp';
 
 export function App() {
   return (
     <Routes>
       {/* Public & Auth Routes */}
+      <Route path="/proctor" element={<MobileProctorApp />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/verify-email" element={<VerifyEmailPage />} />
@@ -151,6 +154,7 @@ export function App() {
             <Route path="/company/recruitment/pipeline" element={<PipelinePage />} />
             <Route path="/company/candidate-intelligence" element={<CandidateIntelligencePage />} />
             <Route path="/company/assessments" element={<CompanyAssessmentsPage />} />
+            <Route path="/company/assessments/:sessionId/proctoring" element={<ProctoringReportPage />} />
             <Route path="/company/assessment-builder" element={<AssessmentBuilderPage />} />
             <Route path="/company/interview-management" element={<InterviewManagementPage />} />
             <Route path="/company/analytics" element={<CompanyAnalyticsPage />} />

