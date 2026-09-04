@@ -210,7 +210,9 @@ export function computeSkillRecommendations(
   topSkills: StudentSkill[],
   learningSkills: Array<{ id?: string; skillId?: string; skillName: string }>,
   allSkills: TaxonomySkill[],
-  limit = 8
+  limit = 8,
+  additionalExcludedNames?: Set<string>,
+  additionalExcludedIds?: Set<string>
 ): RecommendationResult {
   // 1. Compile existing skills to exclude
   const existingNormalizedNames = new Set<string>();
@@ -225,6 +227,14 @@ export function computeSkillRecommendations(
     if (s.skillName) existingNormalizedNames.add(normalizeName(s.skillName));
     if (s.skillId) existingSkillIds.add(s.skillId);
   });
+
+  if (additionalExcludedNames) {
+    additionalExcludedNames.forEach(n => existingNormalizedNames.add(normalizeName(n)));
+  }
+
+  if (additionalExcludedIds) {
+    additionalExcludedIds.forEach(id => existingSkillIds.add(id));
+  }
 
   // 2. Score student's interest in domains based on Top Skills & Learning Skills
   const domainScores: Record<TechDomain, number> = {

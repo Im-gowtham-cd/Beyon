@@ -13,8 +13,23 @@ import {
   BookmarkCheck,
   Compass,
   Star,
+  X,
+  Plus,
 } from 'lucide-react';
 import styles from './SkillExplorer.module.css';
+
+interface MySkillItem {
+  id: string;
+  learningSkillId?: string;
+  profileSkillId?: string;
+  name: string;
+  slug: string;
+  category?: string;
+  status: 'ACTIVE_STUDY' | 'PROFILE_SKILL';
+  proficiency?: string;
+  topicCount?: number;
+  description?: string;
+}
 
 export function SkillExplorer() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -26,6 +41,8 @@ export function SkillExplorer() {
   const [profileSkills, setProfileSkills] = useState<StudentSkill[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [unenrollLoading, setUnenrollLoading] = useState<string | null>(null);
+  const [enrollLoading, setEnrollLoading] = useState<string | null>(null);
   const activeCategory = searchParams.get('category') || '';
 
   const loadData = useCallback(async () => {
@@ -92,38 +109,17 @@ export function SkillExplorer() {
     setSearchParams(params);
   }
 
-  // Instant client-side search filtering for All Available Skills
-  const displayedSkills = useMemo(() => {
-    const pool = skills.length > 0 ? skills : allSkills;
-    if (!search.trim()) return pool;
-    const term = search.toLowerCase().trim();
-    return pool.filter(s =>
-      s.name.toLowerCase().includes(term) ||
-      (s.description && s.description.toLowerCase().includes(term)) ||
-      (typeof s.category === 'string' && s.category.toLowerCase().includes(term)) ||
-      (typeof s.category === 'object' && (s.category as any)?.name?.toLowerCase().includes(term))
-    );
-  }, [skills, allSkills, search]);
-
   // Section 1: "My Skills" (Deduplicated active learning skills + profile skills)
-  const mySkills = useMemo(() => {
-    const map = new Map<string, {
-      id: string;
-      name: string;
-      slug: string;
-      category?: string;
-      status: 'ACTIVE_STUDY' | 'PROFILE_SKILL';
-      proficiency?: string;
-      topicCount?: number;
-      description?: string;
-    }>();
+  const mySkills: MySkillItem[] = useMemo(() => {
+    const map = new Map<string, MySkillItem>();
 
     // 1. Add active learning skills
     learningSkills.forEach(ls => {
       const taxSkill = allSkills.find(s => s.id === ls.skillId || s.name.toLowerCase() === ls.skillName?.toLowerCase());
       const slug = taxSkill?.slug || ls.skillName.toLowerCase().replace(/[^a-z0-9]/g, '');
       map.set(slug, {
-        id: ls.skillId || ls.id,
+        id: taxSkill?.id || ls.skillId || ls.id,
+        learningSkillId: ls.skillId || ls.id,
         name: ls.skillName || taxSkill?.name || 'Skill',
         slug,
         category: typeof taxSkill?.category === 'object' ? (taxSkill.category as any).name : taxSkill?.category || 'Active Track',
@@ -141,6 +137,7 @@ export function SkillExplorer() {
         if (taxSkill && !map.has(taxSkill.slug)) {
           map.set(taxSkill.slug, {
             id: taxSkill.id,
+            learningSkillId: (lt as any).skillId || taxSkill.id,
             name: taxSkill.name,
             slug: taxSkill.slug,
             category: typeof taxSkill.category === 'object' ? (taxSkill.category as any).name : taxSkill.category,
@@ -158,7 +155,8 @@ export function SkillExplorer() {
       const slug = taxSkill?.slug || ps.skillName.toLowerCase().replace(/[^a-z0-9]/g, '');
       if (!map.has(slug)) {
         map.set(slug, {
-          id: ps.id,
+          id: taxSkill?.id || ps.id,
+          profileSkillId: ps.id,
           name: ps.skillName,
           slug,
           category: ps.category || (typeof taxSkill?.category === 'object' ? (taxSkill.category as any).name : taxSkill?.category) || 'Technical Skill',
@@ -169,6 +167,7 @@ export function SkillExplorer() {
         });
       } else {
         const existing = map.get(slug)!;
+        existing.profileSkillId = ps.id;
         if (ps.proficiency && !existing.proficiency) {
           existing.proficiency = ps.proficiency;
         }
@@ -178,10 +177,136 @@ export function SkillExplorer() {
     return Array.from(map.values());
   }, [learningSkills, learningTopics, profileSkills, allSkills]);
 
-  // Section 2: Recommended Skills (Computed based on Top Skills)
+  // Set of all normalized names, slugs, and IDs in "My Skills"
+  const mySkillIdentifiers = useMemo(() => {
+    const names = new Set<string>();
+    const slugs = new Set<string>();
+    const ids = new Set<string>();
+
+    mySkills.forEach(s => {
+      if (s.name) names.add(s.name.toLowerCase().replace(/[^a-z0-9]/g, ''));
+      if (s.slug) slugs.add(s.slug.toLowerCase().replace(/[^a-z0-9]/g, ''));
+      if (s.id) ids.add(s.id);
+      if (s.learningSkillId) ids.add(s.learningSkillId);
+      if (s.profileSkillId) ids.add(s.profileSkillId);
+    });
+
+    return { names, slugs, ids };
+  }, [mySkills]);
+
+  // ALL AVAILABLE SKILLS: strictly exclude anything already in "My Skills"!
+  // If chosen, it disappears from All Available Skills. If unenrolled, it reappears here!
+  const availableSkills = useMemo(() => {
+    const pool = skills.length > 0 ? skills : allSkills;
+    return pool.filter(skill => {
+      // 1. Check ID match
+      if (mySkillIdentifiers.ids.has(skill.id)) return false;
+
+      // 2. Check normalized name match
+      const normName = skill.name.toLowerCase().replace(/[^a-z0-9]/g, '');
+      if (mySkillIdentifiers.names.has(normName)) return false;
+
+      // 3. Check normalized slug match
+      const normSlug = skill.slug ? skill.slug.toLowerCase().replace(/[^a-z0-9]/g, '') : '';
+      if (normSlug && (mySkillIdentifiers.slugs.has(normSlug) || mySkillIdentifiers.names.has(normSlug))) {
+        return false;
+      }
+
+      return true;
+    });
+  }, [skills, allSkills, mySkillIdentifiers]);
+
+  // Client-side search filtering on availableSkills
+  const displayedSkills = useMemo(() => {
+    if (!search.trim()) return availableSkills;
+    const term = search.toLowerCase().trim();
+    return availableSkills.filter(s =>
+      s.name.toLowerCase().includes(term) ||
+      (s.description && s.description.toLowerCase().includes(term)) ||
+      (typeof s.category === 'string' && s.category.toLowerCase().includes(term)) ||
+      (typeof s.category === 'object' && (s.category as any)?.name?.toLowerCase().includes(term))
+    );
+  }, [availableSkills, search]);
+
+  // Section 2: Recommended Skills (Computed based on Top Skills, strictly excluding My Skills)
   const recommendationData = useMemo(() => {
-    return computeSkillRecommendations(profileSkills, learningSkills, allSkills, 8);
-  }, [profileSkills, learningSkills, allSkills]);
+    return computeSkillRecommendations(
+      profileSkills,
+      learningSkills,
+      allSkills,
+      8,
+      mySkillIdentifiers.names,
+      mySkillIdentifiers.ids
+    );
+  }, [profileSkills, learningSkills, allSkills, mySkillIdentifiers]);
+
+  // Unenroll a skill from My Skills
+  async function handleUnenroll(e: React.MouseEvent, skill: MySkillItem) {
+    e.preventDefault();
+    e.stopPropagation();
+    setUnenrollLoading(skill.slug);
+
+    try {
+      // 1. Remove from learning skills backend if enrolled
+      if (skill.learningSkillId || skill.id) {
+        const idToRemove = skill.learningSkillId || skill.id;
+        await studentLearningApi.removeSkill(idToRemove).catch(() => {});
+      }
+
+      // 2. Remove from profile skills backend if present
+      if (skill.profileSkillId) {
+        await studentProfileApi.removeSkill(skill.profileSkillId).catch(() => {});
+      }
+
+      // 3. Update local state immediately so UI updates in real-time
+      setLearningSkills(prev => prev.filter(ls => {
+        const matchName = ls.skillName?.toLowerCase() === skill.name.toLowerCase();
+        const matchId = ls.skillId === skill.id || ls.id === skill.learningSkillId || ls.id === skill.id;
+        return !matchName && !matchId;
+      }));
+
+      setProfileSkills(prev => prev.filter(ps => {
+        const matchName = ps.skillName?.toLowerCase() === skill.name.toLowerCase();
+        const matchId = ps.id === skill.profileSkillId || ps.id === skill.id;
+        return !matchName && !matchId;
+      }));
+
+      setLearningTopics(prev => prev.filter(lt => {
+        const matchSkill = (lt as any).skillId === skill.id;
+        const matchTopic = (lt as any).topicName?.toLowerCase().includes(skill.name.toLowerCase());
+        return !matchSkill && !matchTopic;
+      }));
+    } catch (err) {
+      console.error('Failed to unenroll skill:', err);
+    } finally {
+      setUnenrollLoading(null);
+    }
+  }
+
+  // Enroll a skill into My Skills
+  async function handleEnroll(e: React.MouseEvent, skill: TaxonomySkill) {
+    e.preventDefault();
+    e.stopPropagation();
+    setEnrollLoading(skill.slug);
+
+    try {
+      const res = await studentLearningApi.addSkill(skill.id, skill.name).catch(() => null);
+      setLearningSkills(prev => [
+        ...prev,
+        {
+          id: res?.id || skill.id,
+          userId: res?.userId || '',
+          skillId: skill.id,
+          skillName: skill.name,
+          status: 'LEARNING',
+        },
+      ]);
+    } catch (err) {
+      console.error('Failed to enroll skill:', err);
+    } finally {
+      setEnrollLoading(null);
+    }
+  }
 
   return (
     <div className={styles.page}>
@@ -279,9 +404,25 @@ export function SkillExplorer() {
                     <span style={{ fontSize: '0.76rem', color: '#475569', display: 'flex', alignItems: 'center', gap: '4px' }}>
                       <BookOpen size={12} color="#1c2d81" /> {skill.topicCount || 2} Topics
                     </span>
-                    <span style={{ fontSize: '0.78rem', color: '#1c2d81', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '3px' }}>
-                      Continue <ArrowRight size={13} />
-                    </span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <button
+                        onClick={(e) => handleUnenroll(e, skill)}
+                        disabled={unenrollLoading === skill.slug}
+                        className={styles.unenrollBtn}
+                        title="Unenroll and return to available catalog"
+                      >
+                        {unenrollLoading === skill.slug ? (
+                          'Removing...'
+                        ) : (
+                          <>
+                            <X size={12} /> Unenroll
+                          </>
+                        )}
+                      </button>
+                      <span style={{ fontSize: '0.78rem', color: '#1c2d81', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '3px' }}>
+                        Continue <ArrowRight size={13} />
+                      </span>
+                    </div>
                   </div>
                 </Link>
               ))}
@@ -394,11 +535,26 @@ export function SkillExplorer() {
 
                   <div className={styles.recAction}>
                     <span style={{ fontSize: '0.76rem', color: '#475569', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      <BookOpen size={13} color="#1c2d81" /> {count} Topics &amp; Practice
+                      <BookOpen size={13} color="#1c2d81" /> {count} Topics
                     </span>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      Explore Track <ArrowRight size={14} />
-                    </span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <button
+                        onClick={(e) => handleEnroll(e, skill)}
+                        disabled={enrollLoading === skill.slug}
+                        className={styles.enrollBtn}
+                      >
+                        {enrollLoading === skill.slug ? (
+                          'Enrolling...'
+                        ) : (
+                          <>
+                            <Plus size={12} /> Enroll Track
+                          </>
+                        )}
+                      </button>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        Explore <ArrowRight size={14} />
+                      </span>
+                    </div>
                   </div>
                 </Link>
               );
@@ -407,7 +563,7 @@ export function SkillExplorer() {
         </section>
       )}
 
-      {/* SECTION 3: ALL AVAILABLE SKILLS (Listed After) */}
+      {/* SECTION 3: ALL AVAILABLE SKILLS (Strictly excludes My Skills) */}
       <section className={styles.sectionBlock}>
         <div className={styles.sectionHeader}>
           <div className={styles.sectionTitleGroup}>
@@ -422,7 +578,7 @@ export function SkillExplorer() {
                 </span>
               </div>
               <p className={styles.sectionSubtitle}>
-                Browse verified technologies, runtime environments, and development tools
+                Browse new technologies, frameworks, and developer tools to add to your skills
               </p>
             </div>
           </div>
@@ -456,7 +612,11 @@ export function SkillExplorer() {
           </div>
         ) : displayedSkills.length === 0 ? (
           <div className={styles.emptyState}>
-            <p className={styles.emptyText}>No skills found matching &quot;{search}&quot;.</p>
+            <p className={styles.emptyText}>
+              {search
+                ? `No available skills found matching "${search}".`
+                : 'All skills in this category have been added to your skills! Unenroll any skill above if you wish to return it here.'}
+            </p>
           </div>
         ) : (
           <div className={styles.skillsGrid}>
@@ -475,9 +635,24 @@ export function SkillExplorer() {
                   {skill.description && (
                     <p className={styles.skillDescription}>{skill.description}</p>
                   )}
-                  <div className={styles.topicCount}>
-                    <BookOpen size={13} style={{ color: '#1c2d81' }} />
-                    <span>{count} Topics &amp; Practice Tracks</span>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '6px', paddingTop: '8px', borderTop: '1px solid #f1f5f9' }}>
+                    <div className={styles.topicCount} style={{ margin: 0 }}>
+                      <BookOpen size={13} style={{ color: '#1c2d81' }} />
+                      <span>{count} Topics</span>
+                    </div>
+                    <button
+                      onClick={(e) => handleEnroll(e, skill)}
+                      disabled={enrollLoading === skill.slug}
+                      className={styles.enrollBtn}
+                    >
+                      {enrollLoading === skill.slug ? (
+                        'Enrolling...'
+                      ) : (
+                        <>
+                          <Plus size={12} /> Enroll
+                        </>
+                      )}
+                    </button>
                   </div>
                 </Link>
               );

@@ -406,6 +406,50 @@
   border-top: 1px solid #f1f5f9;
 }
 
+.unenrollBtn {
+  background: transparent;
+  border: 1px solid transparent;
+  color: #94a3b8;
+  font-size: 0.74rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 2px 8px;
+  border-radius: 3px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.15s ease;
+  font-family: inherit;
+}
+
+.unenrollBtn:hover {
+  color: #ef4444;
+  border-color: #fecdd3;
+  background: #fff1f2;
+}
+
+.enrollBtn {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  color: #1c2d81;
+  font-size: 0.74rem;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 3px 10px;
+  border-radius: 3px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.15s ease;
+  font-family: inherit;
+}
+
+.enrollBtn:hover {
+  background: #1c2d81;
+  color: #ffffff;
+  border-color: #1c2d81;
+}
+
 @media (max-width: 768px) {
   .page {
     padding: 16px 16px 40px;
