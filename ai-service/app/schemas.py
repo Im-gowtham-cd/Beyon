@@ -35,6 +35,8 @@ class MobileFrameResponse(BaseModel):
     detectedObjects: List[DetectedObject]
     confidence: float
     events: List[DetectionEvent]
+    cameraObstructed: Optional[bool] = False
+    candidateAbsent: Optional[bool] = False
 
 class AudioChunkRequest(BaseModel):
     audioData: Optional[str] = None  # Base64 encoded audio or WAV

@@ -116,6 +116,7 @@ export function AssessmentApp() {
   const audioContextRef = useRef<AudioContext | null>(null);
   const isTerminatingRef = useRef(false);
   const absenceStreakRef = useRef(0);
+  const cameraCoverStreakRef = useRef(0);
   const multiPersonStreakRef = useRef(0);
   const phoneStreakRef = useRef(0);
   const voiceStreakRef = useRef(0);
@@ -454,6 +455,8 @@ export function AssessmentApp() {
           let centerSkinPixels = 0;
           let phoneBrightPixels = 0;
           let phoneEdgeTransitions = 0;
+          let totalLum = 0;
+          let totalEdges = 0;
           const colSkin = new Int32Array(160);
 
           for (let y = 0; y < 120; y++) {
@@ -462,6 +465,16 @@ export function AssessmentApp() {
               const r = data[idx];
               const g = data[idx + 1];
               const b = data[idx + 2];
+              const lum = (r + g + b) / 3;
+              totalLum += lum;
+
+              if (x < 159) {
+                const rightIdx = (y * 160 + (x + 1)) * 4;
+                const rightLum = (data[rightIdx] + data[rightIdx + 1] + data[rightIdx + 2]) / 3;
+                if (Math.abs(lum - rightLum) > 20) {
+                  totalEdges++;
+                }
+              }
 
               // Biometric YCbCr skin chrominance formula (rejects wooden walls, beige doors, yellow light)
               const Y  =  0.299 * r + 0.587 * g + 0.114 * b;
@@ -489,7 +502,6 @@ export function AssessmentApp() {
               // Only checks for active illuminated glowing screen held up in frame (lum > 230)
               // NEVER checks dark pixels, so dark shirts/jackets will NEVER trigger!
               if (y >= 25 && y <= 100 && x >= 25 && x <= 135) {
-                const lum = (r + g + b) / 3;
                 if (lum > 230) {
                   phoneBrightPixels++;
                   if (x < 134) {
@@ -504,8 +516,25 @@ export function AssessmentApp() {
             }
           }
 
+          const avgLum = totalLum / (160 * 120);
+          // Camera covered by finger/tape/hand:
+          // Low average luminance (< 22) OR extremely few edges (< 50) when average luminance is low (< 45) or flesh is flush on lens
+          const isLaptopCameraCovered = (avgLum < 22) || (totalEdges < 50 && (avgLum < 45 || centerSkinPixels > 1000));
+
+          if (isLaptopCameraCovered) {
+            cameraCoverStreakRef.current = (cameraCoverStreakRef.current || 0) + 1;
+            if (cameraCoverStreakRef.current === 2) {
+              setProctorStatus('WARNING');
+              setProctorMessage('Camera Lens Covered / Obstructed');
+              addMalpracticeAlert('CAMERA_OBSTRUCTION', 'Warning: Laptop camera lens is covered or obstructed! Uncover lens immediately.');
+              setProctoringWarnings(prev => [...prev, 'Laptop camera covered or obstructed']);
+            }
+          } else {
+            cameraCoverStreakRef.current = 0;
+          }
+
           // EVALUATION 1: Face Presence / Absence (Candidate left screen)
-          if (centerSkinPixels < 140) {
+          if (!isLaptopCameraCovered && centerSkinPixels < 140) {
             absenceStreakRef.current++;
             if (absenceStreakRef.current === 1) {
               setProctorStatus('WARNING');
@@ -523,7 +552,7 @@ export function AssessmentApp() {
               if (handleSubmitRef.current) handleSubmitRef.current();
               return;
             }
-          } else {
+          } else if (!isLaptopCameraCovered) {
             if (absenceStreakRef.current > 0 && absenceStreakRef.current < 5) {
               setProctorStatus('CLEAR');
               setProctorMessage('Face Detected & Monitored');
@@ -616,6 +645,16 @@ export function AssessmentApp() {
                   setProctorMessage('Multiple People in Frame');
                   addMalpracticeAlert('DUALVIEW_SECOND_PERSON', 'Warning: Additional person detected in camera view');
                   setProctoringWarnings(prev => [...prev, 'Multiple persons detected']);
+                } else if (type === 'CAMERA_TAMPERING' || type === 'CAMERA_COVERED' || type === 'CAMERA_OBSTRUCTION') {
+                  setProctorStatus('WARNING');
+                  setProctorMessage('Secondary Camera Obstructed');
+                  addMalpracticeAlert('SECONDARY_CAMERA_OBSTRUCTION', 'Warning: Mobile/Environmental camera lens is obstructed or covered.');
+                  setProctoringWarnings(prev => [...prev, 'Mobile camera obstructed or covered']);
+                } else if (type === 'CANDIDATE_ABSENT' || type === 'NO_PERSON_DETECTED' || type === 'SUSTAINED_ABSENCE') {
+                  setProctorStatus('WARNING');
+                  setProctorMessage('Candidate Left Workspace');
+                  addMalpracticeAlert('CANDIDATE_ABSENT_WORKSPACE', 'Warning: Candidate is not visible in mobile/environmental camera viewport.');
+                  setProctoringWarnings(prev => [...prev, 'Candidate left mobile camera view']);
                 }
               }
             }
