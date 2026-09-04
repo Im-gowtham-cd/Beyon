@@ -136,6 +136,7 @@ export function useMobileProctor(_initialToken?: string | null) {
     error,
     heartbeatCount,
     pairWithToken,
+    sendHeartbeat,
     startMonitoring,
     stopMonitoring,
   };

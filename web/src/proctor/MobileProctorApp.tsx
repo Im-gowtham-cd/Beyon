@@ -26,12 +26,24 @@ export const MobileProctorApp: React.FC = () => {
     error: proctorError,
     heartbeatCount,
     pairWithToken,
+    sendHeartbeat,
     startMonitoring,
     stopMonitoring,
   } = useMobileProctor(tokenParam);
 
   const { stream, error: cameraError, loading: cameraLoading, startCamera, stopCamera } = useMobileCamera();
   const { audioLevel, speaking } = useMobileAudio(stream);
+
+  // Keep reporting camera active as soon as mobile camera stream starts
+  useEffect(() => {
+    if (procSessionId && stream && stream.getVideoTracks().length > 0) {
+      sendHeartbeat(procSessionId, true, true);
+      const interval = setInterval(() => {
+        sendHeartbeat(procSessionId, true, true);
+      }, 4000);
+      return () => clearInterval(interval);
+    }
+  }, [procSessionId, stream, sendHeartbeat]);
 
   const handlePair = async (token: string) => {
     await pairWithToken(token);

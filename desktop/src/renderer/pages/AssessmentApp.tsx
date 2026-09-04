@@ -745,7 +745,13 @@ export function AssessmentApp() {
             if (stat.mobilePaired) {
               setMobilePaired(true);
             }
-            if (stat.status === 'STREAMING' || stat.mobileCameraHealth === 'HEALTHY') {
+            if (
+              stat.status === 'STREAMING' ||
+              stat.status === 'ACTIVE' ||
+              stat.mobileCameraHealth === 'HEALTHY' ||
+              stat.mobileCameraHealth === 'OK' ||
+              (stat.mobilePaired && stat.status === 'CALIBRATING')
+            ) {
               setMobileStreaming(true);
               clearInterval(dualViewPollingRef.current);
             }
@@ -1260,22 +1266,22 @@ export function AssessmentApp() {
               <button
                 className={styles.btnPrimary}
                 onClick={() => setStep('instructions')}
-                disabled={!mobileStreaming}
+                disabled={!mobileStreaming && !mobilePaired}
                 type="button"
                 style={{
                   flex: 1,
-                  maxWidth: '260px',
-                  background: mobileStreaming ? '#16a34a' : '#2563eb',
-                  borderColor: mobileStreaming ? '#16a34a' : '#2563eb',
-                  opacity: mobileStreaming ? 1 : 0.65,
-                  cursor: mobileStreaming ? 'pointer' : 'not-allowed',
+                  maxWidth: '280px',
+                  background: mobileStreaming ? '#16a34a' : mobilePaired ? '#2563eb' : '#64748b',
+                  borderColor: mobileStreaming ? '#16a34a' : mobilePaired ? '#2563eb' : '#64748b',
+                  opacity: (mobileStreaming || mobilePaired) ? 1 : 0.65,
+                  cursor: (mobileStreaming || mobilePaired) ? 'pointer' : 'not-allowed',
                   color: '#ffffff',
                 }}
               >
                 {mobileStreaming ? (
                   <><i className="bx bx-check-circle" /> Proceed to Guidelines →</>
                 ) : mobilePaired ? (
-                  <><i className="bx bx-loader-alt bx-spin" /> Calibrating Camera...</>
+                  <><i className="bx bx-check" /> Device Paired — Proceed →</>
                 ) : (
                   <><i className="bx bx-mobile-alt" /> Pair Phone to Continue</>
                 )}
