@@ -22,11 +22,13 @@ export const questionApi = {
 };
 
 export const practiceApi = {
-  getQuestions: (params?: { skillId?: string; topicId?: string; difficulty?: string }) => {
+  getQuestions: (params?: { skillId?: string; topicId?: string; difficulty?: string; page?: number; size?: number }) => {
     const q = new URLSearchParams();
     if (params?.skillId) q.set('skillId', params.skillId);
     if (params?.topicId) q.set('topicId', params.topicId);
     if (params?.difficulty) q.set('difficulty', params.difficulty);
+    if (params?.page !== undefined) q.set('page', String(params.page));
+    if (params?.size !== undefined) q.set('size', String(params.size));
     return api.get<Question[]>(`/practice/questions?${q.toString()}`);
   },
   getQuestion: (id: string) => api.get<Question>(`/practice/questions/${id}`),
