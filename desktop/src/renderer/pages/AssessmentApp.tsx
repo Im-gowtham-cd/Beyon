@@ -452,11 +452,9 @@ export function AssessmentApp() {
           const data = frame.data;
 
           let centerSkinPixels = 0;
-          let leftSkinPixels = 0;
-          let rightSkinPixels = 0;
-          let phoneDarkPixels = 0;
           let phoneBrightPixels = 0;
           let phoneEdgeTransitions = 0;
+          const colSkin = new Int32Array(160);
 
           for (let y = 0; y < 120; y++) {
             for (let x = 0; x < 160; x++) {
@@ -478,26 +476,28 @@ export function AssessmentApp() {
                 (r - g > 8);
 
               if (isHumanSkin) {
-                if (x >= 30 && x <= 130 && y >= 15 && y <= 95) {
+                if (x >= 35 && x <= 125 && y >= 10 && y <= 95) {
                   centerSkinPixels++;
-                } else if (x < 30 && y >= 20 && y <= 100) {
-                  leftSkinPixels++;
-                } else if (x > 130 && y >= 20 && y <= 100) {
-                  rightSkinPixels++;
+                }
+                // Record upper head column distribution (ignore hands/arms typing at desk y > 65)
+                if (y >= 10 && y <= 65) {
+                  colSkin[x]++;
                 }
               }
 
-              // Smartphone / Electronic device detection in lower center region
-              if (y >= 45 && y <= 115 && x >= 30 && x <= 130) {
+              // Smartphone / Electronic device detection:
+              // Only checks for active illuminated glowing screen held up in frame (lum > 230)
+              // NEVER checks dark pixels, so dark shirts/jackets will NEVER trigger!
+              if (y >= 25 && y <= 100 && x >= 25 && x <= 135) {
                 const lum = (r + g + b) / 3;
-                if (lum < 22) phoneDarkPixels++;
-                else if (lum > 225) phoneBrightPixels++;
-
-                if (x < 129) {
-                  const rightIdx = (y * 160 + (x + 1)) * 4;
-                  const rightLum = (data[rightIdx] + data[rightIdx + 1] + data[rightIdx + 2]) / 3;
-                  if (Math.abs(lum - rightLum) > 50) {
-                    phoneEdgeTransitions++;
+                if (lum > 230) {
+                  phoneBrightPixels++;
+                  if (x < 134) {
+                    const rightIdx = (y * 160 + (x + 1)) * 4;
+                    const rightLum = (data[rightIdx] + data[rightIdx + 1] + data[rightIdx + 2]) / 3;
+                    if (Math.abs(lum - rightLum) > 65) {
+                      phoneEdgeTransitions++;
+                    }
                   }
                 }
               }
@@ -531,33 +531,44 @@ export function AssessmentApp() {
             absenceStreakRef.current = 0;
           }
 
-          // EVALUATION 2: Multiple People
-          if (centerSkinPixels >= 140 && (leftSkinPixels > 240 || rightSkinPixels > 240)) {
+          // EVALUATION 2: Multiple People (Two distinct head peaks separated by non-skin valley)
+          let leftHeadMass = 0;
+          let rightHeadMass = 0;
+          let valleyColumns = 0;
+          for (let x = 10; x < 150; x++) {
+            if (colSkin[x] >= 5) {
+              if (x < 75) leftHeadMass += colSkin[x];
+              else if (x > 85) rightHeadMass += colSkin[x];
+            } else if (colSkin[x] < 2 && x >= 50 && x <= 110) {
+              valleyColumns++;
+            }
+          }
+
+          // Only genuine two heads: both peaks have substantial facial mass and are separated by a valley
+          const hasTwoDistinctHeads = leftHeadMass > 600 && rightHeadMass > 600 && valleyColumns >= 6;
+          if (hasTwoDistinctHeads) {
             multiPersonStreakRef.current++;
-            if (multiPersonStreakRef.current === 2) {
+            if (multiPersonStreakRef.current === 6) { // ~3.6s continuous presence of second head
               setProctorStatus('WARNING');
               setProctorMessage('Multiple People in Frame');
-              addMalpracticeAlert('MULTIPLE_PEOPLE_DETECTED', 'Multiple people detected in proctoring camera frame');
+              addMalpracticeAlert('MULTIPLE_PEOPLE_DETECTED', 'Warning: Additional person detected in camera view');
               setProctoringWarnings(prev => [...prev, 'Multiple persons detected']);
             }
           } else {
             multiPersonStreakRef.current = 0;
           }
 
-          // EVALUATION 3: Phone / Unauthorized Device
-          const isPhoneInFrame = (phoneDarkPixels > 240 || phoneBrightPixels > 240) && phoneEdgeTransitions > 75;
+          // EVALUATION 3: Phone / Unauthorized Device -> IMMEDIATE EXIT
+          // Requires an active, bright illuminated electronic screen held in frame
+          const isPhoneInFrame = phoneBrightPixels > 380 && phoneEdgeTransitions > 120;
           if (isPhoneInFrame) {
             phoneStreakRef.current++;
-            if (phoneStreakRef.current === 2) {
-              setProctorStatus('WARNING');
-              setProctorMessage('Mobile Phone Detected');
-              addMalpracticeAlert('MOBILE_PHONE_DETECTED', 'Unauthorized mobile phone / smartphone detected in camera frame!');
-              setProctoringWarnings(prev => [...prev, 'Mobile device detected']);
-            } else if (phoneStreakRef.current >= 5) {
+            if (phoneStreakRef.current >= 4) { // ~2.4s of confirmed active glowing screen
               isTerminatingRef.current = true;
               setProctorStatus('CRITICAL');
-              setProctorMessage('AUTO-TERMINATED (DEVICE)');
-              addMalpracticeAlert('DEVICE_MALPRACTICE_TERMINATION', 'Assessment automatically terminated: Unauthorized mobile phone usage detected.');
+              setProctorMessage('AUTO-TERMINATED (PHONE DETECTED)');
+              addMalpracticeAlert('DEVICE_MALPRACTICE_TERMINATION', 'CRITICAL VIOLATION: Unauthorized mobile phone screen detected. Assessment immediately terminated.');
+              setProctoringWarnings(prev => [...prev, 'Mobile device detected - Test Terminated']);
               if (handleSubmitRef.current) handleSubmitRef.current();
               return;
             }
@@ -571,6 +582,48 @@ export function AssessmentApp() {
       }
     };
 
+    // Cross-Camera Incident Poller for DualView / Mobile Camera
+    let incidentPollInterval: any = null;
+    if (procSessionId) {
+      const examStartTime = Date.now();
+      const seenIncidentIds = new Set<string>();
+      incidentPollInterval = setInterval(async () => {
+        if (isTerminatingRef.current) return;
+        try {
+          const res = await fetch(`${API_BASE}/proctoring/dualview/${procSessionId}/incidents`);
+          if (res.ok) {
+            const list = await res.json();
+            if (Array.isArray(list)) {
+              for (const inc of list) {
+                const incId = String(inc.id || inc.incidentId);
+                if (seenIncidentIds.has(incId)) continue;
+                seenIncidentIds.add(incId);
+
+                // Ignore stale incidents from before the exam started
+                const incidentTime = inc.startedAt ? Date.parse(inc.startedAt) : 0;
+                if (incidentTime > 0 && incidentTime < examStartTime - 3000) continue;
+
+                const type = inc.incidentType;
+                if (type === 'PHONE_DETECTED' || type === 'POSSIBLE_QUESTION_CAPTURE') {
+                  isTerminatingRef.current = true;
+                  setProctorStatus('CRITICAL');
+                  setProctorMessage('AUTO-TERMINATED (PHONE DETECTED)');
+                  addMalpracticeAlert('CRITICAL_PHONE_TERMINATION', 'CRITICAL VIOLATION: Unauthorized mobile phone detected by proctoring sensors. Assessment terminated.');
+                  if (handleSubmitRef.current) handleSubmitRef.current();
+                  return;
+                } else if (type === 'SECOND_PERSON' || type === 'POSSIBLE_EXTERNAL_ASSISTANCE') {
+                  setProctorStatus('WARNING');
+                  setProctorMessage('Multiple People in Frame');
+                  addMalpracticeAlert('DUALVIEW_SECOND_PERSON', 'Warning: Additional person detected in camera view');
+                  setProctoringWarnings(prev => [...prev, 'Multiple persons detected']);
+                }
+              }
+            }
+          }
+        } catch {}
+      }, 2500);
+    }
+
     // Maximize + lock after a short delay to avoid race on startup
     const timer = setTimeout(() => {
       window.beyon?.assessment?.enterFullscreen();
@@ -580,6 +633,9 @@ export function AssessmentApp() {
 
     return () => {
       clearTimeout(timer);
+      if (incidentPollInterval) {
+        clearInterval(incidentPollInterval);
+      }
       if (proctorIntervalRef.current) {
         clearInterval(proctorIntervalRef.current);
         proctorIntervalRef.current = null;
@@ -595,7 +651,7 @@ export function AssessmentApp() {
         examCameraStreamRef.current = null;
       }
     };
-  }, [step, session]);
+  }, [step, session, procSessionId]);
 
   const fetchTime = useCallback(async () => {
     if (!session?.sessionId) return;
