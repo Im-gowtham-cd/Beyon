@@ -71,23 +71,20 @@ public class ProfileService {
         ProfileResponse response = new ProfileResponse();
         boolean profileCompleted = false;
 
-        switch (user.getRole()) {
-            case STUDENT -> {
-                var studentProfile = studentProfileRepository.findByUserId(userId);
-                profileCompleted = studentProfile.isPresent() && studentProfile.get().getCompletionPct() >= 80;
-                response.setStudentProfile(loadStudentData(userId));
-            }
-            case INSTITUTION -> {
-                var instProfile = institutionProfileRepository.findByUserId(userId);
-                profileCompleted = instProfile.isPresent() && instProfile.get().getCompletionPct() >= 80;
-                response.setInstitutionProfile(loadInstitutionData(userId));
-            }
-            case COMPANY -> {
-                var compProfile = companyProfileRepository.findByUserId(userId);
-                profileCompleted = compProfile.isPresent() && compProfile.get().getCompletionPct() >= 80;
-                response.setCompanyProfile(loadCompanyData(userId));
-            }
-            default -> profileCompleted = true;
+        if (user.getRole() == com.beyon.identity.enums.UserRole.STUDENT) {
+            var studentProfile = studentProfileRepository.findByUserId(userId);
+            profileCompleted = studentProfile.isPresent() && studentProfile.get().getCompletionPct() >= 80;
+            response.setStudentProfile(loadStudentData(userId));
+        } else if (user.getRole() == com.beyon.identity.enums.UserRole.INSTITUTION) {
+            var instProfile = institutionProfileRepository.findByUserId(userId);
+            profileCompleted = instProfile.isPresent() && instProfile.get().getCompletionPct() >= 80;
+            response.setInstitutionProfile(loadInstitutionData(userId));
+        } else if (user.getRole() == com.beyon.identity.enums.UserRole.COMPANY) {
+            var compProfile = companyProfileRepository.findByUserId(userId);
+            profileCompleted = compProfile.isPresent() && compProfile.get().getCompletionPct() >= 80;
+            response.setCompanyProfile(loadCompanyData(userId));
+        } else {
+            profileCompleted = true;
         }
 
         response.setUser(new ProfileResponse.UserInfo(user, profileCompleted));

@@ -24,6 +24,7 @@ public class RecruitmentService {
     private final NotificationService notificationService;
     private final com.beyon.identity.repository.UserRepository userRepository;
     private final com.beyon.profile.repository.StudentProfileRepository studentProfileRepository;
+    private final com.beyon.profile.repository.StudentSkillRepository studentSkillRepository;
     private final com.beyon.assessment.repository.AssessmentResultRepository assessmentResultRepository;
 
     public RecruitmentService(RecruitmentApplicationRepository applicationRepository,
@@ -32,6 +33,7 @@ public class RecruitmentService {
                               NotificationService notificationService,
                               com.beyon.identity.repository.UserRepository userRepository,
                               com.beyon.profile.repository.StudentProfileRepository studentProfileRepository,
+                              com.beyon.profile.repository.StudentSkillRepository studentSkillRepository,
                               com.beyon.assessment.repository.AssessmentResultRepository assessmentResultRepository) {
         this.applicationRepository = applicationRepository;
         this.historyRepository = historyRepository;
@@ -39,6 +41,7 @@ public class RecruitmentService {
         this.notificationService = notificationService;
         this.userRepository = userRepository;
         this.studentProfileRepository = studentProfileRepository;
+        this.studentSkillRepository = studentSkillRepository;
         this.assessmentResultRepository = assessmentResultRepository;
     }
 
@@ -118,6 +121,10 @@ public class RecruitmentService {
                 if (!results.isEmpty()) {
                     map.put("assessmentScore", results.get(0).getOverallScore());
                 }
+
+                List<com.beyon.profile.model.StudentSkill> skills = studentSkillRepository.findByUserId(app.getStudentId());
+                List<String> skillNames = skills.stream().map(com.beyon.profile.model.StudentSkill::getSkillName).toList();
+                map.put("skills", skillNames);
             }
 
             enriched.add(map);
@@ -172,5 +179,63 @@ public class RecruitmentService {
 
     public List<RecruitmentStatusHistory> getStatusHistory(UUID applicationId) {
         return historyRepository.findByApplicationIdOrderByCreatedAtDesc(applicationId);
+    }
+
+    public List<Map<String, Object>> getCandidateDiscoveryPool() {
+        List<com.beyon.profile.model.StudentProfile> profiles = studentProfileRepository.findAll();
+        List<Map<String, Object>> pool = new ArrayList<>();
+        for (com.beyon.profile.model.StudentProfile prof : profiles) {
+            Map<String, Object> map = new LinkedHashMap<>();
+            map.put("id", prof.getUserId().toString());
+            map.put("studentId", prof.getUserId());
+            map.put("institutionName", prof.getInstitution());
+            map.put("college", prof.getInstitution());
+            map.put("degree", prof.getDegree());
+            map.put("department", prof.getDepartment());
+            map.put("batch", prof.getGraduationYear() != null ? String.valueOf(prof.getGraduationYear()) : prof.getAcademicYear());
+            map.put("cgpa", prof.getCgpa() != null ? prof.getCgpa().doubleValue() : 0.0);
+
+            userRepository.findById(prof.getUserId()).ifPresent(u -> {
+                map.put("studentName", u.getDisplayName());
+                map.put("name", u.getDisplayName());
+                map.put("studentEmail", u.getEmail());
+            });
+
+            List<com.beyon.profile.model.StudentSkill> skills = studentSkillRepository.findByUserId(prof.getUserId());
+            List<String> skillNames = skills.stream().map(com.beyon.profile.model.StudentSkill::getSkillName).toList();
+            map.put("skills", skillNames);
+
+            List<com.beyon.assessment.model.AssessmentResult> results = assessmentResultRepository.findByStudentIdOrderByCreatedAtDesc(prof.getUserId());
+            if (!results.isEmpty()) {
+                map.put("assessmentScore", results.get(0).getOverallScore());
+                map.put("benchmarkScore", results.get(0).getOverallScore());
+            }
+
+            List<RecruitmentApplication> apps = applicationRepository.findByStudentIdOrderByCreatedAtDesc(prof.getUserId());
+            if (!apps.isEmpty()) {
+                map.put("applicationId", apps.get(0).getId());
+                map.put("applicationStatus", apps.get(0).getStatus());
+                map.put("appliedOpportunityId", apps.get(0).getOpportunityId());
+            }
+
+            pool.add(map);
+        }
+        return pool;
+    }
+
+    @Transactional
+    public RecruitmentApplication shortlistCandidate(UUID studentId, UUID opportunityId, UUID companyUserId) {
+        Optional<RecruitmentApplication> existing = applicationRepository.findByOpportunityIdAndStudentId(opportunityId, studentId);
+        if (existing.isPresent()) {
+            RecruitmentApplication app = existing.get();
+            app.setStatus("SHORTLISTED");
+            return applicationRepository.save(app);
+        } else {
+            RecruitmentApplication app = new RecruitmentApplication();
+            app.setStudentId(studentId);
+            app.setOpportunityId(opportunityId);
+            app.setStatus("SHORTLISTED");
+            return applicationRepository.save(app);
+        }
     }
 }

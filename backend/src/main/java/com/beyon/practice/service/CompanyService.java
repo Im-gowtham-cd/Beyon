@@ -32,6 +32,7 @@ public class CompanyService {
     private final RecruitmentApplicationRepository recruitmentAppRepo;
 
     private final com.beyon.profile.repository.InstitutionProfileRepository institutionProfileRepository;
+    private final com.beyon.institution.repository.PlacementDriveRepository placementDriveRepository;
 
     public CompanyService(CompanyOpportunityRepository opportunityRepository,
                           OpportunityApplicationRepository applicationRepository,
@@ -39,7 +40,8 @@ public class CompanyService {
                           StudentProfileRepository studentProfileRepository,
                           CoinService coinService,
                           RecruitmentApplicationRepository recruitmentAppRepo,
-                          com.beyon.profile.repository.InstitutionProfileRepository institutionProfileRepository) {
+                          com.beyon.profile.repository.InstitutionProfileRepository institutionProfileRepository,
+                          com.beyon.institution.repository.PlacementDriveRepository placementDriveRepository) {
         this.opportunityRepository = opportunityRepository;
         this.applicationRepository = applicationRepository;
         this.userRepository = userRepository;
@@ -47,6 +49,7 @@ public class CompanyService {
         this.coinService = coinService;
         this.recruitmentAppRepo = recruitmentAppRepo;
         this.institutionProfileRepository = institutionProfileRepository;
+        this.placementDriveRepository = placementDriveRepository;
     }
 
     public List<Map<String, Object>> getActiveInstitutions() {
@@ -91,7 +94,32 @@ public class CompanyService {
     @Transactional
     public CompanyOpportunity createOpportunity(UUID companyUserId, CompanyOpportunity opp) {
         opp.setCompanyUserId(companyUserId);
-        return opportunityRepository.save(opp);
+        CompanyOpportunity saved = opportunityRepository.save(opp);
+
+        if ("CAMPUS_DRIVE".equalsIgnoreCase(saved.getOpportunityType()) &&
+            saved.getTargetInstitutionIds() != null &&
+            !saved.getTargetInstitutionIds().isBlank()) {
+            
+            String[] instIds = saved.getTargetInstitutionIds().split(",");
+            for (String idStr : instIds) {
+                String clean = idStr.trim();
+                if (!clean.isEmpty()) {
+                    try {
+                        UUID instId = UUID.fromString(clean);
+                        com.beyon.institution.model.PlacementDrive pd = new com.beyon.institution.model.PlacementDrive();
+                        pd.setOpportunityId(saved.getId());
+                        pd.setInstitutionId(instId);
+                        pd.setCompanyUserId(companyUserId);
+                        pd.setTitle(saved.getTitle());
+                        pd.setDescription(saved.getDescription());
+                        pd.setStatus("PENDING_APPROVAL");
+                        placementDriveRepository.save(pd);
+                    } catch (Exception ignored) {}
+                }
+            }
+        }
+
+        return saved;
     }
 
     @Transactional
@@ -187,13 +215,27 @@ public class CompanyService {
         OpportunityApplication savedApp = applicationRepository.save(app);
 
         try {
+            List<com.beyon.institution.model.PlacementDrive> matchingDrives = placementDriveRepository.findByOpportunityId(opportunityId);
+            com.beyon.institution.model.PlacementDrive matchedDrive = matchingDrives.isEmpty() ? null : matchingDrives.get(0);
+
             if (!recruitmentAppRepo.existsByOpportunityIdAndStudentId(opportunityId, studentId)) {
                 RecruitmentApplication recApp = new RecruitmentApplication();
                 recApp.setOpportunityId(opportunityId);
                 recApp.setStudentId(studentId);
                 recApp.setStatus("APPLIED");
                 recApp.setCoinsSpent(opp.getMinBeyonCoins());
+                recApp.setAppliedAt(Instant.now());
+                if (matchedDrive != null) {
+                    recApp.setDriveId(matchedDrive.getId());
+                    recApp.setInstitutionId(matchedDrive.getInstitutionId());
+                }
                 recruitmentAppRepo.save(recApp);
+            }
+
+            if (matchedDrive != null) {
+                matchedDrive.setAppliedCount(matchedDrive.getAppliedCount() + 1);
+                matchedDrive.setApplicantCount(matchedDrive.getAppliedCount());
+                placementDriveRepository.save(matchedDrive);
             }
         } catch (Exception ignored) {}
 

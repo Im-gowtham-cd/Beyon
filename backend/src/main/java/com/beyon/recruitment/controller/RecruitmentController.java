@@ -46,6 +46,21 @@ public class RecruitmentController {
         return ResponseEntity.ok(ApiResponse.ok(recruitmentService.getEnrichedApplications(userId, role)));
     }
 
+    @GetMapping("/candidates")
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getCandidates() {
+        return ResponseEntity.ok(ApiResponse.ok(recruitmentService.getCandidateDiscoveryPool()));
+    }
+
+    @PostMapping("/shortlist")
+    public ResponseEntity<ApiResponse<RecruitmentApplication>> shortlistCandidate(
+            Authentication auth,
+            @RequestBody Map<String, String> body) {
+        UUID studentId = UUID.fromString(body.get("studentId"));
+        UUID opportunityId = UUID.fromString(body.get("opportunityId"));
+        UUID companyUserId = extractUserId(auth);
+        return ResponseEntity.ok(ApiResponse.ok(recruitmentService.shortlistCandidate(studentId, opportunityId, companyUserId)));
+    }
+
     @PutMapping("/{applicationId}/status")
     public ResponseEntity<ApiResponse<RecruitmentApplication>> updateStatus(
             Authentication auth,

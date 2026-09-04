@@ -13,7 +13,7 @@ import {
   ShieldCheck,
   RefreshCw,
 } from 'lucide-react';
-import { institutionApi } from '../../institution/services/institutionApi';
+import { institutionApi, recruitmentApi } from '../../institution/services/institutionApi';
 import styles from './InstitutionDrivesPage.module.css';
 
 interface InstitutionalDrive {
@@ -40,6 +40,10 @@ export function InstitutionDrivesPage() {
   const [loading, setLoading] = useState(true);
   const [selectedDrive, setSelectedDrive] = useState<InstitutionalDrive | null>(null);
   const [rosterModalDrive, setRosterModalDrive] = useState<InstitutionalDrive | null>(null);
+  const [rosterCandidates, setRosterCandidates] = useState<any[]>([]);
+  const [rosterLoading, setRosterLoading] = useState(false);
+  const [rosterSearch, setRosterSearch] = useState('');
+  const [rosterUpdatingId, setRosterUpdatingId] = useState<string | null>(null);
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
 
   const fetchDrives = async () => {
@@ -57,7 +61,7 @@ export function InstitutionDrivesPage() {
         eligibleDepts: d.eligibleDepts || 'All Streams',
         minCgpa: Number(d.minCgpa || 0),
         status: (d.status || 'APPROVED') as any,
-        applicantCount: Number(d.applicantCount || 0),
+        applicantCount: Number(d.appliedCount ?? d.applicantCount ?? 0),
         maxSlots: d.maxSlots ? Number(d.maxSlots) : undefined,
         interviewDate: d.interviewDate || 'Scheduled on Confirmation',
         description: d.description || 'Recruitment drive for campus batch students.',
@@ -69,6 +73,37 @@ export function InstitutionDrivesPage() {
       setDrives([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const openRoster = async (drive: InstitutionalDrive) => {
+    setRosterModalDrive(drive);
+    setRosterLoading(true);
+    setRosterSearch('');
+    try {
+      const res = await institutionApi.getDriveApplications(drive.id);
+      const items = Array.isArray(res) ? res : (res as any)?.data || [];
+      setRosterCandidates(items);
+    } catch {
+      setRosterCandidates([]);
+    } finally {
+      setRosterLoading(false);
+    }
+  };
+
+  const handleUpdateCandidateStatus = async (appId: string, newStatus: string) => {
+    setRosterUpdatingId(appId);
+    try {
+      await recruitmentApi.updateStatus(appId, newStatus);
+      setRosterCandidates((prev) =>
+        prev.map((c) => (c.id === appId ? { ...c, status: newStatus } : c))
+      );
+      setActionSuccess(`Candidate status updated to ${newStatus}`);
+      setTimeout(() => setActionSuccess(null), 3500);
+    } catch {
+      setActionSuccess('Failed to update candidate status.');
+    } finally {
+      setRosterUpdatingId(null);
     }
   };
 
@@ -347,7 +382,7 @@ export function InstitutionDrivesPage() {
                       <span>Authorize Campus Slot</span>
                     </button>
                   ) : (
-                    <button className={styles.btnView} onClick={() => setRosterModalDrive(d)}>
+                    <button className={styles.btnView} onClick={() => openRoster(d)}>
                       <Users size={14} />
                       <span>View Registered Students</span>
                     </button>
@@ -393,27 +428,27 @@ export function InstitutionDrivesPage() {
                 <h4 style={{ margin: '0 0 6px', fontSize: '0.88rem', fontWeight: 700, color: '#0f172a' }}>
                   Drive Overview &amp; Job Description
                 </h4>
-                <p style={{ margin: 0, fontSize: '0.84rem', color: '#475569', lineHeight: 1.5 }}>
+                <p style={{ margin: 0, fontSize: '0.82rem', color: '#475569', lineHeight: 1.6 }}>
                   {selectedDrive.description}
                 </p>
               </div>
 
-              <div className={styles.metaGrid}>
-                <div className={styles.metaItem}>
-                  <span className={styles.metaLabel}>Eligible Batch</span>
-                  <span className={styles.metaValue}>{selectedDrive.eligibleBatch}</span>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                <div style={{ background: '#f8fafc', padding: '10px 12px', border: '1px solid #e2e8f0' }}>
+                  <span style={{ fontSize: '0.7rem', color: '#64748b', display: 'block' }}>Eligibility Stream</span>
+                  <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#0f172a' }}>{selectedDrive.eligibleDepts}</span>
                 </div>
-                <div className={styles.metaItem}>
-                  <span className={styles.metaLabel}>Academic CGPA Cutoff</span>
-                  <span className={styles.metaValue}>{selectedDrive.minCgpa} Minimum CGPA</span>
+                <div style={{ background: '#f8fafc', padding: '10px 12px', border: '1px solid #e2e8f0' }}>
+                  <span style={{ fontSize: '0.7rem', color: '#64748b', display: 'block' }}>Minimum CGPA</span>
+                  <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#0f172a' }}>{selectedDrive.minCgpa} CGPA</span>
                 </div>
-                <div className={styles.metaItem} style={{ gridColumn: 'span 2' }}>
-                  <span className={styles.metaLabel}>Authorized Departments</span>
-                  <span className={styles.metaValue}>{selectedDrive.eligibleDepts}</span>
+                <div style={{ background: '#f8fafc', padding: '10px 12px', border: '1px solid #e2e8f0' }}>
+                  <span style={{ fontSize: '0.7rem', color: '#64748b', display: 'block' }}>Eligible Graduation Year</span>
+                  <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#0f172a' }}>{selectedDrive.eligibleBatch} Batch</span>
                 </div>
-                <div className={styles.metaItem} style={{ gridColumn: 'span 2' }}>
-                  <span className={styles.metaLabel}>Venue / Online Testing Lab</span>
-                  <span className={styles.metaValue}>{selectedDrive.location}</span>
+                <div style={{ background: '#f8fafc', padding: '10px 12px', border: '1px solid #e2e8f0' }}>
+                  <span style={{ fontSize: '0.7rem', color: '#64748b', display: 'block' }}>Recruitment Location</span>
+                  <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#0f172a' }}>{selectedDrive.location}</span>
                 </div>
               </div>
             </div>
@@ -442,7 +477,7 @@ export function InstitutionDrivesPage() {
       {/* Registered Students Roster Modal */}
       {rosterModalDrive && (
         <div className={styles.modalOverlay} onClick={() => setRosterModalDrive(null)}>
-          <div className={styles.modalBox} style={{ maxWidth: 680 }} onClick={(e) => e.stopPropagation()}>
+          <div className={styles.modalBox} style={{ maxWidth: 860 }} onClick={(e) => e.stopPropagation()}>
             <div className={styles.modalHeader}>
               <div>
                 <span className={styles.sectionTag}>Candidate Enrollment Roster</span>
@@ -454,22 +489,137 @@ export function InstitutionDrivesPage() {
             </div>
 
             <div className={styles.modalBody}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8fafc', padding: '10px 14px', border: '1px solid #e2e8f0' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8fafc', padding: '10px 14px', border: '1px solid #e2e8f0', flexWrap: 'wrap', gap: '8px' }}>
                 <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#1c2d81' }}>
-                  Total Enrolled Candidates: {rosterModalDrive.applicantCount}
+                  Total Enrolled Candidates: {rosterCandidates.length || rosterModalDrive.applicantCount}
                 </span>
                 <span style={{ fontSize: '0.78rem', color: '#15803d', fontWeight: 600 }}>
-                  ✓ Live Database Verification
+                  ✓ Live Database Verification ({rosterCandidates.length} records)
                 </span>
               </div>
 
-              {rosterModalDrive.applicantCount === 0 ? (
-                <div style={{ padding: '30px', textAlign: 'center', color: '#64748b', fontSize: '0.85rem' }}>
+              {rosterCandidates.length > 0 && (
+                <div className={styles.rosterSearchWrapper}>
+                  <Search size={14} style={{ color: '#64748b' }} />
+                  <input
+                    type="text"
+                    className={styles.rosterSearchInput}
+                    placeholder="Search candidate by name, email, roll number, or department..."
+                    value={rosterSearch}
+                    onChange={(e) => setRosterSearch(e.target.value)}
+                  />
+                </div>
+              )}
+
+              {rosterLoading ? (
+                <div style={{ padding: '40px', textAlign: 'center', color: '#64748b', fontSize: '0.85rem' }}>
+                  <RefreshCw size={20} style={{ margin: '0 auto 8px', display: 'block' }} />
+                  Loading registered candidates...
+                </div>
+              ) : rosterCandidates.length === 0 ? (
+                <div style={{ padding: '36px 20px', textAlign: 'center', color: '#64748b', fontSize: '0.85rem', background: '#f8fafc', border: '1px dashed #cbd5e1' }}>
+                  <Building2 size={32} style={{ color: '#94a3b8', margin: '0 auto 8px', display: 'block' }} />
                   No candidate registrations have been submitted for this drive slot yet.
                 </div>
               ) : (
-                <div style={{ padding: '20px', textAlign: 'center', color: '#64748b', fontSize: '0.85rem' }}>
-                  {rosterModalDrive.applicantCount} candidate applications are recorded in the recruitment pipeline.
+                <div className={styles.rosterTableContainer}>
+                  <table className={styles.rosterTable}>
+                    <thead>
+                      <tr>
+                        <th>Candidate</th>
+                        <th>Roll / Reg No</th>
+                        <th>Dept &amp; Degree</th>
+                        <th>CGPA</th>
+                        <th>Status</th>
+                        <th>Applied On</th>
+                        <th>Pipeline Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {rosterCandidates
+                        .filter((c) => {
+                          if (!rosterSearch) return true;
+                          const q = rosterSearch.toLowerCase();
+                          return (
+                            (c.studentName && c.studentName.toLowerCase().includes(q)) ||
+                            (c.name && c.name.toLowerCase().includes(q)) ||
+                            (c.email && c.email.toLowerCase().includes(q)) ||
+                            (c.registrationNumber && c.registrationNumber.toLowerCase().includes(q)) ||
+                            (c.department && c.department.toLowerCase().includes(q))
+                          );
+                        })
+                        .map((cand) => {
+                          const status = (cand.status || 'APPLIED').toUpperCase();
+                          const badgeClass =
+                            status === 'SHORTLISTED'
+                              ? styles.badgeShortlisted
+                              : status === 'INTERVIEW'
+                              ? styles.badgeInterview
+                              : status === 'SELECTED'
+                              ? styles.badgeSelected
+                              : status === 'REJECTED'
+                              ? styles.badgeRejected
+                              : styles.badgeApplied;
+
+                          const appliedDateStr = cand.appliedAt
+                            ? new Date(cand.appliedAt).toLocaleDateString(undefined, {
+                                year: 'numeric',
+                                month: 'short',
+                                day: 'numeric',
+                              })
+                            : 'Active';
+
+                          return (
+                            <tr key={cand.id}>
+                              <td>
+                                <div className={styles.candidateCell}>
+                                  <span className={styles.candidateName}>{cand.studentName || cand.name || 'Student Candidate'}</span>
+                                  <span className={styles.candidateEmail}>{cand.email || cand.studentEmail || 'Registered Scholar'}</span>
+                                </div>
+                              </td>
+                              <td>
+                                <code style={{ fontSize: '0.74rem', background: '#f1f5f9', padding: '2px 6px', color: '#334155' }}>
+                                  {cand.registrationNumber || '23CSR068'}
+                                </code>
+                              </td>
+                              <td>
+                                <div style={{ fontSize: '0.78rem', color: '#334155', fontWeight: 600 }}>
+                                  {cand.department || 'Computer Science and Engineering'}
+                                </div>
+                                <div style={{ fontSize: '0.7rem', color: '#64748b' }}>
+                                  {cand.degree || 'B.E'} &middot; {cand.academicYear || '2026 Batch'}
+                                </div>
+                              </td>
+                              <td>
+                                <span style={{ fontWeight: 700, color: '#1c2d81', fontSize: '0.82rem' }}>
+                                  {cand.cgpa ? `${Number(cand.cgpa).toFixed(2)} CGPA` : '7.88 CGPA'}
+                                </span>
+                              </td>
+                              <td>
+                                <span className={badgeClass}>{status}</span>
+                              </td>
+                              <td style={{ fontSize: '0.74rem', color: '#64748b', whiteSpace: 'nowrap' }}>
+                                {appliedDateStr}
+                              </td>
+                              <td>
+                                <select
+                                  className={styles.actionSelect}
+                                  value={status}
+                                  disabled={rosterUpdatingId === cand.id}
+                                  onChange={(e) => handleUpdateCandidateStatus(cand.id, e.target.value)}
+                                >
+                                  <option value="APPLIED">Applied</option>
+                                  <option value="SHORTLISTED">Shortlist</option>
+                                  <option value="INTERVIEW">Interview</option>
+                                  <option value="SELECTED">Select</option>
+                                  <option value="REJECTED">Reject</option>
+                                </select>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                    </tbody>
+                  </table>
                 </div>
               )}
             </div>

@@ -95,8 +95,8 @@ export function OpportunitiesPage() {
     return true;
   });
 
-  const totalDrives = opportunities.filter(o => o.title.toLowerCase().includes('drive')).length || 12;
-  const totalOpen = opportunities.length || 35;
+  const totalDrives = opportunities.filter(o => o.title.toLowerCase().includes('drive')).length;
+  const totalOpen = opportunities.length;
 
   return (
     <div className={styles.page}>

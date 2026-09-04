@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { api } from '../../services/api/client';
 import {
   ArrowLeft,
   Plus,
@@ -110,18 +111,23 @@ export function CreateOpportunityPage() {
     setSubmitting(true);
     setError(null);
     try {
-      const token = localStorage.getItem('beyon_token') || localStorage.getItem('beyon_access_token');
-      const res = await fetch('/api/v1/opportunities', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(payload),
-      });
+      try {
+        await api.post('/opportunities', payload);
+      } catch (clientErr: any) {
+        const token = localStorage.getItem('beyon_token') || localStorage.getItem('beyon_access_token');
+        const res = await fetch('/api/v1/opportunities', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(payload),
+        });
 
-      if (!res.ok) {
-        throw new Error('Failed to create opportunity. Please check backend connection.');
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.error || errData.message || clientErr.message || 'Failed to create opportunity.');
+        }
       }
       setSuccess(true);
     } catch (err: any) {

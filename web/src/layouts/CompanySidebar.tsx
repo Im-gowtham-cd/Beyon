@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { NavLink, Link } from 'react-router-dom';
 import { useAuth } from '../auth/context/AuthContext';
 import {
@@ -35,15 +35,17 @@ export function CompanySidebar({
   const { user } = useAuth();
   const [profileData, setProfileData] = useState<any>(null);
   const [activeJobsCount, setActiveJobsCount] = useState<number>(0);
+  const [candidatesCount, setCandidatesCount] = useState<number>(0);
 
   useEffect(() => {
     async function loadCompanyData() {
       try {
         const token = localStorage.getItem('beyon_token') || localStorage.getItem('beyon_access_token');
         if (!token) return;
-        const [profRes, oppRes] = await Promise.all([
+        const [profRes, oppRes, candRes] = await Promise.all([
           fetch('/api/v1/profile', { headers: { Authorization: `Bearer ${token}` } }).catch(() => null),
           fetch('/api/v1/opportunities', { headers: { Authorization: `Bearer ${token}` } }).catch(() => null),
+          fetch('/api/v1/recruitment/candidates', { headers: { Authorization: `Bearer ${token}` } }).catch(() => null),
         ]);
         if (profRes && profRes.ok) {
           const p = await profRes.json();
@@ -53,6 +55,12 @@ export function CompanySidebar({
           const o = await oppRes.json();
           if (Array.isArray(o.data)) {
             setActiveJobsCount(o.data.length);
+          }
+        }
+        if (candRes && candRes.ok) {
+          const c = await candRes.json();
+          if (Array.isArray(c.data)) {
+            setCandidatesCount(c.data.length);
           }
         }
       } catch {
@@ -74,7 +82,7 @@ export function CompanySidebar({
     {
       title: 'Talent & AI Screening',
       items: [
-        { to: '/company/candidates', icon: UserCheck, label: 'AI Candidate Discovery', badge: '100+ Verified', badgeType: 'gold' },
+        { to: '/company/candidates', icon: UserCheck, label: 'AI Candidate Discovery', badge: candidatesCount > 0 ? `${candidatesCount} Verified` : undefined, badgeType: 'gold' },
         { to: '/company/pipeline', icon: GitCommit, label: 'Recruitment Pipeline' },
         { to: '/company/candidate-intelligence', icon: Brain, label: 'Candidate Intelligence' },
       ],

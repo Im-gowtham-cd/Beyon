@@ -66,6 +66,7 @@ export function CompanyOpportunitiesPage() {
 
   const totalDrives = opportunities.filter(o => o.opportunityType === 'CAMPUS_DRIVE' || o.title.toLowerCase().includes('drive')).length;
   const totalOpenings = opportunities.length;
+  const totalApplicantsCount = Math.max(applicantCount, opportunities.reduce((sum, opp) => sum + (opp.applicationCount || 0), 0));
 
   return (
     <div className={styles.page}>
@@ -94,11 +95,11 @@ export function CompanyOpportunitiesPage() {
         </div>
         <div className={styles.statCard}>
           <span className={styles.statLabel}>Total Applicants</span>
-          <span className={styles.statValue} style={{ color: '#0284c7' }}>{applicantCount}</span>
+          <span className={styles.statValue} style={{ color: '#0284c7' }}>{totalApplicantsCount}</span>
         </div>
         <div className={styles.statCard}>
           <span className={styles.statLabel}>Verified Candidates</span>
-          <span className={styles.statValue} style={{ color: '#15803d' }}>{applicantCount}</span>
+          <span className={styles.statValue} style={{ color: '#15803d' }}>{totalApplicantsCount}</span>
         </div>
       </div>
 
@@ -196,7 +197,7 @@ export function CompanyOpportunitiesPage() {
               <div className={styles.cardFoot}>
                 <span className={styles.applicantsCount}>
                   <Users size={14} />
-                  <span>{opp.applicationCount || 24} Applicants</span>
+                  <span>{(opp.applicationCount !== undefined && opp.applicationCount !== null) ? opp.applicationCount : 0} Applicants</span>
                 </span>
                 <button
                   className={styles.actionBtn}

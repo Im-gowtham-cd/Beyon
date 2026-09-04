@@ -104,6 +104,14 @@ public class InstitutionController {
         return ResponseEntity.ok(ApiResponse.ok(institutionService.approveDrive(driveId, instId)));
     }
 
+    @GetMapping("/drives/{driveId}/applications")
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getDriveApplications(
+            Authentication auth,
+            @PathVariable UUID driveId) {
+        UUID instId = extractUserId(auth);
+        return ResponseEntity.ok(ApiResponse.ok(institutionService.getDriveApplications(driveId, instId)));
+    }
+
     private UUID extractUserId(Authentication auth) {
         JwtUserDetails details = (JwtUserDetails) auth.getDetails();
         return UUID.fromString(details.getUserId());
