@@ -305,60 +305,47 @@ export function TopicDetail() {
 
         if (elaborateData) {
           return (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', marginBottom: '28px' }}>
-              {/* SDE ₹24+ LPA Target Banner */}
-              <div style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%)', color: '#ffffff', padding: '22px 26px', borderRadius: '10px', border: '1px solid #312e81', boxShadow: '0 4px 12px rgba(15,23,42,0.12)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px', flexWrap: 'wrap' }}>
-                  <span style={{ background: '#38bdf8', color: '#0f172a', fontWeight: 800, fontSize: '0.75rem', padding: '4px 12px', borderRadius: '14px', textTransform: 'uppercase', letterSpacing: '0.6px' }}>
-                    ⭐ ₹24+ LPA SDE Deep Dive
-                  </span>
-                  <span style={{ color: '#93c5fd', fontSize: '0.85rem', fontWeight: 700 }}>
-                    {elaborateData.targetBanner?.roles || 'For ₹24+ LPA SDE roles (Presidio, Oracle, Zoho R&D, Amazon, Microsoft, Adobe, Atlassian, Walmart, JPMorgan, etc.)'}
-                  </span>
-                </div>
-                <p style={{ margin: 0, color: '#e2e8f0', fontSize: '0.92rem', lineHeight: 1.65, fontStyle: 'italic' }}>
-                  "{elaborateData.targetBanner?.tagline || 'Interviewers don\'t expect textbook definitions. They expect you to explain why a technology exists, how it works internally, what problem it solves, and its trade-offs. So let\'s study like an SDE, not like someone preparing for a theory exam.'}"
-                </p>
-              </div>
-
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginBottom: '28px' }}>
               {/* Main Architectural Header & Overview Card */}
-              <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '28px', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '18px' }}>
-                  <div style={{ background: '#eff6ff', color: '#1c2d81', padding: '12px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <BookOpen size={24} />
+              <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '4px', padding: '24px', boxShadow: '0 1px 3px rgba(15, 23, 42, 0.03)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px', marginBottom: '16px', paddingBottom: '14px', borderBottom: '1px solid #f1f5f9' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <div style={{ background: '#eff6ff', color: '#1c2d81', padding: '8px', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <BookOpen size={20} />
+                    </div>
+                    <div>
+                      <h2 style={{ fontFamily: 'var(--font-heading, Montserrat)', fontSize: '1.2rem', fontWeight: 800, color: '#0f172a', margin: 0, letterSpacing: '-0.01em' }}>
+                        {elaborateData.title}
+                      </h2>
+                    </div>
                   </div>
-                  <div>
-                    <h2 style={{ fontSize: '1.35rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>
-                      {elaborateData.levelHeading || elaborateData.title}
-                    </h2>
-                    <span style={{ fontSize: '0.82rem', color: '#1d4ed8', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                      {elaborateData.badge} • Uncompressed Technical Specification
-                    </span>
-                  </div>
+                  <span style={{ fontSize: '0.72rem', fontWeight: 600, color: '#1c2d81', background: '#eff6ff', padding: '4px 10px', borderRadius: '4px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                    Technical Reference &amp; Core Architecture
+                  </span>
                 </div>
 
-                <div style={{ color: '#334155', fontSize: '0.95rem', lineHeight: 1.8, margin: '0 0 20px', background: '#f8fafc', padding: '20px 22px', borderRadius: '8px', borderLeft: '4px solid #1c2d81' }}>
+                <div style={{ color: '#334155', fontSize: '0.92rem', lineHeight: 1.75, margin: '0 0 20px', background: '#f8fafc', padding: '16px 20px', borderRadius: '4px', borderLeft: '3px solid #1c2d81' }}>
                   {elaborateData.overview}
                 </div>
 
                 {/* SDE Questions: Full Uncompressed Questions & Answers */}
                 {elaborateData.sdeQuestions && elaborateData.sdeQuestions.length > 0 && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '26px', marginTop: '28px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginTop: '24px' }}>
                     {elaborateData.sdeQuestions.map((q) => (
-                      <div key={q.number} style={{ border: '1px solid #e2e8f0', borderRadius: '10px', padding: '24px', background: '#ffffff', boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
-                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', marginBottom: '14px' }}>
-                          <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minWidth: '30px', height: '30px', borderRadius: '8px', background: '#1c2d81', color: '#ffffff', fontWeight: 800, fontSize: '0.85rem' }}>
+                      <div key={q.number} style={{ border: '1px solid #e2e8f0', borderRadius: '4px', padding: '22px', background: '#ffffff', boxShadow: '0 1px 2px rgba(15, 23, 42, 0.02)' }}>
+                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', marginBottom: '14px' }}>
+                          <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minWidth: '28px', height: '28px', borderRadius: '4px', background: '#eff6ff', color: '#1c2d81', fontWeight: 800, fontSize: '0.82rem', border: '1px solid #bfdbfe' }}>
                             {q.number}
                           </span>
-                          <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800, color: '#0f172a', lineHeight: 1.4 }}>
+                          <h3 style={{ fontFamily: 'var(--font-heading, Montserrat)', margin: 0, fontSize: '1.05rem', fontWeight: 700, color: '#0f172a', lineHeight: 1.45 }}>
                             {q.question}
                           </h3>
                         </div>
 
                         {/* Official Definition */}
                         {q.officialDefinition && (
-                          <div style={{ background: '#f8fafc', borderLeft: '3px solid #3b82f6', padding: '12px 16px', borderRadius: '4px', margin: '0 0 14px', fontSize: '0.9rem', color: '#334155', lineHeight: 1.65 }}>
-                            <div style={{ fontWeight: 700, color: '#1d4ed8', fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px' }}>
+                          <div style={{ background: '#f8fafc', borderLeft: '3px solid #1c2d81', padding: '12px 16px', borderRadius: '2px', margin: '0 0 14px', fontSize: '0.89rem', color: '#334155', lineHeight: 1.65 }}>
+                            <div style={{ fontWeight: 700, color: '#1c2d81', fontSize: '0.74rem', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '4px' }}>
                               Official Definition
                             </div>
                             {q.officialDefinition}
@@ -367,50 +354,50 @@ export function TopicDetail() {
 
                         {/* Why do we need it / Problem / Solution */}
                         {q.whyNeeded && (
-                          <div style={{ margin: '0 0 14px', color: '#334155', fontSize: '0.915rem', lineHeight: 1.7, whiteSpace: 'pre-line' }}>
-                            <div style={{ fontWeight: 700, color: '#0f172a', marginBottom: '6px' }}>Why do we need it?</div>
+                          <div style={{ margin: '0 0 14px', color: '#334155', fontSize: '0.9rem', lineHeight: 1.7, whiteSpace: 'pre-line' }}>
+                            <div style={{ fontWeight: 700, color: '#0f172a', marginBottom: '4px' }}>Why do we need it?</div>
                             {q.whyNeeded}
                           </div>
                         )}
 
                         {q.problemBefore && (
-                          <div style={{ background: '#fff1f2', border: '1px solid #fecdd3', borderRadius: '6px', padding: '14px 16px', margin: '0 0 14px', fontSize: '0.9rem', color: '#9f1239', lineHeight: 1.65, whiteSpace: 'pre-line' }}>
-                            <div style={{ fontWeight: 800, textTransform: 'uppercase', fontSize: '0.75rem', marginBottom: '4px' }}>Problem before:</div>
+                          <div style={{ background: '#fff1f2', border: '1px solid #fecdd3', borderLeft: '3px solid #e11d48', borderRadius: '4px', padding: '12px 16px', margin: '0 0 14px', fontSize: '0.885rem', color: '#9f1239', lineHeight: 1.65, whiteSpace: 'pre-line' }}>
+                            <div style={{ fontWeight: 800, textTransform: 'uppercase', fontSize: '0.74rem', letterSpacing: '0.04em', marginBottom: '4px' }}>Problem before:</div>
                             {q.problemBefore}
                           </div>
                         )}
 
                         {q.solution && (
-                          <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '6px', padding: '14px 16px', margin: '0 0 14px', fontSize: '0.9rem', color: '#166534', lineHeight: 1.65, whiteSpace: 'pre-line' }}>
-                            <div style={{ fontWeight: 800, textTransform: 'uppercase', fontSize: '0.75rem', marginBottom: '4px' }}>Solution:</div>
+                          <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderLeft: '3px solid #16a34a', borderRadius: '4px', padding: '12px 16px', margin: '0 0 14px', fontSize: '0.885rem', color: '#166534', lineHeight: 1.65, whiteSpace: 'pre-line' }}>
+                            <div style={{ fontWeight: 800, textTransform: 'uppercase', fontSize: '0.74rem', letterSpacing: '0.04em', marginBottom: '4px' }}>Solution:</div>
                             {q.solution}
                           </div>
                         )}
 
                         {q.realWorldExample && (
-                          <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '6px', padding: '14px 16px', margin: '0 0 14px', fontSize: '0.9rem', color: '#334155', lineHeight: 1.65, whiteSpace: 'pre-line' }}>
-                            <div style={{ fontWeight: 700, color: '#0f172a', marginBottom: '4px' }}>Real-World Example:</div>
+                          <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderLeft: '3px solid #64748b', borderRadius: '4px', padding: '12px 16px', margin: '0 0 14px', fontSize: '0.885rem', color: '#334155', lineHeight: 1.65, whiteSpace: 'pre-line' }}>
+                            <div style={{ fontWeight: 700, color: '#0f172a', marginBottom: '4px', fontSize: '0.82rem' }}>Real-World Example:</div>
                             {q.realWorldExample}
                           </div>
                         )}
 
                         {/* Visual ASCII Diagram */}
                         {q.diagram && (
-                          <div style={{ background: '#0f172a', color: '#38bdf8', padding: '16px', borderRadius: '8px', fontFamily: 'monospace', fontSize: '0.84rem', margin: '14px 0', overflowX: 'auto', lineHeight: 1.5, whiteSpace: 'pre' }}>
+                          <div style={{ background: '#0f172a', color: '#38bdf8', padding: '14px 16px', borderRadius: '4px', fontFamily: 'monospace', fontSize: '0.835rem', margin: '14px 0', overflowX: 'auto', lineHeight: 1.5, whiteSpace: 'pre', border: '1px solid #1e293b' }}>
                             {q.diagram}
                           </div>
                         )}
 
                         {/* Where is it used */}
                         {q.whereUsed && q.whereUsed.length > 0 && (
-                          <div style={{ margin: '14px 0', background: '#f1f5f9', padding: '14px 18px', borderRadius: '6px' }}>
-                            <div style={{ fontWeight: 700, fontSize: '0.82rem', color: '#0f172a', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                          <div style={{ margin: '14px 0', background: '#f8fafc', border: '1px solid #e2e8f0', padding: '12px 16px', borderRadius: '4px' }}>
+                            <div style={{ fontWeight: 700, fontSize: '0.78rem', color: '#1c2d81', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                               Where is it used?
                             </div>
                             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '8px' }}>
                               {q.whereUsed.map((item, iIdx) => (
-                                <div key={iIdx} style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.86rem', color: '#334155' }}>
-                                  <CheckCircle2 size={14} color="#16a34a" /> {item}
+                                <div key={iIdx} style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem', color: '#334155' }}>
+                                  <CheckCircle2 size={13} color="#1c2d81" /> {item}
                                 </div>
                               ))}
                             </div>
@@ -419,16 +406,16 @@ export function TopicDetail() {
 
                         {/* Explanation */}
                         {q.explanation && (
-                          <p style={{ color: '#334155', fontSize: '0.915rem', lineHeight: 1.7, margin: '12px 0', whiteSpace: 'pre-line' }}>
+                          <p style={{ color: '#334155', fontSize: '0.9rem', lineHeight: 1.7, margin: '10px 0', whiteSpace: 'pre-line' }}>
                             {q.explanation}
                           </p>
                         )}
 
                         {/* Key Points */}
                         {q.keyPoints && q.keyPoints.length > 0 && (
-                          <ul style={{ paddingLeft: '20px', margin: '12px 0 16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                          <ul style={{ paddingLeft: '18px', margin: '10px 0 14px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
                             {q.keyPoints.map((kp, kpIdx) => (
-                              <li key={kpIdx} style={{ color: '#334155', fontSize: '0.885rem', lineHeight: 1.6 }}>
+                              <li key={kpIdx} style={{ color: '#334155', fontSize: '0.875rem', lineHeight: 1.6 }}>
                                 {kp}
                               </li>
                             ))}
@@ -437,16 +424,16 @@ export function TopicDetail() {
 
                         {/* Code snippet */}
                         {q.code && (
-                          <div style={{ marginTop: '14px', borderRadius: '6px', overflow: 'hidden', border: '1px solid #1e293b' }}>
-                            <div style={{ background: '#1e293b', color: '#cbd5e1', padding: '8px 14px', fontSize: '0.78rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                              <Terminal size={14} color="#38bdf8" /> Code Implementation
+                          <div style={{ marginTop: '12px', borderRadius: '4px', overflow: 'hidden', border: '1px solid #e2e8f0' }}>
+                            <div style={{ background: '#1e293b', color: '#cbd5e1', padding: '7px 14px', fontSize: '0.76rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <Terminal size={13} color="#38bdf8" /> Code Implementation
                             </div>
-                            <pre style={{ margin: 0, background: '#0f172a', color: '#f8fafc', padding: '16px', fontFamily: 'monospace', fontSize: '0.835rem', overflowX: 'auto', lineHeight: 1.55 }}>
+                            <pre style={{ margin: 0, background: '#0f172a', color: '#f8fafc', padding: '14px 16px', fontFamily: 'monospace', fontSize: '0.825rem', overflowX: 'auto', lineHeight: 1.55 }}>
                               <code>{q.code}</code>
                             </pre>
                             {q.output && (
-                              <div style={{ background: '#0b1120', padding: '12px 14px', borderTop: '1px solid #1e293b', fontFamily: 'monospace', fontSize: '0.82rem', color: '#4ade80' }}>
-                                <div style={{ color: '#94a3b8', fontSize: '0.72rem', textTransform: 'uppercase', marginBottom: '4px' }}>Expected Output:</div>
+                              <div style={{ background: '#0b1120', padding: '10px 14px', borderTop: '1px solid #1e293b', fontFamily: 'monospace', fontSize: '0.81rem', color: '#4ade80' }}>
+                                <div style={{ color: '#94a3b8', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '3px' }}>Expected Output:</div>
                                 <pre style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{q.output}</pre>
                               </div>
                             )}
@@ -455,12 +442,12 @@ export function TopicDetail() {
 
                         {/* Table */}
                         {q.table && (
-                          <div style={{ marginTop: '16px', overflowX: 'auto', border: '1px solid #e2e8f0', borderRadius: '6px' }}>
-                            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+                          <div style={{ marginTop: '14px', overflowX: 'auto', border: '1px solid #e2e8f0', borderRadius: '4px' }}>
+                            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.84rem' }}>
                               <thead>
                                 <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
                                   {q.table.headers.map((h, hIdx) => (
-                                    <th key={hIdx} style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 700, color: '#1e293b' }}>
+                                    <th key={hIdx} style={{ padding: '10px 14px', textAlign: 'left', fontWeight: 700, color: '#0f172a' }}>
                                       {h}
                                     </th>
                                   ))}
@@ -470,7 +457,7 @@ export function TopicDetail() {
                                 {q.table.rows.map((row, rIdx) => (
                                   <tr key={rIdx} style={{ borderBottom: rIdx === q.table!.rows.length - 1 ? 'none' : '1px solid #f1f5f9', background: rIdx % 2 === 0 ? '#ffffff' : '#fafafa' }}>
                                     {row.map((cell, cIdx) => (
-                                      <td key={cIdx} style={{ padding: '12px 16px', color: cIdx === 0 ? '#0f172a' : '#475569', fontWeight: cIdx === 0 ? 700 : 400 }}>
+                                      <td key={cIdx} style={{ padding: '10px 14px', color: cIdx === 0 ? '#0f172a' : '#475569', fontWeight: cIdx === 0 ? 600 : 400 }}>
                                         {cell}
                                       </td>
                                     ))}
@@ -481,13 +468,13 @@ export function TopicDetail() {
                           </div>
                         )}
 
-                        {/* 2-Minute Interview Answer Callout */}
+                        {/* Interview Answer (2 minutes) Callout */}
                         {q.interviewAnswer && (
-                          <div style={{ marginTop: '16px', background: '#f0fdf4', border: '1px solid #86efac', borderRadius: '8px', padding: '16px 20px' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#15803d', fontWeight: 800, fontSize: '0.825rem', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' }}>
-                              <Lightbulb size={16} /> Interview Answer (2 minutes)
+                          <div style={{ marginTop: '14px', background: '#f0fdf4', border: '1px solid #bbf7d0', borderLeft: '3px solid #16a34a', borderRadius: '4px', padding: '14px 18px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#15803d', fontWeight: 700, fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '6px' }}>
+                              <Lightbulb size={14} /> Interview Response (2 Minutes)
                             </div>
-                            <div style={{ color: '#14532d', fontSize: '0.905rem', lineHeight: 1.75, fontWeight: 500 }}>
+                            <div style={{ color: '#14532d', fontSize: '0.885rem', lineHeight: 1.7, fontWeight: 500 }}>
                               {q.interviewAnswer}
                             </div>
                           </div>
@@ -499,54 +486,56 @@ export function TopicDetail() {
 
                 {/* Comprehensive Demo (Applying All Concepts) */}
                 {elaborateData.comprehensiveDemo && (
-                  <div style={{ marginTop: '32px', border: '2px solid #3b82f6', borderRadius: '10px', overflow: 'hidden' }}>
-                    <div style={{ background: '#1e3a8a', color: '#ffffff', padding: '14px 20px', fontWeight: 800, fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <Code2 size={20} /> ⭐ {elaborateData.comprehensiveDemo.title}
+                  <div style={{ marginTop: '28px', border: '1px solid #cbd5e1', borderRadius: '4px', overflow: 'hidden' }}>
+                    <div style={{ background: '#1c2d81', color: '#ffffff', padding: '12px 18px', fontWeight: 700, fontSize: '0.92rem', fontFamily: 'var(--font-heading, Montserrat)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <Code2 size={18} /> {elaborateData.comprehensiveDemo.title}
                     </div>
-                    <pre style={{ margin: 0, background: '#0f172a', color: '#f8fafc', padding: '20px', fontFamily: 'monospace', fontSize: '0.84rem', overflowX: 'auto', lineHeight: 1.55 }}>
+                    <pre style={{ margin: 0, background: '#0f172a', color: '#f8fafc', padding: '16px 18px', fontFamily: 'monospace', fontSize: '0.83rem', overflowX: 'auto', lineHeight: 1.55 }}>
                       <code>{elaborateData.comprehensiveDemo.code}</code>
                     </pre>
-                    <div style={{ background: '#090d16', padding: '14px 20px', borderTop: '1px solid #1e293b', fontFamily: 'monospace', fontSize: '0.835rem', color: '#4ade80' }}>
-                      <div style={{ color: '#94a3b8', fontSize: '0.75rem', textTransform: 'uppercase', marginBottom: '6px', fontWeight: 700 }}>Output:</div>
+                    <div style={{ background: '#0b1120', padding: '12px 18px', borderTop: '1px solid #1e293b', fontFamily: 'monospace', fontSize: '0.82rem', color: '#4ade80' }}>
+                      <div style={{ color: '#94a3b8', fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '4px', fontWeight: 700 }}>Output:</div>
                       <pre style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{elaborateData.comprehensiveDemo.output}</pre>
                     </div>
                     {elaborateData.comprehensiveDemo.deepDiveNotes && (
-                      <div style={{ background: '#eff6ff', padding: '14px 20px', borderTop: '1px solid #bfdbfe', fontSize: '0.885rem', color: '#1e40af', lineHeight: 1.6 }}>
+                      <div style={{ background: '#f8fafc', padding: '12px 18px', borderTop: '1px solid #e2e8f0', fontSize: '0.86rem', color: '#334155', lineHeight: 1.6 }}>
                         {elaborateData.comprehensiveDemo.deepDiveNotes.map((note, nIdx) => (
-                          <div key={nIdx} style={{ fontWeight: nIdx === 0 ? 800 : 500 }}>{note}</div>
+                          <div key={nIdx} style={{ fontWeight: nIdx === 0 ? 700 : 400, color: nIdx === 0 ? '#1c2d81' : '#334155' }}>{note}</div>
                         ))}
                       </div>
                     )}
                   </div>
                 )}
 
-                {/* SDE Interview Traps */}
+                {/* Interview Traps */}
                 {elaborateData.sdeTraps && elaborateData.sdeTraps.length > 0 && (
-                  <div style={{ marginTop: '32px' }}>
-                    <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#dc2626', margin: '0 0 16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <AlertTriangle size={22} color="#dc2626" /> ⭐ SDE Interview Traps
+                  <div style={{ marginTop: '28px' }}>
+                    <h3 style={{ fontFamily: 'var(--font-heading, Montserrat)', fontSize: '1.05rem', fontWeight: 700, color: '#0f172a', margin: '0 0 14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <AlertTriangle size={18} color="#d97706" /> Technical Traps &amp; Edge Cases
                     </h3>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                       {elaborateData.sdeTraps.map((trap, tIdx) => (
-                        <div key={tIdx} style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '8px', padding: '18px 20px' }}>
-                          <div style={{ fontWeight: 800, fontSize: '0.95rem', color: '#991b1b', marginBottom: '8px' }}>
+                        <div key={tIdx} style={{ background: '#fffbeb', border: '1px solid #fef3c7', borderLeft: '3px solid #f59e0b', borderRadius: '4px', padding: '16px 18px' }}>
+                          <div style={{ fontWeight: 700, fontSize: '0.9rem', color: '#92400e', marginBottom: '6px' }}>
                             {trap.title}
                           </div>
                           {trap.code && (
-                            <pre style={{ background: '#1e293b', color: '#f8fafc', padding: '12px 14px', borderRadius: '6px', fontSize: '0.82rem', fontFamily: 'monospace', margin: '8px 0', overflowX: 'auto' }}>
+                            <pre style={{ background: '#1e293b', color: '#f8fafc', padding: '10px 12px', borderRadius: '4px', fontSize: '0.81rem', fontFamily: 'monospace', margin: '8px 0', overflowX: 'auto' }}>
                               <code>{trap.code}</code>
                             </pre>
                           )}
-                          <div style={{ fontSize: '0.9rem', color: '#7f1d1d', lineHeight: 1.6 }}>
-                            <strong>Answer:</strong> {trap.answer}
-                          </div>
+                          {trap.answer && (
+                            <div style={{ fontSize: '0.875rem', color: '#78350f', lineHeight: 1.6 }}>
+                              <strong>Answer:</strong> {trap.answer}
+                            </div>
+                          )}
                           {trap.output && (
-                            <div style={{ fontSize: '0.875rem', color: '#991b1b', marginTop: '6px' }}>
+                            <div style={{ fontSize: '0.85rem', color: '#92400e', marginTop: '4px' }}>
                               <strong>Output:</strong> <code>{trap.output}</code>
                             </div>
                           )}
                           {trap.reason && (
-                            <div style={{ fontSize: '0.875rem', color: '#b91c1c', marginTop: '4px', fontStyle: 'italic' }}>
+                            <div style={{ fontSize: '0.85rem', color: '#78350f', marginTop: '4px', fontStyle: 'italic' }}>
                               <strong>Reason:</strong> {trap.reason}
                             </div>
                           )}
@@ -556,23 +545,23 @@ export function TopicDetail() {
                   </div>
                 )}
 
-                {/* SDE Mental Model & Key Takeaways */}
+                {/* Mental Model & Key Takeaways */}
                 {elaborateData.mentalModel && (
-                  <div style={{ marginTop: '32px', background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '10px', padding: '24px' }}>
-                    <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#0f172a', margin: '0 0 14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <Cpu size={20} color="#1c2d81" /> 🧠 {elaborateData.mentalModel.title}
+                  <div style={{ marginTop: '28px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '4px', padding: '20px' }}>
+                    <h3 style={{ fontFamily: 'var(--font-heading, Montserrat)', fontSize: '1.05rem', fontWeight: 700, color: '#0f172a', margin: '0 0 12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <Cpu size={18} color="#1c2d81" /> {elaborateData.mentalModel.title}
                     </h3>
                     {elaborateData.mentalModel.diagram && (
-                      <div style={{ background: '#0f172a', color: '#38bdf8', padding: '16px', borderRadius: '8px', fontFamily: 'monospace', fontSize: '0.835rem', overflowX: 'auto', lineHeight: 1.5, margin: '0 0 18px', whiteSpace: 'pre' }}>
+                      <div style={{ background: '#0f172a', color: '#38bdf8', padding: '14px 16px', borderRadius: '4px', fontFamily: 'monospace', fontSize: '0.825rem', overflowX: 'auto', lineHeight: 1.5, margin: '0 0 16px', whiteSpace: 'pre', border: '1px solid #1e293b' }}>
                         {elaborateData.mentalModel.diagram}
                       </div>
                     )}
-                    <div style={{ fontWeight: 800, fontSize: '0.85rem', color: '#0f172a', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '10px' }}>
-                      📌 Key Takeaways to Remember:
+                    <div style={{ fontWeight: 700, fontSize: '0.78rem', color: '#1c2d81', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '8px' }}>
+                      Key Takeaways:
                     </div>
-                    <ul style={{ margin: 0, paddingLeft: '20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <ul style={{ margin: 0, paddingLeft: '18px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
                       {elaborateData.mentalModel.keyTakeaways.map((point, pIdx) => (
-                        <li key={pIdx} style={{ fontSize: '0.905rem', color: '#334155', lineHeight: 1.6 }}>
+                        <li key={pIdx} style={{ fontSize: '0.875rem', color: '#334155', lineHeight: 1.6 }}>
                           {point}
                         </li>
                       ))}
@@ -582,36 +571,36 @@ export function TopicDetail() {
 
                 {/* Legacy / Extra Core Concept Modules (if any) */}
                 {elaborateData.coreConcepts && elaborateData.coreConcepts.length > 0 && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '22px', marginTop: '28px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '18px', marginTop: '24px' }}>
                     {elaborateData.coreConcepts.map((concept, idx) => (
-                      <div key={idx} style={{ border: '1px solid #e2e8f0', borderRadius: '8px', padding: '22px', background: '#ffffff' }}>
-                        <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0f172a', margin: '0 0 12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <Code2 size={18} color="#1c2d81" /> {concept.heading}
+                      <div key={idx} style={{ border: '1px solid #e2e8f0', borderRadius: '4px', padding: '20px', background: '#ffffff' }}>
+                        <h3 style={{ fontFamily: 'var(--font-heading, Montserrat)', fontSize: '1rem', fontWeight: 700, color: '#0f172a', margin: '0 0 10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <Code2 size={16} color="#1c2d81" /> {concept.heading}
                         </h3>
-                        <p style={{ color: '#475569', fontSize: '0.915rem', lineHeight: 1.7, margin: '0 0 14px' }}>
+                        <p style={{ color: '#475569', fontSize: '0.89rem', lineHeight: 1.65, margin: '0 0 12px' }}>
                           {concept.description}
                         </p>
                         {concept.bulletPoints && (
-                          <ul style={{ paddingLeft: '20px', margin: '0 0 16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                          <ul style={{ paddingLeft: '18px', margin: '0 0 14px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
                             {concept.bulletPoints.map((bp, bpIdx) => (
-                              <li key={bpIdx} style={{ color: '#334155', fontSize: '0.885rem', lineHeight: 1.6 }}>
+                              <li key={bpIdx} style={{ color: '#334155', fontSize: '0.865rem', lineHeight: 1.55 }}>
                                 {bp}
                               </li>
                             ))}
                           </ul>
                         )}
                         {concept.codeSnippet && (
-                          <div style={{ marginTop: '14px', borderRadius: '6px', overflow: 'hidden', border: '1px solid #1e293b' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#1e293b', color: '#cbd5e1', padding: '8px 14px', fontSize: '0.78rem', fontWeight: 600 }}>
+                          <div style={{ marginTop: '12px', borderRadius: '4px', overflow: 'hidden', border: '1px solid #e2e8f0' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#1e293b', color: '#cbd5e1', padding: '7px 14px', fontSize: '0.76rem', fontWeight: 600 }}>
                               <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                <Terminal size={14} color="#38bdf8" /> {concept.codeSnippet.title}
+                                <Terminal size={13} color="#38bdf8" /> {concept.codeSnippet.title}
                               </span>
-                              <span style={{ textTransform: 'uppercase', color: '#94a3b8', fontSize: '0.7rem' }}>{concept.codeSnippet.language}</span>
+                              <span style={{ textTransform: 'uppercase', color: '#94a3b8', fontSize: '0.68rem' }}>{concept.codeSnippet.language}</span>
                             </div>
-                            <pre style={{ margin: 0, background: '#0f172a', color: '#f8fafc', padding: '16px', fontFamily: 'monospace', fontSize: '0.835rem', overflowX: 'auto', lineHeight: 1.55 }}>
+                            <pre style={{ margin: 0, background: '#0f172a', color: '#f8fafc', padding: '14px 16px', fontFamily: 'monospace', fontSize: '0.825rem', overflowX: 'auto', lineHeight: 1.55 }}>
                               <code>{concept.codeSnippet.code}</code>
                             </pre>
-                            <div style={{ background: '#0b1120', padding: '8px 14px', fontSize: '0.8rem', color: '#94a3b8', borderTop: '1px solid #1e293b' }}>
+                            <div style={{ background: '#0b1120', padding: '8px 14px', fontSize: '0.78rem', color: '#94a3b8', borderTop: '1px solid #1e293b' }}>
                               💡 {concept.codeSnippet.explanation}
                             </div>
                           </div>
@@ -623,16 +612,16 @@ export function TopicDetail() {
 
                 {/* Legacy Comparison Table (if any) */}
                 {elaborateData.comparisons && (
-                  <div style={{ marginTop: '28px' }}>
-                    <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0f172a', margin: '0 0 14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <Cpu size={18} color="#1c2d81" /> {elaborateData.comparisons.title}
+                  <div style={{ marginTop: '24px' }}>
+                    <h3 style={{ fontFamily: 'var(--font-heading, Montserrat)', fontSize: '1rem', fontWeight: 700, color: '#0f172a', margin: '0 0 12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <Cpu size={16} color="#1c2d81" /> {elaborateData.comparisons.title}
                     </h3>
-                    <div style={{ overflowX: 'auto', border: '1px solid #e2e8f0', borderRadius: '6px' }}>
-                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+                    <div style={{ overflowX: 'auto', border: '1px solid #e2e8f0', borderRadius: '4px' }}>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.84rem' }}>
                         <thead>
                           <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
                             {elaborateData.comparisons.headers.map((h, hIdx) => (
-                              <th key={hIdx} style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 700, color: '#1e293b' }}>
+                              <th key={hIdx} style={{ padding: '10px 14px', textAlign: 'left', fontWeight: 700, color: '#0f172a' }}>
                                 {h}
                               </th>
                             ))}
@@ -642,7 +631,7 @@ export function TopicDetail() {
                           {elaborateData.comparisons.rows.map((row, rIdx) => (
                             <tr key={rIdx} style={{ borderBottom: rIdx === elaborateData.comparisons!.rows.length - 1 ? 'none' : '1px solid #f1f5f9', background: rIdx % 2 === 0 ? '#ffffff' : '#fafafa' }}>
                               {row.map((cell, cIdx) => (
-                                <td key={cIdx} style={{ padding: '12px 16px', color: cIdx === 0 ? '#0f172a' : '#475569', fontWeight: cIdx === 0 ? 700 : 400 }}>
+                                <td key={cIdx} style={{ padding: '10px 14px', color: cIdx === 0 ? '#0f172a' : '#475569', fontWeight: cIdx === 0 ? 600 : 400 }}>
                                   {cell}
                                 </td>
                               ))}
@@ -658,56 +647,56 @@ export function TopicDetail() {
               {/* Granular Subtopics with Technical Explanations & Interview Q&As (if available) */}
               {elaborateData.subtopicBreakdowns && Object.keys(elaborateData.subtopicBreakdowns).length > 0 && (
                 <div>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', margin: '0 0 16px', flexWrap: 'wrap', gap: '8px' }}>
-                    <h2 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#0f172a', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <Layers size={20} color="#1c2d81" /> Granular Concept Modules &amp; Interview Deep Dives ({subtopics.length})
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', margin: '0 0 14px', flexWrap: 'wrap', gap: '8px' }}>
+                    <h2 style={{ fontFamily: 'var(--font-heading, Montserrat)', fontSize: '1.1rem', fontWeight: 700, color: '#0f172a', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <Layers size={18} color="#1c2d81" /> Granular Concept Modules ({subtopics.length})
                     </h2>
-                    <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 600 }}>
-                      Targeted for Senior SDE &amp; Core Architecture Interviews
+                    <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 500 }}>
+                      Subtopic Specifications
                     </span>
                   </div>
 
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                     {subtopics.map((sub, sIdx) => {
                       const breakdown = elaborateData.subtopicBreakdowns?.[sub.name];
                       return (
-                        <div key={sub.id || sIdx} style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '22px', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
-                            <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '26px', height: '26px', borderRadius: '50%', background: '#eff6ff', color: '#1d4ed8', fontWeight: 800, fontSize: '0.8rem' }}>
+                        <div key={sub.id || sIdx} style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '4px', padding: '18px', boxShadow: '0 1px 2px rgba(15, 23, 42, 0.02)' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+                            <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px', borderRadius: '4px', background: '#eff6ff', color: '#1c2d81', fontWeight: 700, fontSize: '0.78rem', border: '1px solid #bfdbfe' }}>
                               {sIdx + 1}
                             </span>
-                            <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: '#0f172a' }}>
+                            <h3 style={{ fontFamily: 'var(--font-heading, Montserrat)', margin: 0, fontSize: '0.98rem', fontWeight: 700, color: '#0f172a' }}>
                               {sub.name}
                             </h3>
                           </div>
 
-                          <p style={{ color: '#475569', fontSize: '0.915rem', lineHeight: 1.7, margin: '0 0 14px' }}>
+                          <p style={{ color: '#475569', fontSize: '0.88rem', lineHeight: 1.65, margin: '0 0 12px' }}>
                             {breakdown?.conceptSummary || sub.description || 'Comprehensive conceptual module.'}
                           </p>
 
                           {breakdown?.keyPoints && (
-                            <div style={{ margin: '0 0 14px', background: '#f8fafc', padding: '14px 18px', borderRadius: '6px', border: '1px solid #f1f5f9' }}>
-                              <div style={{ fontWeight: 700, fontSize: '0.78rem', color: '#334155', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' }}>
+                            <div style={{ margin: '0 0 12px', background: '#f8fafc', padding: '12px 14px', borderRadius: '4px', border: '1px solid #f1f5f9' }}>
+                              <div style={{ fontWeight: 700, fontSize: '0.74rem', color: '#1c2d81', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '6px' }}>
                                 Core Architectural Guarantees:
                               </div>
-                              <ul style={{ margin: 0, paddingLeft: '18px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                              <ul style={{ margin: 0, paddingLeft: '16px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
                                 {breakdown.keyPoints.map((kp, kpIdx) => (
-                                  <li key={kpIdx} style={{ fontSize: '0.865rem', color: '#334155', lineHeight: 1.5 }}>{kp}</li>
+                                  <li key={kpIdx} style={{ fontSize: '0.84rem', color: '#334155', lineHeight: 1.5 }}>{kp}</li>
                                 ))}
                               </ul>
                             </div>
                           )}
 
                           {breakdown?.interviewQA && (
-                            <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '6px', padding: '16px 18px' }}>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#15803d', fontWeight: 800, fontSize: '0.825rem', textTransform: 'uppercase', marginBottom: '6px' }}>
-                                <Lightbulb size={15} /> Technical Interview Q&amp;A
+                            <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderLeft: '3px solid #16a34a', borderRadius: '4px', padding: '12px 16px' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: '#15803d', fontWeight: 700, fontSize: '0.76rem', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '4px' }}>
+                                <Lightbulb size={13} /> Technical Interview Q&amp;A
                               </div>
-                              <div style={{ fontWeight: 700, fontSize: '0.9rem', color: '#14532d', marginBottom: '8px' }}>
+                              <div style={{ fontWeight: 600, fontSize: '0.875rem', color: '#14532d', marginBottom: '6px' }}>
                                 Q: {breakdown.interviewQA.question}
                               </div>
-                              <div style={{ fontSize: '0.865rem', color: '#166534', lineHeight: 1.65 }}>
-                                <strong>Architectural Answer:</strong> {breakdown.interviewQA.answer}
+                              <div style={{ fontSize: '0.84rem', color: '#166534', lineHeight: 1.6 }}>
+                                <strong>Answer:</strong> {breakdown.interviewQA.answer}
                               </div>
                             </div>
                           )}
