@@ -27,7 +27,11 @@ export function AdminFeedbackPage() {
   useEffect(() => {
     setLoading(true);
     feedbackApi.adminGetAll({ ...filters, page, size: 20 })
-      .then((res: any) => { setReports(res.data || []); setTotalPages(res.pagination?.totalPages || 0); })
+      .then((res: any) => {
+        const list = Array.isArray(res) ? res : res?.data || [];
+        setReports(list);
+        setTotalPages(res?.pagination?.totalPages || (list.length > 0 ? 1 : 0));
+      })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [filters, page]);

@@ -15,6 +15,8 @@ import com.beyon.profile.repository.StudentProfileRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.beyon.recruitment.model.RecruitmentApplication;
+import com.beyon.recruitment.repository.RecruitmentApplicationRepository;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.*;
@@ -27,17 +29,20 @@ public class CompanyService {
     private final UserRepository userRepository;
     private final StudentProfileRepository studentProfileRepository;
     private final CoinService coinService;
+    private final RecruitmentApplicationRepository recruitmentAppRepo;
 
     public CompanyService(CompanyOpportunityRepository opportunityRepository,
                           OpportunityApplicationRepository applicationRepository,
                           UserRepository userRepository,
                           StudentProfileRepository studentProfileRepository,
-                          CoinService coinService) {
+                          CoinService coinService,
+                          RecruitmentApplicationRepository recruitmentAppRepo) {
         this.opportunityRepository = opportunityRepository;
         this.applicationRepository = applicationRepository;
         this.userRepository = userRepository;
         this.studentProfileRepository = studentProfileRepository;
         this.coinService = coinService;
+        this.recruitmentAppRepo = recruitmentAppRepo;
     }
 
     public List<CompanyOpportunity> getCompanyOpportunities(UUID companyUserId) {
@@ -149,7 +154,20 @@ public class CompanyService {
         opp.setApplicationCount(opp.getApplicationCount() + 1);
         opportunityRepository.save(opp);
 
-        return applicationRepository.save(app);
+        OpportunityApplication savedApp = applicationRepository.save(app);
+
+        try {
+            if (!recruitmentAppRepo.existsByOpportunityIdAndStudentId(opportunityId, studentId)) {
+                RecruitmentApplication recApp = new RecruitmentApplication();
+                recApp.setOpportunityId(opportunityId);
+                recApp.setStudentId(studentId);
+                recApp.setStatus("APPLIED");
+                recApp.setCoinsSpent(opp.getMinBeyonCoins());
+                recruitmentAppRepo.save(recApp);
+            }
+        } catch (Exception ignored) {}
+
+        return savedApp;
     }
 
     public List<OpportunityApplication> getApplications(UUID studentId) {

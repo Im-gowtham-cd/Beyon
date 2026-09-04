@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../auth/context/AuthContext';
 import { institutionApi } from '../../institution/services/institutionApi';
@@ -42,16 +42,16 @@ export function InstitutionHome() {
         }
 
         const [metricsRes, studentsRes, pendingRes, drivesRes] = await Promise.all([
-          institutionApi.getMetrics().catch(() => ({ data: null })),
-          institutionApi.getStudents().catch(() => ({ data: [] })),
-          institutionApi.getPendingStudents().catch(() => ({ data: [] })),
-          institutionApi.getDrives().catch(() => ({ data: [] })),
+          institutionApi.getMetrics().catch(() => null),
+          institutionApi.getStudents().catch(() => []),
+          institutionApi.getPendingStudents().catch(() => []),
+          institutionApi.getDrives().catch(() => []),
         ]);
 
-        setMetrics((metricsRes as any)?.data || null);
-        setStudents((studentsRes as any)?.data || []);
-        setPendingStudents((pendingRes as any)?.data || []);
-        setDrives((drivesRes as any)?.data || []);
+        setMetrics(metricsRes && (metricsRes as any).data !== undefined ? (metricsRes as any).data : metricsRes);
+        setStudents(Array.isArray(studentsRes) ? studentsRes : (studentsRes as any)?.data || []);
+        setPendingStudents(Array.isArray(pendingRes) ? pendingRes : (pendingRes as any)?.data || []);
+        setDrives(Array.isArray(drivesRes) ? drivesRes : (drivesRes as any)?.data || []);
       } catch {
         /* fallback */
       }

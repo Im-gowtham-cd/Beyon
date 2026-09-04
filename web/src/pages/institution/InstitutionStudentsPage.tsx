@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Search,
   CheckCircle2,
@@ -45,11 +45,13 @@ export function InstitutionStudentsPage() {
     setLoading(true);
     try {
       const [pendingRes, allRes] = await Promise.all([
-        institutionApi.getPendingStudents().catch(() => ({ data: [] })),
-        institutionApi.getStudents().catch(() => ({ data: [] })),
+        institutionApi.getPendingStudents().catch(() => []),
+        institutionApi.getStudents().catch(() => []),
       ]);
-      setPendingStudents((pendingRes as any)?.data || []);
-      setAllStudents((allRes as any)?.data || []);
+      const pendingList = Array.isArray(pendingRes) ? pendingRes : (pendingRes as any)?.data || [];
+      const allList = Array.isArray(allRes) ? allRes : (allRes as any)?.data || [];
+      setPendingStudents(pendingList);
+      setAllStudents(allList);
     } catch {
       setActionMessage({ type: 'error', text: 'Failed to load students roster from server.' });
     } finally {

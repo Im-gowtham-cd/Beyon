@@ -25,10 +25,10 @@ public class AssessmentController {
     @PostMapping("/session")
     public ResponseEntity<?> createSession(@RequestBody Map<String, Object> body, HttpServletRequest request) {
         UUID userId = extractUserId(request);
-        UUID applicationId = UUID.fromString((String) body.get("applicationId"));
-        UUID opportunityId = UUID.fromString((String) body.get("opportunityId"));
-        int questionCount = (int) body.getOrDefault("questionCount", 40);
-        int durationMinutes = (int) body.getOrDefault("durationMinutes", 60);
+        UUID applicationId = body.get("applicationId") != null ? UUID.fromString((String) body.get("applicationId")) : UUID.randomUUID();
+        UUID opportunityId = body.get("opportunityId") != null ? UUID.fromString((String) body.get("opportunityId")) : null;
+        int questionCount = body.get("questionCount") instanceof Number ? ((Number) body.get("questionCount")).intValue() : 40;
+        int durationMinutes = body.get("durationMinutes") instanceof Number ? ((Number) body.get("durationMinutes")).intValue() : 60;
 
         var session = sessionService.createSession(applicationId, userId, opportunityId, questionCount, durationMinutes);
         return ResponseEntity.ok(Map.of(
@@ -67,7 +67,7 @@ public class AssessmentController {
 
     @PostMapping("/session/{sessionId}/verify")
     public ResponseEntity<?> verifyIdentity(@PathVariable UUID sessionId, @RequestBody Map<String, Object> body) {
-        String status = (String) body.get("status");
+        String status = body.get("status") != null ? (String) body.get("status") : "VERIFIED";
         String captureUrl = (String) body.get("captureUrl");
         Boolean faceDetected = (Boolean) body.get("faceDetected");
         Integer faceCount = body.get("faceCount") != null ? (Integer) body.get("faceCount") : 0;

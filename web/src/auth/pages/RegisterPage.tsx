@@ -22,8 +22,19 @@ export function RegisterPage() {
     const nextErrors: typeof errors = {};
     if (!name.trim()) nextErrors.name = 'Full name is required';
     if (!email.trim()) nextErrors.email = 'Email is required';
-    if (!password) nextErrors.password = 'Password is required';
-    else if (password.length < 8) nextErrors.password = 'Password must be at least 8 characters';
+    if (!password) {
+      nextErrors.password = 'Password is required';
+    } else if (password.length < 8) {
+      nextErrors.password = 'Password must be at least 8 characters';
+    } else if (!/[A-Z]/.test(password)) {
+      nextErrors.password = 'Password must contain at least one uppercase letter';
+    } else if (!/[a-z]/.test(password)) {
+      nextErrors.password = 'Password must contain at least one lowercase letter';
+    } else if (!/[0-9]/.test(password)) {
+      nextErrors.password = 'Password must contain at least one number';
+    } else if (!/[!@#$%^&*()_+\-=[\]{}|;:,.<>?]/.test(password)) {
+      nextErrors.password = 'Password must contain at least one special character (!@#$%^&*)';
+    }
     if (!agreeTerms) nextErrors.terms = 'You must agree to the terms';
 
     setErrors(nextErrors);
@@ -47,10 +58,10 @@ export function RegisterPage() {
       try {
         const loginRes = await authApi.login({ email, password });
         login(loginRes.accessToken, loginRes.user);
-        showToast('Registration successful! Redirecting to setup...');
+        showToast('Registration successful! Redirecting to dashboard...');
         setTimeout(() => {
-          navigate(`/onboarding/${role.toLowerCase()}`);
-        }, 1000);
+          navigate(`/${role.toLowerCase()}/home`);
+        }, 600);
       } catch {
         showToast('Registration successful! Please sign in.');
         setTimeout(() => {
@@ -59,7 +70,7 @@ export function RegisterPage() {
       }
     } catch (err) {
       const apiErr = err as ApiError;
-      showToast(apiErr.message || 'Registration failed. Please try again.', true);
+      showToast(apiErr.message || 'Registration failed. Please check your credentials and try again.', true);
     } finally {
       setLoading(false);
     }
@@ -197,6 +208,9 @@ export function RegisterPage() {
                   </button>
                 </div>
                 {errors.password && <span className={styles.inputError}>{errors.password}</span>}
+                <span style={{ fontSize: '0.74rem', color: '#64748b', marginTop: '4px', display: 'block' }}>
+                  Must be 8+ characters with uppercase, lowercase, number, and special character.
+                </span>
               </div>
 
               <div className={styles.loginOptions}>

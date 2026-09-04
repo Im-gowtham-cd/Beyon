@@ -29,6 +29,7 @@ public class CompanyOpportunity {
     @Column(length = 200)
     private String location;
 
+    @Column(name = "is_remote")
     private Boolean remote;
 
     @Column(precision = 4, scale = 2)

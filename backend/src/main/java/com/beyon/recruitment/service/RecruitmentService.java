@@ -45,6 +45,10 @@ public class RecruitmentService {
         return applicationRepository.findByDriveId(driveId);
     }
 
+    public List<RecruitmentApplication> getAllApplications() {
+        return applicationRepository.findAll();
+    }
+
     @Transactional
     public RecruitmentApplication updateStatus(UUID applicationId, String newStatus, UUID changedBy, String notes) {
         RecruitmentApplication app = applicationRepository.findById(applicationId)

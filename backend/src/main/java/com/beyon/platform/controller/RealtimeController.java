@@ -28,18 +28,20 @@ public class RealtimeController {
         UUID userId = UUID.fromString(auth.getName());
         SseEmitter emitter = new SseEmitter(0L);
 
-        realtimeService.subscribe(userId, event -> {
+        java.util.function.Consumer<String> callback = event -> {
             try {
                 emitter.send(SseEmitter.event().data(event, MediaType.APPLICATION_JSON));
             } catch (Exception e) {
                 emitter.complete();
-                realtimeService.unsubscribe(userId, event1 -> {});
             }
-        });
+        };
 
-        emitter.onCompletion(() -> realtimeService.unsubscribe(userId, event -> {}));
-        emitter.onTimeout(() -> realtimeService.unsubscribe(userId, event -> {}));
-        emitter.onError(e -> realtimeService.unsubscribe(userId, event -> {}));
+        realtimeService.subscribe(userId, callback);
+
+        Runnable cleanup = () -> realtimeService.unsubscribe(userId, callback);
+        emitter.onCompletion(cleanup);
+        emitter.onTimeout(cleanup);
+        emitter.onError(e -> cleanup.run());
 
         return emitter;
     }

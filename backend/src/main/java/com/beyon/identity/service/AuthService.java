@@ -19,6 +19,15 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.beyon.profile.model.StudentProfile;
+import com.beyon.profile.model.CompanyProfile;
+import com.beyon.profile.model.InstitutionProfile;
+import com.beyon.profile.repository.StudentProfileRepository;
+import com.beyon.profile.repository.CompanyProfileRepository;
+import com.beyon.profile.repository.InstitutionProfileRepository;
+import com.beyon.practice.service.CoinService;
+import com.beyon.practice.service.StreakService;
+
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -37,6 +46,11 @@ public class AuthService {
     private final JwtUtil jwtUtil;
     private final AuditService auditService;
     private final RateLimitService rateLimitService;
+    private final StudentProfileRepository studentProfileRepository;
+    private final CompanyProfileRepository companyProfileRepository;
+    private final InstitutionProfileRepository institutionProfileRepository;
+    private final CoinService coinService;
+    private final StreakService streakService;
 
     public AuthService(UserRepository userRepository,
                        EmailVerificationTokenRepository emailVerificationTokenRepository,
@@ -44,7 +58,12 @@ public class AuthService {
                        PasswordEncoder passwordEncoder,
                        JwtUtil jwtUtil,
                        AuditService auditService,
-                       RateLimitService rateLimitService) {
+                       RateLimitService rateLimitService,
+                       StudentProfileRepository studentProfileRepository,
+                       CompanyProfileRepository companyProfileRepository,
+                       InstitutionProfileRepository institutionProfileRepository,
+                       CoinService coinService,
+                       StreakService streakService) {
         this.userRepository = userRepository;
         this.emailVerificationTokenRepository = emailVerificationTokenRepository;
         this.passwordResetTokenRepository = passwordResetTokenRepository;
@@ -52,6 +71,11 @@ public class AuthService {
         this.jwtUtil = jwtUtil;
         this.auditService = auditService;
         this.rateLimitService = rateLimitService;
+        this.studentProfileRepository = studentProfileRepository;
+        this.companyProfileRepository = companyProfileRepository;
+        this.institutionProfileRepository = institutionProfileRepository;
+        this.coinService = coinService;
+        this.streakService = streakService;
     }
 
     @Transactional
@@ -75,16 +99,48 @@ public class AuthService {
         user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
         user.setDisplayName(request.getName());
         user.setRole(request.getRole());
-        user.setStatus(AccountStatus.PENDING_VERIFICATION);
-        user.setProfileStatus(AccountStatus.INCOMPLETE);
-        user.setEmailVerified(false);
-        userRepository.save(user);
+        user.setStatus(AccountStatus.ACTIVE);
+        user.setProfileStatus(AccountStatus.ACTIVE);
+        user.setEmailVerified(true);
+        User savedUser = userRepository.save(user);
 
-        createEmailVerificationToken(user.getId());
+        // Auto-initialize role-specific profile & assets immediately
+        if (request.getRole() == UserRole.STUDENT) {
+            StudentProfile profile = new StudentProfile();
+            profile.setUserId(savedUser.getId());
+            profile.setCountry("India");
+            profile.setDegree("B.Tech");
+            profile.setDepartment("Computer Science and Engineering");
+            profile.setAcademicYear("3rd Year");
+            profile.setInstitution("Engineering College");
+            profile.setPlacementPreference(com.beyon.profile.enums.PlacementPreference.PLACEMENT_WILLING);
+            profile.setPreferredWorkType(com.beyon.profile.enums.WorkType.ANY);
+            profile.setCompletionPct(60);
+            studentProfileRepository.save(profile);
 
-        auditService.log(AuditEventType.REGISTRATION, user.getEmail(), null, null);
+            try {
+                coinService.getOrCreateWallet(savedUser.getId());
+                coinService.earnCoins(savedUser.getId(), "WELCOME_BONUS", "REGISTRATION", savedUser.getId());
+                streakService.recordActivity(savedUser.getId());
+            } catch (Exception ignored) {}
+        } else if (request.getRole() == UserRole.COMPANY) {
+            CompanyProfile profile = new CompanyProfile();
+            profile.setUserId(savedUser.getId());
+            profile.setCompanyName(request.getName());
+            profile.setCountry("India");
+            companyProfileRepository.save(profile);
+        } else if (request.getRole() == UserRole.INSTITUTION) {
+            InstitutionProfile profile = new InstitutionProfile();
+            profile.setUserId(savedUser.getId());
+            profile.setInstitutionName(request.getName());
+            profile.setCountry("India");
+            institutionProfileRepository.save(profile);
+        }
 
-        return buildUserInfo(user);
+        createEmailVerificationToken(savedUser.getId());
+        auditService.log(AuditEventType.REGISTRATION, savedUser.getEmail(), null, null);
+
+        return buildUserInfo(savedUser);
     }
 
     public AuthResponse login(LoginRequest request, String ipAddress, String userAgent) {

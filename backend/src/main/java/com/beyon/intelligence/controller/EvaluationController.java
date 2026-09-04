@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.*;
 
 @RestController
-@RequestMapping("/api/v1/evaluation")
+@RequestMapping("/api/v1/intelligence/evaluation")
 public class EvaluationController {
     private final EvaluationService evalService;
     private final JwtUtil jwtUtil;

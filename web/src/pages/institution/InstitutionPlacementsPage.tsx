@@ -1,10 +1,10 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import {
   Search,
   CheckCircle2,
   Download,
 } from 'lucide-react';
-import styles from '../../assessment/pages/AssessmentBuilderPage.module.css';
+import styles from './InstitutionPlacementsPage.module.css';
 
 interface PlacementRecord {
   id: string;
