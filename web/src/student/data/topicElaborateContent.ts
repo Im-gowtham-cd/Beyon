@@ -15,12 +15,64 @@ export interface SubtopicDetail {
   };
 }
 
+export interface SDEQuestionItem {
+  number: number;
+  question: string;
+  officialDefinition?: string;
+  whyNeeded?: string;
+  problemBefore?: string;
+  solution?: string;
+  realWorldExample?: string;
+  diagram?: string;
+  whereUsed?: string[];
+  explanation?: string;
+  keyPoints?: string[];
+  code?: string;
+  output?: string;
+  table?: {
+    headers: string[];
+    rows: string[][];
+  };
+  interviewAnswer: string;
+}
+
+export interface SDETrapItem {
+  title: string;
+  code?: string;
+  answer?: string;
+  output?: string;
+  reason?: string;
+}
+
+export interface ComprehensiveDemo {
+  title: string;
+  code: string;
+  output: string;
+  explanation?: string;
+  deepDiveNotes?: string[];
+}
+
+export interface SDEMentalModel {
+  title: string;
+  diagram: string;
+  keyTakeaways: string[];
+}
+
 export interface TopicContent {
   slug: string;
   title: string;
   badge: string;
+  levelHeading?: string;
+  targetBanner?: {
+    roles: string;
+    tagline: string;
+  };
   overview: string;
-  coreConcepts: {
+  sdeQuestions?: SDEQuestionItem[];
+  comprehensiveDemo?: ComprehensiveDemo;
+  sdeTraps?: SDETrapItem[];
+  mentalModel?: SDEMentalModel;
+  coreConcepts?: {
     heading: string;
     description: string;
     bulletPoints?: string[];
@@ -36,7 +88,7 @@ export interface TopicContent {
     headers: string[];
     rows: string[][];
   };
-  subtopicBreakdowns: Record<string, SubtopicDetail>;
+  subtopicBreakdowns?: Record<string, SubtopicDetail>;
 }
 
 export const TOPIC_CONTENT_REGISTRY: Record<string, TopicContent> = {
