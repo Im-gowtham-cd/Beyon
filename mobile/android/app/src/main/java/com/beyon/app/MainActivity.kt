@@ -57,6 +57,25 @@ class MainActivity : AppCompatActivity() {
         binding.btnSettings.setOnClickListener {
             showTunnelSettingsDialog()
         }
+
+        handleProctorDeepLink(intent)
+    }
+
+    override fun onNewIntent(intent: android.content.Intent) {
+        super.onNewIntent(intent)
+        handleProctorDeepLink(intent)
+    }
+
+    private fun handleProctorDeepLink(intent: android.content.Intent?) {
+        val data = intent?.data ?: return
+        if (data.scheme == "beyon" && (data.host == "proctor" || data.path?.contains("proctor") == true)) {
+            val token = data.getQueryParameter("token")
+            val pIntent = android.content.Intent(this, DualViewProctorActivity::class.java).apply {
+                putExtra("pairingToken", token)
+                setData(data)
+            }
+            startActivity(pIntent)
+        }
     }
 
     fun selectTab(tabId: Int) {

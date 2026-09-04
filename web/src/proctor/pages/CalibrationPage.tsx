@@ -75,9 +75,9 @@ export const CalibrationPage: React.FC<Props> = ({ stream, audioLevel, onStartEx
           {checks.handsVisible ? (
             <CheckSquare size={18} className={styles.guidelineSuccessIcon} />
           ) : (
-            <Square size={18} style={{ color: '#64748b', flexShrink: 0 }} />
+            <Square size={18} style={{ color: 'var(--color-border)', flexShrink: 0 }} />
           )}
-          <span style={{ color: checks.handsVisible ? '#f8fafc' : '#94a3b8' }}>
+          <span style={{ color: checks.handsVisible ? 'var(--text-primary)' : 'var(--text-muted)', fontWeight: checks.handsVisible ? 600 : 400 }}>
             Hands, desk, and laptop keyboard are framed inside the guide box.
           </span>
         </div>
@@ -90,9 +90,9 @@ export const CalibrationPage: React.FC<Props> = ({ stream, audioLevel, onStartEx
           {checks.phoneStable ? (
             <CheckSquare size={18} className={styles.guidelineSuccessIcon} />
           ) : (
-            <Square size={18} style={{ color: '#64748b', flexShrink: 0 }} />
+            <Square size={18} style={{ color: 'var(--color-border)', flexShrink: 0 }} />
           )}
-          <span style={{ color: checks.phoneStable ? '#f8fafc' : '#94a3b8' }}>
+          <span style={{ color: checks.phoneStable ? 'var(--text-primary)' : 'var(--text-muted)', fontWeight: checks.phoneStable ? 600 : 400 }}>
             Phone is stably propped on a stand, cup, or charger (no hand-holding).
           </span>
         </div>
@@ -105,9 +105,9 @@ export const CalibrationPage: React.FC<Props> = ({ stream, audioLevel, onStartEx
           {checks.wellLit ? (
             <CheckSquare size={18} className={styles.guidelineSuccessIcon} />
           ) : (
-            <Square size={18} style={{ color: '#64748b', flexShrink: 0 }} />
+            <Square size={18} style={{ color: 'var(--color-border)', flexShrink: 0 }} />
           )}
-          <span style={{ color: checks.wellLit ? '#f8fafc' : '#94a3b8' }}>
+          <span style={{ color: checks.wellLit ? 'var(--text-primary)' : 'var(--text-muted)', fontWeight: checks.wellLit ? 600 : 400 }}>
             Room is adequately illuminated with no backlight glare.
           </span>
         </div>

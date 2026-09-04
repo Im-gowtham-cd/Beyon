@@ -69,12 +69,12 @@ export const PairingPage: React.FC<Props> = ({ initialToken, onPaired, error }) 
       )}
 
       {submitting && initialToken && initialToken !== 'undefined' ? (
-        <div style={{ padding: '1.5rem', textAlign: 'center', background: 'rgba(59,130,246,0.06)', borderRadius: '0.875rem', border: '1px solid rgba(59,130,246,0.2)' }}>
-          <RefreshCw size={28} className={styles.pulse} style={{ color: '#60a5fa', margin: '0 auto 0.75rem' }} />
-          <div style={{ fontWeight: 600, color: '#ffffff', fontSize: '0.9375rem' }}>
+        <div style={{ padding: '1.5rem', textAlign: 'center', background: '#f8fafc', borderRadius: '8px', border: '1px solid #bfdbfe' }}>
+          <RefreshCw size={28} className={styles.pulse} style={{ color: 'var(--color-primary)', margin: '0 auto 0.75rem' }} />
+          <div style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '0.9375rem' }}>
             Verifying Pairing Handshake...
           </div>
-          <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '0.25rem', fontFamily: 'monospace' }}>
+          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.25rem', fontFamily: 'monospace' }}>
             Token: {initialToken.slice(0, 8)}...{initialToken.slice(-6)}
           </div>
         </div>

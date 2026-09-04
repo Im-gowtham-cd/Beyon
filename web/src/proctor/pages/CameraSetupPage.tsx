@@ -82,22 +82,22 @@ export const CameraSetupPage: React.FC<Props> = ({
         <CameraPreview stream={stream} mirrored={facing === 'user'} />
       ) : (
         <div style={{
-          padding: '2.5rem 1rem',
+          padding: '2.25rem 1rem',
           textAlign: 'center',
-          background: 'rgba(255,255,255,0.02)',
-          borderRadius: '1rem',
-          border: '1px dashed rgba(255,255,255,0.15)',
+          background: '#f8fafc',
+          borderRadius: '8px',
+          border: '1.5px dashed #cbd5e1',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          gap: '1rem'
+          gap: '0.875rem'
         }}>
           <div style={{
-            width: '56px',
-            height: '56px',
-            borderRadius: '50%',
-            background: 'rgba(59,130,246,0.15)',
-            color: '#60a5fa',
+            width: '52px',
+            height: '52px',
+            borderRadius: '10px',
+            background: 'rgba(37, 60, 172, 0.08)',
+            color: 'var(--color-primary)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -105,11 +105,11 @@ export const CameraSetupPage: React.FC<Props> = ({
             <Camera size={26} />
           </div>
           <div>
-            <div style={{ fontWeight: 600, color: '#ffffff', fontSize: '1rem' }}>
+            <div style={{ fontWeight: 800, color: 'var(--text-primary)', fontSize: '1rem' }}>
               Camera &amp; Audio Inactive
             </div>
-            <p style={{ color: '#94a3b8', fontSize: '0.8125rem', marginTop: '0.35rem', maxWidth: '280px', margin: '0.35rem auto 0' }}>
-              Tap below to prompt your mobile browser for camera and microphone permissions.
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', marginTop: '0.25rem', maxWidth: '280px', margin: '0.25rem auto 0' }}>
+              Tap below to prompt your device for camera and microphone permissions.
             </p>
           </div>
           <button

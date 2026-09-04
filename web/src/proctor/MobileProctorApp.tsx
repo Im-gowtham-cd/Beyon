@@ -8,7 +8,7 @@ import { CompletedPage } from './pages/CompletedPage';
 import { useMobileCamera } from './hooks/useMobileCamera';
 import { useMobileAudio } from './hooks/useMobileAudio';
 import { useMobileProctor } from './hooks/useMobileProctor';
-import { Video, Check } from 'lucide-react';
+import { Check } from 'lucide-react';
 
 export const MobileProctorApp: React.FC = () => {
   const [tokenParam, setTokenParam] = useState<string | null>(null);
@@ -88,23 +88,19 @@ export const MobileProctorApp: React.FC = () => {
 
   return (
     <div className={styles.container}>
-      {/* Header */}
+      {/* Header (Matching Desktop Assessment Header) */}
       <header className={styles.header}>
         <div className={styles.brand}>
-          <div className={styles.brandIconWrap}>
-            <Video size={18} color="#ffffff" />
-          </div>
+          <div className={styles.brandMark} />
           <div>
-            <div className={styles.brandTitle}>
-              <span>Beyon</span>
-              <span style={{ color: '#38bdf8' }}>DualView</span>
-            </div>
+            <span className={styles.brandName}>BEYON</span>
+            <span className={styles.brandSub}>DUALVIEW PROCTOR</span>
           </div>
         </div>
 
-        <div className={styles.brandBadge}>
-          <span className={styles.brandDot} />
-          <span>Surveillance Mode</span>
+        <div className={styles.kioskPill}>
+          <span className={styles.dotLive} />
+          <span>KIOSK SECURED</span>
         </div>
       </header>
 
