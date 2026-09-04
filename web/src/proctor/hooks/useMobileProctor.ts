@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 
-const API_BASE = `http://${window.location.hostname || 'localhost'}:8085/api/v1`;
+const API_BASE = '/api/v1';
 
 export interface MobileProctorState {
   procSessionId: string | null;

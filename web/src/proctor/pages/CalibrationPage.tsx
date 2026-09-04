@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import styles from '../styles/MobileProctor.module.css';
 import { CameraPreview } from '../components/CameraPreview';
 import { CalibrationOverlay } from '../components/CalibrationOverlay';
+import { CheckSquare, Square, Volume2, Lock } from 'lucide-react';
 
 interface Props {
   stream: MediaStream | null;
@@ -10,50 +11,115 @@ interface Props {
 }
 
 export const CalibrationPage: React.FC<Props> = ({ stream, audioLevel, onStartExam }) => {
+  const [checks, setChecks] = useState({
+    handsVisible: true,
+    phoneStable: true,
+    wellLit: true,
+  });
+
+  const toggleCheck = (key: keyof typeof checks) => {
+    setChecks((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const allChecked = checks.handsVisible && checks.phoneStable && checks.wellLit;
+  const audioPercentage = Math.min(100, Math.round((audioLevel / 128) * 100));
+
   return (
     <div className={styles.card}>
-      <div>
-        <h2 className={styles.title}>Workspace Calibration</h2>
-        <p className={styles.subtitle}>
-          Position your phone stably on your desk or on a stand so your hands, keyboard, and screen are visible.
-        </p>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div>
+          <h2 className={styles.title}>Workspace Calibration</h2>
+          <p className={styles.subtitle}>
+            Position your phone to your side (45°–90°) so your hands, keyboard, and screen are visible.
+          </p>
+        </div>
       </div>
 
-      <CameraPreview stream={stream}>
+      <CameraPreview stream={stream} mirrored={false}>
         <CalibrationOverlay />
       </CameraPreview>
 
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.75rem 1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '0.5rem' }}>
-        <span style={{ fontSize: '0.8125rem', color: '#9ca3af' }}>Microphone Sensor Activity</span>
-        <div style={{ width: '100px', height: '8px', background: 'rgba(255,255,255,0.1)', borderRadius: '9999px', overflow: 'hidden' }}>
+      {/* Microphone Activity Meter */}
+      <div className={styles.audioMeterWrap}>
+        <div className={styles.audioMeterHeader}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: '#94a3b8' }}>
+            <Volume2 size={15} />
+            <span>Microphone Sensor</span>
+          </div>
+          <span style={{
+            fontSize: '0.75rem',
+            fontWeight: 600,
+            color: audioPercentage > 25 ? '#34d399' : '#60a5fa'
+          }}>
+            {audioPercentage > 25 ? 'Audio Active' : 'Normal / Ambient'}
+          </span>
+        </div>
+        <div className={styles.audioMeterTrack}>
           <div
+            className={styles.audioMeterFill}
             style={{
-              width: `${Math.min(100, (audioLevel / 128) * 100)}%`,
-              height: '100%',
-              background: audioLevel > 35 ? '#34d399' : '#3b82f6',
-              transition: 'width 0.1s ease',
+              width: `${Math.max(6, audioPercentage)}%`,
+              backgroundColor: audioPercentage > 35 ? '#34d399' : '#3b82f6',
             }}
           />
         </div>
       </div>
 
+      {/* Interactive Alignment Checklist */}
       <div className={styles.guidelineList}>
-        <div className={styles.guidelineItem}>
-          <span className={styles.guidelineIcon}>✓</span>
-          <span>Candidate hands and keyboard must be within camera viewpoint.</span>
+        <div
+          className={styles.guidelineItem}
+          style={{ cursor: 'pointer', userSelect: 'none' }}
+          onClick={() => toggleCheck('handsVisible')}
+        >
+          {checks.handsVisible ? (
+            <CheckSquare size={18} className={styles.guidelineSuccessIcon} />
+          ) : (
+            <Square size={18} style={{ color: '#64748b', flexShrink: 0 }} />
+          )}
+          <span style={{ color: checks.handsVisible ? '#f8fafc' : '#94a3b8' }}>
+            Hands, desk, and laptop keyboard are framed inside the guide box.
+          </span>
         </div>
-        <div className={styles.guidelineItem}>
-          <span className={styles.guidelineIcon}>✓</span>
-          <span>No other persons or secondary communication screens should be visible.</span>
+
+        <div
+          className={styles.guidelineItem}
+          style={{ cursor: 'pointer', userSelect: 'none' }}
+          onClick={() => toggleCheck('phoneStable')}
+        >
+          {checks.phoneStable ? (
+            <CheckSquare size={18} className={styles.guidelineSuccessIcon} />
+          ) : (
+            <Square size={18} style={{ color: '#64748b', flexShrink: 0 }} />
+          )}
+          <span style={{ color: checks.phoneStable ? '#f8fafc' : '#94a3b8' }}>
+            Phone is stably propped on a stand, cup, or charger (no hand-holding).
+          </span>
         </div>
-        <div className={styles.guidelineItem}>
-          <span className={styles.guidelineIcon}>✓</span>
-          <span>Keep your phone plugged into a charger or ensure battery &gt; 50%.</span>
+
+        <div
+          className={styles.guidelineItem}
+          style={{ cursor: 'pointer', userSelect: 'none' }}
+          onClick={() => toggleCheck('wellLit')}
+        >
+          {checks.wellLit ? (
+            <CheckSquare size={18} className={styles.guidelineSuccessIcon} />
+          ) : (
+            <Square size={18} style={{ color: '#64748b', flexShrink: 0 }} />
+          )}
+          <span style={{ color: checks.wellLit ? '#f8fafc' : '#94a3b8' }}>
+            Room is adequately illuminated with no backlight glare.
+          </span>
         </div>
       </div>
 
-      <button className={styles.btnPrimary} onClick={onStartExam}>
-        Lock In &amp; Begin Live Proctoring
+      <button
+        className={styles.btnPrimary}
+        onClick={onStartExam}
+        disabled={!allChecked}
+      >
+        <Lock size={16} />
+        <span>Confirm Alignment &amp; Activate Stream</span>
       </button>
     </div>
   );

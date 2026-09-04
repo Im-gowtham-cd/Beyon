@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import QRCode from 'qrcode';
 import styles from './AssessmentApp.module.css';
 
 declare global {
@@ -126,10 +127,27 @@ export function AssessmentApp() {
   const [procSessionId, setProcSessionId] = useState<string | null>(null);
   const [pairingToken, setPairingToken] = useState<string | null>(null);
   const [pairingUrl, setPairingUrl] = useState<string | null>(null);
+  const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string | null>(null);
   const [mobilePaired, setMobilePaired] = useState(false);
+  const [mobileStreaming, setMobileStreaming] = useState(false);
   const [dualViewLoading, setDualViewLoading] = useState(false);
   const [dualViewConsent, setDualViewConsent] = useState(false);
   const dualViewPollingRef = useRef<any>(null);
+
+  useEffect(() => {
+    if (pairingUrl) {
+      QRCode.toDataURL(pairingUrl, {
+        width: 200,
+        margin: 1,
+        color: {
+          dark: '#0f172a',
+          light: '#ffffff',
+        },
+      })
+        .then((url) => setQrCodeDataUrl(url))
+        .catch((err) => console.error('Local QR Code Generation Failed:', err));
+    }
+  }, [pairingUrl]);
 
   useEffect(() => {
     const loadSys = async () => {
@@ -716,7 +734,7 @@ export function AssessmentApp() {
       const tokenData = await tokenRes.json();
       setPairingToken(tokenData.token);
       const lanHost = (!window.location.hostname || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') ? '10.1.36.24' : window.location.hostname;
-      setPairingUrl(`http://${lanHost}:5173/proctor?token=${tokenData.token}`);
+      setPairingUrl(`https://${lanHost}:5173/proctor?token=${tokenData.token}`);
 
       if (dualViewPollingRef.current) clearInterval(dualViewPollingRef.current);
       dualViewPollingRef.current = setInterval(async () => {
@@ -726,11 +744,14 @@ export function AssessmentApp() {
             const stat = await statRes.json();
             if (stat.mobilePaired) {
               setMobilePaired(true);
+            }
+            if (stat.status === 'STREAMING' || stat.mobileCameraHealth === 'HEALTHY') {
+              setMobileStreaming(true);
               clearInterval(dualViewPollingRef.current);
             }
           }
         } catch (e) {}
-      }, 2000);
+      }, 1500);
     } catch (err: any) {
       console.warn('DualView setup initialization fallback:', err);
     } finally {
@@ -1149,80 +1170,115 @@ export function AssessmentApp() {
       {/* DualView AI Proctoring Mobile Pairing Step */}
       {step === 'dualview-setup' && (
         <main className={styles.main}>
-          <div className={styles.contentCard} style={{ maxWidth: '580px', textAlign: 'center' }}>
-            <div style={{ display: 'inline-flex', padding: '0.75rem', background: 'rgba(59,130,246,0.1)', borderRadius: '50%', color: '#3b82f6', marginBottom: '0.75rem' }}>
-              <i className="bx bx-camera-movie" style={{ fontSize: '2rem' }} />
+          <div className={styles.dualViewCard}>
+            <div className={styles.dualViewIconBadge}>
+              <i className="bx bx-camera-movie" />
             </div>
 
-            <h1 className={styles.title}>DualView AI Proctoring Setup</h1>
-            <p className={styles.subtitle}>
+            <h1 className={styles.dualViewTitle}>DualView AI Proctoring Setup</h1>
+            <p className={styles.dualViewSubtitle}>
               Pair your mobile phone as a secondary side-angle environment camera.
             </p>
 
-            <div style={{ margin: '1.5rem 0', padding: '1.5rem', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '0.75rem' }}>
+            <div className={styles.dualViewSetupBox}>
               {dualViewLoading ? (
-                <div style={{ padding: '2rem', color: '#94a3b8' }}>
-                  <i className="bx bx-loader-alt bx-spin" style={{ fontSize: '1.5rem', marginBottom: '0.5rem', display: 'block' }} />
-                  Generating secure pairing link...
+                <div style={{ padding: '2.5rem', color: '#475569', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem' }}>
+                  <i className="bx bx-loader-alt bx-spin" style={{ fontSize: '2rem', color: '#2563eb' }} />
+                  <span style={{ fontSize: '0.95rem', fontWeight: 600 }}>Generating secure pairing token...</span>
                 </div>
               ) : (
                 <>
-                  <div style={{ marginBottom: '1rem' }}>
-                    <div style={{ fontSize: '0.8125rem', color: '#94a3b8', marginBottom: '0.5rem' }}>
+                  <div style={{ marginBottom: '1.25rem' }}>
+                    <div className={styles.dualViewInstruction}>
                       Scan QR code or open link on your mobile phone:
                     </div>
                     {pairingUrl && (
-                      <div style={{ background: '#ffffff', padding: '12px', display: 'inline-block', borderRadius: '8px' }}>
-                        <img
-                          src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(pairingUrl)}`}
-                          alt="Pairing QR Code"
-                          width="180"
-                          height="180"
-                          style={{ display: 'block' }}
-                        />
+                      <div className={styles.dualViewQrContainer}>
+                        {qrCodeDataUrl ? (
+                          <img
+                            src={qrCodeDataUrl}
+                            alt="DualView Pairing QR Code"
+                            width="200"
+                            height="200"
+                            style={{ display: 'block', borderRadius: '4px' }}
+                          />
+                        ) : (
+                          <div style={{ width: 200, height: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b' }}>
+                            <i className="bx bx-loader-alt bx-spin" style={{ fontSize: '2rem', color: '#2563eb' }} />
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
 
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', alignItems: 'center' }}>
-                    <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Or navigate to this URL on mobile:</div>
-                    <code style={{ fontSize: '0.8125rem', background: 'rgba(0,0,0,0.3)', padding: '0.4rem 0.75rem', borderRadius: '0.375rem', color: '#60a5fa', wordBreak: 'break-all' }}>
-                      {pairingUrl || 'http://localhost:5173/proctor'}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', alignItems: 'center' }}>
+                    <div className={styles.dualViewUrlLabel}>Or navigate to this URL on mobile:</div>
+                    <code className={styles.dualViewUrlCode}>
+                      {pairingUrl || 'http://10.1.36.24:5173/proctor'}
                     </code>
                   </div>
 
-                  <div style={{ marginTop: '1.25rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
-                    <span
-                      style={{
-                        width: '8px',
-                        height: '8px',
-                        borderRadius: '50%',
-                        backgroundColor: mobilePaired ? '#22c55e' : '#eab308',
-                        boxShadow: `0 0 8px ${mobilePaired ? '#22c55e' : '#eab308'}`,
-                      }}
-                    />
-                    <span style={{ fontSize: '0.875rem', fontWeight: 600, color: mobilePaired ? '#22c55e' : '#eab308' }}>
-                      {mobilePaired ? '✓ Mobile Camera Connected & Verified' : 'Waiting for mobile connection...'}
-                    </span>
+                  <div>
+                    <div
+                      className={`${styles.dualViewStatus} ${
+                        mobileStreaming
+                          ? styles.dualViewStatusConnected
+                          : mobilePaired
+                          ? styles.dualViewStatusCalibrating
+                          : styles.dualViewStatusWaiting
+                      }`}
+                    >
+                      <span
+                        className={styles.dualViewStatusDot}
+                        style={{
+                          backgroundColor: mobileStreaming ? '#16a34a' : mobilePaired ? '#2563eb' : '#d97706',
+                          boxShadow: `0 0 8px ${mobileStreaming ? '#22c55e' : mobilePaired ? '#3b82f6' : '#f59e0b'}`,
+                        }}
+                      />
+                      <span>
+                        {mobileStreaming
+                          ? '✓ DualView Camera Streaming & Verified'
+                          : mobilePaired
+                          ? 'Mobile paired! Setting up camera & microphone...'
+                          : 'Waiting for mobile connection...'}
+                      </span>
+                    </div>
                   </div>
                 </>
               )}
             </div>
 
-            <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center' }}>
+            <div className={styles.dualViewBtnRow}>
               <button
                 className={styles.btnSecondary}
                 onClick={() => setStep('instructions')}
+                type="button"
+                style={{ flex: 1, maxWidth: '240px' }}
               >
                 Skip / Single Camera Only
               </button>
               <button
                 className={styles.btnPrimary}
                 onClick={() => setStep('instructions')}
-                disabled={!mobilePaired}
-                style={{ opacity: mobilePaired ? 1 : 0.5, cursor: mobilePaired ? 'pointer' : 'not-allowed' }}
+                disabled={!mobileStreaming}
+                type="button"
+                style={{
+                  flex: 1,
+                  maxWidth: '260px',
+                  background: mobileStreaming ? '#16a34a' : '#2563eb',
+                  borderColor: mobileStreaming ? '#16a34a' : '#2563eb',
+                  opacity: mobileStreaming ? 1 : 0.65,
+                  cursor: mobileStreaming ? 'pointer' : 'not-allowed',
+                  color: '#ffffff',
+                }}
               >
-                {mobilePaired ? 'Proceed to Guidelines →' : 'Pair Phone to Continue'}
+                {mobileStreaming ? (
+                  <><i className="bx bx-check-circle" /> Proceed to Guidelines →</>
+                ) : mobilePaired ? (
+                  <><i className="bx bx-loader-alt bx-spin" /> Calibrating Camera...</>
+                ) : (
+                  <><i className="bx bx-mobile-alt" /> Pair Phone to Continue</>
+                )}
               </button>
             </div>
           </div>

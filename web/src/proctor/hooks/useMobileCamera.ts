@@ -12,6 +12,13 @@ export function useMobileCamera() {
       if (stream) {
         stream.getTracks().forEach((t) => t.stop());
       }
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        const msg = !window.isSecureContext
+          ? 'Camera access requires HTTPS. Please connect to https://' + window.location.host + window.location.pathname + window.location.search
+          : 'Your browser does not support camera capture via mediaDevices. Please use Chrome or Safari.';
+        setError(msg);
+        throw new Error(msg);
+      }
       const mediaStream = await navigator.mediaDevices.getUserMedia({
         video: {
           facingMode: { ideal: facingMode },

@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import styles from './styles/MobileProctor.module.css';
 import { PairingPage } from './pages/PairingPage';
 import { CameraSetupPage } from './pages/CameraSetupPage';
@@ -8,6 +8,7 @@ import { CompletedPage } from './pages/CompletedPage';
 import { useMobileCamera } from './hooks/useMobileCamera';
 import { useMobileAudio } from './hooks/useMobileAudio';
 import { useMobileProctor } from './hooks/useMobileProctor';
+import { Video, Check } from 'lucide-react';
 
 export const MobileProctorApp: React.FC = () => {
   const [tokenParam, setTokenParam] = useState<string | null>(null);
@@ -15,7 +16,7 @@ export const MobileProctorApp: React.FC = () => {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const t = params.get('token');
-    if (t) setTokenParam(t);
+    if (t && t !== 'undefined') setTokenParam(t);
   }, []);
 
   const {
@@ -52,16 +53,76 @@ export const MobileProctorApp: React.FC = () => {
     setStatus('completed');
   };
 
+  // Stepper calculations
+  const steps = [
+    { key: 'pairing', label: 'Pair' },
+    { key: 'setup', label: 'Sensors' },
+    { key: 'calibrating', label: 'Align' },
+    { key: 'active', label: 'Stream' },
+  ];
+
+  const getStepIndex = (st: string) => {
+    switch (st) {
+      case 'pairing': return 0;
+      case 'setup': return 1;
+      case 'calibrating': return 2;
+      case 'active': return 3;
+      case 'completed': return 4;
+      default: return 0;
+    }
+  };
+
+  const currentIndex = getStepIndex(status);
+
   return (
     <div className={styles.container}>
+      {/* Header */}
       <header className={styles.header}>
         <div className={styles.brand}>
-          <span className={styles.brandDot} />
-          <span className={styles.brandTitle}>Beyon DualView</span>
+          <div className={styles.brandIconWrap}>
+            <Video size={18} color="#ffffff" />
+          </div>
+          <div>
+            <div className={styles.brandTitle}>
+              <span>Beyon</span>
+              <span style={{ color: '#38bdf8' }}>DualView</span>
+            </div>
+          </div>
         </div>
-        <span className={styles.brandBadge}>Side Angle Feed</span>
+
+        <div className={styles.brandBadge}>
+          <span className={styles.brandDot} />
+          <span>Surveillance Mode</span>
+        </div>
       </header>
 
+      {/* Stepper (only visible while setting up / active) */}
+      {status !== 'completed' && (
+        <div className={styles.stepper}>
+          {steps.map((step, idx) => {
+            const isDone = currentIndex > idx;
+            const isActive = currentIndex === idx;
+            return (
+              <div
+                key={step.key}
+                className={`${styles.stepItem} ${isActive ? styles.stepActive : ''} ${isDone ? styles.stepDone : ''}`}
+              >
+                {idx < steps.length - 1 && (
+                  <div
+                    className={`${styles.stepConnector} ${currentIndex > idx ? styles.stepConnectorActive : ''}`}
+                  />
+                )}
+                <div className={styles.stepNumber}>
+                  {isDone ? <Check size={13} strokeWidth={3} /> : idx + 1}
+                </div>
+                <span className={styles.stepLabel}>{step.label}</span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Content Body */}
       <main className={styles.content}>
         {status === 'pairing' && (
           <PairingPage
