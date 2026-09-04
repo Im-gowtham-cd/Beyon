@@ -1,4 +1,4 @@
-﻿import { NavLink, Link } from 'react-router-dom';
+import { NavLink, Link } from 'react-router-dom';
 import {
   LayoutDashboard,
   Users,
@@ -62,7 +62,9 @@ export function AdminSidebar({
     >
       <div className={styles.sidebarHeader}>
         <Link to="/admin/home" className={styles.logoArea}>
-          <div className={styles.logoIcon}>B</div>
+          <div className={styles.logoIcon} style={{ background: 'transparent', boxShadow: 'none' }}>
+            <img src="/logo-icon.png" alt="Beyon" style={{ width: '32px', height: '32px', objectFit: 'contain' }} />
+          </div>
           {!collapsed && (
             <div style={{ display: 'flex', alignItems: 'center' }}>
               <span className={styles.logoText}>BEYON</span>

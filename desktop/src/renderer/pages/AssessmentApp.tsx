@@ -1211,8 +1211,8 @@ export function AssessmentApp() {
       {/* Top Header */}
       <header className={styles.assessmentHeader}>
         <div className={styles.brandTitle}>
-          <span className={styles.brandMark} />
-          <div>
+          <img src="/logo-transparent.png" alt="Beyon" className={styles.brandLogoImg} />
+          <div className={styles.brandSubWrapper}>
             <span className={styles.brandName}>Beyon</span>
             <span className={styles.brandSub}>
               {step === 'dashboard' ? 'Student Candidate Workspace' : 'Secure Proctored Assessment Client'}
@@ -1312,7 +1312,9 @@ export function AssessmentApp() {
         <main className={styles.main}>
           <div className={styles.authCard}>
             <div className={styles.authAside}>
-              <span className={styles.asideMark} />
+              <div className={styles.authAsideLogoWrapper}>
+                <img src="/logo.png" alt="Beyon Official Logo" className={styles.authAsideLogo} />
+              </div>
               <h2>Beyon Secure Assessment Portal</h2>
               <p>Secure candidate authentication for proctored examinations and skill competency assessments.</p>
               <div className={styles.authNotice}>
@@ -1322,7 +1324,10 @@ export function AssessmentApp() {
             </div>
 
             <div className={styles.authPanel}>
-              <span className="section-label">Beyon Portal</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '0.4rem' }}>
+                <img src="/logo-icon.png" alt="Beyon Icon" style={{ width: '26px', height: '26px', objectFit: 'contain' }} />
+                <span className="section-label" style={{ marginBottom: 0 }}>Official Assessment Portal</span>
+              </div>
               <h1>Candidate Sign In</h1>
               <p className={styles.subtitle}>Enter your candidate credentials to start the assessment.</p>
 
@@ -1397,7 +1402,8 @@ export function AssessmentApp() {
             <div className={styles.dashHeroContent}>
               <div className={styles.dashBadgeRow}>
                 <span className={styles.portalBadge}>
-                  <i className="bx bx-shield-quarter" /> Beyon Secure Assessment Portal
+                  <img src="/logo-icon.png" alt="Beyon" style={{ width: '15px', height: '15px', objectFit: 'contain', verticalAlign: 'middle', marginRight: '6px' }} />
+                  Beyon Secure Assessment Portal
                 </span>
                 <span className={styles.verifiedBadge}>
                   <i className="bx bx-badge-check" /> Verified Candidate

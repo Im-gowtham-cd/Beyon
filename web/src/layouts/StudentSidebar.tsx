@@ -120,8 +120,8 @@ export function StudentSidebar({
         {/* Brand Header */}
         <div className={styles.brandHeader}>
           <Link to="/student/home" className={styles.brandLink}>
-            <div className={styles.brandLogo}>
-              <span>B</span>
+            <div className={styles.brandLogo} style={{ background: 'transparent', boxShadow: 'none' }}>
+              <img src="/logo-icon.png" alt="Beyon" style={{ width: '32px', height: '32px', objectFit: 'contain' }} />
             </div>
             {!collapsed && (
               <div className={styles.brandInfo}>

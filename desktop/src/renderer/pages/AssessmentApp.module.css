@@ -33,6 +33,23 @@
   flex-shrink: 0;
 }
 
+.brandLogoImg {
+  height: 36px;
+  max-width: 140px;
+  width: auto;
+  object-fit: contain;
+  display: block;
+}
+
+.brandSubWrapper {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  border-left: 2px solid var(--color-border-light);
+  padding-left: 10px;
+  margin-left: 2px;
+}
+
 .brandName {
   font-family: var(--font-heading);
   font-size: 1.25rem;
@@ -239,6 +256,25 @@
   height: 40px;
   background: var(--color-accent);
   margin-bottom: 20px;
+  display: block;
+}
+
+.authAsideLogoWrapper {
+  background: #ffffff;
+  padding: 10px 16px;
+  border-radius: var(--radius-sm);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+  width: fit-content;
+}
+
+.authAsideLogo {
+  height: 40px;
+  width: auto;
+  object-fit: contain;
   display: block;
 }
 

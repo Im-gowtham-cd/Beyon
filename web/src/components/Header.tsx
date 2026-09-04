@@ -129,8 +129,7 @@ export function Header() {
       {/* Main Bar */}
       <div className={styles.mainBar}>
         <Link to="/" className={styles.navTitle} onClick={closeMobile}>
-          <span className={styles.brandMark} aria-hidden="true" />
-          <span className={styles.brandText}>Beyon</span>
+          <img src="/logo-transparent.png" alt="Beyon" className={styles.brandLogoImg} />
           <span className={styles.brandSub}>Skills &amp; Careers</span>
         </Link>
 

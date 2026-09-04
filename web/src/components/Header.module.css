@@ -88,6 +88,14 @@
   flex-shrink: 0;
 }
 
+.brandLogoImg {
+  height: 38px;
+  width: auto;
+  max-width: 140px;
+  object-fit: contain;
+  display: block;
+}
+
 .brandText {
   font-family: var(--font-heading);
   font-size: var(--fs-3xl);

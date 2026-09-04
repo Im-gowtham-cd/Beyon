@@ -131,6 +131,7 @@ function createWindow() {
     autoHideMenuBar: true,
     backgroundColor: '#f4f6fb',
     title: 'Beyon — Secure Lockdown Assessment Client',
+    icon: path.join(__dirname, '../../public/logo-icon.png'),
     webPreferences: {
       preload: path.join(__dirname, '../preload/preload.cjs'),
       contextIsolation: true,

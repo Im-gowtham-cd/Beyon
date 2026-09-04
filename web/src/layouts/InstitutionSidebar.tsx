@@ -109,14 +109,18 @@ export function InstitutionSidebar({
       <div className={styles.header}>
         {!collapsed ? (
           <Link to="/institution/home" className={styles.brand}>
-            <div className={styles.brandLogo}>B</div>
+            <div className={styles.brandLogo} style={{ background: 'transparent', boxShadow: 'none' }}>
+              <img src="/logo-icon.png" alt="Beyon" style={{ width: '32px', height: '32px', objectFit: 'contain' }} />
+            </div>
             <div className={styles.brandText}>
               <span className={styles.brandName}>BEYON</span>
               <span className={styles.brandSub}>Institution Hub</span>
             </div>
           </Link>
         ) : (
-          <div className={styles.brandLogo}>B</div>
+          <div className={styles.brandLogo} style={{ background: 'transparent', boxShadow: 'none' }}>
+            <img src="/logo-icon.png" alt="Beyon" style={{ width: '32px', height: '32px', objectFit: 'contain' }} />
+          </div>
         )}
 
         <button
