@@ -35,6 +35,9 @@ public class CompanyOpportunity {
     @Column(precision = 4, scale = 2)
     private BigDecimal minCgpa;
 
+    @Column(precision = 6, scale = 2)
+    private BigDecimal packageLpa;
+
     @Column(columnDefinition = "TEXT")
     private String eligibleDepartments;
 
@@ -90,6 +93,8 @@ public class CompanyOpportunity {
     public void setRemote(Boolean remote) { this.remote = remote; }
     public BigDecimal getMinCgpa() { return minCgpa; }
     public void setMinCgpa(BigDecimal minCgpa) { this.minCgpa = minCgpa; }
+    public BigDecimal getPackageLpa() { return packageLpa; }
+    public void setPackageLpa(BigDecimal packageLpa) { this.packageLpa = packageLpa; }
     public String getEligibleDepartments() { return eligibleDepartments; }
     public void setEligibleDepartments(String eligibleDepartments) { this.eligibleDepartments = eligibleDepartments; }
     public String getEligibleGraduationYears() { return eligibleGraduationYears; }

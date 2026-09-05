@@ -12,6 +12,8 @@ import {
   Search,
   AlertCircle,
   X,
+  ShieldCheck,
+  Briefcase,
 } from 'lucide-react';
 import styles from './PracticePages.module.css';
 
@@ -214,6 +216,10 @@ export function OpportunitiesPage() {
                       <span style={{ fontSize: '0.72rem', background: '#dcfce7', color: '#15803d', border: '1px solid #bbf7d0', padding: '3px 8px', borderRadius: '0px', fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                         <Check size={12} /> Applied
                       </span>
+                    ) : opp.opportunityType === 'CAMPUS_DRIVE' ? (
+                      <span style={{ fontSize: '0.72rem', background: '#f0fdfa', color: '#0f766e', border: '1px solid #99f6e4', padding: '3px 8px', borderRadius: '0px', fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                        <ShieldCheck size={12} /> Verified Campus Drive
+                      </span>
                     ) : (
                       <span style={{ fontSize: '0.72rem', background: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe', padding: '3px 8px', borderRadius: '0px', fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>
                         {opp.opportunityType.replace('_', ' ')}
@@ -223,6 +229,9 @@ export function OpportunitiesPage() {
 
                   {/* Metadata Pills */}
                   <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center', margin: '10px 0' }}>
+                    <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#15803d', background: '#f0fdf4', border: '1px solid #bbf7d0', padding: '3px 8px', borderRadius: '0px', whiteSpace: 'nowrap', flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                      <Briefcase size={13} style={{ color: '#16a34a' }} /> ₹{opp.packageLpa || 12} LPA
+                    </span>
                     {opp.location && (
                       <span style={{ fontSize: '0.75rem', fontWeight: 500, color: '#475569', background: '#f8fafc', border: '1px solid #e2e8f0', padding: '3px 8px', borderRadius: '0px', whiteSpace: 'nowrap', flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                         <MapPin size={13} style={{ color: '#0284c7' }} /> {opp.location}
@@ -330,9 +339,16 @@ export function OpportunitiesPage() {
           }} onClick={e => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <div>
-                <span className={styles.typeBadge} style={{ fontWeight: 600, textTransform: 'uppercase' }}>
-                  {selectedOpp.opportunityType.replace('_', ' ')}
-                </span>
+                <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
+                  <span className={styles.typeBadge} style={{ fontWeight: 600, textTransform: 'uppercase' }}>
+                    {selectedOpp.opportunityType.replace('_', ' ')}
+                  </span>
+                  {selectedOpp.opportunityType === 'CAMPUS_DRIVE' && (
+                    <span style={{ fontSize: '0.72rem', background: '#f0fdfa', color: '#0f766e', border: '1px solid #99f6e4', padding: '2px 8px', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                      <ShieldCheck size={12} /> Verified by Placement Cell
+                    </span>
+                  )}
+                </div>
                 <h2 style={{ fontFamily: 'var(--font-heading, Montserrat)', fontSize: '1.25rem', fontWeight: 800, color: '#0f172a', margin: '6px 0 0' }}>
                   {selectedOpp.title}
                 </h2>
@@ -356,6 +372,7 @@ export function OpportunitiesPage() {
                 Eligibility &amp; Criteria
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '0.82rem', color: '#334155' }}>
+                <div><strong>Package (CTC):</strong> ₹{selectedOpp.packageLpa || 12} LPA</div>
                 <div><strong>Location:</strong> {selectedOpp.location || 'Flexible'} {selectedOpp.remote ? '(Remote)' : ''}</div>
                 <div><strong>Min CGPA:</strong> {selectedOpp.minCgpa || 'No Cutoff'}</div>
                 <div><strong>Departments:</strong> {(selectedOpp as any).eligibleDepartments || 'All Engineering'}</div>
@@ -409,35 +426,64 @@ export function OpportunitiesPage() {
               >
                 Close
               </button>
-              {isApplied(selectedOpp.id) ? (
-                <button
-                  style={{
-                    background: '#f0fdf4',
-                    border: '1px solid #bbf7d0',
-                    color: '#15803d',
-                    padding: '8px 16px',
-                    borderRadius: '0px',
-                    fontWeight: 600,
-                    fontSize: '0.84rem',
-                    cursor: 'default',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '4px',
-                  }}
-                  disabled
-                >
-                  <Check size={14} /> Already Applied
-                </button>
-              ) : (
-                <button
-                  className={styles.submitBtn}
-                  style={{ margin: 0, borderRadius: '0px' }}
-                  onClick={() => handleApply(selectedOpp.id)}
-                  disabled={applying || Boolean(eligibility && !eligibility.eligible)}
-                >
-                  {applying ? 'Submitting Application...' : 'Confirm & Apply'}
-                </button>
-              )}
+              {(() => {
+                const myApp = myApplications.find(a => a.opportunityId === selectedOpp.id);
+                if (myApp) {
+                  const hasAssessed = myApp.status === 'ASSESSED' || myApp.assessmentScore != null;
+                  if (hasAssessed) {
+                    return (
+                      <button
+                        style={{
+                          background: '#f0fdf4',
+                          border: '1.5px solid #16a34a',
+                          color: '#15803d',
+                          padding: '8px 16px',
+                          borderRadius: '0px',
+                          fontWeight: 700,
+                          fontSize: '0.84rem',
+                          cursor: 'default',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                        }}
+                        disabled
+                      >
+                        <Check size={14} /> Assessment Completed ({myApp.assessmentScore || 0}% Score)
+                      </button>
+                    );
+                  }
+                  return (
+                    <button
+                      style={{
+                        background: '#f0fdf4',
+                        border: '1px solid #bbf7d0',
+                        color: '#15803d',
+                        padding: '8px 16px',
+                        borderRadius: '0px',
+                        fontWeight: 600,
+                        fontSize: '0.84rem',
+                        cursor: 'default',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                      }}
+                      disabled
+                    >
+                      <Check size={14} /> Applied · Ready for Assessment
+                    </button>
+                  );
+                }
+                return (
+                  <button
+                    className={styles.submitBtn}
+                    style={{ margin: 0, borderRadius: '0px' }}
+                    onClick={() => handleApply(selectedOpp.id)}
+                    disabled={applying || Boolean(eligibility && !eligibility.eligible)}
+                  >
+                    {applying ? 'Submitting Application...' : 'Confirm & Apply'}
+                  </button>
+                );
+              })()}
             </div>
           </div>
         </div>

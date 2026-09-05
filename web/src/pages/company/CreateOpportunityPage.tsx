@@ -228,6 +228,7 @@ export function CreateOpportunityPage() {
     opportunityType: 'CAMPUS_DRIVE',
     location: '',
     remote: false,
+    packageLpa: 12.0,
     minCgpa: 7.5,
     eligibleDepartments: 'Computer Science and Engineering, Information Technology, Artificial Intelligence & Data Science, Electronics and Communication Engineering',
     eligibleGraduationYears: '2026, 2027',
@@ -619,6 +620,7 @@ export function CreateOpportunityPage() {
                   opportunityType: 'CAMPUS_DRIVE',
                   location: 'Chennai / Bangalore',
                   remote: false,
+                  packageLpa: 12.0,
                   minCgpa: 8.0,
                   eligibleDepartments: 'Computer Science and Engineering, Information Technology, Artificial Intelligence & Data Science, Electronics and Communication Engineering',
                   eligibleGraduationYears: '2026, 2027',
@@ -704,6 +706,19 @@ export function CreateOpportunityPage() {
                 placeholder="e.g. Chennai, Bangalore, Hyderabad"
                 value={form.location}
                 onChange={(e) => setForm({ ...form, location: e.target.value })}
+              />
+            </div>
+
+            <div className={styles.fieldGroup}>
+              <label className={styles.label}>Annual Compensation / Package (LPA in ₹)</label>
+              <input
+                type="number"
+                step="0.5"
+                min="0"
+                className={styles.input}
+                placeholder="e.g. 14.5"
+                value={form.packageLpa}
+                onChange={(e) => setForm({ ...form, packageLpa: parseFloat(e.target.value) || 0 })}
               />
             </div>
 

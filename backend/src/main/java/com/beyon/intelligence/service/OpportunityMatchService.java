@@ -20,15 +20,18 @@ public class OpportunityMatchService {
     private final StudentSkillGraphRepository graphRepo;
     private final CompanyOpportunityRepository opportunityRepo;
     private final SkillRepository skillRepo;
+    private final com.beyon.practice.service.CompanyService companyService;
 
     public OpportunityMatchService(OpportunityMatchDetailRepository matchRepo,
                                     StudentSkillGraphRepository graphRepo,
                                     CompanyOpportunityRepository opportunityRepo,
-                                    SkillRepository skillRepo) {
+                                    SkillRepository skillRepo,
+                                    com.beyon.practice.service.CompanyService companyService) {
         this.matchRepo = matchRepo;
         this.graphRepo = graphRepo;
         this.opportunityRepo = opportunityRepo;
         this.skillRepo = skillRepo;
+        this.companyService = companyService;
     }
 
     public Map<String, Object> calculateMatch(UUID studentId, UUID opportunityId) {
@@ -104,7 +107,15 @@ public class OpportunityMatchService {
 
     public List<Map<String, Object>> getMyMatches(UUID studentId) {
         List<StudentSkillGraph> skills = graphRepo.findByStudentIdOrderByProficiencyPctDesc(studentId);
-        List<CompanyOpportunity> opportunities = opportunityRepo.findByStatusOrderByCreatedAtDesc("ACTIVE");
+        List<CompanyOpportunity> allOpportunities = opportunityRepo.findByStatusOrderByCreatedAtDesc("PUBLISHED");
+        if (allOpportunities.isEmpty()) {
+            allOpportunities = opportunityRepo.findByStatusOrderByCreatedAtDesc("ACTIVE");
+        }
+
+        // Only recommend opportunities that are open or verified & approved by student's institution
+        List<CompanyOpportunity> opportunities = allOpportunities.stream()
+                .filter(opp -> companyService.isOpportunityVisibleAndApprovedForStudent(opp, studentId))
+                .toList();
 
         return opportunities.stream().map(opp -> {
             BigDecimal skillMatch = calculateSkillMatch(skills, opp);

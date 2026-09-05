@@ -124,6 +124,8 @@ ipcMain.handle('assessment:device-info', () => {
   };
 });
 
+process.env['ELECTRON_DISABLE_SECURITY_WARNINGS'] = 'true';
+
 function createWindow() {
   mainWindow = new BrowserWindow({
     fullscreen: true,
@@ -136,7 +138,7 @@ function createWindow() {
       preload: path.join(__dirname, '../preload/preload.cjs'),
       contextIsolation: true,
       nodeIntegration: false,
-      webSecurity: false,
+      webSecurity: true,
     },
   });
 

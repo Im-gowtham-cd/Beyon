@@ -95,7 +95,7 @@ public class PlacementDrive {
     @Transient
     private String driveType = "ON_CAMPUS";
 
-    @Transient
+    @Column(precision = 6, scale = 2)
     private java.math.BigDecimal packageLpa = java.math.BigDecimal.valueOf(12.0);
 
     @Transient

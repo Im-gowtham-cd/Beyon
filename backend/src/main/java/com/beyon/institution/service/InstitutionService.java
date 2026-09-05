@@ -258,7 +258,7 @@ public class InstitutionService {
                     d.setEligibleDepts(opp.getEligibleDepartments() != null ? opp.getEligibleDepartments() : "All Engineering Streams");
                     d.setEligibleBatch(opp.getEligibleGraduationYears() != null ? opp.getEligibleGraduationYears() : "2026 Batch");
                     d.setLocation(opp.getLocation() != null ? opp.getLocation() : "Campus / Hybrid");
-                    d.setPackageLpa(BigDecimal.valueOf(14.0));
+                    d.setPackageLpa(opp.getPackageLpa() != null ? opp.getPackageLpa() : (d.getPackageLpa() != null ? d.getPackageLpa() : BigDecimal.valueOf(12.0)));
                 });
             }
             if (d.getCompanyUserId() != null) {

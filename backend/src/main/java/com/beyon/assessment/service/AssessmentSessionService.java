@@ -26,6 +26,12 @@ public class AssessmentSessionService {
     private final AssessmentResultRepository resultRepository;
     private final org.springframework.context.ApplicationEventPublisher eventPublisher;
     private final com.beyon.practice.repository.QuestionOptionRepository questionOptionRepository;
+    private final com.beyon.practice.repository.CompanyOpportunityRepository opportunityRepository;
+    private final com.beyon.assessment.repository.AssessmentConfigurationRepository assessmentConfigRepository;
+    private final com.beyon.practice.repository.QuestionRepository questionRepository;
+    private final com.beyon.practice.repository.OpportunityApplicationRepository applicationRepository;
+    private final com.beyon.recruitment.repository.RecruitmentApplicationRepository recruitmentApplicationRepository;
+    private final com.beyon.institution.repository.PlacementDriveRepository placementDriveRepository;
     private final SecureRandom secureRandom = new SecureRandom();
 
     public AssessmentSessionService(
@@ -39,7 +45,13 @@ public class AssessmentSessionService {
             SystemCheckResultRepository systemCheckResultRepository,
             AssessmentResultRepository resultRepository,
             org.springframework.context.ApplicationEventPublisher eventPublisher,
-            com.beyon.practice.repository.QuestionOptionRepository questionOptionRepository) {
+            com.beyon.practice.repository.QuestionOptionRepository questionOptionRepository,
+            com.beyon.practice.repository.CompanyOpportunityRepository opportunityRepository,
+            com.beyon.assessment.repository.AssessmentConfigurationRepository assessmentConfigRepository,
+            com.beyon.practice.repository.QuestionRepository questionRepository,
+            com.beyon.practice.repository.OpportunityApplicationRepository applicationRepository,
+            com.beyon.recruitment.repository.RecruitmentApplicationRepository recruitmentApplicationRepository,
+            com.beyon.institution.repository.PlacementDriveRepository placementDriveRepository) {
         this.sessionRepository = sessionRepository;
         this.policyRepository = policyRepository;
         this.answerRepository = answerRepository;
@@ -51,12 +63,83 @@ public class AssessmentSessionService {
         this.resultRepository = resultRepository;
         this.eventPublisher = eventPublisher;
         this.questionOptionRepository = questionOptionRepository;
+        this.opportunityRepository = opportunityRepository;
+        this.assessmentConfigRepository = assessmentConfigRepository;
+        this.questionRepository = questionRepository;
+        this.applicationRepository = applicationRepository;
+        this.recruitmentApplicationRepository = recruitmentApplicationRepository;
+        this.placementDriveRepository = placementDriveRepository;
     }
 
     public AssessmentSession createSession(UUID applicationId, UUID studentId, UUID opportunityId, int questionCount, int durationMinutes) {
-        Optional<AssessmentSession> existing = sessionRepository.findByApplicationId(applicationId);
-        if (existing.isPresent()) {
-            return existing.get();
+        // 1. Single attempt guard: Check if student has already completed assessment for this opportunity
+        if (opportunityId != null && studentId != null) {
+            List<AssessmentSession> oppSessions = sessionRepository.findByStudentIdAndOpportunityIdOrderByCreatedAtDesc(studentId, opportunityId);
+            for (AssessmentSession s : oppSessions) {
+                if ("SUBMITTED".equals(s.getStatus()) || "COMPLETED".equals(s.getStatus()) || "EVALUATED".equals(s.getStatus()) || "TERMINATED".equals(s.getStatus())) {
+                    throw new com.beyon.common.exception.ConflictException("You have already completed and submitted the assessment for this placement drive. Retakes are not permitted.");
+                }
+                if ("CREATED".equals(s.getStatus()) || "LAUNCHED".equals(s.getStatus()) || "IN_PROGRESS".equals(s.getStatus())) {
+                    return s;
+                }
+            }
+
+            if (applicationRepository != null) {
+                applicationRepository.findByOpportunityIdAndStudentId(opportunityId, studentId).ifPresent(app -> {
+                    if ("ASSESSED".equalsIgnoreCase(app.getStatus()) || app.getAssessmentScore() != null) {
+                        throw new com.beyon.common.exception.ConflictException("You have already completed and submitted the assessment for this placement drive. Retakes are not permitted.");
+                    }
+                });
+            }
+        }
+
+        if (applicationId != null) {
+            Optional<AssessmentSession> existing = sessionRepository.findByApplicationId(applicationId);
+            if (existing.isPresent()) {
+                AssessmentSession s = existing.get();
+                if ("SUBMITTED".equals(s.getStatus()) || "COMPLETED".equals(s.getStatus()) || "EVALUATED".equals(s.getStatus()) || "TERMINATED".equals(s.getStatus())) {
+                    throw new com.beyon.common.exception.ConflictException("You have already completed and submitted this assessment. Retakes are not permitted.");
+                }
+                return s;
+            }
+        }
+
+        // 2. Derive question count and duration minutes from drive configuration
+        int resolvedDuration = durationMinutes;
+        int resolvedQuestions = questionCount;
+
+        if (opportunityId != null) {
+            if (opportunityRepository != null) {
+                opportunityRepository.findById(opportunityId).ifPresent(opp -> {
+                    if (opp.getAssessmentId() != null && assessmentConfigRepository != null) {
+                        assessmentConfigRepository.findById(opp.getAssessmentId()).ifPresent(cfg -> {
+                            if (cfg.getDurationMinutes() > 0) {
+                                // use cfg duration
+                            }
+                        });
+                    }
+                });
+            }
+            if (questionRepository != null) {
+                List<com.beyon.practice.model.Question> customQs = questionRepository.findByTagsContainingOrderByCreatedAtAsc("opportunity:" + opportunityId);
+                if (!customQs.isEmpty()) {
+                    resolvedQuestions = customQs.size();
+                }
+            }
+            if (opportunityRepository != null) {
+                var oppOpt = opportunityRepository.findById(opportunityId);
+                if (oppOpt.isPresent() && oppOpt.get().getAssessmentId() != null && assessmentConfigRepository != null) {
+                    var cfgOpt = assessmentConfigRepository.findById(oppOpt.get().getAssessmentId());
+                    if (cfgOpt.isPresent()) {
+                        if (cfgOpt.get().getDurationMinutes() > 0) {
+                            resolvedDuration = cfgOpt.get().getDurationMinutes();
+                        }
+                        if (resolvedQuestions <= 0 && cfgOpt.get().getTotalQuestions() > 0) {
+                            resolvedQuestions = cfgOpt.get().getTotalQuestions();
+                        }
+                    }
+                }
+            }
         }
 
         Optional<AssessmentPolicy> policy = opportunityId != null 
@@ -64,16 +147,16 @@ public class AssessmentSessionService {
                 : Optional.empty();
 
         AssessmentSession session = new AssessmentSession();
-        session.setApplicationId(applicationId);
+        session.setApplicationId(applicationId != null ? applicationId : UUID.randomUUID());
         session.setStudentId(studentId);
         session.setOpportunityId(opportunityId);
         policy.ifPresent(p -> session.setPolicyId(p.getId()));
         session.setSessionToken(generateToken());
         session.setLaunchToken(generateToken());
-        session.setTotalQuestions(questionCount);
-        session.setDurationMinutes(durationMinutes);
+        session.setTotalQuestions(resolvedQuestions > 0 ? resolvedQuestions : 20);
+        session.setDurationMinutes(resolvedDuration > 0 ? resolvedDuration : 60);
         session.setStatus("CREATED");
-        session.setExpiresAt(OffsetDateTime.now().plusMinutes(durationMinutes + 30));
+        session.setExpiresAt(OffsetDateTime.now().plusMinutes(session.getDurationMinutes() + 30));
 
         audit(session.getId(), studentId, "SESSION", "Session created", null, null, null);
         return sessionRepository.save(session);
@@ -271,6 +354,10 @@ public class AssessmentSessionService {
     }
 
     public AssessmentSession submitAssessment(UUID sessionId) {
+        return submitAssessment(sessionId, null);
+    }
+
+    public AssessmentSession submitAssessment(UUID sessionId, Map<String, Object> submissionPayload) {
         AssessmentSession session = sessionRepository.findById(sessionId)
                 .orElseThrow(() -> new RuntimeException("Session not found"));
 
@@ -278,22 +365,150 @@ public class AssessmentSessionService {
             return session;
         }
 
-        List<AssessmentAnswer> answers = answerRepository.findBySessionIdOrderByCreatedAt(sessionId);
+        // 1. Resolve session questions
+        List<com.beyon.practice.model.Question> questions = new ArrayList<>();
+        if (session.getOpportunityId() != null) {
+            questions = questionRepository.findByTagsContainingOrderByCreatedAtAsc("opportunity:" + session.getOpportunityId());
+        }
+        if (questions.isEmpty()) {
+            List<AssessmentQuestionOrder> orders = questionOrderRepository.findBySessionIdOrderBySortOrder(sessionId);
+            if (!orders.isEmpty()) {
+                for (AssessmentQuestionOrder ord : orders) {
+                    questionRepository.findById(ord.getQuestionId()).ifPresent(questions::add);
+                }
+            }
+        }
+        if (questions.isEmpty()) {
+            int qCount = session.getTotalQuestions() > 0 ? session.getTotalQuestions() : 5;
+            questions = questionRepository.findByStatusOrderByCreatedAtDesc("PUBLISHED", org.springframework.data.domain.PageRequest.of(0, qCount));
+        }
 
-        long attempted = answers.stream().filter(a -> a.getAnsweredAt() != null).count();
-        long correct = answers.stream().filter(a -> Boolean.TRUE.equals(a.getIsCorrect())).count();
-        BigDecimal totalMarks = answers.stream()
-                .map(a -> a.getMarksAwarded() != null ? a.getMarksAwarded() : BigDecimal.ZERO)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        // 2. Extract submitted answers from payload
+        Map<String, Object> submittedAnswers = new HashMap<>();
+        if (submissionPayload != null && submissionPayload.get("answers") instanceof Map) {
+            submittedAnswers = (Map<String, Object>) submissionPayload.get("answers");
+        }
+
+        // 3. Grade each question precisely against database correct options
+        long attempted = 0;
+        long correct = 0;
+
+        for (int i = 0; i < questions.size(); i++) {
+            com.beyon.practice.model.Question q = questions.get(i);
+            UUID qId = q.getId();
+            String qKey = "q-" + (i + 1);
+
+            // Fetch candidate answer for this question from payload or existing answer repo
+            Object userAnsObj = submittedAnswers.containsKey(qId.toString())
+                    ? submittedAnswers.get(qId.toString())
+                    : submittedAnswers.get(qKey);
+
+            Set<String> candidateSelectedOptionIds = new HashSet<>();
+            String answerText = null;
+            boolean markedForReview = false;
+
+            if (userAnsObj instanceof Map) {
+                Map<String, Object> userAnsMap = (Map<String, Object>) userAnsObj;
+                if (userAnsMap.get("optionId") != null) {
+                    candidateSelectedOptionIds.add(userAnsMap.get("optionId").toString().trim());
+                }
+                if (userAnsMap.get("selectedOptionId") != null) {
+                    candidateSelectedOptionIds.add(userAnsMap.get("selectedOptionId").toString().trim());
+                }
+                if (userAnsMap.get("optionIds") instanceof List) {
+                    List<?> list = (List<?>) userAnsMap.get("optionIds");
+                    for (Object item : list) {
+                        if (item != null) candidateSelectedOptionIds.add(item.toString().trim());
+                    }
+                }
+                if (userAnsMap.get("selectedOptionIds") instanceof List) {
+                    List<?> list = (List<?>) userAnsMap.get("selectedOptionIds");
+                    for (Object item : list) {
+                        if (item != null) candidateSelectedOptionIds.add(item.toString().trim());
+                    }
+                }
+                if (userAnsMap.get("answerText") != null) {
+                    answerText = userAnsMap.get("answerText").toString();
+                }
+                markedForReview = Boolean.TRUE.equals(userAnsMap.get("marked"));
+            } else if (userAnsObj instanceof String) {
+                candidateSelectedOptionIds.add(((String) userAnsObj).trim());
+            }
+
+            // Also check existing answers in repository if not in payload
+            if (candidateSelectedOptionIds.isEmpty()) {
+                var existingOpt = answerRepository.findBySessionIdAndQuestionId(sessionId, qId);
+                if (existingOpt.isPresent()) {
+                    AssessmentAnswer existingAns = existingOpt.get();
+                    if (existingAns.getSelectedOptionId() != null) {
+                        candidateSelectedOptionIds.add(existingAns.getSelectedOptionId().toString());
+                    }
+                    if (existingAns.getAnswerText() != null && !existingAns.getAnswerText().isBlank()) {
+                        String[] parts = existingAns.getAnswerText().split(",");
+                        for (String p : parts) {
+                            if (!p.isBlank()) candidateSelectedOptionIds.add(p.trim());
+                        }
+                    }
+                }
+            }
+
+            // Fetch actual options from DB
+            List<com.beyon.practice.model.QuestionOption> dbOptions = questionOptionRepository.findByQuestionIdOrderByDisplayOrder(qId);
+            Set<String> correctOptionIds = dbOptions.stream()
+                    .filter(com.beyon.practice.model.QuestionOption::isCorrect)
+                    .map(opt -> opt.getId().toString())
+                    .collect(Collectors.toSet());
+
+            boolean isAttemptedThisQ = !candidateSelectedOptionIds.isEmpty() || (answerText != null && !answerText.isBlank());
+            if (isAttemptedThisQ) {
+                attempted++;
+            }
+
+            // Real correctness evaluation:
+            // Must have at least 1 correct option defined, and candidate's selected set must match exactly
+            boolean isCorrect = false;
+            if (!correctOptionIds.isEmpty()) {
+                isCorrect = candidateSelectedOptionIds.equals(correctOptionIds);
+            }
+            if (isCorrect) {
+                correct++;
+            }
+
+            // Persist AssessmentAnswer
+            AssessmentAnswer answer = answerRepository.findBySessionIdAndQuestionId(sessionId, qId)
+                    .orElse(new AssessmentAnswer());
+            answer.setSessionId(sessionId);
+            answer.setQuestionId(qId);
+            if (!candidateSelectedOptionIds.isEmpty()) {
+                try {
+                    answer.setSelectedOptionId(UUID.fromString(candidateSelectedOptionIds.iterator().next()));
+                } catch (Exception ignored) {}
+                answer.setAnswerText(String.join(",", candidateSelectedOptionIds));
+            }
+            answer.setIsCorrect(isCorrect);
+            answer.setMarkedForReview(markedForReview);
+            answer.setMarksAwarded(isCorrect ? BigDecimal.valueOf(1) : BigDecimal.ZERO);
+            if (isAttemptedThisQ) {
+                answer.setAnsweredAt(OffsetDateTime.now());
+            }
+            answerRepository.save(answer);
+        }
+
+        int totalQuestions = questions.isEmpty() ? (session.getTotalQuestions() > 0 ? session.getTotalQuestions() : 1) : questions.size();
+
+        // Exact percentage score: (correct / totalQuestions) * 100
+        BigDecimal score = BigDecimal.valueOf(correct)
+                .multiply(BigDecimal.valueOf(100))
+                .divide(BigDecimal.valueOf(totalQuestions), 1, RoundingMode.HALF_UP);
+
+        BigDecimal accuracy = attempted > 0
+                ? BigDecimal.valueOf(correct).multiply(BigDecimal.valueOf(100)).divide(BigDecimal.valueOf(attempted), 1, RoundingMode.HALF_UP)
+                : BigDecimal.ZERO;
 
         int timeUsed = 0;
         if (session.getStartedAt() != null) {
             timeUsed = (int) java.time.Duration.between(session.getStartedAt(), OffsetDateTime.now()).getSeconds();
         }
-
-        BigDecimal accuracy = attempted > 0
-                ? BigDecimal.valueOf(correct).multiply(BigDecimal.valueOf(100)).divide(BigDecimal.valueOf(attempted), 1, RoundingMode.HALF_UP)
-                : BigDecimal.ZERO;
 
         long warningCount = proctoringEventRepository.countBySessionIdAndSeverity(sessionId, "WARNING");
         long criticalCount = proctoringEventRepository.countBySessionIdAndSeverity(sessionId, "CRITICAL");
@@ -306,23 +521,10 @@ public class AssessmentSessionService {
             integrityStatus = "WARNING";
         }
 
-        // If totalMarks is zero but questions were attempted, grant realistic credit for attempted questions
-        if (attempted > 0 && totalMarks.compareTo(BigDecimal.ZERO) == 0) {
-            correct = attempted;
-            totalMarks = BigDecimal.valueOf(correct).multiply(BigDecimal.valueOf(5));
-            accuracy = BigDecimal.valueOf(100.0);
-        } else if (attempted == 0 && totalMarks.compareTo(BigDecimal.ZERO) == 0) {
-            // Default completion baseline
-            attempted = 5;
-            correct = 4;
-            totalMarks = BigDecimal.valueOf(80.0);
-            accuracy = BigDecimal.valueOf(80.0);
-        }
-
         session.setStatus("SUBMITTED");
         session.setSubmittedAt(OffsetDateTime.now());
         session.setCompletedAt(OffsetDateTime.now());
-        session.setScore(totalMarks);
+        session.setScore(score);
         session.setAccuracy(accuracy);
         session.setQuestionsAttempted((int) attempted);
         session.setQuestionsCorrect((int) correct);
@@ -376,6 +578,34 @@ public class AssessmentSessionService {
         } catch (Exception e) {
             // Continue safely
         }
+
+        // Direct synchronization for recruitment application pipeline & placement drive statistics
+        try {
+            if (savedSession.getOpportunityId() != null && savedSession.getStudentId() != null) {
+                if (applicationRepository != null) {
+                    applicationRepository.findByOpportunityIdAndStudentId(savedSession.getOpportunityId(), savedSession.getStudentId())
+                            .ifPresent(app -> {
+                                app.setAssessmentScore(savedSession.getScore());
+                                app.setStatus("ASSESSED");
+                                applicationRepository.save(app);
+                            });
+                }
+                if (recruitmentApplicationRepository != null) {
+                    recruitmentApplicationRepository.findByOpportunityIdAndStudentId(savedSession.getOpportunityId(), savedSession.getStudentId())
+                            .ifPresent(recApp -> {
+                                recApp.setAssessmentScore(savedSession.getScore());
+                                recApp.setStatus("ASSESSED");
+                                recruitmentApplicationRepository.save(recApp);
+                            });
+                }
+                if (placementDriveRepository != null) {
+                    placementDriveRepository.findByOpportunityId(savedSession.getOpportunityId()).forEach(drive -> {
+                        drive.setAssessedCount(drive.getAssessedCount() + 1);
+                        placementDriveRepository.save(drive);
+                    });
+                }
+            }
+        } catch (Exception ignored) {}
 
         return savedSession;
     }

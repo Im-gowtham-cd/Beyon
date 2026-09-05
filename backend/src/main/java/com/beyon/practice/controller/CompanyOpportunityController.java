@@ -34,6 +34,9 @@ public class CompanyOpportunityController {
             if ("COMPANY".equals(details.getRole())) {
                 UUID companyUserId = UUID.fromString(details.getUserId());
                 return ResponseEntity.ok(ApiResponse.ok(companyService.getCompanyOpportunities(companyUserId)));
+            } else if ("STUDENT".equals(details.getRole())) {
+                UUID studentId = UUID.fromString(details.getUserId());
+                return ResponseEntity.ok(ApiResponse.ok(companyService.getOpportunitiesForStudent(studentId)));
             }
         }
         return ResponseEntity.ok(ApiResponse.ok(companyService.getPublishedOpportunities()));

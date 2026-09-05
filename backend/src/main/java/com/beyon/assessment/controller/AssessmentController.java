@@ -187,7 +187,7 @@ public class AssessmentController {
 
     @PostMapping("/session/{sessionId}/submit")
     public ResponseEntity<?> submitAssessment(@PathVariable UUID sessionId, @RequestBody(required = false) Map<String, Object> body) {
-        var session = sessionService.submitAssessment(sessionId);
+        var session = sessionService.submitAssessment(sessionId, body);
         Map<String, Object> res = new LinkedHashMap<>();
         res.put("sessionId", session.getId());
         res.put("status", session.getStatus());

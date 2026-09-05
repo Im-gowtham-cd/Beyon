@@ -33,6 +33,7 @@ public class CompanyService {
 
     private final com.beyon.profile.repository.InstitutionProfileRepository institutionProfileRepository;
     private final com.beyon.institution.repository.PlacementDriveRepository placementDriveRepository;
+    private final com.beyon.institution.repository.InstitutionStudentRepository institutionStudentRepository;
     private final com.beyon.practice.repository.QuestionRepository questionRepository;
     private final com.beyon.practice.repository.QuestionOptionRepository questionOptionRepository;
     private final com.beyon.assessment.repository.AssessmentConfigurationRepository assessmentConfigRepository;
@@ -45,6 +46,7 @@ public class CompanyService {
                           RecruitmentApplicationRepository recruitmentAppRepo,
                           com.beyon.profile.repository.InstitutionProfileRepository institutionProfileRepository,
                           com.beyon.institution.repository.PlacementDriveRepository placementDriveRepository,
+                          com.beyon.institution.repository.InstitutionStudentRepository institutionStudentRepository,
                           com.beyon.practice.repository.QuestionRepository questionRepository,
                           com.beyon.practice.repository.QuestionOptionRepository questionOptionRepository,
                           com.beyon.assessment.repository.AssessmentConfigurationRepository assessmentConfigRepository) {
@@ -56,6 +58,7 @@ public class CompanyService {
         this.recruitmentAppRepo = recruitmentAppRepo;
         this.institutionProfileRepository = institutionProfileRepository;
         this.placementDriveRepository = placementDriveRepository;
+        this.institutionStudentRepository = institutionStudentRepository;
         this.questionRepository = questionRepository;
         this.questionOptionRepository = questionOptionRepository;
         this.assessmentConfigRepository = assessmentConfigRepository;
@@ -118,6 +121,95 @@ public class CompanyService {
         return opportunityRepository.findByCompanyUserIdOrderByCreatedAtDesc(companyUserId);
     }
 
+    public Set<UUID> resolveStudentInstitutionIds(UUID studentId) {
+        Set<UUID> instIds = new LinkedHashSet<>();
+        
+        // 1. From student profile institution name / code
+        studentProfileRepository.findByUserId(studentId).ifPresent(profile -> {
+            if (profile.getInstitution() != null && !profile.getInstitution().isBlank()) {
+                String instName = profile.getInstitution().trim();
+                List<User> instUsers = userRepository.findByRole(com.beyon.identity.enums.UserRole.INSTITUTION);
+                for (User iu : instUsers) {
+                    if (iu.getDisplayName() != null &&
+                        (iu.getDisplayName().equalsIgnoreCase(instName) ||
+                         instName.toLowerCase().contains(iu.getDisplayName().toLowerCase()) ||
+                         iu.getDisplayName().toLowerCase().contains(instName.toLowerCase()))) {
+                        instIds.add(iu.getId());
+                    }
+                }
+                institutionProfileRepository.findAll().forEach(ip -> {
+                    if ((ip.getInstitutionName() != null &&
+                         (ip.getInstitutionName().equalsIgnoreCase(instName) ||
+                          instName.toLowerCase().contains(ip.getInstitutionName().toLowerCase()) ||
+                          ip.getInstitutionName().toLowerCase().contains(instName.toLowerCase()))) ||
+                        (ip.getInstitutionCode() != null && ip.getInstitutionCode().equalsIgnoreCase(instName))) {
+                        instIds.add(ip.getUserId());
+                    }
+                });
+            }
+        });
+
+        // 2. From institution students mapping table
+        try {
+            institutionStudentRepository.findByStudentId(studentId).forEach(is -> {
+                if (is.getInstitutionId() != null) {
+                    instIds.add(is.getInstitutionId());
+                }
+            });
+        } catch (Exception ignored) {}
+
+        return instIds;
+    }
+
+    public boolean isOpportunityVisibleAndApprovedForStudent(CompanyOpportunity opp, UUID studentId) {
+        // Direct / open postings (FULL_TIME, INTERNSHIP) without campus targeting are open to all students
+        if (!"CAMPUS_DRIVE".equalsIgnoreCase(opp.getOpportunityType()) &&
+            (opp.getTargetInstitutionIds() == null || opp.getTargetInstitutionIds().isBlank())) {
+            return true;
+        }
+
+        // Campus placement drive requires student to belong to target institution AND institution must have approved the drive
+        Set<UUID> studentInstIds = resolveStudentInstitutionIds(studentId);
+        if (studentInstIds.isEmpty()) {
+            return false;
+        }
+
+        String targetIdsStr = opp.getTargetInstitutionIds();
+        if (targetIdsStr == null || targetIdsStr.isBlank()) {
+            // Check if ANY approved placement drive exists for student's institution
+            for (UUID sInstId : studentInstIds) {
+                var driveOpt = placementDriveRepository.findByOpportunityIdAndInstitutionId(opp.getId(), sInstId);
+                if (driveOpt.isPresent() && "APPROVED".equalsIgnoreCase(driveOpt.get().getStatus())) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        List<String> targetIds = Arrays.stream(targetIdsStr.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .toList();
+
+        for (UUID sInstId : studentInstIds) {
+            if (targetIds.contains(sInstId.toString())) {
+                var driveOpt = placementDriveRepository.findByOpportunityIdAndInstitutionId(opp.getId(), sInstId);
+                if (driveOpt.isPresent() && "APPROVED".equalsIgnoreCase(driveOpt.get().getStatus())) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    public List<CompanyOpportunity> getOpportunitiesForStudent(UUID studentId) {
+        List<CompanyOpportunity> all = opportunityRepository.findByStatusOrderByCreatedAtDesc("PUBLISHED");
+        return all.stream()
+                .filter(opp -> isOpportunityVisibleAndApprovedForStudent(opp, studentId))
+                .toList();
+    }
+
     public List<CompanyOpportunity> getPublishedOpportunities() {
         return opportunityRepository.findByStatusOrderByCreatedAtDesc("PUBLISHED");
     }
@@ -149,6 +241,9 @@ public class CompanyService {
                         pd.setTitle(saved.getTitle());
                         pd.setDescription(saved.getDescription());
                         pd.setStatus("PENDING_APPROVAL");
+                        if (saved.getPackageLpa() != null) {
+                            pd.setPackageLpa(saved.getPackageLpa());
+                        }
                         placementDriveRepository.save(pd);
                     } catch (Exception ignored) {}
                 }
@@ -167,6 +262,11 @@ public class CompanyService {
         opp.setOpportunityType(payload.get("opportunityType") != null ? (String) payload.get("opportunityType") : "CAMPUS_DRIVE");
         opp.setLocation((String) payload.get("location"));
         opp.setRemote(Boolean.TRUE.equals(payload.get("remote")));
+        if (payload.get("packageLpa") != null) {
+            try {
+                opp.setPackageLpa(new BigDecimal(payload.get("packageLpa").toString()));
+            } catch (Exception ignored) {}
+        }
         if (payload.get("minCgpa") != null) {
             try {
                 opp.setMinCgpa(new BigDecimal(payload.get("minCgpa").toString()));
@@ -256,6 +356,9 @@ public class CompanyService {
                         pd.setTitle(savedOpp.getTitle());
                         pd.setDescription(savedOpp.getDescription());
                         pd.setStatus("PENDING_APPROVAL");
+                        if (savedOpp.getPackageLpa() != null) {
+                            pd.setPackageLpa(savedOpp.getPackageLpa());
+                        }
                         placementDriveRepository.save(pd);
                     } catch (Exception ignored) {}
                 }
@@ -352,6 +455,40 @@ public class CompanyService {
                 eligible = false;
                 reasons.add("Placement preference is set to Not Seeking");
             }
+
+            // Campus Placement Drive institution targeting & approval check
+            if ("CAMPUS_DRIVE".equalsIgnoreCase(opp.getOpportunityType()) ||
+                (opp.getTargetInstitutionIds() != null && !opp.getTargetInstitutionIds().isBlank())) {
+                Set<UUID> studentInstIds = resolveStudentInstitutionIds(studentId);
+                if (studentInstIds.isEmpty()) {
+                    eligible = false;
+                    reasons.add("Your student profile is not linked to any verified partner institution");
+                } else {
+                    String targetIdsStr = opp.getTargetInstitutionIds();
+                    List<String> targetIds = (targetIdsStr != null && !targetIdsStr.isBlank())
+                            ? Arrays.stream(targetIdsStr.split(",")).map(String::trim).filter(s -> !s.isEmpty()).toList()
+                            : Collections.emptyList();
+
+                    boolean isTargeted = targetIds.isEmpty() || studentInstIds.stream().anyMatch(id -> targetIds.contains(id.toString()));
+                    if (!isTargeted) {
+                        eligible = false;
+                        reasons.add("This campus recruitment drive is not open to your institution");
+                    } else {
+                        boolean isApproved = false;
+                        for (UUID sInstId : studentInstIds) {
+                            var driveOpt = placementDriveRepository.findByOpportunityIdAndInstitutionId(opp.getId(), sInstId);
+                            if (driveOpt.isPresent() && "APPROVED".equalsIgnoreCase(driveOpt.get().getStatus())) {
+                                isApproved = true;
+                                break;
+                            }
+                        }
+                        if (!isApproved) {
+                            eligible = false;
+                            reasons.add("Campus drive is awaiting verification & approval by your institution's placement cell");
+                        }
+                    }
+                }
+            }
         }
 
         Map<String, Object> result = new HashMap<>();
@@ -442,11 +579,26 @@ public class CompanyService {
                 map.put("role", opp.getTitle());
                 map.put("opportunityType", opp.getOpportunityType());
                 map.put("location", opp.getLocation());
+                map.put("packageLpa", opp.getPackageLpa() != null ? opp.getPackageLpa() : java.math.BigDecimal.valueOf(12.0));
                 map.put("eligibleDepartments", opp.getEligibleDepartments());
                 map.put("requiredSkills", opp.getRequiredSkills());
                 map.put("minCgpa", opp.getMinCgpa());
-                map.put("durationMinutes", 60);
-                map.put("totalQuestions", 20);
+                
+                int duration = 60;
+                int totalQ = 20;
+                if (opp.getAssessmentId() != null) {
+                    var configOpt = assessmentConfigRepository.findById(opp.getAssessmentId());
+                    if (configOpt.isPresent()) {
+                        duration = configOpt.get().getDurationMinutes();
+                        totalQ = configOpt.get().getTotalQuestions();
+                    }
+                }
+                List<com.beyon.practice.model.Question> customQs = questionRepository.findByTagsContainingOrderByCreatedAtAsc("opportunity:" + opp.getId());
+                if (!customQs.isEmpty()) {
+                    totalQ = customQs.size();
+                }
+                map.put("durationMinutes", duration);
+                map.put("totalQuestions", totalQ);
                 map.put("applicationStatus", app.getStatus());
                 map.put("assessmentScore", app.getAssessmentScore());
                 map.put("appliedAt", app.getAppliedAt());

@@ -117,7 +117,10 @@ export interface CompanyOpportunity {
   opportunityType: string;
   location?: string;
   remote?: boolean;
+  packageLpa?: number;
   minCgpa?: number;
+  eligibleDepartments?: string;
+  eligibleGraduationYears?: string;
   requiredSkills?: string;
   minBeyonCoins: number;
   applicationCount: number;
@@ -130,6 +133,7 @@ export interface OpportunityApplication {
   studentId: string;
   status: string;
   coinsSpent: number;
+  assessmentScore?: number;
   appliedAt?: string;
 }
 

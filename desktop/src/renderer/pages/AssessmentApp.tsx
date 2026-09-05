@@ -1,6 +1,9 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import QRCode from 'qrcode';
 import styles from './AssessmentApp.module.css';
+import logoTransparent from '../../../public/logo-transparent.png';
+import logoIcon from '../../../public/logo-icon.png';
+import logoPng from '../../../public/logo.png';
 
 declare global {
   interface Window {
@@ -110,7 +113,7 @@ export function AssessmentApp() {
   const [selectedModuleModal, setSelectedModuleModal] = useState<string | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [answers, setAnswers] = useState<Record<string, { optionId?: string; marked: boolean }>>({});
+  const [answers, setAnswers] = useState<Record<string, { optionId?: string; optionIds?: string[]; marked: boolean }>>({});
   const [timeInfo, setTimeInfo] = useState<TimeInfo | null>(null);
   const [checkStatus, setCheckStatus] = useState<Record<string, 'PENDING' | 'PASS' | 'FAIL'>>({});
   const [results, setResults] = useState<any>(null);
@@ -1002,17 +1005,44 @@ export function AssessmentApp() {
     }
   };
 
-  const handleAnswer = (questionId: string, optionId: string) => {
-    setAnswers(prev => ({
-      ...prev,
-      [questionId]: { optionId, marked: prev[questionId]?.marked || false },
-    }));
+  const handleAnswer = (questionId: string, optionId: string, isMultiple: boolean = false) => {
+    setAnswers(prev => {
+      const existing = prev[questionId] || { marked: false };
+      if (isMultiple) {
+        const currentList = existing.optionIds || (existing.optionId ? [existing.optionId] : []);
+        const nextList = currentList.includes(optionId)
+          ? currentList.filter(id => id !== optionId)
+          : [...currentList, optionId];
+        return {
+          ...prev,
+          [questionId]: {
+            ...existing,
+            optionId: nextList[0] || undefined,
+            optionIds: nextList,
+            marked: existing.marked,
+          },
+        };
+      } else {
+        return {
+          ...prev,
+          [questionId]: {
+            ...existing,
+            optionId,
+            optionIds: [optionId],
+            marked: existing.marked,
+          },
+        };
+      }
+    });
   };
 
   const handleMarkReview = (questionId: string) => {
     setAnswers(prev => ({
       ...prev,
-      [questionId]: { ...prev[questionId], marked: !prev[questionId]?.marked },
+      [questionId]: {
+        ...prev[questionId],
+        marked: !prev[questionId]?.marked,
+      },
     }));
   };
 
@@ -1031,10 +1061,26 @@ export function AssessmentApp() {
     window.beyon?.assessment?.unlockWindow();
     setStep('submitting');
 
+    // Build structured answer mapping using question IDs and order keys
+    const payloadAnswers: Record<string, any> = {};
+    examQuestionsList.forEach((q: any, idx: number) => {
+      const qKey = `q-${idx + 1}`;
+      const ans = answers[qKey] || (q.id ? answers[q.id] : null);
+      if (ans && (ans.optionId || (ans.optionIds && ans.optionIds.length > 0))) {
+        payloadAnswers[q.id || qKey] = {
+          questionId: q.id,
+          optionId: ans.optionId,
+          optionIds: ans.optionIds || (ans.optionId ? [ans.optionId] : []),
+          selectedOptionId: ans.optionId,
+          selectedOptionIds: ans.optionIds || (ans.optionId ? [ans.optionId] : []),
+          marked: ans.marked,
+        };
+      }
+    });
+
     if (!session || session.sessionId === '00000000-0000-0000-0000-000000000001') {
-      const answeredCount = Object.values(answers).filter(a => a.optionId).length;
-      const calculatedScore = totalQ > 0 ? Math.round((answeredCount / totalQ) * 100) : 0;
-      setResults({ score: calculatedScore, status: 'SUBMITTED', totalQuestions: totalQ, answeredCount });
+      const attemptedCount = Object.values(answers).filter(a => a.optionId || (a.optionIds && a.optionIds.length > 0)).length;
+      setResults({ score: 0, accuracy: 0, status: 'SUBMITTED', totalQuestions: totalQ, answeredCount: attemptedCount });
       setStep('results');
       return;
     }
@@ -1042,14 +1088,14 @@ export function AssessmentApp() {
     try {
       const res = await apiFetch(`/assessment/session/${session.sessionId}/submit`, {
         method: 'POST',
-        body: JSON.stringify({ answers }),
+        body: JSON.stringify({ answers: payloadAnswers }),
       });
       setResults(res);
       setStep('results');
     } catch (err: any) {
-      const answeredCount = Object.values(answers).filter(a => a.optionId).length;
-      const calculatedScore = totalQ > 0 ? Math.round((answeredCount / totalQ) * 100) : 0;
-      setResults({ score: calculatedScore, status: 'SUBMITTED', totalQuestions: totalQ, answeredCount });
+      console.warn('Submission fallback:', err);
+      const attemptedCount = Object.values(answers).filter(a => a.optionId || (a.optionIds && a.optionIds.length > 0)).length;
+      setResults({ score: 0, accuracy: 0, status: 'SUBMITTED', totalQuestions: totalQ, answeredCount: attemptedCount });
       setStep('results');
     }
   };
@@ -1108,42 +1154,51 @@ export function AssessmentApp() {
     const activeToken = token || (await window.beyon?.auth?.getToken?.()) || null;
 
     try {
-      const oppId = targetId || activeOpportunity?.id || '79cbb9c2-13cf-44a9-91c0-9a7e68809640';
-      const res = await fetch(`${API_BASE}/assessment/session`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(activeToken ? { Authorization: `Bearer ${activeToken}` } : {}),
-        },
-        body: JSON.stringify({
-          opportunityId: oppId,
-          questionCount: totalQCount,
-          durationMinutes: durationMins,
-        }),
-      });
+      const oppId = targetId || activeOpportunity?.id || null;
+      let activeSessionData: any = null;
 
-      if (res.ok) {
-        const sessionData = await res.json();
-        setSession({
-          sessionId: sessionData.sessionId,
-          status: sessionData.status || 'CREATED',
-          totalQuestions: sessionData.totalQuestions || totalQCount,
-          durationMinutes: sessionData.durationMinutes || durationMins,
+      if (oppId) {
+        const res = await fetch(`${API_BASE}/assessment/session`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(activeToken ? { Authorization: `Bearer ${activeToken}` } : {}),
+          },
+          body: JSON.stringify({
+            opportunityId: oppId,
+            questionCount: totalQCount,
+            durationMinutes: durationMins,
+          }),
         });
-      } else {
-        setSession({
-          sessionId: '00000000-0000-0000-0000-000000000001',
-          status: 'CREATED',
-          totalQuestions: totalQCount,
-          durationMinutes: durationMins,
-        });
+
+        if (res.status === 409) {
+          const errData = await res.json().catch(() => ({}));
+          const errMsg = errData.error || errData.message || 'You have already completed and submitted the assessment for this drive. Retakes are not permitted.';
+          setError(errMsg);
+          setIsStartingAssessment(false);
+          return;
+        }
+
+        if (res.ok) {
+          activeSessionData = await res.json();
+        }
       }
+
+      const totalQuestionsCount = activeSessionData?.totalQuestions || totalQCount;
+      const durationMinutesVal = activeSessionData?.durationMinutes || durationMins;
+
+      setSession({
+        sessionId: activeSessionData?.sessionId || '00000000-0000-0000-0000-000000000001',
+        status: activeSessionData?.status || 'CREATED',
+        totalQuestions: totalQuestionsCount,
+        durationMinutes: durationMinutesVal,
+      });
 
       // Pre-load company drive questions or benchmark questions for the examination
       try {
-        const qEndpoint = opportunityId
-          ? `${API_BASE}/opportunities/${opportunityId}/questions`
-          : `${API_BASE}/practice/questions?size=${totalQCount}`;
+        const qEndpoint = oppId
+          ? `${API_BASE}/opportunities/${oppId}/questions`
+          : `${API_BASE}/practice/questions?size=${totalQuestionsCount}`;
         
         const qRes = await fetch(qEndpoint, {
           headers: activeToken ? { Authorization: `Bearer ${activeToken}` } : {},
@@ -1153,9 +1208,7 @@ export function AssessmentApp() {
           const list = qData.data || qData || [];
           if (Array.isArray(list) && list.length > 0) {
             setExamQuestionsList(list);
-            if (session) {
-              setSession(prev => prev ? { ...prev, totalQuestions: list.length } : prev);
-            }
+            setSession(prev => prev ? { ...prev, totalQuestions: list.length } : prev);
           }
         }
       } catch (e) {
@@ -1166,14 +1219,7 @@ export function AssessmentApp() {
       setStep('verify');
     } catch (err: any) {
       console.warn('Error starting assessment session:', err);
-      setSession({
-        sessionId: '00000000-0000-0000-0000-000000000001',
-        status: 'CREATED',
-        totalQuestions: totalQCount,
-        durationMinutes: durationMins,
-      });
-      await window.beyon?.assessment?.enterFullscreen();
-      setStep('verify');
+      setError(err?.message || 'Failed to start assessment session.');
     } finally {
       setIsStartingAssessment(false);
     }
@@ -1218,7 +1264,7 @@ export function AssessmentApp() {
       {/* Top Header */}
       <header className={styles.assessmentHeader}>
         <div className={styles.brandTitle}>
-          <img src="/logo-transparent.png" alt="Beyon" className={styles.brandLogoImg} />
+          <img src={logoTransparent} alt="Beyon" className={styles.brandLogoImg} />
           <div className={styles.brandSubWrapper}>
             <span className={styles.brandName}>Beyon</span>
             <span className={styles.brandSub}>
@@ -1320,7 +1366,7 @@ export function AssessmentApp() {
           <div className={styles.authCard}>
             <div className={styles.authAside}>
               <div className={styles.authAsideLogoWrapper}>
-                <img src="/logo.png" alt="Beyon Official Logo" className={styles.authAsideLogo} />
+                <img src={logoPng} alt="Beyon Official Logo" className={styles.authAsideLogo} />
               </div>
               <h2>Beyon Secure Assessment Portal</h2>
               <p>Secure candidate authentication for proctored examinations and skill competency assessments.</p>
@@ -1332,7 +1378,7 @@ export function AssessmentApp() {
 
             <div className={styles.authPanel}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '0.4rem' }}>
-                <img src="/logo-icon.png" alt="Beyon Icon" style={{ width: '26px', height: '26px', objectFit: 'contain' }} />
+                <img src={logoIcon} alt="Beyon Icon" style={{ width: '26px', height: '26px', objectFit: 'contain' }} />
                 <span className="section-label" style={{ marginBottom: 0 }}>Official Assessment Portal</span>
               </div>
               <h1>Candidate Sign In</h1>
@@ -1409,7 +1455,7 @@ export function AssessmentApp() {
             <div className={styles.dashHeroContent}>
               <div className={styles.dashBadgeRow}>
                 <span className={styles.portalBadge}>
-                  <img src="/logo-icon.png" alt="Beyon" style={{ width: '15px', height: '15px', objectFit: 'contain', verticalAlign: 'middle', marginRight: '6px' }} />
+                  <img src={logoIcon} alt="Beyon" style={{ width: '15px', height: '15px', objectFit: 'contain', verticalAlign: 'middle', marginRight: '6px' }} />
                   Beyon Secure Assessment Portal
                 </span>
                 <span className={styles.verifiedBadge}>
@@ -1510,18 +1556,35 @@ export function AssessmentApp() {
                       <span className={styles.assessmentDurationChip}>
                         <i className="bx bx-time-five" /> {opp.durationMinutes || 60} Mins &middot; {opp.totalQuestions || 20} Questions
                       </span>
-                      <button
-                        className={styles.btnTakeTest}
-                        onClick={() => handleTakeTest(opp.id, opp.title, opp.durationMinutes || 60, opp.totalQuestions || 20)}
-                        disabled={isStartingAssessment}
-                        type="button"
-                      >
-                        {isStartingAssessment ? (
-                          <><i className="bx bx-loader-alt bx-spin" /> Launching...</>
-                        ) : (
-                          <><i className="bx bx-rocket" /> Start Assessment</>
-                        )}
-                      </button>
+                      {opp.applicationStatus === 'ASSESSED' || opp.assessmentScore != null ? (
+                        <button
+                          className={styles.btnTakeTest}
+                          disabled
+                          type="button"
+                          style={{
+                            background: '#f0fdf4',
+                            color: '#15803d',
+                            border: '1.5px solid #16a34a',
+                            cursor: 'default',
+                            opacity: 1,
+                          }}
+                        >
+                          <i className="bx bx-check-circle" /> Completed ({opp.assessmentScore ?? 0}%)
+                        </button>
+                      ) : (
+                        <button
+                          className={styles.btnTakeTest}
+                          onClick={() => handleTakeTest(opp.id, opp.title, opp.durationMinutes || 60, opp.totalQuestions || 20)}
+                          disabled={isStartingAssessment}
+                          type="button"
+                        >
+                          {isStartingAssessment ? (
+                            <><i className="bx bx-loader-alt bx-spin" /> Launching...</>
+                          ) : (
+                            <><i className="bx bx-rocket" /> Start Assessment</>
+                          )}
+                        </button>
+                      )}
                       <span className={styles.assessmentFootnote}>
                         Requires Secondary Phone Camera
                       </span>
@@ -2013,10 +2076,11 @@ export function AssessmentApp() {
                 {Array.from({ length: totalQ }, (_, i) => {
                   const qId = `q-${i + 1}`;
                   const ans = answers[qId];
+                  const hasAnswered = Boolean(ans?.optionId || (ans?.optionIds && ans.optionIds.length > 0));
                   let btnClass = styles.paletteBtn;
                   if (i === currentQuestion) btnClass += ` ${styles.paletteActive}`;
                   else if (ans?.marked) btnClass += ` ${styles.paletteMarked}`;
-                  else if (ans?.optionId) btnClass += ` ${styles.paletteAnswered}`;
+                  else if (hasAnswered) btnClass += ` ${styles.paletteAnswered}`;
                   return (
                     <button
                       key={qId}
@@ -2035,8 +2099,8 @@ export function AssessmentApp() {
               </div>
 
               <div className={styles.paletteStats}>
-                <span>Answered: <b>{Object.values(answers).filter(a => a.optionId).length}</b></span>
-                <span>Remaining: <b>{totalQ - Object.values(answers).filter(a => a.optionId).length}</b></span>
+                <span>Answered: <b>{Object.values(answers).filter(a => a.optionId || (a.optionIds && a.optionIds.length > 0)).length}</b></span>
+                <span>Remaining: <b>{totalQ - Object.values(answers).filter(a => a.optionId || (a.optionIds && a.optionIds.length > 0)).length}</b></span>
               </div>
             </div>
           </aside>
@@ -2057,6 +2121,12 @@ export function AssessmentApp() {
 
             {(() => {
               const activeQ = examQuestionsList[currentQuestion];
+              const isMultiple = activeQ?.questionType === 'MCQ_MULTIPLE' ||
+                                 activeQ?.questionType === 'MULTIPLE' ||
+                                 activeQ?.type === 'MULTIPLE' ||
+                                 Boolean(activeQ?.allowMultiple) ||
+                                 Boolean(activeQ?.isMultipleChoice);
+
               const qTitle = activeQ?.title || activeQ?.description || `Technical Competency Question #${currentQuestion + 1}: Which architecture or data structure guarantees thread safety and O(1) performance in high-concurrency systems?`;
               const qOptions = (Array.isArray(activeQ?.options) && activeQ.options.length > 0)
                 ? activeQ.options.map((opt: any, idx: number) => ({
@@ -2073,21 +2143,80 @@ export function AssessmentApp() {
 
               return (
                 <>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                    {isMultiple ? (
+                      <span style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '5px',
+                        padding: '3px 8px',
+                        background: '#eff6ff',
+                        color: '#1d4ed8',
+                        border: '1px solid #bfdbfe',
+                        fontSize: '0.74rem',
+                        fontWeight: 700,
+                        letterSpacing: '0.02em',
+                      }}>
+                        <i className="bx bx-check-square" style={{ fontSize: '1rem', color: '#2563eb' }} />
+                        MULTIPLE CHOICE &middot; Select all that apply
+                      </span>
+                    ) : (
+                      <span style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '5px',
+                        padding: '3px 8px',
+                        background: '#f8fafc',
+                        color: '#475569',
+                        border: '1px solid #e2e8f0',
+                        fontSize: '0.74rem',
+                        fontWeight: 600,
+                      }}>
+                        <i className="bx bx-radio-circle-marked" style={{ fontSize: '1rem', color: '#64748b' }} />
+                        SINGLE CHOICE QUESTION
+                      </span>
+                    )}
+                  </div>
+
                   <h2 className={styles.questionText}>{qTitle}</h2>
 
                   <div className={styles.options}>
-                    {qOptions.map((opt: any) => (
-                      <div
-                        key={opt.id}
-                        className={`${styles.option} ${
-                          currentAns?.optionId === opt.id ? styles.optionSelected : ''
-                        }`}
-                        onClick={() => handleAnswer(currentQId, opt.id)}
-                      >
-                        <span className={styles.optionMarker}>{opt.label}</span>
-                        <span className={styles.optionText}>{opt.text}</span>
-                      </div>
-                    ))}
+                    {qOptions.map((opt: any) => {
+                      const isSelected = isMultiple
+                        ? Boolean(currentAns?.optionIds?.includes(opt.id))
+                        : (currentAns?.optionId === opt.id || Boolean(currentAns?.optionIds?.includes(opt.id)));
+
+                      return (
+                        <div
+                          key={opt.id}
+                          className={`${styles.option} ${isSelected ? styles.optionSelected : ''}`}
+                          onClick={() => handleAnswer(currentQId, opt.id, isMultiple)}
+                          style={{
+                            cursor: 'pointer',
+                            transition: 'all 0.15s ease',
+                          }}
+                        >
+                          {isMultiple ? (
+                            <span
+                              className={styles.optionMarker}
+                              style={{
+                                background: isSelected ? 'var(--color-primary)' : '#f8fafc',
+                                color: isSelected ? '#ffffff' : '#475569',
+                                border: `1.5px solid ${isSelected ? 'var(--color-primary)' : '#cbd5e1'}`,
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                              }}
+                            >
+                              <i className={`bx ${isSelected ? 'bx-check' : 'bx-minus'}`} style={{ fontSize: '1.1rem' }} />
+                            </span>
+                          ) : (
+                            <span className={styles.optionMarker}>{opt.label}</span>
+                          )}
+                          <span className={styles.optionText} style={{ fontWeight: isSelected ? 600 : 400 }}>{opt.text}</span>
+                        </div>
+                      );
+                    })}
                   </div>
                 </>
               );
@@ -2157,7 +2286,13 @@ export function AssessmentApp() {
                 <div className={styles.resultItem}>
                   <div className={styles.resultLabel}>Answered</div>
                   <div className={styles.resultValue}>
-                    {Object.values(answers).filter(a => a.optionId).length}
+                    {Object.values(answers).filter(a => a.optionId || (a.optionIds && a.optionIds.length > 0)).length}
+                  </div>
+                </div>
+                <div className={styles.resultItem}>
+                  <div className={styles.resultLabel}>Accuracy</div>
+                  <div className={styles.resultValue} style={{ color: (results?.accuracy ?? 0) >= 60 ? 'var(--color-success)' : '#dc2626' }}>
+                    {results?.accuracy !== undefined && results?.accuracy !== null ? `${results.accuracy}%` : '0%'}
                   </div>
                 </div>
                 <div className={styles.resultItem}>
