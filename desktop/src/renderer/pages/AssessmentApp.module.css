@@ -124,7 +124,9 @@
   background: #eff6ff;
   color: #1e40af;
   border: 1px solid #bfdbfe;
-  padding: 4px 10px;
+  height: 34px;
+  box-sizing: border-box;
+  padding: 0 10px;
   font-size: 0.72rem;
   font-weight: 800;
   letter-spacing: 0.05em;
@@ -141,11 +143,14 @@
 .finishBtn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 7px;
   background: #15803d;
   color: #ffffff;
-  border: none;
-  padding: 8px 16px;
+  border: 1px solid #166534;
+  height: 34px;
+  box-sizing: border-box;
+  padding: 0 16px;
   border-radius: 0px;
   font-family: var(--font-display, 'ClashDisplay', sans-serif);
   font-size: 0.82rem;
@@ -162,11 +167,14 @@
 .headerSettingsBtn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
   background: #f8fafc;
   color: var(--text-primary);
   border: 1px solid var(--color-border);
-  padding: 7px 14px;
+  height: 34px;
+  box-sizing: border-box;
+  padding: 0 14px;
   border-radius: 0px;
   font-family: var(--font-display, 'ClashDisplay', sans-serif);
   font-size: 0.8rem;
@@ -183,11 +191,14 @@
 .headerExitBtn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
   background: #fef2f2;
   color: #b91c1c;
   border: 1px solid #fecaca;
-  padding: 7px 14px;
+  height: 34px;
+  box-sizing: border-box;
+  padding: 0 14px;
   border-radius: 0px;
   font-family: var(--font-display, 'ClashDisplay', sans-serif);
   font-size: 0.8rem;
@@ -205,11 +216,14 @@
 .headerExitBtnDisabled {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
   background: #f1f5f9;
   color: #94a3b8;
   border: 1px solid #e2e8f0;
-  padding: 7px 14px;
+  height: 34px;
+  box-sizing: border-box;
+  padding: 0 14px;
   border-radius: 0px;
   font-family: var(--font-display, 'ClashDisplay', sans-serif);
   font-size: 0.8rem;
@@ -1542,14 +1556,15 @@
 .headerStreakBadge {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
   background: #fff7ed;
   border: 1px solid #fed7aa;
   color: #c2410c;
-  font-family: var(--font-heading);
+  height: 34px;
+  box-sizing: border-box;
   font-size: 0.8rem;
   font-weight: 800;
-  padding: 5px 12px;
+  padding: 0 12px;
 }
 
 .headerStreakBadge i {
@@ -1563,17 +1578,19 @@
   gap: 8px;
   background: #f8fafc;
   border: 1px solid #e2e8f0;
-  padding: 4px 12px 4px 6px;
+  height: 34px;
+  box-sizing: border-box;
+  padding: 0 12px 0 6px;
 }
 
 .headerProfileAvatar {
-  width: 26px;
-  height: 26px;
+  width: 24px;
+  height: 24px;
   background: #1c2d81;
   color: #fed601;
   font-family: var(--font-heading);
   font-weight: 800;
-  font-size: 0.78rem;
+  font-size: 0.75rem;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1588,14 +1605,17 @@
 .headerSignOutBtn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 5px;
   background: #f1f5f9;
   border: 1px solid #cbd5e1;
   color: #475569;
-  font-family: var(--font-heading);
-  font-size: 0.78rem;
+  font-family: var(--font-display, 'ClashDisplay', sans-serif);
+  font-size: 0.8rem;
   font-weight: 700;
-  padding: 6px 12px;
+  height: 34px;
+  box-sizing: border-box;
+  padding: 0 14px;
   cursor: pointer;
   transition: all 0.15s ease;
 }

@@ -1,4 +1,32 @@
-/* Fonts loaded via Google Fonts link in index.html */
+/* ================================================================
+   BEYON ENTERPRISE DESKTOP DESIGN SYSTEM
+   Fonts, Dropdowns & Unified Typography
+   ================================================================ */
+
+@font-face {
+  font-family: 'ClashDisplay';
+  src: url('/fonts/ClashDisplay.ttf') format('truetype');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'GROBOLD';
+  src: url('/fonts/GROBOLD.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Montserrat';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('/fonts/Montserrat-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
 
 :root {
   --color-primary: #253cac;
@@ -24,9 +52,9 @@
   --color-warning: #c98f00;
   --color-danger: #c62828;
 
-  --font-body: 'Montserrat', -apple-system, 'Segoe UI', sans-serif;
-  --font-heading: 'ClashDisplay', 'Montserrat', sans-serif;
-  --font-display: 'Montserrat', sans-serif;
+  --font-body: 'ClashDisplay', 'Montserrat', -apple-system, 'Segoe UI', sans-serif;
+  --font-heading: 'ClashDisplay', sans-serif;
+  --font-display: 'ClashDisplay', 'Montserrat', sans-serif;
   --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
 
   --radius-xs: 0px;
@@ -61,8 +89,20 @@ h1, h2, h3, h4, h5, h6 {
   color: var(--color-primary);
 }
 
+input, select, textarea, button {
+  font-family: var(--font-body) !important;
+}
+
+select,
+select option,
+select optgroup {
+  font-family: 'ClashDisplay', var(--font-body), sans-serif !important;
+  background-color: var(--color-surface, #ffffff);
+  color: var(--text-primary, #0d0d0e);
+}
+
 button {
   cursor: pointer;
   border: none;
-  font-family: var(--font-display);
+  font-family: var(--font-display) !important;
 }
