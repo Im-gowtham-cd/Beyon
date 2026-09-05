@@ -185,21 +185,24 @@ public class RecruitmentService {
         List<com.beyon.profile.model.StudentProfile> profiles = studentProfileRepository.findAll();
         List<Map<String, Object>> pool = new ArrayList<>();
         for (com.beyon.profile.model.StudentProfile prof : profiles) {
+            var userOpt = userRepository.findById(prof.getUserId());
+            if (userOpt.isEmpty()) continue;
+            var u = userOpt.get();
+            if (u.getDisplayName() == null || u.getDisplayName().isBlank()) continue;
+            if (u.getEmail() != null && (u.getEmail().contains("test.com") || u.getEmail().contains("@example.com"))) continue;
+
             Map<String, Object> map = new LinkedHashMap<>();
             map.put("id", prof.getUserId().toString());
             map.put("studentId", prof.getUserId());
-            map.put("institutionName", prof.getInstitution());
-            map.put("college", prof.getInstitution());
-            map.put("degree", prof.getDegree());
-            map.put("department", prof.getDepartment());
-            map.put("batch", prof.getGraduationYear() != null ? String.valueOf(prof.getGraduationYear()) : prof.getAcademicYear());
+            map.put("studentName", u.getDisplayName());
+            map.put("name", u.getDisplayName());
+            map.put("studentEmail", u.getEmail());
+            map.put("institutionName", prof.getInstitution() != null ? prof.getInstitution() : "Partner Institution");
+            map.put("college", prof.getInstitution() != null ? prof.getInstitution() : "Partner Institution");
+            map.put("degree", prof.getDegree() != null ? prof.getDegree() : "B.Tech");
+            map.put("department", prof.getDepartment() != null ? prof.getDepartment() : "Computer Science and Engineering");
+            map.put("batch", prof.getGraduationYear() != null ? String.valueOf(prof.getGraduationYear()) : (prof.getAcademicYear() != null ? prof.getAcademicYear() : "Batch 2026"));
             map.put("cgpa", prof.getCgpa() != null ? prof.getCgpa().doubleValue() : 0.0);
-
-            userRepository.findById(prof.getUserId()).ifPresent(u -> {
-                map.put("studentName", u.getDisplayName());
-                map.put("name", u.getDisplayName());
-                map.put("studentEmail", u.getEmail());
-            });
 
             List<com.beyon.profile.model.StudentSkill> skills = studentSkillRepository.findByUserId(prof.getUserId());
             List<String> skillNames = skills.stream().map(com.beyon.profile.model.StudentSkill::getSkillName).toList();

@@ -11,6 +11,7 @@ import {
   Check,
   AlertOctagon,
 } from 'lucide-react';
+import { api } from '../../services/api/client';
 import styles from './AssessmentBuilderPage.module.css';
 
 interface Incident {
@@ -70,13 +71,12 @@ export const ProctoringReportPage: React.FC = () => {
   const fetchReport = async () => {
     if (!sessionId) return;
     setLoading(true);
+    setError(null);
     try {
-      const res = await fetch(`http://localhost:8085/api/v1/proctoring/dualview/${sessionId}/report`);
-      if (!res.ok) throw new Error('Failed to load proctoring report');
-      const data = await res.json();
+      const data = await api.get<ProctoringReport>(`/proctoring/dualview/${sessionId}/report`);
       setReport(data);
     } catch (err: any) {
-      setError(err.message);
+      setError(err?.message || 'Failed to load proctoring report');
     } finally {
       setLoading(false);
     }
@@ -89,19 +89,15 @@ export const ProctoringReportPage: React.FC = () => {
   const handleReviewIncident = async (incidentId: string, action: string) => {
     if (!report) return;
     try {
-      await fetch(
-        `http://localhost:8085/api/v1/proctoring/dualview/${report.procSessionId}/incidents/${incidentId}/review`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action, notes: reviewNotes }),
-        }
+      await api.post(
+        `/proctoring/dualview/${report.procSessionId}/incidents/${incidentId}/review`,
+        { action, notes: reviewNotes }
       );
       setReviewingId(null);
       setReviewNotes('');
       await fetchReport();
     } catch (err: any) {
-      alert('Failed to submit review: ' + err.message);
+      alert('Failed to submit review: ' + (err?.message || 'Error occurred'));
     }
   };
 
