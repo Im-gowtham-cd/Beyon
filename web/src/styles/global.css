@@ -6,6 +6,7 @@
   padding: 0;
   box-sizing: border-box;
   scrollbar-width: none;
+  font-family: 'ClashDisplay', 'Clash Display', sans-serif !important;
 }
 
 html {
@@ -14,10 +15,11 @@ html {
   font-size: 16px;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  font-family: 'ClashDisplay', 'Clash Display', sans-serif !important;
 }
 
 body {
-  font-family: var(--font-body);
+  font-family: 'ClashDisplay', 'Clash Display', sans-serif !important;
   font-size: var(--fs-base, 0.95rem);
   font-weight: 500;
   color: var(--text-primary, #020617);
@@ -32,15 +34,15 @@ body {
 
 /* ── Typography ── */
 h1, h2, h3, h4, h5, h6 {
-  font-family: var(--font-heading);
+  font-family: 'ClashDisplay', 'Clash Display', sans-serif !important;
   font-weight: 700;
   color: var(--color-primary, #1c2d81);
   overflow-wrap: break-word;
   letter-spacing: -0.01em;
 }
 
-p, a, button, td, th, li, label, span, input, textarea {
-  font-family: inherit;
+p, a, button, td, th, li, label, span, input, textarea, div, select, option, optgroup {
+  font-family: 'ClashDisplay', 'Clash Display', sans-serif !important;
   overflow-wrap: break-word;
   overflow-wrap: anywhere;
 }
@@ -50,6 +52,7 @@ a {
   color: inherit;
   text-decoration: none;
   transition: var(--transition-fast);
+  font-family: 'ClashDisplay', 'Clash Display', sans-serif !important;
 }
 
 /* ── Images ── */
@@ -59,7 +62,7 @@ img {
   display: block;
 }
 
-/* ── Form Controls & Typography Mapping ── */
+/* ── Form Controls & Dropdown Typography Mapping ── */
 input,
 select,
 textarea,
@@ -69,7 +72,7 @@ option,
 label,
 fieldset,
 legend {
-  font-family: var(--font-body, 'ClashDisplay', sans-serif);
+  font-family: 'ClashDisplay', 'Clash Display', sans-serif !important;
   font-size: inherit;
   color: inherit;
 }
@@ -85,18 +88,18 @@ input[type="date"],
 input[type="datetime-local"],
 select,
 textarea {
-  font-family: var(--font-body, 'ClashDisplay', sans-serif);
+  font-family: 'ClashDisplay', 'Clash Display', sans-serif !important;
   border-radius: 0px;
 }
 
 select {
-  font-family: var(--font-body, 'ClashDisplay', sans-serif) !important;
+  font-family: 'ClashDisplay', 'Clash Display', sans-serif !important;
   cursor: pointer;
 }
 
 select option,
 select optgroup {
-  font-family: var(--font-body, 'ClashDisplay', sans-serif) !important;
+  font-family: 'ClashDisplay', 'Clash Display', sans-serif !important;
   background-color: var(--color-surface, #ffffff);
   color: var(--text-primary, #0f172a);
 }
@@ -116,7 +119,7 @@ input[type="radio"] {
 button {
   cursor: pointer;
   border: none;
-  font-family: var(--font-body, 'ClashDisplay', sans-serif);
+  font-family: 'ClashDisplay', 'Clash Display', sans-serif !important;
   background: none;
 }
 
