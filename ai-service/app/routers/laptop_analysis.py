@@ -135,6 +135,17 @@ async def analyze_laptop_frame(req: LaptopFrameRequest):
                 metadata={"bbox": phone_bbox, "source": "yolo_model"}
             ))
 
+        # 3. Deep Learning Cheating CNN & Posture Telemetry
+        from app.services.cheat_cnn_detector import detect_cheating_cnn
+        is_cheating, cheat_prob, cnn_meta = detect_cheating_cnn(img)
+        if is_cheating or cheat_prob >= 0.70:
+            events.append(DetectionEvent(
+                eventType="SUSPICIOUS_BEHAVIOR",
+                confidence=round(cheat_prob, 3),
+                cameraSource="LAPTOP_FRONT",
+                metadata=cnn_meta
+            ))
+
         return LaptopFrameResponse(
             facePresent=face_present,
             faceCount=face_count,

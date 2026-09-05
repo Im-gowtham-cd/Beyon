@@ -1,4 +1,5 @@
 import logging
+import cv2
 import numpy as np
 from typing import List, Dict, Any, Tuple
 
@@ -17,7 +18,6 @@ def get_yolo_model():
     
     try:
         from ultralytics import YOLO
-        # Use YOLO11 nano model or YOLOv8 nano model (lightweight, highly accurate ~6MB)
         try:
             _yolo_model = YOLO("yolo11n.pt")
             logger.info("Loaded YOLO11 nano proctoring model successfully")
@@ -34,13 +34,12 @@ def get_yolo_model():
 
 def detect_objects_yolo(image_bgr: np.ndarray) -> Tuple[int, bool, List[Dict[str, Any]]]:
     """
-    Runs YOLO object detection on the provided BGR image.
+    Runs enhanced YOLO object detection + Computer Vision geometric screen analysis.
     Returns:
       (person_count, cell_phone_detected, detected_objects_list)
     """
-    model = get_yolo_model()
-    if model is None or image_bgr is None:
-        return 1, False, []
+    if image_bgr is None:
+        return 0, False, []
 
     h, w = image_bgr.shape[:2]
     total_area = w * h
@@ -49,50 +48,95 @@ def detect_objects_yolo(image_bgr: np.ndarray) -> Tuple[int, bool, List[Dict[str
     cell_phone_detected = False
     detected_objects = []
 
-    try:
-        # Run inference with conf=0.50
-        results = model(image_bgr, conf=0.50, verbose=False)
-        for r in results:
-            for box in r.boxes:
-                cls_id = int(box.cls[0].item())
-                conf = float(box.conf[0].item())
-                label = model.names[cls_id].lower()
-                xyxy = box.xyxy[0].tolist()
-                bx, by, bx2, by2 = xyxy
-                bw = bx2 - bx
-                bh = by2 - by
-                box_area = bw * bh
+    # 1. YOLO Neural Network Inference (Sensitivity: conf=0.25)
+    model = get_yolo_model()
+    if model is not None:
+        try:
+            results = model(image_bgr, conf=0.25, verbose=False)
+            for r in results:
+                for box in r.boxes:
+                    cls_id = int(box.cls[0].item())
+                    conf = float(box.conf[0].item())
+                    label = model.names[cls_id].lower()
+                    xyxy = box.xyxy[0].tolist()
+                    bx, by, bx2, by2 = xyxy
+                    bw = bx2 - bx
+                    bh = by2 - by
+                    box_area = bw * bh
 
-                # Human Person Detection
-                if label == "person" and conf >= 0.55:
-                    if box_area > 0.02 * total_area:
-                        person_count += 1
+                    # Human Person Detection
+                    if label == "person" and conf >= 0.45:
+                        if box_area > 0.015 * total_area:
+                            person_count += 1
+                            detected_objects.append({
+                                "label": "person",
+                                "confidence": round(conf, 3),
+                                "bbox": [int(bx), int(by), int(bw), int(bh)]
+                            })
+
+                    # Cell Phone / Mobile Device Detection
+                    elif (label in ["cell phone", "phone", "mobile phone", "smartphone"] and conf >= 0.28) or                          (label in ["remote", "gadget"] and conf >= 0.35):
+                        # Filter reasonable bounding box sizes for handheld/desk phone (0.3% to 45% of frame)
+                        if 0.003 * total_area < box_area < 0.45 * total_area:
+                            cell_phone_detected = True
+                            detected_objects.append({
+                                "label": "phone",
+                                "confidence": round(conf, 3),
+                                "bbox": [int(bx), int(by), int(bw), int(bh)],
+                                "model_class": label
+                            })
+
+                    # Secondary Monitors / Laptops / Tablets
+                    elif label in ["laptop", "tv", "tablet"] and conf >= 0.50:
                         detected_objects.append({
-                            "label": "person",
+                            "label": label,
                             "confidence": round(conf, 3),
                             "bbox": [int(bx), int(by), int(bw), int(bh)]
                         })
 
-                # Cell Phone Detection: Target COCO "cell phone" class
-                elif label in ["cell phone", "phone", "mobile phone"] and conf >= 0.60:
-                    # Ignore tiny specks or full screen anomalies
-                    if 0.005 * total_area < box_area < 0.40 * total_area:
-                        cell_phone_detected = True
-                        detected_objects.append({
-                            "label": "phone",
-                            "confidence": round(conf, 3),
-                            "bbox": [int(bx), int(by), int(bw), int(bh)]
-                        })
+        except Exception as e:
+            logger.error(f"Error during YOLO inference: {e}")
 
-                # Also capture secondary laptops/monitors or tablets if relevant
-                elif label in ["laptop", "tablet", "tv"] and conf >= 0.65:
-                    detected_objects.append({
-                        "label": label,
-                        "confidence": round(conf, 3),
-                        "bbox": [int(bx), int(by), int(bw), int(bh)]
-                    })
-
-    except Exception as e:
-        logger.error(f"Error during YOLO inference: {e}")
+    # 2. Computer Vision Geometric Smartphone & Screen Contour Detector (corroborates side-view desk)
+    if not cell_phone_detected:
+        try:
+            gray = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2GRAY)
+            blurred = cv2.GaussianBlur(gray, (5, 5), 0)
+            edges = cv2.Canny(blurred, 50, 150)
+            
+            kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
+            dilated = cv2.dilate(edges, kernel, iterations=1)
+            contours, _ = cv2.findContours(dilated, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            
+            for c in contours:
+                area = cv2.contourArea(c)
+                # Phone size: between 0.5% and 15% of frame area
+                if 0.005 * total_area < area < 0.15 * total_area:
+                    peri = cv2.arcLength(c, True)
+                    approx = cv2.approxPolyDP(c, 0.04 * peri, True)
+                    
+                    # 4-corner quadrilateral (phone screen / body)
+                    if len(approx) == 4:
+                        x, y, cw, ch = cv2.boundingRect(approx)
+                        aspect = float(max(cw, ch)) / max(float(min(cw, ch)), 1.0)
+                        
+                        # Smartphone aspect ratio is typically between 1.6 and 2.4
+                        if 1.6 <= aspect <= 2.4:
+                            roi = gray[y:y+ch, x:x+cw]
+                            roi_std = float(np.std(roi))
+                            roi_mean = float(np.mean(roi))
+                            
+                            # Phone screen on desk has uniform glass surface or illuminated display
+                            if roi_std > 20.0 and (roi_mean < 80.0 or roi_mean > 160.0):
+                                cell_phone_detected = True
+                                detected_objects.append({
+                                    "label": "phone",
+                                    "confidence": 0.88,
+                                    "bbox": [int(x), int(y), int(cw), int(ch)],
+                                    "source": "cv_geometry_screen"
+                                })
+                                break
+        except Exception as e:
+            logger.debug(f"CV geometric phone detector: {e}")
 
     return person_count, cell_phone_detected, detected_objects

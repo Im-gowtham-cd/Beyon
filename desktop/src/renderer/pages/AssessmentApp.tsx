@@ -162,12 +162,32 @@ export function AssessmentApp() {
   // Real-Time Proctoring AI Engine state
   const [proctorStatus, setProctorStatus] = useState<'CLEAR' | 'WARNING' | 'CRITICAL'>('CLEAR');
   const [proctorMessage, setProctorMessage] = useState('Face Detected & Monitored');
-  const [strikeCount, setStrikeCount] = useState<number>(0);
-  const [activeWarningModal, setActiveWarningModal] = useState<{ strike: number; title: string; reason: string } | null>(null);
+  const [activeWarningModal, setActiveWarningModal] = useState<{
+    strike: number;
+    maxStrikes: number;
+    isTerminated: boolean;
+    title: string;
+    reason: string;
+  } | null>(null);
   const analysisCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const isTerminatingRef = useRef(false);
   const strikeCountRef = useRef(0);
+  const categoryStrikesRef = useRef<{
+    PHONE: number;
+    PERSON: number;
+    SOUND: number;
+    ABSENT: number;
+    GAZE: number;
+    OTHER: number;
+  }>({
+    PHONE: 0,
+    PERSON: 0,
+    SOUND: 0,
+    ABSENT: 0,
+    GAZE: 0,
+    OTHER: 0,
+  });
   const lastStrikeTimeRef = useRef(0);
   const absenceStreakRef = useRef(0);
   const cameraCoverStreakRef = useRef(0);
@@ -233,6 +253,26 @@ export function AssessmentApp() {
     }
   };
 
+  const getViolationCategory = (eventType: string): 'PHONE' | 'PERSON' | 'SOUND' | 'ABSENT' | 'GAZE' | 'OTHER' => {
+    if (eventType === 'PHONE_DETECTED' || eventType === 'POSSIBLE_QUESTION_CAPTURE') return 'PHONE';
+    if (eventType === 'MULTIPLE_PEOPLE' || eventType === 'SECOND_PERSON' || eventType === 'MULTIPLE_FACES') return 'PERSON';
+    if (eventType === 'SUSPICIOUS_SPEECH' || eventType === 'SECOND_VOICE' || eventType === 'CONVERSATION_SUSPECTED' || eventType === 'AUDIO_VIOLATION') return 'SOUND';
+    if (eventType === 'CANDIDATE_ABSENT' || eventType === 'FACE_MISSING' || eventType === 'NO_PERSON_DETECTED' || eventType === 'SUSTAINED_ABSENCE') return 'ABSENT';
+    if (eventType === 'LOOKING_AWAY' || eventType === 'GAZE_DEVIATION' || eventType === 'SUSPICIOUS_BEHAVIOR') return 'GAZE';
+    return 'OTHER';
+  };
+
+  const getMaxWarningsForCategory = (cat: 'PHONE' | 'PERSON' | 'SOUND' | 'ABSENT' | 'GAZE' | 'OTHER'): number => {
+    switch (cat) {
+      case 'PHONE': return 0;   // 0 warnings -> Instant Disqualification on phone detection
+      case 'PERSON': return 1;  // 1 warning allowed -> Terminates on 2nd person strike
+      case 'SOUND': return 3;   // 3 warnings allowed -> Terminates on 4th voice infraction
+      case 'ABSENT': return 2;  // 2 warnings allowed -> Terminates on 3rd absence
+      case 'GAZE': return 3;    // 3 warnings allowed -> Terminates on 4th looking-away infraction
+      default: return 3;
+    }
+  };
+
   const triggerRuleEngineViolation = (
     eventType: string,
     reason: string,
@@ -242,19 +282,23 @@ export function AssessmentApp() {
     if (isTerminatingRef.current) return;
 
     const snapshot = captureFrameBase64();
+    const category = getViolationCategory(eventType);
+    const maxAllowed = getMaxWarningsForCategory(category);
 
-    // 📱 PHONE DETECTED: Instant Kill Switch
-    if (isInstantKill) {
+    // 📱 PHONE DETECTED: 0 Warnings Allowed -> Instant Kill Switch
+    if (isInstantKill || maxAllowed === 0) {
       isTerminatingRef.current = true;
       setProctorStatus('CRITICAL');
       setProctorMessage('AUTO-TERMINATED (PHONE DETECTED)');
       setActiveWarningModal({
-        strike: 3,
+        strike: 1,
+        maxStrikes: 0,
+        isTerminated: true,
         title: 'CRITICAL VIOLATION: MOBILE PHONE DETECTED',
-        reason: `Unauthorized mobile device detected (${cameraSource}). In accordance with examination security policy, this session has been immediately terminated and logged.`,
+        reason: `Unauthorized mobile device detected (${cameraSource}). In accordance with strict examination security policy (0 warnings allowed for mobile phones), this session has been immediately terminated and logged.`,
       });
       addMalpracticeAlert('CRITICAL_PHONE_TERMINATION', `🚨 CRITICAL VIOLATION: ${reason}. Assessment terminated.`);
-      setProctoringWarnings(prev => [...prev, `[INSTANT TERMINATION] ${reason} (${cameraSource})`]);
+      setProctoringWarnings(prev => [...prev, `[INSTANT TERMINATION - 0 WARNINGS] ${reason} (${cameraSource})`]);
 
       logProctoringIncident(eventType, 'CRITICAL', 0.98, reason, cameraSource, snapshot);
 
@@ -264,51 +308,55 @@ export function AssessmentApp() {
       return;
     }
 
-    // Temporal Smoothing & Cooldown filter (4s between strikes)
+    // Temporal Smoothing & Cooldown filter (3s between strikes)
     const now = Date.now();
-    if (now - lastStrikeTimeRef.current < 4000) return;
+    if (now - lastStrikeTimeRef.current < 3000) return;
     lastStrikeTimeRef.current = now;
 
     strikeCountRef.current += 1;
-    const currentStrikes = strikeCountRef.current;
-    setStrikeCount(currentStrikes);
-    setProctoringWarnings(prev => [...prev, `[STRIKE ${currentStrikes}/3] ${reason} (${cameraSource})`]);
+    categoryStrikesRef.current[category] = (categoryStrikesRef.current[category] || 0) + 1;
+    const catStrikes = categoryStrikesRef.current[category];
+    const totalStrikes = strikeCountRef.current;
+    setStrikeCount(totalStrikes);
 
-    const severity = currentStrikes >= 3 ? 'CRITICAL' : currentStrikes === 2 ? 'HIGH' : 'MEDIUM';
+    const isTerminated = catStrikes > maxAllowed;
+
+    setProctoringWarnings(prev => [
+      ...prev,
+      `[${category} WARNING ${catStrikes}/${maxAllowed}] ${reason} (${cameraSource})`
+    ]);
+
+    const severity = isTerminated ? 'CRITICAL' : catStrikes === maxAllowed ? 'HIGH' : 'MEDIUM';
     logProctoringIncident(eventType, severity, 0.90, reason, cameraSource, snapshot);
 
-    if (currentStrikes === 1) {
-      setProctorStatus('WARNING');
-      setProctorMessage(`Strike 1/3: ${reason}`);
-      setActiveWarningModal({
-        strike: 1,
-        title: 'Proctoring Warning (Strike 1 of 3)',
-        reason: `${reason}. Please ensure you maintain correct posture, silence, and look directly at your screen.`,
-      });
-      addMalpracticeAlert('VIOLATION_STRIKE_1', `⚠️ Warning (Strike 1/3): ${reason}`);
-    } else if (currentStrikes === 2) {
-      setProctorStatus('WARNING');
-      setProctorMessage(`Strike 2/3: FINAL WARNING`);
-      setActiveWarningModal({
-        strike: 2,
-        title: '🚨 FINAL WARNING (Strike 2 of 3)',
-        reason: `${reason}. You have 1 strike remaining. One more infraction will immediately terminate your assessment.`,
-      });
-      addMalpracticeAlert('VIOLATION_STRIKE_2', `🚨 FINAL WARNING (Strike 2/3): ${reason}`);
-    } else if (currentStrikes >= 3) {
+    if (isTerminated) {
       isTerminatingRef.current = true;
       setProctorStatus('CRITICAL');
-      setProctorMessage('AUTO-TERMINATED (3 STRIKES)');
+      setProctorMessage(`AUTO-TERMINATED (${category} LIMIT EXCEEDED)`);
       setActiveWarningModal({
-        strike: 3,
-        title: '⛔ ASSESSMENT TERMINATED (3 Strikes Exceeded)',
-        reason: `You have exceeded the maximum allowed proctoring violations (3 strikes). Latest infraction: ${reason}. Assessment is being auto-submitted.`,
+        strike: catStrikes,
+        maxStrikes: maxAllowed,
+        isTerminated: true,
+        title: `⛔ ASSESSMENT TERMINATED (${category} Limit Exceeded)`,
+        reason: `You have exceeded the maximum allowed warnings for ${category.toLowerCase()} violations (${maxAllowed} allowed). Latest infraction: ${reason}. Assessment is being auto-submitted.`,
       });
-      addMalpracticeAlert('STRIKE_LIMIT_TERMINATION', `⛔ ASSESSMENT TERMINATED: 3 Strikes Exceeded (${reason}).`);
+      addMalpracticeAlert('STRIKE_LIMIT_TERMINATION', `⛔ TERMINATED: ${category} Limit Exceeded (${reason}).`);
 
       setTimeout(() => {
         if (handleSubmitRef.current) handleSubmitRef.current();
       }, 2500);
+    } else {
+      setProctorStatus('WARNING');
+      setProctorMessage(`${category} Warning ${catStrikes}/${maxAllowed}: ${reason}`);
+      const isFinal = catStrikes === maxAllowed;
+      setActiveWarningModal({
+        strike: catStrikes,
+        maxStrikes: maxAllowed,
+        isTerminated: false,
+        title: isFinal ? `🚨 FINAL WARNING (${catStrikes} of ${maxAllowed})` : `Proctoring Warning (${catStrikes} of ${maxAllowed})`,
+        reason: `${reason}. You have ${maxAllowed - catStrikes} warning(s) remaining for ${category.toLowerCase()} before automatic session termination.`,
+      });
+      addMalpracticeAlert(`VIOLATION_${category}_${catStrikes}`, `⚠️ Warning (${catStrikes}/${maxAllowed}): ${reason}`);
     }
   };
 
@@ -3017,59 +3065,68 @@ export function AssessmentApp() {
             className={styles.modalCard}
             style={{
               maxWidth: 520,
-              border: `2px solid ${activeWarningModal.strike >= 3 ? '#dc2626' : '#ea580c'}`,
-              boxShadow: activeWarningModal.strike >= 3 ? '0 0 30px rgba(220, 38, 38, 0.4)' : '0 0 25px rgba(234, 88, 12, 0.35)',
+              border: `2px solid ${activeWarningModal.isTerminated ? '#dc2626' : '#ea580c'}`,
+              boxShadow: activeWarningModal.isTerminated ? '0 0 30px rgba(220, 38, 38, 0.4)' : '0 0 25px rgba(234, 88, 12, 0.35)',
             }}
           >
             <div
               className={styles.modalHeader}
               style={{
-                background: activeWarningModal.strike >= 3 ? '#fef2f2' : '#fff7ed',
-                borderBottom: `1px solid ${activeWarningModal.strike >= 3 ? '#fca5a5' : '#fdba74'}`,
+                background: activeWarningModal.isTerminated ? '#fef2f2' : '#fff7ed',
+                borderBottom: `1px solid ${activeWarningModal.isTerminated ? '#fca5a5' : '#fdba74'}`,
               }}
             >
               <div
                 className={styles.modalTitle}
                 style={{
-                  color: activeWarningModal.strike >= 3 ? '#991b1b' : '#c2410c',
+                  color: activeWarningModal.isTerminated ? '#991b1b' : '#c2410c',
                   display: 'flex',
                   alignItems: 'center',
                   gap: 8,
                 }}
               >
-                <i className={`bx ${activeWarningModal.strike >= 3 ? 'bx-error-circle' : 'bx-error'}`} style={{ fontSize: 22 }} />
+                <i className={`bx ${activeWarningModal.isTerminated ? 'bx-error-circle' : 'bx-error'}`} style={{ fontSize: 22 }} />
                 <span>{activeWarningModal.title}</span>
               </div>
             </div>
             <div className={styles.modalBody} style={{ padding: '20px 24px' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
                 <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#475569' }}>
-                  Recorded Strikes:
+                  Violation Status:
                 </span>
-                <span style={{ fontSize: '0.85rem', fontWeight: 800, color: activeWarningModal.strike >= 3 ? '#dc2626' : '#ea580c' }}>
-                  {activeWarningModal.strike} / 3 Strikes
+                <span style={{ fontSize: '0.85rem', fontWeight: 800, color: activeWarningModal.isTerminated ? '#dc2626' : '#ea580c' }}>
+                  {activeWarningModal.maxStrikes === 0
+                    ? '0 Warnings Allowed (Instant Termination)'
+                    : `${activeWarningModal.strike} / ${activeWarningModal.maxStrikes} Warning${activeWarningModal.maxStrikes !== 1 ? 's' : ''}`}
                 </span>
               </div>
-              <div style={{ display: 'flex', gap: 6, marginBottom: 16 }}>
-                {[1, 2, 3].map((s) => (
-                  <div
-                    key={s}
-                    style={{
-                      flex: 1,
-                      height: 8,
-                      borderRadius: 4,
-                      background: s <= activeWarningModal.strike ? (activeWarningModal.strike >= 3 ? '#dc2626' : '#f97316') : '#e2e8f0',
-                      boxShadow: s <= activeWarningModal.strike ? '0 0 8px rgba(220, 38, 38, 0.35)' : 'none',
-                    }}
-                  />
-                ))}
-              </div>
+
+              {activeWarningModal.maxStrikes > 0 && (
+                <div style={{ display: 'flex', gap: 6, marginBottom: 16 }}>
+                  {Array.from({ length: activeWarningModal.maxStrikes }).map((_, idx) => {
+                    const s = idx + 1;
+                    const filled = s <= activeWarningModal.strike;
+                    return (
+                      <div
+                        key={s}
+                        style={{
+                          flex: 1,
+                          height: 8,
+                          borderRadius: 4,
+                          background: filled ? (activeWarningModal.isTerminated ? '#dc2626' : '#f97316') : '#e2e8f0',
+                          boxShadow: filled ? '0 0 8px rgba(220, 38, 38, 0.35)' : 'none',
+                        }}
+                      />
+                    );
+                  })}
+                </div>
+              )}
 
               <div
                 style={{
                   padding: '14px 16px',
-                  background: activeWarningModal.strike >= 3 ? '#fef2f2' : '#f8fafc',
-                  border: `1px solid ${activeWarningModal.strike >= 3 ? '#fecaca' : '#e2e8f0'}`,
+                  background: activeWarningModal.isTerminated ? '#fef2f2' : '#f8fafc',
+                  border: `1px solid ${activeWarningModal.isTerminated ? '#fecaca' : '#e2e8f0'}`,
                   borderRadius: 6,
                   lineHeight: 1.6,
                   fontSize: '0.88rem',
@@ -3081,19 +3138,19 @@ export function AssessmentApp() {
               </div>
 
               <div style={{ marginTop: 14, fontSize: '0.78rem', color: '#64748b', lineHeight: 1.5 }}>
-                {activeWarningModal.strike >= 3 ? (
+                {activeWarningModal.isTerminated ? (
                   <span style={{ color: '#dc2626', fontWeight: 700 }}>
-                    Assessment session has ended. All recorded answers and proctoring logs are being finalized.
+                    Assessment session has ended. All recorded answers and proctoring telemetry are being finalized.
                   </span>
                 ) : (
                   <span>
-                    Notice: Video frames and acoustic signals are continuously logged. Any further infraction will result in immediate disqualification.
+                    Notice: Video frames, dual-camera coverage, and acoustic signals are continuously verified. Please maintain silence and full dual-camera presence.
                   </span>
                 )}
               </div>
             </div>
             <div className={styles.modalFooter}>
-              {activeWarningModal.strike < 3 ? (
+              {!activeWarningModal.isTerminated ? (
                 <button
                   className={styles.btnPrimary}
                   style={{ width: '100%', padding: '12px 20px', background: '#ea580c', borderColor: '#ea580c' }}

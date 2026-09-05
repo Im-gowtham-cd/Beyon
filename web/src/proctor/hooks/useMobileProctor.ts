@@ -66,18 +66,18 @@ export function useMobileProctor(_initialToken?: string | null) {
     }
   }, []);
 
-  // Frame capture and upload
+  // Frame capture and upload with enhanced 640x480 resolution for sharp object & phone recognition
   const captureAndSendFrame = useCallback(async (sessionId: string, videoElement: HTMLVideoElement) => {
     if (!videoElement || videoElement.videoWidth === 0) return;
     try {
       const canvas = document.createElement('canvas');
-      canvas.width = 320;
-      canvas.height = 240;
+      canvas.width = 640;
+      canvas.height = 480;
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
-      ctx.drawImage(videoElement, 0, 0, 320, 240);
+      ctx.drawImage(videoElement, 0, 0, 640, 480);
 
-      const base64Data = canvas.toDataURL('image/jpeg', 0.6);
+      const base64Data = canvas.toDataURL('image/jpeg', 0.82);
       await fetch(`${API_BASE}/proctoring/dualview/${sessionId}/mobile-frame`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -104,12 +104,12 @@ export function useMobileProctor(_initialToken?: string | null) {
     // Initial heartbeat
     sendHeartbeat(sessionId, true, true);
 
-    // Frame sample upload every 2.5 seconds
+    // Frame sample upload every 1.5 seconds for rapid detection
     if (frameUploadIntervalRef.current) clearInterval(frameUploadIntervalRef.current);
     if (videoElement) {
       frameUploadIntervalRef.current = setInterval(() => {
         captureAndSendFrame(sessionId, videoElement);
-      }, 2500);
+      }, 1500);
     }
   }, [sendHeartbeat, captureAndSendFrame]);
 

@@ -175,6 +175,17 @@ async def analyze_mobile_frame(req: MobileFrameRequest):
                 metadata={"source": "yolo_model"}
             ))
 
+        # Deep Learning Cheating CNN & Workspace Activity Detection
+        from app.services.cheat_cnn_detector import detect_cheating_cnn
+        is_cheating, cheat_prob, cnn_meta = detect_cheating_cnn(img)
+        if is_cheating or cheat_prob >= 0.70:
+            events.append(DetectionEvent(
+                eventType="SUSPICIOUS_BEHAVIOR",
+                confidence=round(cheat_prob, 3),
+                cameraSource="MOBILE_SIDE",
+                metadata=cnn_meta
+            ))
+
         return MobileFrameResponse(
             personCount=person_count,
             secondaryDeviceDetected=secondary_device,
