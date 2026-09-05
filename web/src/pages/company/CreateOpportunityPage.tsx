@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../../services/api/client';
 import {
@@ -11,6 +11,10 @@ import {
   Building2,
   CheckSquare,
   Square,
+  Trash2,
+  Copy,
+  Sparkles,
+  GraduationCap,
 } from 'lucide-react';
 import styles from '../../practice/pages/CreateQuestionPage.module.css';
 
@@ -21,6 +25,7 @@ interface ActiveInstitution {
   city?: string;
   state?: string;
   grade?: string;
+  departments?: string[];
 }
 
 interface OptionItem {
@@ -33,15 +38,15 @@ interface CustomQuestion {
   id: string;
   title: string;
   description: string;
-  questionType: string;
+  questionType: 'MCQ_SINGLE' | 'MCQ_MULTIPLE' | string;
   difficulty: string;
   explanation: string;
   options: OptionItem[];
 }
 
-const SAMPLE_QUESTIONS: CustomQuestion[] = [
+const PRESET_5_SWE: CustomQuestion[] = [
   {
-    id: 'sample-1',
+    id: 'swe-1',
     title: 'Which data structure guarantees O(1) average lookup time in concurrent hash-based lookups?',
     description: 'Which data structure guarantees O(1) average lookup time in concurrent hash-based lookups?',
     questionType: 'MCQ_SINGLE',
@@ -55,7 +60,7 @@ const SAMPLE_QUESTIONS: CustomQuestion[] = [
     ],
   },
   {
-    id: 'sample-2',
+    id: 'swe-2',
     title: 'In RESTful architectural design, which HTTP method is idempotent and used to replace a target resource?',
     description: 'In RESTful architectural design, which HTTP method is idempotent and used to replace a target resource?',
     questionType: 'MCQ_SINGLE',
@@ -69,7 +74,7 @@ const SAMPLE_QUESTIONS: CustomQuestion[] = [
     ],
   },
   {
-    id: 'sample-3',
+    id: 'swe-3',
     title: 'What is the worst-case time complexity of QuickSort when using naive pivot selection on already sorted data?',
     description: 'What is the worst-case time complexity of QuickSort when using naive pivot selection on already sorted data?',
     questionType: 'MCQ_SINGLE',
@@ -83,21 +88,21 @@ const SAMPLE_QUESTIONS: CustomQuestion[] = [
     ],
   },
   {
-    id: 'sample-4',
-    title: 'In database ACID transactions, which property ensures uncommitted changes from one transaction are invisible to others?',
-    description: 'In database ACID transactions, which property ensures uncommitted changes from one transaction are invisible to others?',
-    questionType: 'MCQ_SINGLE',
+    id: 'swe-4',
+    title: 'Which of the following properties are essential characteristics of ACID database transactions? (Select all that apply)',
+    description: 'Which of the following properties are essential characteristics of ACID database transactions?',
+    questionType: 'MCQ_MULTIPLE',
     difficulty: 'MEDIUM',
-    explanation: 'Isolation guarantees that concurrent transactions execute without cross-contamination before committing.',
+    explanation: 'ACID stands for Atomicity, Consistency, Isolation, and Durability.',
     options: [
-      { id: 'opt-1', optionText: 'Atomicity', isCorrect: false },
-      { id: 'opt-2', optionText: 'Consistency', isCorrect: false },
-      { id: 'opt-3', optionText: 'Isolation', isCorrect: true },
-      { id: 'opt-4', optionText: 'Durability', isCorrect: false },
+      { id: 'opt-1', optionText: 'Atomicity (all operations complete or none execute)', isCorrect: true },
+      { id: 'opt-2', optionText: 'Isolation (concurrent transactions execute independently)', isCorrect: true },
+      { id: 'opt-3', optionText: 'Durability (committed data survives system crashes)', isCorrect: true },
+      { id: 'opt-4', optionText: 'Arbitrage (dynamic price adjustment across distributed nodes)', isCorrect: false },
     ],
   },
   {
-    id: 'sample-5',
+    id: 'swe-5',
     title: 'Which Spring Boot annotation is used to create a global exception handling component for REST controllers?',
     description: 'Which Spring Boot annotation is used to create a global exception handling component for REST controllers?',
     questionType: 'MCQ_SINGLE',
@@ -108,6 +113,85 @@ const SAMPLE_QUESTIONS: CustomQuestion[] = [
       { id: 'opt-2', optionText: '@ExceptionHandlerAdvice', isCorrect: false },
       { id: 'opt-3', optionText: '@GlobalService', isCorrect: false },
       { id: 'opt-4', optionText: '@ResponseStatusHandler', isCorrect: false },
+    ],
+  },
+];
+
+const PRESET_8_FULLSTACK: CustomQuestion[] = [
+  ...PRESET_5_SWE,
+  {
+    id: 'fs-6',
+    title: 'Which HTTP status codes indicate successful client requests in standard RFC 7231? (Select all that apply)',
+    description: 'Which HTTP status codes indicate successful client requests?',
+    questionType: 'MCQ_MULTIPLE',
+    difficulty: 'EASY',
+    explanation: '200 (OK), 201 (Created), and 204 (No Content) are 2xx Success status codes.',
+    options: [
+      { id: 'opt-1', optionText: '200 OK', isCorrect: true },
+      { id: 'opt-2', optionText: '201 Created', isCorrect: true },
+      { id: 'opt-3', optionText: '204 No Content', isCorrect: true },
+      { id: 'opt-4', optionText: '304 Not Modified', isCorrect: false },
+      { id: 'opt-5', optionText: '400 Bad Request', isCorrect: false },
+    ],
+  },
+  {
+    id: 'fs-7',
+    title: 'In React, what hook is used to execute side effects after rendering without blocking the browser paint?',
+    description: 'In React, what hook is used to execute side effects after rendering?',
+    questionType: 'MCQ_SINGLE',
+    difficulty: 'EASY',
+    explanation: 'useEffect runs asynchronously after browser paint, whereas useLayoutEffect runs synchronously before paint.',
+    options: [
+      { id: 'opt-1', optionText: 'useEffect', isCorrect: true },
+      { id: 'opt-2', optionText: 'useLayoutEffect', isCorrect: false },
+      { id: 'opt-3', optionText: 'useMemo', isCorrect: false },
+      { id: 'opt-4', optionText: 'useCallback', isCorrect: false },
+    ],
+  },
+  {
+    id: 'fs-8',
+    title: 'In Redis caching strategies, which methods help mitigate Cache Stampede (Thundering Herd)? (Select all that apply)',
+    description: 'In Redis caching strategies, which methods help mitigate Cache Stampede?',
+    questionType: 'MCQ_MULTIPLE',
+    difficulty: 'HARD',
+    explanation: 'Distributed Mutex locking, Probabilistic early expiration (XFetch), and Background cache warming effectively mitigate thundering herd.',
+    options: [
+      { id: 'opt-1', optionText: 'Distributed Mutex Lock on key miss', isCorrect: true },
+      { id: 'opt-2', optionText: 'Probabilistic Early Expiration (XFetch algorithm)', isCorrect: true },
+      { id: 'opt-3', optionText: 'Setting TTL to 0 ms across all concurrent requests', isCorrect: false },
+      { id: 'opt-4', optionText: 'Background asynchronous cache pre-warming cron', isCorrect: true },
+    ],
+  },
+];
+
+const PRESET_10_SYSTEM_DESIGN: CustomQuestion[] = [
+  ...PRESET_8_FULLSTACK,
+  {
+    id: 'sd-9',
+    title: 'In the CAP Theorem, which trade-off does Apache Cassandra traditionally optimize for during network partitions?',
+    description: 'In the CAP Theorem, which trade-off does Apache Cassandra traditionally optimize for?',
+    questionType: 'MCQ_SINGLE',
+    difficulty: 'HARD',
+    explanation: 'Cassandra is an AP system focusing on High Availability and Partition Tolerance with eventual consistency.',
+    options: [
+      { id: 'opt-1', optionText: 'AP (Availability and Partition Tolerance)', isCorrect: true },
+      { id: 'opt-2', optionText: 'CP (Strict Consistency and Partition Tolerance)', isCorrect: false },
+      { id: 'opt-3', optionText: 'CA without partition support', isCorrect: false },
+      { id: 'opt-4', optionText: 'None of the above', isCorrect: false },
+    ],
+  },
+  {
+    id: 'sd-10',
+    title: 'Which message brokers provide partitioned distributed commit log semantics for replayable stream processing? (Select all that apply)',
+    description: 'Which message brokers provide partitioned distributed commit log semantics?',
+    questionType: 'MCQ_MULTIPLE',
+    difficulty: 'MEDIUM',
+    explanation: 'Apache Kafka, Apache Pulsar, and Redpanda are distributed commit log event streaming architectures.',
+    options: [
+      { id: 'opt-1', optionText: 'Apache Kafka', isCorrect: true },
+      { id: 'opt-2', optionText: 'Apache Pulsar', isCorrect: true },
+      { id: 'opt-3', optionText: 'RabbitMQ (traditional AMQP broker)', isCorrect: false },
+      { id: 'opt-4', optionText: 'Redpanda', isCorrect: true },
     ],
   },
 ];
@@ -127,7 +211,16 @@ export function CreateOpportunityPage() {
     adaptiveEnabled: false,
   });
 
-  const [questions, setQuestions] = useState<CustomQuestion[]>(SAMPLE_QUESTIONS);
+  const [questions, setQuestions] = useState<CustomQuestion[]>(PRESET_5_SWE);
+
+  const [selectedDepartments, setSelectedDepartments] = useState<string[]>([
+    'Computer Science and Engineering',
+    'Information Technology',
+    'Artificial Intelligence & Data Science',
+    'Electronics and Communication Engineering',
+  ]);
+  const [customDeptInput, setCustomDeptInput] = useState('');
+  const [customDepartments, setCustomDepartments] = useState<string[]>([]);
 
   const [form, setForm] = useState({
     title: '',
@@ -136,7 +229,7 @@ export function CreateOpportunityPage() {
     location: '',
     remote: false,
     minCgpa: 7.5,
-    eligibleDepartments: 'Computer Science, Information Technology, AI & Data Science, Electronics',
+    eligibleDepartments: 'Computer Science and Engineering, Information Technology, Artificial Intelligence & Data Science, Electronics and Communication Engineering',
     eligibleGraduationYears: '2026, 2027',
     requiredSkills: '',
     preferredSkills: '',
@@ -156,7 +249,6 @@ export function CreateOpportunityPage() {
           const data = await res.json();
           if (Array.isArray(data.data)) {
             setActiveInstitutions(data.data);
-            // Default select all active institutions
             setSelectedInstIds(data.data.map((i: ActiveInstitution) => i.id));
           }
         }
@@ -168,6 +260,85 @@ export function CreateOpportunityPage() {
     }
     loadActiveInstitutions();
   }, []);
+
+  // Dynamically derive departments available from the selected partner institutions
+  const availableDepartments = useMemo(() => {
+    const targetInstitutions =
+      form.opportunityType === 'CAMPUS_DRIVE' && selectedInstIds.length > 0
+        ? activeInstitutions.filter((inst) => selectedInstIds.includes(inst.id))
+        : activeInstitutions;
+
+    const deptsSet = new Set<string>();
+
+    targetInstitutions.forEach((inst) => {
+      if (Array.isArray(inst.departments) && inst.departments.length > 0) {
+        inst.departments.forEach((dept) => {
+          if (dept && dept.trim()) {
+            deptsSet.add(dept.trim());
+          }
+        });
+      }
+    });
+
+    if (deptsSet.size === 0) {
+      [
+        'Computer Science and Engineering',
+        'Information Technology',
+        'Artificial Intelligence & Data Science',
+        'Electronics and Communication Engineering',
+        'Electrical and Electronics Engineering',
+        'Mechanical Engineering',
+        'Civil Engineering',
+        'Cybersecurity & Digital Forensics',
+        'Data Science & Business Systems',
+        'Robotics & Automation',
+      ].forEach((d) => deptsSet.add(d));
+    }
+
+    customDepartments.forEach((d) => deptsSet.add(d));
+    return Array.from(deptsSet);
+  }, [activeInstitutions, selectedInstIds, form.opportunityType, customDepartments]);
+
+  const toggleDepartment = (dept: string) => {
+    setSelectedDepartments((prev) => {
+      const next = prev.includes(dept) ? prev.filter((d) => d !== dept) : [...prev, dept];
+      setForm((f) => ({ ...f, eligibleDepartments: next.join(', ') }));
+      return next;
+    });
+  };
+
+  const selectAllDepartments = () => {
+    setSelectedDepartments(availableDepartments);
+    setForm((f) => ({ ...f, eligibleDepartments: availableDepartments.join(', ') }));
+  };
+
+  const deselectAllDepartments = () => {
+    setSelectedDepartments([]);
+    setForm((f) => ({ ...f, eligibleDepartments: '' }));
+  };
+
+  const selectCsItCircuitOnly = () => {
+    const csBranches = availableDepartments.filter((d) =>
+      /computer|information|ai|artificial|data|cyber|software|electronics/i.test(d)
+    );
+    setSelectedDepartments(csBranches);
+    setForm((f) => ({ ...f, eligibleDepartments: csBranches.join(', ') }));
+  };
+
+  const handleAddCustomDepartment = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!customDeptInput.trim()) return;
+    const newDept = customDeptInput.trim();
+    if (!customDepartments.includes(newDept)) {
+      setCustomDepartments((prev) => [...prev, newDept]);
+    }
+    if (!selectedDepartments.includes(newDept)) {
+      const next = [...selectedDepartments, newDept];
+      setSelectedDepartments(next);
+      setForm((f) => ({ ...f, eligibleDepartments: next.join(', ') }));
+    }
+    setCustomDeptInput('');
+  };
 
   const toggleInstitution = (id: string) => {
     setSelectedInstIds((prev) =>
@@ -185,7 +356,7 @@ export function CreateOpportunityPage() {
 
   const handleAddQuestion = () => {
     const newQ: CustomQuestion = {
-      id: `q-custom-${Date.now()}`,
+      id: `q-custom-${Date.now()}-${questions.length + 1}`,
       title: '',
       description: '',
       questionType: 'MCQ_SINGLE',
@@ -198,7 +369,23 @@ export function CreateOpportunityPage() {
         { id: `opt-${Date.now()}-4`, optionText: '', isCorrect: false },
       ],
     };
-    setQuestions([...questions, newQ]);
+    setQuestions((prev) => [...prev, newQ]);
+  };
+
+  const handleDuplicateQuestion = (idx: number) => {
+    const sourceQ = questions[idx];
+    const duplicated: CustomQuestion = {
+      ...sourceQ,
+      id: `q-dup-${Date.now()}`,
+      title: `${sourceQ.title} (Copy)`,
+      options: sourceQ.options.map((opt, oIdx) => ({
+        ...opt,
+        id: `opt-dup-${Date.now()}-${oIdx}`,
+      })),
+    };
+    const updated = [...questions];
+    updated.splice(idx + 1, 0, duplicated);
+    setQuestions(updated);
   };
 
   const handleRemoveQuestion = (idx: number) => {
@@ -215,26 +402,106 @@ export function CreateOpportunityPage() {
     setQuestions(updated);
   };
 
+  const handleQuestionTypeChange = (qIdx: number, newType: string) => {
+    const updated = [...questions];
+    const q = { ...updated[qIdx], questionType: newType };
+    if (newType === 'MCQ_SINGLE') {
+      let found = false;
+      q.options = q.options.map((opt) => {
+        if (opt.isCorrect && !found) {
+          found = true;
+          return opt;
+        }
+        return { ...opt, isCorrect: false };
+      });
+      if (!found && q.options.length > 0) {
+        q.options[0].isCorrect = true;
+      }
+    }
+    updated[qIdx] = q;
+    setQuestions(updated);
+  };
+
+  const handleAddOption = (qIdx: number) => {
+    const updated = [...questions];
+    const q = { ...updated[qIdx] };
+    const nextNum = q.options.length + 1;
+    q.options = [
+      ...q.options,
+      {
+        id: `opt-${Date.now()}-${nextNum}`,
+        optionText: '',
+        isCorrect: false,
+      },
+    ];
+    updated[qIdx] = q;
+    setQuestions(updated);
+  };
+
+  const handleRemoveOption = (qIdx: number, optIdx: number) => {
+    const updated = [...questions];
+    const q = { ...updated[qIdx] };
+    if (q.options.length <= 2) {
+      setError('A multiple-choice question must have at least 2 options.');
+      return;
+    }
+    const removedWasCorrect = q.options[optIdx].isCorrect;
+    q.options = q.options.filter((_, i) => i !== optIdx);
+    if (removedWasCorrect && !q.options.some((o) => o.isCorrect) && q.options.length > 0) {
+      q.options[0].isCorrect = true;
+    }
+    updated[qIdx] = q;
+    setQuestions(updated);
+  };
+
   const handleOptionTextChange = (qIdx: number, optIdx: number, text: string) => {
     const updated = [...questions];
-    const opts = [...updated[qIdx].options];
+    const q = { ...updated[qIdx] };
+    const opts = [...q.options];
     opts[optIdx] = { ...opts[optIdx], optionText: text };
-    updated[qIdx] = { ...updated[qIdx], options: opts };
+    q.options = opts;
+    updated[qIdx] = q;
     setQuestions(updated);
   };
 
-  const handleSetCorrectOption = (qIdx: number, optIdx: number) => {
+  const handleToggleCorrectOption = (qIdx: number, optIdx: number) => {
     const updated = [...questions];
-    const opts = updated[qIdx].options.map((opt, i) => ({
-      ...opt,
-      isCorrect: i === optIdx,
-    }));
-    updated[qIdx] = { ...updated[qIdx], options: opts };
+    const q = { ...updated[qIdx] };
+    if (q.questionType === 'MCQ_MULTIPLE') {
+      q.options = q.options.map((opt, i) =>
+        i === optIdx ? { ...opt, isCorrect: !opt.isCorrect } : opt
+      );
+    } else {
+      q.options = q.options.map((opt, i) => ({
+        ...opt,
+        isCorrect: i === optIdx,
+      }));
+    }
+    updated[qIdx] = q;
     setQuestions(updated);
   };
 
-  const handleLoadSampleQuestions = () => {
-    setQuestions(SAMPLE_QUESTIONS);
+  const handleLoadPreset = (preset: CustomQuestion[]) => {
+    setQuestions(preset);
+  };
+
+  const handleClearAllQuestions = () => {
+    setQuestions([
+      {
+        id: `q-blank-${Date.now()}`,
+        title: '',
+        description: '',
+        questionType: 'MCQ_SINGLE',
+        difficulty: 'MEDIUM',
+        explanation: '',
+        options: [
+          { id: `opt-1`, optionText: '', isCorrect: true },
+          { id: `opt-2`, optionText: '', isCorrect: false },
+          { id: `opt-3`, optionText: '', isCorrect: false },
+          { id: `opt-4`, optionText: '', isCorrect: false },
+        ],
+      },
+    ]);
   };
 
   async function handleSubmit(e: React.FormEvent) {
@@ -340,6 +607,12 @@ export function CreateOpportunityPage() {
               className={styles.btnPrimary}
               onClick={() => {
                 setSuccess(false);
+                setSelectedDepartments([
+                  'Computer Science and Engineering',
+                  'Information Technology',
+                  'Artificial Intelligence & Data Science',
+                  'Electronics and Communication Engineering',
+                ]);
                 setForm({
                   title: '',
                   description: '',
@@ -347,7 +620,7 @@ export function CreateOpportunityPage() {
                   location: 'Chennai / Bangalore',
                   remote: false,
                   minCgpa: 8.0,
-                  eligibleDepartments: 'CSE, IT, ECE, AI & DS',
+                  eligibleDepartments: 'Computer Science and Engineering, Information Technology, Artificial Intelligence & Data Science, Electronics and Communication Engineering',
                   eligibleGraduationYears: '2026, 2027',
                   requiredSkills: '',
                   preferredSkills: '',
@@ -536,8 +809,12 @@ export function CreateOpportunityPage() {
 
         {/* Candidate Eligibility Criteria */}
         <div className={styles.card}>
-          <h3 className={styles.cardTitle}>2. Academic &amp; Batch Eligibility</h3>
-          <p className={styles.cardSubtitle}>Automate candidate filtering by setting academic cutoffs</p>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+            <div>
+              <h3 className={styles.cardTitle}>2. Academic &amp; Batch Eligibility</h3>
+              <p className={styles.cardSubtitle}>Automate candidate filtering by setting academic cutoffs and department criteria</p>
+            </div>
+          </div>
 
           <div className={styles.formGrid}>
             <div className={styles.fieldGroup}>
@@ -574,16 +851,191 @@ export function CreateOpportunityPage() {
                 onChange={(e) => setForm({ ...form, eligibleGraduationYears: e.target.value })}
               />
             </div>
+          </div>
 
-            <div className={styles.fieldGroup}>
-              <label className={styles.label}>Eligible Departments</label>
-              <input
-                type="text"
-                className={styles.input}
-                placeholder="e.g. CSE, IT, ECE, AI & DS"
-                value={form.eligibleDepartments}
-                onChange={(e) => setForm({ ...form, eligibleDepartments: e.target.value })}
-              />
+          {/* Department Selection based on Target Institutions */}
+          <div style={{ marginTop: '24px', paddingTop: '20px', borderTop: '1px solid #e2e8f0' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px', marginBottom: '10px' }}>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <GraduationCap size={18} style={{ color: '#1c2d81' }} />
+                  <label className={styles.label} style={{ marginBottom: 0, fontSize: '0.92rem', fontWeight: 700 }}>
+                    Eligible Academic Departments
+                  </label>
+                  <span
+                    style={{
+                      fontSize: '0.72rem',
+                      fontWeight: 700,
+                      background: selectedDepartments.length > 0 ? '#1c2d81' : '#64748b',
+                      color: '#ffffff',
+                      padding: '2px 8px',
+                    }}
+                  >
+                    {selectedDepartments.length} Selected
+                  </span>
+                </div>
+                <p style={{ margin: '4px 0 0 0', fontSize: '0.78rem', color: '#64748b' }}>
+                  Select from departments available across your target partner institutions. Only candidates in selected branches can apply.
+                </p>
+              </div>
+
+              {/* Quick Filter Buttons */}
+              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  onClick={selectAllDepartments}
+                  style={{
+                    fontSize: '0.74rem',
+                    fontWeight: 600,
+                    color: '#1c2d81',
+                    background: '#f1f5f9',
+                    border: '1px solid #cbd5e1',
+                    padding: '4px 8px',
+                    cursor: 'pointer',
+                  }}
+                >
+                  Select All ({availableDepartments.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={selectCsItCircuitOnly}
+                  style={{
+                    fontSize: '0.74rem',
+                    fontWeight: 600,
+                    color: '#0f766e',
+                    background: '#f0fdfa',
+                    border: '1px solid #99f6e4',
+                    padding: '4px 8px',
+                    cursor: 'pointer',
+                  }}
+                >
+                  CS / IT &amp; AI Only
+                </button>
+                <button
+                  type="button"
+                  onClick={deselectAllDepartments}
+                  style={{
+                    fontSize: '0.74rem',
+                    fontWeight: 600,
+                    color: '#b91c1c',
+                    background: '#fef2f2',
+                    border: '1px solid #fecaca',
+                    padding: '4px 8px',
+                    cursor: 'pointer',
+                  }}
+                >
+                  Clear
+                </button>
+              </div>
+            </div>
+
+            {/* Department Checkbox / Pill Grid */}
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))',
+                gap: '8px',
+                marginTop: '12px',
+              }}
+            >
+              {availableDepartments.map((dept) => {
+                const isSelected = selectedDepartments.includes(dept);
+                return (
+                  <div
+                    key={dept}
+                    onClick={() => toggleDepartment(dept)}
+                    style={{
+                      padding: '8px 12px',
+                      background: isSelected ? '#f0f4ff' : '#ffffff',
+                      border: isSelected ? '1.5px solid #1c2d81' : '1px solid #e2e8f0',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      transition: 'all 0.12s ease',
+                      userSelect: 'none',
+                    }}
+                  >
+                    <div style={{ color: isSelected ? '#1c2d81' : '#94a3b8', display: 'flex', alignItems: 'center' }}>
+                      {isSelected ? <CheckSquare size={16} /> : <Square size={16} />}
+                    </div>
+                    <span
+                      style={{
+                        fontSize: '0.8rem',
+                        fontWeight: isSelected ? 600 : 500,
+                        color: isSelected ? '#0f172a' : '#475569',
+                        lineHeight: 1.3,
+                      }}
+                    >
+                      {dept}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Custom Department Adder & Selected Summary */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                marginTop: '12px',
+                flexWrap: 'wrap',
+                background: '#f8fafc',
+                padding: '10px 14px',
+                border: '1px dashed #cbd5e1',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: '1 1 320px' }}>
+                <input
+                  type="text"
+                  placeholder="Add custom / specialized department (e.g. Mechatronics, Bio-Informatics)..."
+                  value={customDeptInput}
+                  onChange={(e) => setCustomDeptInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleAddCustomDepartment();
+                    }
+                  }}
+                  style={{
+                    flex: 1,
+                    padding: '6px 10px',
+                    fontSize: '0.8rem',
+                    border: '1px solid #cbd5e1',
+                    outline: 'none',
+                    background: '#ffffff',
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => handleAddCustomDepartment()}
+                  style={{
+                    padding: '6px 12px',
+                    fontSize: '0.78rem',
+                    fontWeight: 600,
+                    color: '#ffffff',
+                    background: '#1c2d81',
+                    border: 'none',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  <Plus size={13} />
+                  <span>Add Department</span>
+                </button>
+              </div>
+
+              <div style={{ flex: '1 1 100%', fontSize: '0.74rem', color: '#64748b' }}>
+                <strong>Saved Filter:</strong>{' '}
+                <span style={{ color: '#0f172a' }}>
+                  {form.eligibleDepartments || 'None selected (all departments will be restricted)'}
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -620,33 +1072,71 @@ export function CreateOpportunityPage() {
 
         {/* 4. Proctored Drive Assessment & Custom Question Authoring */}
         <div className={styles.card} style={{ borderLeft: '4px solid #fed601' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px', marginBottom: '8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px', marginBottom: '14px' }}>
             <div>
               <h3 className={styles.cardTitle} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                4. Proctored Drive Assessment &amp; Custom Questions
+                <Sparkles size={18} color="#1c2d81" /> 4. Proctored Drive Assessment &amp; Custom Questions
               </h3>
               <p className={styles.cardSubtitle}>
-                Author your custom technical questions for this drive. Candidates taking the proctored exam will be served and evaluated on these exact questions.
+                Author as many custom questions as required. Support both Single-Choice (1 correct option) and Multiple-Choice (multiple correct options) formats with customizable option choices.
               </p>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+
+            {/* Top Quick Actions */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
               <button
                 type="button"
-                onClick={handleLoadSampleQuestions}
+                onClick={() => handleLoadPreset(PRESET_5_SWE)}
                 style={{
-                  padding: '6px 12px',
+                  padding: '6px 10px',
                   background: '#f8fafc',
                   border: '1px solid #cbd5e1',
                   color: '#1c2d81',
-                  fontSize: '0.8rem',
+                  fontSize: '0.78rem',
                   fontWeight: 700,
                   cursor: 'pointer',
                   display: 'inline-flex',
                   alignItems: 'center',
-                  gap: '6px',
+                  gap: '5px',
                 }}
               >
-                Load 5 Standard SWE Questions
+                5 Standard SWE
+              </button>
+              <button
+                type="button"
+                onClick={() => handleLoadPreset(PRESET_8_FULLSTACK)}
+                style={{
+                  padding: '6px 10px',
+                  background: '#f8fafc',
+                  border: '1px solid #cbd5e1',
+                  color: '#1c2d81',
+                  fontSize: '0.78rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                }}
+              >
+                8 Full-Stack
+              </button>
+              <button
+                type="button"
+                onClick={() => handleLoadPreset(PRESET_10_SYSTEM_DESIGN)}
+                style={{
+                  padding: '6px 10px',
+                  background: '#f8fafc',
+                  border: '1px solid #cbd5e1',
+                  color: '#1c2d81',
+                  fontSize: '0.78rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                }}
+              >
+                10 System Design
               </button>
               <button
                 type="button"
@@ -696,12 +1186,12 @@ export function CreateOpportunityPage() {
             </div>
 
             <div className={styles.fieldGroup}>
-              <label className={styles.label}>Total Questions to Answer</label>
+              <label className={styles.label}>Configured Question Count</label>
               <input
                 type="text"
                 disabled
                 className={styles.input}
-                style={{ background: '#f1f5f9', color: '#64748b' }}
+                style={{ background: '#f1f5f9', color: '#1c2d81', fontWeight: 700 }}
                 value={`${questions.length} Questions Configured`}
               />
             </div>
@@ -716,142 +1206,296 @@ export function CreateOpportunityPage() {
           </div>
 
           {/* Interactive List of Questions */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            {questions.map((q, qIdx) => (
-              <div
-                key={q.id || qIdx}
-                style={{
-                  border: '1px solid #e2e8f0',
-                  background: '#ffffff',
-                  padding: '18px 20px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '12px',
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #f1f5f9', paddingBottom: '8px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <span style={{ background: '#1c2d81', color: '#fed601', padding: '2px 8px', fontSize: '0.78rem', fontWeight: 800 }}>
-                      Question #{qIdx + 1}
-                    </span>
-                    <span style={{ fontSize: '0.78rem', fontWeight: 600, color: '#64748b' }}>
-                      Single Choice MCQ
-                    </span>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <select
-                      value={q.difficulty}
-                      onChange={(e) => handleQuestionChange(qIdx, 'difficulty', e.target.value)}
-                      style={{
-                        padding: '4px 8px',
-                        border: '1px solid #cbd5e1',
-                        fontSize: '0.75rem',
-                        fontWeight: 700,
-                        background: '#f8fafc',
-                      }}
-                    >
-                      <option value="EASY">EASY</option>
-                      <option value="MEDIUM">MEDIUM</option>
-                      <option value="HARD">HARD</option>
-                    </select>
-                    {questions.length > 1 && (
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveQuestion(qIdx)}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+            {questions.map((q, qIdx) => {
+              const isMulti = q.questionType === 'MCQ_MULTIPLE';
+
+              return (
+                <div
+                  key={q.id || qIdx}
+                  style={{
+                    border: '1px solid #e2e8f0',
+                    background: '#ffffff',
+                    padding: '20px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '14px',
+                    position: 'relative',
+                  }}
+                >
+                  {/* Question Card Top Bar */}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #f1f5f9', paddingBottom: '10px', flexWrap: 'wrap', gap: '10px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                      <span style={{ background: '#1c2d81', color: '#fed601', padding: '3px 10px', fontSize: '0.8rem', fontWeight: 800 }}>
+                        Question #{qIdx + 1}
+                      </span>
+
+                      {/* Question Type Selector */}
+                      <select
+                        value={q.questionType}
+                        onChange={(e) => handleQuestionTypeChange(qIdx, e.target.value)}
                         style={{
-                          background: 'transparent',
-                          border: 'none',
-                          color: '#dc2626',
-                          cursor: 'pointer',
+                          padding: '4px 10px',
+                          border: '1.5px solid #1c2d81',
                           fontSize: '0.78rem',
                           fontWeight: 700,
+                          background: isMulti ? '#fdf4ff' : '#eff6ff',
+                          color: isMulti ? '#86198f' : '#1c2d81',
+                          cursor: 'pointer',
                         }}
                       >
-                        Remove
+                        <option value="MCQ_SINGLE">Single Choice (1 Correct Answer)</option>
+                        <option value="MCQ_MULTIPLE">Multiple Choice (Multiple Correct Answers)</option>
+                      </select>
+
+                      {/* Difficulty Level */}
+                      <select
+                        value={q.difficulty}
+                        onChange={(e) => handleQuestionChange(qIdx, 'difficulty', e.target.value)}
+                        style={{
+                          padding: '4px 8px',
+                          border: '1px solid #cbd5e1',
+                          fontSize: '0.75rem',
+                          fontWeight: 700,
+                          background: '#f8fafc',
+                          color: '#475569',
+                        }}
+                      >
+                        <option value="EASY">EASY</option>
+                        <option value="MEDIUM">MEDIUM</option>
+                        <option value="HARD">HARD</option>
+                      </select>
+                    </div>
+
+                    {/* Question Action Controls */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <button
+                        type="button"
+                        onClick={() => handleDuplicateQuestion(qIdx)}
+                        title="Duplicate Question"
+                        style={{
+                          background: '#f8fafc',
+                          border: '1px solid #cbd5e1',
+                          color: '#475569',
+                          cursor: 'pointer',
+                          fontSize: '0.75rem',
+                          fontWeight: 700,
+                          padding: '4px 8px',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                        }}
+                      >
+                        <Copy size={12} /> Duplicate
                       </button>
-                    )}
-                  </div>
-                </div>
 
-                {/* Question Statement */}
-                <div>
-                  <label className={styles.label} style={{ marginBottom: '4px', display: 'block' }}>Question Statement</label>
-                  <textarea
-                    rows={2}
-                    className={styles.input}
-                    placeholder="Enter the question statement / problem text..."
-                    value={q.title}
-                    onChange={(e) => handleQuestionChange(qIdx, 'title', e.target.value)}
-                    style={{ width: '100%', resize: 'vertical' }}
-                    required
-                  />
-                </div>
-
-                {/* Question Options */}
-                <div>
-                  <label className={styles.label} style={{ marginBottom: '6px', display: 'block' }}>
-                    Answer Options (Select the radio button next to the correct answer)
-                  </label>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '10px' }}>
-                    {q.options.map((opt, optIdx) => {
-                      const letter = String.fromCharCode(65 + optIdx);
-                      return (
-                        <div
-                          key={opt.id || optIdx}
+                      {questions.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveQuestion(qIdx)}
+                          title="Remove this question"
                           style={{
-                            display: 'flex',
+                            background: '#fef2f2',
+                            border: '1px solid #fecaca',
+                            color: '#dc2626',
+                            cursor: 'pointer',
+                            fontSize: '0.75rem',
+                            fontWeight: 700,
+                            padding: '4px 8px',
+                            display: 'inline-flex',
                             alignItems: 'center',
-                            gap: '8px',
-                            background: opt.isCorrect ? '#f0fdf4' : '#f8fafc',
-                            border: opt.isCorrect ? '1.5px solid #22c55e' : '1px solid #e2e8f0',
-                            padding: '6px 10px',
+                            gap: '4px',
                           }}
                         >
-                          <input
-                            type="radio"
-                            name={`correct-opt-${qIdx}`}
-                            checked={opt.isCorrect}
-                            onChange={() => handleSetCorrectOption(qIdx, optIdx)}
-                            style={{ cursor: 'pointer', accentColor: '#16a34a' }}
-                            title="Mark as correct option"
-                          />
-                          <span style={{ fontWeight: 800, fontSize: '0.8rem', color: opt.isCorrect ? '#166534' : '#475569' }}>
-                            {letter}.
-                          </span>
-                          <input
-                            type="text"
-                            value={opt.optionText}
-                            onChange={(e) => handleOptionTextChange(qIdx, optIdx, e.target.value)}
-                            placeholder={`Option ${letter} text...`}
+                          <Trash2 size={12} /> Remove
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Question Statement */}
+                  <div>
+                    <label className={styles.label} style={{ marginBottom: '4px', display: 'block' }}>
+                      Question Statement / Problem Prompt *
+                    </label>
+                    <textarea
+                      rows={2}
+                      className={styles.input}
+                      placeholder="Enter the question statement / problem text..."
+                      value={q.title}
+                      onChange={(e) => handleQuestionChange(qIdx, 'title', e.target.value)}
+                      style={{ width: '100%', resize: 'vertical' }}
+                      required
+                    />
+                  </div>
+
+                  {/* Options Management */}
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                      <label className={styles.label} style={{ display: 'flex', alignItems: 'center', gap: '6px', margin: 0 }}>
+                        <span>Answer Option Choices ({q.options.length})</span>
+                        <span style={{ fontSize: '0.74rem', color: isMulti ? '#86198f' : '#166534', fontWeight: 600 }}>
+                          {isMulti ? '— Check all options that are correct' : '— Select the radio button for the correct option'}
+                        </span>
+                      </label>
+
+                      <button
+                        type="button"
+                        onClick={() => handleAddOption(qIdx)}
+                        style={{
+                          background: '#f1f5f9',
+                          border: '1px solid #cbd5e1',
+                          color: '#1c2d81',
+                          cursor: 'pointer',
+                          fontSize: '0.74rem',
+                          fontWeight: 700,
+                          padding: '3px 8px',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                        }}
+                      >
+                        <Plus size={12} /> Add Option
+                      </button>
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '10px' }}>
+                      {q.options.map((opt, optIdx) => {
+                        const letter = String.fromCharCode(65 + optIdx);
+                        return (
+                          <div
+                            key={opt.id || optIdx}
                             style={{
-                              flex: 1,
-                              border: 'none',
-                              background: 'transparent',
-                              fontSize: '0.82rem',
-                              outline: 'none',
-                              color: '#0f172a',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '8px',
+                              background: opt.isCorrect ? '#f0fdf4' : '#f8fafc',
+                              border: opt.isCorrect ? '1.5px solid #22c55e' : '1px solid #e2e8f0',
+                              padding: '6px 10px',
+                              transition: 'all 0.15s ease',
                             }}
-                            required
-                          />
-                        </div>
-                      );
-                    })}
+                          >
+                            {isMulti ? (
+                              <input
+                                type="checkbox"
+                                checked={opt.isCorrect}
+                                onChange={() => handleToggleCorrectOption(qIdx, optIdx)}
+                                style={{ cursor: 'pointer', accentColor: '#16a34a', width: '16px', height: '16px' }}
+                                title="Check if this option is correct (Multiple Choice)"
+                              />
+                            ) : (
+                              <input
+                                type="radio"
+                                name={`correct-opt-${qIdx}`}
+                                checked={opt.isCorrect}
+                                onChange={() => handleToggleCorrectOption(qIdx, optIdx)}
+                                style={{ cursor: 'pointer', accentColor: '#16a34a', width: '16px', height: '16px' }}
+                                title="Mark as the single correct option"
+                              />
+                            )}
+
+                            <span
+                              style={{
+                                fontWeight: 800,
+                                fontSize: '0.82rem',
+                                color: opt.isCorrect ? '#166534' : '#475569',
+                                width: '20px',
+                              }}
+                            >
+                              {letter}.
+                            </span>
+
+                            <input
+                              type="text"
+                              value={opt.optionText}
+                              onChange={(e) => handleOptionTextChange(qIdx, optIdx, e.target.value)}
+                              placeholder={`Option ${letter} text...`}
+                              style={{
+                                flex: 1,
+                                border: 'none',
+                                background: 'transparent',
+                                fontSize: '0.82rem',
+                                outline: 'none',
+                                color: '#0f172a',
+                              }}
+                              required
+                            />
+
+                            {q.options.length > 2 && (
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveOption(qIdx, optIdx)}
+                                title="Delete option"
+                                style={{
+                                  background: 'transparent',
+                                  border: 'none',
+                                  color: '#94a3b8',
+                                  cursor: 'pointer',
+                                  padding: '2px',
+                                }}
+                              >
+                                <Trash2 size={13} />
+                              </button>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Explanation */}
+                  <div>
+                    <label className={styles.label} style={{ marginBottom: '4px', display: 'block' }}>
+                      Explanation / Solution Rationale (Optional)
+                    </label>
+                    <input
+                      type="text"
+                      className={styles.input}
+                      placeholder="Brief explanation of why the correct option(s) are right..."
+                      value={q.explanation || ''}
+                      onChange={(e) => handleQuestionChange(qIdx, 'explanation', e.target.value)}
+                    />
                   </div>
                 </div>
+              );
+            })}
+          </div>
 
-                {/* Explanation */}
-                <div>
-                  <label className={styles.label} style={{ marginBottom: '4px', display: 'block' }}>Explanation / Solution Key (Optional)</label>
-                  <input
-                    type="text"
-                    className={styles.input}
-                    placeholder="Brief explanation of why the correct option is right..."
-                    value={q.explanation || ''}
-                    onChange={(e) => handleQuestionChange(qIdx, 'explanation', e.target.value)}
-                  />
-                </div>
-              </div>
-            ))}
+          {/* Bottom Add Question Button */}
+          <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'center', gap: '12px' }}>
+            <button
+              type="button"
+              onClick={handleAddQuestion}
+              style={{
+                padding: '10px 24px',
+                background: '#1c2d81',
+                color: '#ffffff',
+                border: 'none',
+                fontWeight: 700,
+                fontSize: '0.86rem',
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+              }}
+            >
+              <Plus size={16} /> Add Another Question
+            </button>
+            <button
+              type="button"
+              onClick={handleClearAllQuestions}
+              style={{
+                padding: '10px 18px',
+                background: '#ffffff',
+                color: '#64748b',
+                border: '1px solid #cbd5e1',
+                fontWeight: 700,
+                fontSize: '0.86rem',
+                cursor: 'pointer',
+              }}
+            >
+              Reset to Blank Question
+            </button>
           </div>
         </div>
 
@@ -859,7 +1503,7 @@ export function CreateOpportunityPage() {
         <div className={styles.formFooter}>
           <button type="submit" className={styles.btnPrimary} disabled={submitting}>
             <Send size={15} />
-            <span>{submitting ? 'Publishing Drive...' : 'Publish Campus Drive'}</span>
+            <span>{submitting ? 'Publishing Drive & Assessment...' : 'Publish Campus Drive & Assessment'}</span>
           </button>
           <Link to="/company/opportunities" className={styles.btnSecondary}>
             Cancel

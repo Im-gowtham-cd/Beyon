@@ -66,6 +66,8 @@ public class CompanyService {
                 com.beyon.identity.enums.UserRole.INSTITUTION,
                 com.beyon.identity.enums.AccountStatus.ACTIVE
         );
+        List<com.beyon.profile.model.StudentProfile> allStudentProfiles = studentProfileRepository.findAll();
+
         List<Map<String, Object>> result = new ArrayList<>();
         for (User u : activeUsers) {
             Map<String, Object> map = new LinkedHashMap<>();
@@ -82,6 +84,31 @@ public class CompanyService {
                 map.put("grade", prof.getAccreditationGrade());
                 map.put("type", prof.getInstitutionType());
             });
+
+            String instName = (String) map.get("name");
+            Set<String> depts = new LinkedHashSet<>();
+
+            // Find departments from registered students in this institution
+            for (com.beyon.profile.model.StudentProfile sp : allStudentProfiles) {
+                if (sp.getDepartment() != null && !sp.getDepartment().isBlank()) {
+                    if (instName != null && sp.getInstitution() != null &&
+                        (sp.getInstitution().equalsIgnoreCase(instName) || instName.toLowerCase().contains(sp.getInstitution().toLowerCase()))) {
+                        depts.add(sp.getDepartment().trim());
+                    }
+                }
+            }
+
+            // Always provide the standard academic engineering departments
+            depts.add("Computer Science and Engineering");
+            depts.add("Information Technology");
+            depts.add("Artificial Intelligence & Data Science");
+            depts.add("Electronics and Communication Engineering");
+            depts.add("Electrical and Electronics Engineering");
+            depts.add("Mechanical Engineering");
+            depts.add("Civil Engineering");
+            depts.add("Cybersecurity & Digital Forensics");
+
+            map.put("departments", new ArrayList<>(depts));
             result.add(map);
         }
         return result;

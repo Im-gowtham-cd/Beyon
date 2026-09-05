@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Search,
   UserCheck,
   Check,
   Building2,
   ShieldCheck,
-  Mail,
   Clock,
+  MessageSquare,
 } from 'lucide-react';
 import styles from './CandidateDiscoveryPage.module.css';
 
@@ -28,6 +29,7 @@ interface CandidateProfile {
 }
 
 export function CandidateDiscoveryPage() {
+  const navigate = useNavigate();
   const [opportunities, setOpportunities] = useState<any[]>([]);
   const [selectedOppId, setSelectedOppId] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState('');
@@ -154,6 +156,13 @@ export function CandidateDiscoveryPage() {
     } catch {
       /* handled */
     }
+  };
+
+  const handleContactCandidate = (candidate: CandidateProfile) => {
+    const targetId = candidate.studentId || candidate.id;
+    const nameParam = encodeURIComponent(candidate.name || 'Candidate');
+    const emailParam = encodeURIComponent(candidate.email || '');
+    navigate(`/company/messages?recipientId=${targetId}&name=${nameParam}&email=${emailParam}`);
   };
 
   const filteredCandidates = candidates.filter((c) => {
@@ -384,16 +393,15 @@ export function CandidateDiscoveryPage() {
                     )}
                   </button>
 
-                  {c.email && (
-                    <a
-                      href={`mailto:${c.email}`}
-                      className={styles.btnContact}
-                      title={`Send email to ${c.email}`}
-                    >
-                      <Mail size={14} />
-                      <span>Contact</span>
-                    </a>
-                  )}
+                  <button
+                    type="button"
+                    className={styles.btnContact}
+                    onClick={() => handleContactCandidate(c)}
+                    title={`Open direct chat with ${c.name}`}
+                  >
+                    <MessageSquare size={14} />
+                    <span>Message</span>
+                  </button>
                 </div>
               </div>
             );

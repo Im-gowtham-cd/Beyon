@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   MessageSquare,
   Search,
@@ -51,6 +52,10 @@ interface ContactUser {
 
 export function MessagingPage() {
   const { user } = useAuth();
+  const [searchParams] = useSearchParams();
+  const targetRecipientId = searchParams.get('recipientId') || searchParams.get('userId') || searchParams.get('studentId');
+  const targetName = searchParams.get('name') || searchParams.get('displayName');
+
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedConv, setSelectedConv] = useState<Conversation | null>(null);
   const [messages, setMessages] = useState<MessageItem[]>([]);
@@ -105,14 +110,59 @@ export function MessagingPage() {
     }
   };
 
-  // Initial load
+  // Initial load and Target recipient auto-selection
   useEffect(() => {
-    fetchConversations().then((list) => {
-      if (list.length > 0 && !selectedConv) {
+    let isMounted = true;
+
+    const initConversations = async () => {
+      const list = await fetchConversations();
+      if (!isMounted) return;
+
+      if (targetRecipientId) {
+        // Find existing conversation with target recipient
+        const existing = list.find((c: Conversation) => 
+          c.recipientId === targetRecipientId || 
+          (c as any).participantIds?.includes(targetRecipientId)
+        );
+
+        if (existing) {
+          selectConversation(existing);
+        } else {
+          // Create or retrieve direct conversation for target recipient
+          try {
+            const token = localStorage.getItem('beyon_token') || localStorage.getItem('beyon_access_token');
+            const res = await fetch('/api/v1/messages/conversations', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                ...(token ? { Authorization: `Bearer ${token}` } : {}),
+              },
+              body: JSON.stringify({
+                recipientId: targetRecipientId,
+                title: `Chat with ${targetName ? decodeURIComponent(targetName) : 'Candidate'}`,
+              }),
+            });
+
+            if (res.ok && isMounted) {
+              const json = await res.json();
+              const updatedList = await fetchConversations();
+              const targetConv = updatedList.find((c: Conversation) => c.id === json.data?.id) || json.data;
+              if (targetConv && isMounted) {
+                selectConversation(targetConv);
+              }
+            }
+          } catch {
+            /* ignore */
+          }
+        }
+      } else if (list.length > 0 && !selectedConv) {
         selectConversation(list[0]);
       }
-    });
-  }, []);
+    };
+
+    initConversations();
+    return () => { isMounted = false; };
+  }, [targetRecipientId]);
 
   // Polling for new messages in active chat
   useEffect(() => {
