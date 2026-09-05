@@ -336,12 +336,14 @@ const styles = StyleSheet.create({
     lineHeight: 16,
   },
   actionRow: {
-    marginTop: 4,
+    marginTop: 6,
   },
   submitBtn: {
+    height: 46,
     backgroundColor: colors.primary,
-    paddingVertical: 12,
     alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 0,
   },
   submitBtnDisabled: {
     opacity: 0.5,
@@ -350,15 +352,19 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontWeight: '800',
     fontSize: 13,
+    letterSpacing: 0.5,
   },
   nextBtn: {
+    height: 46,
     backgroundColor: colors.accent,
-    paddingVertical: 12,
     alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 0,
   },
   nextBtnText: {
     color: colors.primary,
     fontWeight: '900',
     fontSize: 13,
+    letterSpacing: 0.5,
   },
 });

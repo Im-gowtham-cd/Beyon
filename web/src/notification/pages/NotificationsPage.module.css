@@ -31,14 +31,22 @@
 }
 
 .markAllBtn {
-  padding: 8px 16px;
+  height: 36px;
+  min-height: 36px;
+  padding: 0 16px;
   border-radius: 0px;
   background: #ffffff;
   border: 1px solid #cbd5e1;
-  color: #475569;
+  color: #1c2d81;
   font-size: 0.82rem;
   font-weight: 700;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  box-sizing: border-box;
+  white-space: nowrap;
   transition: all 0.15s ease;
 }
 
@@ -55,7 +63,9 @@
 }
 
 .filterChip {
-  padding: 7px 16px;
+  height: 36px;
+  min-height: 36px;
+  padding: 0 16px;
   border-radius: 0px;
   background: #ffffff;
   border: 1px solid #cbd5e1;
@@ -63,6 +73,12 @@
   font-size: 0.82rem;
   font-weight: 700;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  box-sizing: border-box;
+  white-space: nowrap;
   transition: all 0.15s ease;
 }
 

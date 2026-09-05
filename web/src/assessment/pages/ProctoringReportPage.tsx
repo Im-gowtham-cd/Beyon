@@ -349,23 +349,24 @@ export const ProctoringReportPage: React.FC = () => {
                         marginBottom: '0.75rem',
                       }}
                     />
-                    <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                    <div style={{ display: 'flex', gap: '0.6rem', justifyContent: 'flex-end' }}>
                       <button
+                        type="button"
                         className={styles.btnSecondary}
                         onClick={() => setReviewingId(null)}
                       >
                         Cancel
                       </button>
                       <button
-                        className={styles.btnSecondary}
-                        style={{ color: '#16a34a' }}
+                        type="button"
+                        className={styles.btnSuccess}
                         onClick={() => handleReviewIncident(inc.id, 'DISMISSED')}
                       >
                         Dismiss False Alarm
                       </button>
                       <button
-                        className={styles.btnPrimary}
-                        style={{ background: '#dc2626', borderColor: '#dc2626' }}
+                        type="button"
+                        className={styles.btnDanger}
                         onClick={() => handleReviewIncident(inc.id, 'VIOLATION_CONFIRMED')}
                       >
                         Confirm Violation

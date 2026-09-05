@@ -26,6 +26,8 @@ public class RecruitmentService {
     private final com.beyon.profile.repository.StudentProfileRepository studentProfileRepository;
     private final com.beyon.profile.repository.StudentSkillRepository studentSkillRepository;
     private final com.beyon.assessment.repository.AssessmentResultRepository assessmentResultRepository;
+    private final com.beyon.institution.repository.InstitutionStudentRepository institutionStudentRepository;
+    private final com.beyon.recruitment.repository.PlacementRecordRepository placementRecordRepository;
 
     public RecruitmentService(RecruitmentApplicationRepository applicationRepository,
                               RecruitmentStatusHistoryRepository historyRepository,
@@ -34,7 +36,9 @@ public class RecruitmentService {
                               com.beyon.identity.repository.UserRepository userRepository,
                               com.beyon.profile.repository.StudentProfileRepository studentProfileRepository,
                               com.beyon.profile.repository.StudentSkillRepository studentSkillRepository,
-                              com.beyon.assessment.repository.AssessmentResultRepository assessmentResultRepository) {
+                              com.beyon.assessment.repository.AssessmentResultRepository assessmentResultRepository,
+                              com.beyon.institution.repository.InstitutionStudentRepository institutionStudentRepository,
+                              com.beyon.recruitment.repository.PlacementRecordRepository placementRecordRepository) {
         this.applicationRepository = applicationRepository;
         this.historyRepository = historyRepository;
         this.opportunityRepository = opportunityRepository;
@@ -43,6 +47,8 @@ public class RecruitmentService {
         this.studentProfileRepository = studentProfileRepository;
         this.studentSkillRepository = studentSkillRepository;
         this.assessmentResultRepository = assessmentResultRepository;
+        this.institutionStudentRepository = institutionStudentRepository;
+        this.placementRecordRepository = placementRecordRepository;
     }
 
     public List<RecruitmentApplication> getStudentApplications(UUID studentId) {
@@ -154,6 +160,46 @@ public class RecruitmentService {
                     "Application Status Updated",
                     "Your application for " + opp.getTitle() + " is now: " + newStatus,
                     "APPLICATION_STATUS", "RECRUITMENT_APPLICATION", applicationId);
+        }
+
+        // Cross-module sync: if candidate is SELECTED or PLACED, update institution placement status & record
+        if ("SELECTED".equalsIgnoreCase(newStatus) || "PLACED".equalsIgnoreCase(newStatus)) {
+            List<com.beyon.institution.model.InstitutionStudent> instStudents = institutionStudentRepository.findByStudentId(app.getStudentId());
+            for (var is : instStudents) {
+                is.setPlacementStatus("PLACED");
+                institutionStudentRepository.save(is);
+            }
+
+            List<com.beyon.recruitment.model.PlacementRecord> existing = placementRecordRepository.findByStudentIdOrderByCreatedAtDesc(app.getStudentId());
+            boolean hasRecord = existing.stream().anyMatch(r ->
+                (r.getPipelineId() != null && r.getPipelineId().equals(applicationId)) ||
+                (r.getDriveId() != null && r.getDriveId().equals(app.getOpportunityId()))
+            );
+            if (!hasRecord) {
+                com.beyon.recruitment.model.PlacementRecord pr = new com.beyon.recruitment.model.PlacementRecord();
+                pr.setStudentId(app.getStudentId());
+                pr.setPipelineId(applicationId);
+                pr.setDriveId(app.getOpportunityId());
+                pr.setCompanyUserId(opp != null ? opp.getCompanyUserId() : changedBy);
+                pr.setJobRole(opp != null ? opp.getTitle() : "Software Development Engineer");
+                if (opp != null && opp.getPackageLpa() != null) {
+                    pr.setCtcAmount(opp.getPackageLpa().multiply(java.math.BigDecimal.valueOf(100000)));
+                } else {
+                    pr.setCtcAmount(java.math.BigDecimal.valueOf(1850000));
+                }
+                pr.setCtcCurrency("INR");
+                pr.setPlacementType(opp != null && opp.getOpportunityType() != null ? opp.getOpportunityType() : "FULL_TIME");
+                pr.setPlacementYear(2026);
+                pr.setStatus("PLACED");
+                pr.setVerified(true);
+                pr.setVerifiedBy(changedBy);
+                pr.setVerifiedAt(java.time.OffsetDateTime.now());
+                pr.setOfferDate(java.time.OffsetDateTime.now());
+                if (!instStudents.isEmpty()) {
+                    pr.setInstitutionId(instStudents.get(0).getInstitutionId());
+                }
+                placementRecordRepository.save(pr);
+            }
         }
 
         return applicationRepository.save(app);

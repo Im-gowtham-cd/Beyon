@@ -17,7 +17,7 @@ html {
 }
 
 body {
-  font-family: var(--font-body, 'ClashDisplay', sans-serif);
+  font-family: var(--font-body);
   font-size: var(--fs-base, 0.95rem);
   font-weight: 500;
   color: var(--text-primary, #020617);
@@ -32,7 +32,7 @@ body {
 
 /* ── Typography ── */
 h1, h2, h3, h4, h5, h6 {
-  font-family: var(--font-heading, 'ClashDisplay', sans-serif);
+  font-family: var(--font-heading);
   font-weight: 700;
   color: var(--color-primary, #1c2d81);
   overflow-wrap: break-word;
@@ -40,9 +40,9 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 p, a, button, td, th, li, label, span, input, textarea {
+  font-family: inherit;
   overflow-wrap: break-word;
   overflow-wrap: anywhere;
-  font-weight: 500;
 }
 
 /* ── Links ── */
@@ -280,27 +280,33 @@ ul, ol {
   line-height: 1.7;
 }
 
-/* ── Buttons ── */
-.btn-primary {
+/* ── Unified Design System Button Primitives ── */
+.btn-primary,
+.btnPrimary {
+  height: 38px;
+  min-height: 38px;
+  padding: 0 20px;
   background: var(--color-primary);
   color: var(--color-surface);
   border: 1.5px solid var(--color-primary);
-  padding: 11px 28px;
-  cursor: pointer;
-  font-family: var(--font-display);
-  font-size: var(--fs-sm);
-  font-weight: 600;
+  font-family: var(--font-display, var(--font-body));
+  font-size: var(--fs-sm, 0.84rem);
+  font-weight: 700;
   letter-spacing: 0.02em;
-  border-radius: var(--radius-xs);
-  transition: var(--transition);
+  border-radius: var(--radius-xs, 0px);
+  cursor: pointer;
+  transition: var(--transition-fast);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
   text-decoration: none;
+  box-sizing: border-box;
+  white-space: nowrap;
 }
 
-.btn-primary:hover {
+.btn-primary:hover,
+.btnPrimary:hover {
   background: var(--color-primary-dark);
   border-color: var(--color-primary-dark);
   color: var(--color-surface);
@@ -308,28 +314,130 @@ ul, ol {
   box-shadow: var(--shadow-md);
 }
 
-.btn-secondary {
+.btn-secondary,
+.btnSecondary {
+  height: 38px;
+  min-height: 38px;
+  padding: 0 18px;
   background: var(--color-surface);
   color: var(--color-primary);
-  border: 1.5px solid var(--color-primary);
-  padding: 11px 28px;
-  cursor: pointer;
-  font-family: var(--font-display);
-  font-size: var(--fs-sm);
-  font-weight: 600;
+  border: 1.5px solid var(--color-border-dark, #cbd5e1);
+  font-family: var(--font-display, var(--font-body));
+  font-size: var(--fs-sm, 0.84rem);
+  font-weight: 700;
   letter-spacing: 0.02em;
-  border-radius: var(--radius-xs);
-  transition: var(--transition);
+  border-radius: var(--radius-xs, 0px);
+  cursor: pointer;
+  transition: var(--transition-fast);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
   text-decoration: none;
+  box-sizing: border-box;
+  white-space: nowrap;
 }
 
-.btn-secondary:hover {
+.btn-secondary:hover,
+.btnSecondary:hover {
+  background: var(--color-surface-2, #f8fafc);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  transform: translateY(-1px);
+}
+
+.btn-danger,
+.btnDanger {
+  height: 38px;
+  min-height: 38px;
+  padding: 0 18px;
+  background: var(--color-danger, #ef4444);
+  color: #ffffff;
+  border: 1.5px solid var(--color-danger, #ef4444);
+  font-family: var(--font-display, var(--font-body));
+  font-size: var(--fs-sm, 0.84rem);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  border-radius: var(--radius-xs, 0px);
+  cursor: pointer;
+  transition: var(--transition-fast);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-decoration: none;
+  box-sizing: border-box;
+  white-space: nowrap;
+}
+
+.btn-danger:hover,
+.btnDanger:hover {
+  background: #dc2626;
+  border-color: #dc2626;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25);
+}
+
+.btn-success,
+.btnSuccess {
+  height: 38px;
+  min-height: 38px;
+  padding: 0 18px;
+  background: var(--color-success, #10b981);
+  color: #ffffff;
+  border: 1.5px solid var(--color-success, #10b981);
+  font-family: var(--font-display, var(--font-body));
+  font-size: var(--fs-sm, 0.84rem);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  border-radius: var(--radius-xs, 0px);
+  cursor: pointer;
+  transition: var(--transition-fast);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-decoration: none;
+  box-sizing: border-box;
+  white-space: nowrap;
+}
+
+.btn-success:hover,
+.btnSuccess:hover {
+  background: var(--color-success-dark, #059669);
+  border-color: var(--color-success-dark, #059669);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+}
+
+.btn-outline,
+.btnOutline {
+  height: 38px;
+  min-height: 38px;
+  padding: 0 18px;
+  background: transparent;
+  color: var(--color-primary);
+  border: 1.5px solid var(--color-primary);
+  font-family: var(--font-display, var(--font-body));
+  font-size: var(--fs-sm, 0.84rem);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  border-radius: var(--radius-xs, 0px);
+  cursor: pointer;
+  transition: var(--transition-fast);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-decoration: none;
+  box-sizing: border-box;
+  white-space: nowrap;
+}
+
+.btn-outline:hover,
+.btnOutline:hover {
   background: var(--color-primary);
-  color: var(--color-surface);
+  color: #ffffff;
   transform: translateY(-1px);
 }
 

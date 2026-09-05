@@ -1,4 +1,4 @@
-﻿.page {
+.page {
   width: 100%;
   padding: 24px 32px 60px;
   display: flex;
@@ -260,36 +260,157 @@
 }
 
 .actionBtn {
-  padding: 6px 14px;
+  height: 32px;
+  min-height: 32px;
+  padding: 0 14px;
   background: #eff6ff;
   border: 1px solid #bfdbfe;
   color: #1c2d81;
   font-size: 0.78rem;
-  font-weight: 600;
+  font-weight: 700;
   border-radius: 0px;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  justify-content: center;
+  gap: 6px;
+  box-sizing: border-box;
+  white-space: nowrap;
+  transition: all 0.15s ease;
 }
 
 .actionBtn:hover {
   background: #dbeafe;
+  border-color: #1c2d81;
 }
 
 .publishBtn {
-  padding: 6px 14px;
+  height: 32px;
+  min-height: 32px;
+  padding: 0 14px;
   background: #15803d;
   border: 1px solid #15803d;
   color: #ffffff;
   font-size: 0.78rem;
-  font-weight: 600;
+  font-weight: 700;
   border-radius: 0px;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  box-sizing: border-box;
+  white-space: nowrap;
+  transition: all 0.15s ease;
 }
 
 .publishBtn:hover {
   background: #166534;
+}
+
+/* Standardized Button Primitives for Assessment Builder & Sessions */
+.btnPrimary {
+  height: 38px;
+  min-height: 38px;
+  padding: 0 20px;
+  background: #1c2d81;
+  color: #ffffff;
+  border: 1px solid #1c2d81;
+  font-size: 0.82rem;
+  font-weight: 700;
+  border-radius: 0px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-sizing: border-box;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.btnPrimary:hover {
+  background: #15246e;
+  border-color: #15246e;
+  box-shadow: 0 4px 12px rgba(28, 45, 129, 0.2);
+}
+
+.btnPrimary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btnSecondary {
+  height: 38px;
+  min-height: 38px;
+  padding: 0 16px;
+  background: #ffffff;
+  color: #1c2d81;
+  border: 1px solid #cbd5e1;
+  font-size: 0.82rem;
+  font-weight: 700;
+  border-radius: 0px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-sizing: border-box;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.btnSecondary:hover {
+  background: #f8fafc;
+  border-color: #1c2d81;
+}
+
+.btnDanger {
+  height: 38px;
+  min-height: 38px;
+  padding: 0 16px;
+  background: #dc2626;
+  color: #ffffff;
+  border: 1px solid #dc2626;
+  font-size: 0.82rem;
+  font-weight: 700;
+  border-radius: 0px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-sizing: border-box;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.btnDanger:hover {
+  background: #b91c1c;
+}
+
+.btnSuccess {
+  height: 38px;
+  min-height: 38px;
+  padding: 0 16px;
+  background: #16a34a;
+  color: #ffffff;
+  border: 1px solid #16a34a;
+  font-size: 0.82rem;
+  font-weight: 700;
+  border-radius: 0px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-sizing: border-box;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.btnSuccess:hover {
+  background: #15803d;
 }
 
 /* Builder Form */

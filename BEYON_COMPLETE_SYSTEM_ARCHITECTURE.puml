@@ -1,0 +1,173 @@
+@startuml Beyon_Complete_End_To_End_System
+!theme plain
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName Arial
+skinparam roundCorner 8
+skinparam shadowing false
+skinparam packageStyle rectangle
+
+title **BEYON — Complete End-to-End System Architecture (Dolt, React, Electron, Spring Boot, FastAPI, Redis, SFU)**
+
+' ==========================================
+' CLIENT TIERS
+' ==========================================
+package "🖥️ Edge Client Layer" {
+    package "💻 Desktop Lockdown App (Electron + React)" as DesktopModule {
+        [React 19 UI Renderer] as DesktopUI
+        [Assessment Runner & Monaco Editor] as CodeEditor
+        [OS Kernel & Process Guard] as OSGuard
+        [Audio Analyzer Node (Web Audio)] as AudioAnalyzer
+        [Laptop Camera Stream (Front 30FPS)] as LaptopCam
+        [Local SQLite & Offline Cache] as DesktopOfflineDB
+        
+        DesktopUI --> CodeEditor
+        DesktopUI --> AudioAnalyzer
+        DesktopUI --> LaptopCam
+        DesktopUI --> OSGuard
+        DesktopUI --> DesktopOfflineDB
+    }
+
+    package "📱 Mobile Dual-View Client (PWA / React WebRTC)" as MobileModule {
+        [Mobile Video Capture (Side 30FPS)] as MobileCam
+        [QR Code Token Handshake] as QRScanner
+        [Desk & Device Gyro Alignment] as GyroSensor
+        
+        MobileModule --> QRScanner
+        MobileModule --> MobileCam
+        MobileModule --> GyroSensor
+    }
+
+    package "🌐 Enterprise Web Portals (React 19 + Tailwind + Vite)" as WebModule {
+        [Recruiter Talent & Pipeline Portal] as RecruiterPortal
+        [Live Proctoring Multi-Cam Video Wall] as ProctorLiveWall
+        [Candidate Assessment & Practice Portal] as StudentPortal
+        [Institution Placement Cell Portal] as CollegePortal
+        [Platform Admin & Assessment Builder] as AdminPortal
+    }
+}
+
+' ==========================================
+' REAL-TIME STREAMING & GATEWAY
+' ==========================================
+package "⚡ Real-Time Streaming and Edge Gateway" {
+    component [WebRTC SFU Cluster (LiveKit / MediaSoup)] as WebRTCSFU
+    component [Cloudflare Edge and CDN (SSL / DDoS / WAF)] as EdgeGateway
+    component [API Gateway and Reverse Proxy (Spring Cloud Gateway / Nginx)] as APIGateway
+}
+
+' ==========================================
+' CORE APPLICATION BACKEND
+' ==========================================
+package "⚙️ Core Application Tier (Spring Boot 3.4 Microservices)" as BackendTier {
+    package "Controllers and Gateways" {
+        [Auth and Security Controller (JWT/OAuth2)] as AuthCtrl
+        [DualViewProctoringController] as ProctorCtrl
+        [AssessmentEngineController] as AssessmentCtrl
+        [RecruitmentPipelineController] as RecruitCtrl
+        [InstitutionAnalyticsController] as InstCtrl
+        [WebSocket and SSE Event Broker] as WSSBroker
+    }
+
+    package "Business Logic and Services" {
+        [Assessment Evaluation and Scoring Service] as ScoringService
+        [Proctoring Rule and Strike Engine] as RuleEngine
+        [Candidate Pipeline and Talent Graph Service] as TalentService
+        [Gamification and Coin Wallet Service] as GamifyService
+        [Audit Trail and Tamper-Proof Event Service] as AuditService
+    }
+
+    package "Event Bus and Messaging" {
+        [Spring ApplicationEventPublisher] as SpringEventBus
+        [Apache Kafka / RabbitMQ Event Queue] as KafkaQueue
+    }
+
+    ProctorCtrl --> RuleEngine
+    AssessmentCtrl --> ScoringService
+    RecruitCtrl --> TalentService
+    RuleEngine --> AuditService
+    ScoringService --> GamifyService
+    RuleEngine --> SpringEventBus
+    SpringEventBus --> WSSBroker
+    SpringEventBus --> KafkaQueue
+}
+
+' ==========================================
+' AI INFERENCE & COMPUTER VISION TIER
+' ==========================================
+package "🧠 AI Inference Microservices (FastAPI + PyTorch + Triton)" as AITier {
+    [YOLO11 Object Detector (Phone, Book, Earbuds)] as YOLO11
+    [Cheating Face CNN (Gaze, Head Pose, Multi-Face)] as FaceCNN
+    [Desk Secondary Screen and Keyboard Detector] as DeskScreenAI
+    [Audio Transcription and Diarization (Deepgram / Whisper)] as AudioAI
+    [Automated Coding Rubric Evaluator (Gemini 1.5 / GPT-4o)] as GenAIEvaluator
+}
+
+' ==========================================
+' PERSISTENCE, CACHE & DOLT DATABASE
+' ==========================================
+package "💾 High-Throughput Storage, Caching and Versioned DB Tier" as StorageTier {
+    database "🐬 Dolt (Git-for-Data / Version-Controlled SQL DB)" as DoltDB {
+        folder "Branch: main (Active Production Data)" {
+            [candidate_profiles] as TblCandidates
+            [assessment_results] as TblResults
+            [opportunity_applications] as TblApps
+            [proctoring_incidents] as TblIncidents
+            [coin_wallets and streaks] as TblGamify
+        }
+        folder "Branch: exam-rubrics-v2 (Versioned Rubrics and Questions)" {
+            [assessment_questions] as TblQuestions
+            [coding_test_cases] as TblTestCases
+            [evaluation_rubrics] as TblRubrics
+        }
+        [Dolt System Tables (dolt_log, dolt_diff, dolt_commit)] as DoltAuditTrail
+    }
+
+    database "⚡ Redis 7 Cluster" as RedisCluster {
+        [Ephemeral Session States and Locks] as SessionState
+        [Atomic Strike Warning Counters] as StrikeCounters
+        [Real-Time Leaderboards and Presence] as ActivePresence
+    }
+
+    database "📊 ClickHouse DB (Time-Series Proctoring Telemetry)" as ClickHouseDB {
+        [telemetry_frames_log] as TelemetryLogs
+        [gaze_and_audio_time_series] as TimeSeriesEvents
+    }
+
+    storage "☁️ Cloudflare R2 / AWS S3 (Violation Evidence Vault)" as S3Vault {
+        [Encrypted Incident Snapshots (.webp)] as Snapshots
+        [Full Dual-View Session Recordings (.mp4)] as VideoRecordings
+    }
+}
+
+' ==========================================
+' CONNECTIONS & DATA FLOWS
+' ==========================================
+DesktopUI --> EdgeGateway : HTTPS / WSS API Calls
+MobileCam --> EdgeGateway : HTTPS / WSS Side Camera
+WebModule --> EdgeGateway : HTTPS / WSS Web Portals
+
+EdgeGateway --> APIGateway
+APIGateway --> BackendTier
+
+LaptopCam --> WebRTCSFU : WebRTC Video Track (Front 30FPS)
+MobileCam --> WebRTCSFU : WebRTC Video Track (Side 30FPS)
+WebRTCSFU --> ProctorLiveWall : Sub-50ms Multi-Stream Grid Wall
+WebRTCSFU --> S3Vault : Archive Session Stream
+
+ProctorCtrl --> YOLO11 : gRPC / HTTP POST Frame Base64
+ProctorCtrl --> FaceCNN : Facial Landmark and Gaze Stream
+ProctorCtrl --> DeskScreenAI : Analyze Lateral Screen View
+AudioAnalyzer --> AudioAI : Audio Stream for Whispering / Secondary Voice
+ScoringService --> GenAIEvaluator : Send Code Diff for AI Rubric Evaluation
+
+RuleEngine --> RedisCluster : Atomic Strike Counter (INCRBY)
+BackendTier --> RedisCluster : Cache JWT Sessions and Active Takers
+RuleEngine --> ClickHouseDB : Log High-Frequency Telemetry Events
+RuleEngine --> S3Vault : Save Incident Evidence Snapshot
+BackendTier --> DoltDB : Commit Transactions, Results and Schema Changes (MySQL Wire Protocol)
+AuditService --> DoltAuditTrail : Generate Dolt Cryptographic Commit Hash
+
+WSSBroker --> ProctorLiveWall : Real-Time Live Incident Alerts
+WSSBroker --> DesktopUI : Live Warning Overlay and Lockdown Kill-Switch
+
+@enduml

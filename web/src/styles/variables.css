@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Montserrat:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
 /* ================================================================
    BEYON ENTERPRISE DESIGN SYSTEM v3.0
    Unified Identity, Full-Bleed Fluid Architecture & Crisp Tokens
@@ -93,9 +95,10 @@
   --color-violet-light: #f3e8ff;
 
   /* ── Typography Stack ── */
-  --font-body: 'ClashDisplay', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --font-heading: 'ClashDisplay', sans-serif;
-  --font-display: 'ClashDisplay', sans-serif;
+  --font-body: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-heading: 'ClashDisplay', 'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-display: 'ClashDisplay', 'Montserrat', sans-serif;
+  --font-subheading: 'Montserrat', 'Plus Jakarta Sans', sans-serif;
   --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
 
   /* ── Typography Scales ── */

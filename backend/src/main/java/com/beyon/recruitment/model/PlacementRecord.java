@@ -30,7 +30,12 @@ public class PlacementRecord {
     @Column(name = "created_at", nullable = false) private OffsetDateTime createdAt = OffsetDateTime.now();
     @Column(name = "updated_at", nullable = false) private OffsetDateTime updatedAt = OffsetDateTime.now();
 
+    @Transient
+    private String companyName;
+
     public PlacementRecord() {}
+    public String getCompanyName() { return companyName; }
+    public void setCompanyName(String companyName) { this.companyName = companyName; }
     public UUID getId() { return id; } public void setId(UUID v) { this.id = v; }
     public UUID getStudentId() { return studentId; } public void setStudentId(UUID v) { this.studentId = v; }
     public UUID getCompanyUserId() { return companyUserId; } public void setCompanyUserId(UUID v) { this.companyUserId = v; }

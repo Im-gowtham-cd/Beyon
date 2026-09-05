@@ -427,19 +427,34 @@ export function InstitutionStudentsPage() {
                   <td style={{ padding: '12px 16px', fontWeight: 600, color: '#0f172a' }}>{s.department}</td>
                   <td style={{ padding: '12px 16px', color: '#64748b' }}>{s.batch}</td>
                   <td style={{ padding: '12px 16px' }}>
-                    <span
+                    <select
+                      value={s.placementStatus || 'UNPLACED'}
+                      onChange={async (e) => {
+                        const newStatus = e.target.value;
+                        try {
+                          await institutionApi.updatePlacementStatus(s.studentId, newStatus);
+                          setActionMessage({ type: 'success', text: `Updated student status to: ${newStatus}` });
+                          await loadData();
+                        } catch {
+                          setActionMessage({ type: 'error', text: 'Failed to update student placement status.' });
+                        }
+                      }}
                       style={{
-                        fontSize: '0.72rem',
+                        padding: '4px 8px',
+                        borderRadius: '4px',
+                        fontSize: '0.76rem',
                         fontWeight: 700,
-                        padding: '2px 8px',
-                        borderRadius: '3px',
+                        cursor: 'pointer',
                         background: s.placementStatus === 'PLACED' ? '#dcfce7' : '#eff6ff',
                         color: s.placementStatus === 'PLACED' ? '#15803d' : '#1d4ed8',
-                        border: `1px solid ${s.placementStatus === 'PLACED' ? '#bbf7d0' : '#bfdbfe'}`,
+                        border: `1px solid ${s.placementStatus === 'PLACED' ? '#86efac' : '#bfdbfe'}`,
                       }}
                     >
-                      {s.placementStatus}
-                    </span>
+                      <option value="UNPLACED">UNPLACED</option>
+                      <option value="PLACEMENT_SEEKING">PLACEMENT_SEEKING</option>
+                      <option value="PLACED">PLACED (Offer Certified)</option>
+                      <option value="OPTED_OUT">OPTED_OUT</option>
+                    </select>
                   </td>
                   <td style={{ padding: '12px 16px' }}>
                     <span
