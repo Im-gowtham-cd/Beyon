@@ -1139,9 +1139,13 @@ export function AssessmentApp() {
         });
       }
 
-      // Pre-load real questions for the examination
+      // Pre-load company drive questions or benchmark questions for the examination
       try {
-        const qRes = await fetch(`${API_BASE}/practice/questions?size=${totalQCount}`, {
+        const qEndpoint = opportunityId
+          ? `${API_BASE}/opportunities/${opportunityId}/questions`
+          : `${API_BASE}/practice/questions?size=${totalQCount}`;
+        
+        const qRes = await fetch(qEndpoint, {
           headers: activeToken ? { Authorization: `Bearer ${activeToken}` } : {},
         });
         if (qRes.ok) {
@@ -1149,10 +1153,13 @@ export function AssessmentApp() {
           const list = qData.data || qData || [];
           if (Array.isArray(list) && list.length > 0) {
             setExamQuestionsList(list);
+            if (session) {
+              setSession(prev => prev ? { ...prev, totalQuestions: list.length } : prev);
+            }
           }
         }
       } catch (e) {
-        console.warn('Practice questions pre-fetch fallback:', e);
+        console.warn('Drive questions pre-fetch fallback:', e);
       }
 
       await window.beyon?.assessment?.enterFullscreen();

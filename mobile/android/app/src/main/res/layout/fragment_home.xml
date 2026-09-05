@@ -68,7 +68,10 @@
                     android:paddingTop="3dp"
                     android:paddingEnd="8dp"
                     android:paddingBottom="3dp"
-                    android:text="🔥 7 Day Streak"
+                    android:text="7 Day Streak"
+                    android:drawableStart="@drawable/ic_fire"
+                    android:drawablePadding="4dp"
+                    android:gravity="center_vertical"
                     android:textColor="#FFFFFF"
                     android:textSize="11sp"
                     android:textStyle="bold" />

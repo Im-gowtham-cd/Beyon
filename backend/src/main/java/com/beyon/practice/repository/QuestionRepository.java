@@ -37,4 +37,7 @@ public interface QuestionRepository extends JpaRepository<Question, UUID> {
 
     @Query("SELECT q FROM Question q WHERE (q.status = 'PUBLISHED' OR q.status = 'ACTIVE') AND q.id NOT IN (SELECT a.questionId FROM StudentQuestionAttempt a WHERE a.studentId = :studentId) ORDER BY FUNCTION('RAND')")
     List<Question> findUnsolvedForStudent(@Param("studentId") UUID studentId, Pageable pageable);
+
+    List<Question> findByTagsContainingOrderByCreatedAtAsc(String tag);
+    List<Question> findByCreatedByOrderByCreatedAtDesc(UUID createdBy);
 }

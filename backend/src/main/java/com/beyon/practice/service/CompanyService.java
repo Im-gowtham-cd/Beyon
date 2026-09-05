@@ -33,6 +33,9 @@ public class CompanyService {
 
     private final com.beyon.profile.repository.InstitutionProfileRepository institutionProfileRepository;
     private final com.beyon.institution.repository.PlacementDriveRepository placementDriveRepository;
+    private final com.beyon.practice.repository.QuestionRepository questionRepository;
+    private final com.beyon.practice.repository.QuestionOptionRepository questionOptionRepository;
+    private final com.beyon.assessment.repository.AssessmentConfigurationRepository assessmentConfigRepository;
 
     public CompanyService(CompanyOpportunityRepository opportunityRepository,
                           OpportunityApplicationRepository applicationRepository,
@@ -41,7 +44,10 @@ public class CompanyService {
                           CoinService coinService,
                           RecruitmentApplicationRepository recruitmentAppRepo,
                           com.beyon.profile.repository.InstitutionProfileRepository institutionProfileRepository,
-                          com.beyon.institution.repository.PlacementDriveRepository placementDriveRepository) {
+                          com.beyon.institution.repository.PlacementDriveRepository placementDriveRepository,
+                          com.beyon.practice.repository.QuestionRepository questionRepository,
+                          com.beyon.practice.repository.QuestionOptionRepository questionOptionRepository,
+                          com.beyon.assessment.repository.AssessmentConfigurationRepository assessmentConfigRepository) {
         this.opportunityRepository = opportunityRepository;
         this.applicationRepository = applicationRepository;
         this.userRepository = userRepository;
@@ -50,6 +56,9 @@ public class CompanyService {
         this.recruitmentAppRepo = recruitmentAppRepo;
         this.institutionProfileRepository = institutionProfileRepository;
         this.placementDriveRepository = placementDriveRepository;
+        this.questionRepository = questionRepository;
+        this.questionOptionRepository = questionOptionRepository;
+        this.assessmentConfigRepository = assessmentConfigRepository;
     }
 
     public List<Map<String, Object>> getActiveInstitutions() {
@@ -120,6 +129,146 @@ public class CompanyService {
         }
 
         return saved;
+    }
+
+    @Transactional
+    public CompanyOpportunity createOpportunityWithQuestions(UUID companyUserId, Map<String, Object> payload) {
+        CompanyOpportunity opp = new CompanyOpportunity();
+        opp.setCompanyUserId(companyUserId);
+        opp.setTitle((String) payload.get("title"));
+        opp.setDescription((String) payload.get("description"));
+        opp.setOpportunityType(payload.get("opportunityType") != null ? (String) payload.get("opportunityType") : "CAMPUS_DRIVE");
+        opp.setLocation((String) payload.get("location"));
+        opp.setRemote(Boolean.TRUE.equals(payload.get("remote")));
+        if (payload.get("minCgpa") != null) {
+            try {
+                opp.setMinCgpa(new BigDecimal(payload.get("minCgpa").toString()));
+            } catch (Exception ignored) {}
+        }
+        opp.setEligibleDepartments((String) payload.get("eligibleDepartments"));
+        opp.setEligibleGraduationYears((String) payload.get("eligibleGraduationYears"));
+        opp.setRequiredSkills((String) payload.get("requiredSkills"));
+        opp.setPreferredSkills((String) payload.get("preferredSkills"));
+        if (payload.get("minBeyonCoins") != null) {
+            try {
+                opp.setMinBeyonCoins(((Number) payload.get("minBeyonCoins")).intValue());
+            } catch (Exception ignored) {}
+        }
+        opp.setTargetInstitutionIds((String) payload.get("targetInstitutionIds"));
+        opp.setTargetInstitutionNames((String) payload.get("targetInstitutionNames"));
+        opp.setStatus(payload.get("status") != null ? (String) payload.get("status") : "PUBLISHED");
+
+        // 1. Create and link AssessmentConfiguration for this drive
+        int durationMins = payload.get("durationMinutes") != null ? ((Number) payload.get("durationMinutes")).intValue() : 60;
+        int passingScore = payload.get("passingScore") != null ? ((Number) payload.get("passingScore")).intValue() : 65;
+        
+        List<Map<String, Object>> questionsData = (List<Map<String, Object>>) payload.get("questions");
+        int totalQuestions = (questionsData != null && !questionsData.isEmpty()) ? questionsData.size() : (payload.get("totalQuestions") != null ? ((Number) payload.get("totalQuestions")).intValue() : 20);
+
+        com.beyon.assessment.model.AssessmentConfiguration assessmentConfig = new com.beyon.assessment.model.AssessmentConfiguration();
+        assessmentConfig.setCompanyId(companyUserId);
+        assessmentConfig.setTitle(opp.getTitle() + " Assessment");
+        assessmentConfig.setDescription("Official Proctored Assessment for " + opp.getTitle());
+        assessmentConfig.setDurationMinutes(durationMins);
+        assessmentConfig.setTotalQuestions(totalQuestions);
+        assessmentConfig.setPassingScore(new BigDecimal(passingScore));
+        assessmentConfig.setStatus("PUBLISHED");
+        assessmentConfig.setAdaptiveEnabled(Boolean.TRUE.equals(payload.get("adaptiveEnabled")));
+        com.beyon.assessment.model.AssessmentConfiguration savedConfig = assessmentConfigRepository.save(assessmentConfig);
+        opp.setAssessmentId(savedConfig.getId());
+
+        CompanyOpportunity savedOpp = opportunityRepository.save(opp);
+
+        // 2. Save custom questions and options created by company
+        if (questionsData != null && !questionsData.isEmpty()) {
+            for (int i = 0; i < questionsData.size(); i++) {
+                Map<String, Object> qMap = questionsData.get(i);
+                com.beyon.practice.model.Question q = new com.beyon.practice.model.Question();
+                String qTitle = qMap.get("title") != null ? (String) qMap.get("title") : "Question " + (i + 1);
+                q.setTitle(qTitle);
+                q.setDescription(qMap.get("description") != null ? (String) qMap.get("description") : qTitle);
+                q.setQuestionType(qMap.get("questionType") != null ? (String) qMap.get("questionType") : "MCQ_SINGLE");
+                q.setDifficulty(qMap.get("difficulty") != null ? (String) qMap.get("difficulty") : "MEDIUM");
+                q.setExplanation((String) qMap.get("explanation"));
+                q.setCreatedBy(companyUserId);
+                q.setStatus("PUBLISHED");
+                q.setTags("opportunity:" + savedOpp.getId() + ",assessment:" + savedConfig.getId());
+                com.beyon.practice.model.Question savedQ = questionRepository.save(q);
+
+                List<Map<String, Object>> optionsData = (List<Map<String, Object>>) qMap.get("options");
+                if (optionsData != null) {
+                    for (int optIdx = 0; optIdx < optionsData.size(); optIdx++) {
+                        Map<String, Object> optMap = optionsData.get(optIdx);
+                        com.beyon.practice.model.QuestionOption opt = new com.beyon.practice.model.QuestionOption();
+                        opt.setQuestionId(savedQ.getId());
+                        opt.setOptionText((String) optMap.get("optionText"));
+                        opt.setCorrect(Boolean.TRUE.equals(optMap.get("isCorrect")) || Boolean.TRUE.equals(optMap.get("correct")));
+                        opt.setDisplayOrder(optIdx + 1);
+                        opt.setExplanation((String) optMap.get("explanation"));
+                        questionOptionRepository.save(opt);
+                    }
+                }
+            }
+        }
+
+        // 3. Register placement drives for target institutions
+        if ("CAMPUS_DRIVE".equalsIgnoreCase(savedOpp.getOpportunityType()) &&
+            savedOpp.getTargetInstitutionIds() != null &&
+            !savedOpp.getTargetInstitutionIds().isBlank()) {
+            
+            String[] instIds = savedOpp.getTargetInstitutionIds().split(",");
+            for (String idStr : instIds) {
+                String clean = idStr.trim();
+                if (!clean.isEmpty()) {
+                    try {
+                        UUID instId = UUID.fromString(clean);
+                        com.beyon.institution.model.PlacementDrive pd = new com.beyon.institution.model.PlacementDrive();
+                        pd.setOpportunityId(savedOpp.getId());
+                        pd.setInstitutionId(instId);
+                        pd.setCompanyUserId(companyUserId);
+                        pd.setTitle(savedOpp.getTitle());
+                        pd.setDescription(savedOpp.getDescription());
+                        pd.setStatus("PENDING_APPROVAL");
+                        placementDriveRepository.save(pd);
+                    } catch (Exception ignored) {}
+                }
+            }
+        }
+
+        return savedOpp;
+    }
+
+    public List<Map<String, Object>> getOpportunityQuestions(UUID opportunityId) {
+        String tag = "opportunity:" + opportunityId;
+        List<com.beyon.practice.model.Question> questions = questionRepository.findByTagsContainingOrderByCreatedAtAsc(tag);
+        
+        if (questions.isEmpty()) {
+            questions = questionRepository.findByStatusOrderByCreatedAtDesc("PUBLISHED", org.springframework.data.domain.PageRequest.of(0, 20));
+        }
+
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (com.beyon.practice.model.Question q : questions) {
+            Map<String, Object> qMap = new LinkedHashMap<>();
+            qMap.put("id", q.getId());
+            qMap.put("title", q.getTitle());
+            qMap.put("description", q.getDescription());
+            qMap.put("questionType", q.getQuestionType());
+            qMap.put("difficulty", q.getDifficulty());
+            qMap.put("explanation", q.getExplanation());
+
+            List<com.beyon.practice.model.QuestionOption> options = questionOptionRepository.findByQuestionIdOrderByDisplayOrder(q.getId());
+            List<Map<String, Object>> optList = new ArrayList<>();
+            for (com.beyon.practice.model.QuestionOption opt : options) {
+                Map<String, Object> optMap = new LinkedHashMap<>();
+                optMap.put("id", opt.getId());
+                optMap.put("optionText", opt.getOptionText());
+                optMap.put("displayOrder", opt.getDisplayOrder());
+                optList.add(optMap);
+            }
+            qMap.put("options", optList);
+            result.add(qMap);
+        }
+        return result;
     }
 
     @Transactional

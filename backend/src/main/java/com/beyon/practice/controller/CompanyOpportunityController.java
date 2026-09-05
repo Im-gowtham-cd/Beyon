@@ -49,10 +49,15 @@ public class CompanyOpportunityController {
         return ResponseEntity.ok(ApiResponse.ok(companyService.getOpportunity(id)));
     }
 
+    @GetMapping("/{id}/questions")
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getOpportunityQuestions(@PathVariable UUID id) {
+        return ResponseEntity.ok(ApiResponse.ok(companyService.getOpportunityQuestions(id)));
+    }
+
     @PostMapping
-    public ResponseEntity<ApiResponse<CompanyOpportunity>> createOpportunity(Authentication auth, @RequestBody CompanyOpportunity opp) {
+    public ResponseEntity<ApiResponse<CompanyOpportunity>> createOpportunity(Authentication auth, @RequestBody Map<String, Object> body) {
         UUID companyUserId = extractUserId(auth);
-        return ResponseEntity.ok(ApiResponse.ok(companyService.createOpportunity(companyUserId, opp)));
+        return ResponseEntity.ok(ApiResponse.ok(companyService.createOpportunityWithQuestions(companyUserId, body)));
     }
 
     @PutMapping("/{id}")

@@ -15,11 +15,16 @@ public class AssessmentController {
     private final AssessmentSessionService sessionService;
     private final ProctoringService proctoringService;
     private final JwtUtil jwtUtil;
+    private final com.beyon.practice.service.CompanyService companyService;
 
-    public AssessmentController(AssessmentSessionService sessionService, ProctoringService proctoringService, JwtUtil jwtUtil) {
+    public AssessmentController(AssessmentSessionService sessionService,
+                                ProctoringService proctoringService,
+                                JwtUtil jwtUtil,
+                                com.beyon.practice.service.CompanyService companyService) {
         this.sessionService = sessionService;
         this.proctoringService = proctoringService;
         this.jwtUtil = jwtUtil;
+        this.companyService = companyService;
     }
 
     @PostMapping("/session")
@@ -129,6 +134,15 @@ public class AssessmentController {
         res.put("totalQuestions", session.getTotalQuestions());
         res.put("durationMinutes", session.getDurationMinutes());
         return ResponseEntity.ok(res);
+    }
+
+    @GetMapping("/session/{sessionId}/questions")
+    public ResponseEntity<?> getSessionQuestions(@PathVariable UUID sessionId) {
+        var session = sessionService.getAssessmentSession(sessionId);
+        if (session != null && session.getOpportunityId() != null) {
+            return ResponseEntity.ok(com.beyon.common.response.ApiResponse.ok(companyService.getOpportunityQuestions(session.getOpportunityId())));
+        }
+        return ResponseEntity.ok(com.beyon.common.response.ApiResponse.ok(companyService.getOpportunityQuestions(null)));
     }
 
     @PostMapping("/session/{sessionId}/answer")

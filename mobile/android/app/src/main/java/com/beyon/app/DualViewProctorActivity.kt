@@ -145,9 +145,9 @@ class DualViewProctorActivity : AppCompatActivity() {
 
     private fun updateCameraSwitchButtons() {
         val isFront = currentLensFacing == CameraCharacteristics.LENS_FACING_FRONT
-        binding.btnSwitchCameraHeader.text = if (isFront) "🔄 FRONT" else "🔄 REAR"
-        binding.btnSwitchCamera.text = if (isFront) "🔄  Switch to Rear Camera" else "🔄  Switch to Front Camera"
-        binding.btnSwitchCameraStreaming.text = if (isFront) "🔄 Rear" else "🔄 Front"
+        binding.btnSwitchCameraHeader.text = if (isFront) "FRONT" else "REAR"
+        binding.btnSwitchCamera.text = if (isFront) "Switch to Rear Camera" else "Switch to Front Camera"
+        binding.btnSwitchCameraStreaming.text = if (isFront) "Rear" else "Front"
         val facingName = if (isFront) "Front (Selfie) Camera" else "Rear (Environment) Camera"
         Toast.makeText(this, "Switched to $facingName", Toast.LENGTH_SHORT).show()
     }

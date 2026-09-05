@@ -25,6 +25,7 @@ public class AssessmentSessionService {
     private final SystemCheckResultRepository systemCheckResultRepository;
     private final AssessmentResultRepository resultRepository;
     private final org.springframework.context.ApplicationEventPublisher eventPublisher;
+    private final com.beyon.practice.repository.QuestionOptionRepository questionOptionRepository;
     private final SecureRandom secureRandom = new SecureRandom();
 
     public AssessmentSessionService(
@@ -37,7 +38,8 @@ public class AssessmentSessionService {
             IdentityVerificationRepository identityVerificationRepository,
             SystemCheckResultRepository systemCheckResultRepository,
             AssessmentResultRepository resultRepository,
-            org.springframework.context.ApplicationEventPublisher eventPublisher) {
+            org.springframework.context.ApplicationEventPublisher eventPublisher,
+            com.beyon.practice.repository.QuestionOptionRepository questionOptionRepository) {
         this.sessionRepository = sessionRepository;
         this.policyRepository = policyRepository;
         this.answerRepository = answerRepository;
@@ -48,6 +50,7 @@ public class AssessmentSessionService {
         this.systemCheckResultRepository = systemCheckResultRepository;
         this.resultRepository = resultRepository;
         this.eventPublisher = eventPublisher;
+        this.questionOptionRepository = questionOptionRepository;
     }
 
     public AssessmentSession createSession(UUID applicationId, UUID studentId, UUID opportunityId, int questionCount, int durationMinutes) {
@@ -216,6 +219,13 @@ public class AssessmentSessionService {
         answer.setMarkedForReview(markedForReview);
         answer.setAnsweredAt(OffsetDateTime.now());
         answer.setUpdatedAt(OffsetDateTime.now());
+
+        if (selectedOptionId != null) {
+            questionOptionRepository.findById(selectedOptionId).ifPresent(opt -> {
+                answer.setIsCorrect(opt.isCorrect());
+                answer.setMarksAwarded(opt.isCorrect() ? BigDecimal.valueOf(5) : BigDecimal.ZERO);
+            });
+        }
 
         session.setLastAutosaveAt(OffsetDateTime.now());
         session.setUpdatedAt(OffsetDateTime.now());
@@ -485,5 +495,9 @@ public class AssessmentSessionService {
         }
         sb.append("}");
         return sb.toString();
+    }
+
+    public AssessmentSession getAssessmentSession(UUID sessionId) {
+        return sessionRepository.findById(sessionId).orElse(null);
     }
 }
