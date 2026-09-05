@@ -14,6 +14,7 @@ import {
   LineChart,
   Building2,
   MessageSquare,
+  Bell,
   ChevronLeft,
   ChevronRight,
 } from 'lucide-react';
@@ -99,6 +100,7 @@ export function CompanySidebar({
       title: 'Analytics & Settings',
       items: [
         { to: '/company/analytics', icon: LineChart, label: 'Hiring Analytics' },
+        { to: '/company/notifications', icon: Bell, label: 'Notifications' },
         { to: '/company/profile', icon: Building2, label: 'Company Profile' },
         { to: '/company/messages', icon: MessageSquare, label: 'Direct Messaging' },
       ],

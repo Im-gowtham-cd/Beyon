@@ -138,6 +138,18 @@ export function AssessmentApp() {
   const alertCounterRef = useRef(0);
   const launchToken = new URLSearchParams(window.location.search).get('token');
 
+  // Reattempt Request state
+  const [reattemptsMap, setReattemptsMap] = useState<Record<string, any>>({});
+  const [showReattemptModal, setShowReattemptModal] = useState<{
+    oppId: string;
+    oppTitle: string;
+    companyName?: string;
+    defaultTerminationReason?: string;
+  } | null>(null);
+  const [reattemptStudentReason, setReattemptStudentReason] = useState<string>('');
+  const [isSubmittingReattempt, setIsSubmittingReattempt] = useState<boolean>(false);
+  const [reattemptSuccessMsg, setReattemptSuccessMsg] = useState<string>('');
+
   // Application Settings & Exit state
   const [showExitModal, setShowExitModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
@@ -150,13 +162,18 @@ export function AssessmentApp() {
   // Real-Time Proctoring AI Engine state
   const [proctorStatus, setProctorStatus] = useState<'CLEAR' | 'WARNING' | 'CRITICAL'>('CLEAR');
   const [proctorMessage, setProctorMessage] = useState('Face Detected & Monitored');
+  const [strikeCount, setStrikeCount] = useState<number>(0);
+  const [activeWarningModal, setActiveWarningModal] = useState<{ strike: number; title: string; reason: string } | null>(null);
   const analysisCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const isTerminatingRef = useRef(false);
+  const strikeCountRef = useRef(0);
+  const lastStrikeTimeRef = useRef(0);
   const absenceStreakRef = useRef(0);
   const cameraCoverStreakRef = useRef(0);
   const multiPersonStreakRef = useRef(0);
   const phoneStreakRef = useRef(0);
+  const lookAwayStreakRef = useRef(0);
   const voiceStreakRef = useRef(0);
   const noiseStreakRef = useRef(0);
   const proctorIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -172,6 +189,129 @@ export function AssessmentApp() {
   const [dualViewLoading, setDualViewLoading] = useState(false);
   const [dualViewConsent, setDualViewConsent] = useState(false);
   const dualViewPollingRef = useRef<any>(null);
+
+  const captureFrameBase64 = (): string | null => {
+    try {
+      const canvas = analysisCanvasRef.current || document.createElement('canvas');
+      if (examVideoRef.current && examVideoRef.current.readyState >= 2) {
+        canvas.width = 320;
+        canvas.height = 240;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(examVideoRef.current, 0, 0, 320, 240);
+          return canvas.toDataURL('image/jpeg', 0.7);
+        }
+      }
+    } catch {}
+    return null;
+  };
+
+  const logProctoringIncident = async (
+    incidentType: string,
+    severity: string,
+    confidence: number,
+    reason: string,
+    source: string = 'LAPTOP_FRONT',
+    evidenceBase64?: string | null
+  ) => {
+    if (!procSessionId) return;
+    try {
+      await fetch(`${API_BASE}/proctoring/dualview/${procSessionId}/incidents`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          incidentType,
+          severity,
+          confidence,
+          riskContribution: severity === 'CRITICAL' ? 100 : severity === 'HIGH' ? 35 : 20,
+          sources: [source],
+          evidenceBase64: evidenceBase64 || captureFrameBase64(),
+        }),
+      });
+    } catch (e) {
+      console.warn('[RuleEngine] Error logging incident:', e);
+    }
+  };
+
+  const triggerRuleEngineViolation = (
+    eventType: string,
+    reason: string,
+    cameraSource: string = 'LAPTOP_FRONT',
+    isInstantKill: boolean = false
+  ) => {
+    if (isTerminatingRef.current) return;
+
+    const snapshot = captureFrameBase64();
+
+    // 📱 PHONE DETECTED: Instant Kill Switch
+    if (isInstantKill) {
+      isTerminatingRef.current = true;
+      setProctorStatus('CRITICAL');
+      setProctorMessage('AUTO-TERMINATED (PHONE DETECTED)');
+      setActiveWarningModal({
+        strike: 3,
+        title: 'CRITICAL VIOLATION: MOBILE PHONE DETECTED',
+        reason: `Unauthorized mobile device detected (${cameraSource}). In accordance with examination security policy, this session has been immediately terminated and logged.`,
+      });
+      addMalpracticeAlert('CRITICAL_PHONE_TERMINATION', `🚨 CRITICAL VIOLATION: ${reason}. Assessment terminated.`);
+      setProctoringWarnings(prev => [...prev, `[INSTANT TERMINATION] ${reason} (${cameraSource})`]);
+
+      logProctoringIncident(eventType, 'CRITICAL', 0.98, reason, cameraSource, snapshot);
+
+      setTimeout(() => {
+        if (handleSubmitRef.current) handleSubmitRef.current();
+      }, 2200);
+      return;
+    }
+
+    // Temporal Smoothing & Cooldown filter (4s between strikes)
+    const now = Date.now();
+    if (now - lastStrikeTimeRef.current < 4000) return;
+    lastStrikeTimeRef.current = now;
+
+    strikeCountRef.current += 1;
+    const currentStrikes = strikeCountRef.current;
+    setStrikeCount(currentStrikes);
+    setProctoringWarnings(prev => [...prev, `[STRIKE ${currentStrikes}/3] ${reason} (${cameraSource})`]);
+
+    const severity = currentStrikes >= 3 ? 'CRITICAL' : currentStrikes === 2 ? 'HIGH' : 'MEDIUM';
+    logProctoringIncident(eventType, severity, 0.90, reason, cameraSource, snapshot);
+
+    if (currentStrikes === 1) {
+      setProctorStatus('WARNING');
+      setProctorMessage(`Strike 1/3: ${reason}`);
+      setActiveWarningModal({
+        strike: 1,
+        title: 'Proctoring Warning (Strike 1 of 3)',
+        reason: `${reason}. Please ensure you maintain correct posture, silence, and look directly at your screen.`,
+      });
+      addMalpracticeAlert('VIOLATION_STRIKE_1', `⚠️ Warning (Strike 1/3): ${reason}`);
+    } else if (currentStrikes === 2) {
+      setProctorStatus('WARNING');
+      setProctorMessage(`Strike 2/3: FINAL WARNING`);
+      setActiveWarningModal({
+        strike: 2,
+        title: '🚨 FINAL WARNING (Strike 2 of 3)',
+        reason: `${reason}. You have 1 strike remaining. One more infraction will immediately terminate your assessment.`,
+      });
+      addMalpracticeAlert('VIOLATION_STRIKE_2', `🚨 FINAL WARNING (Strike 2/3): ${reason}`);
+    } else if (currentStrikes >= 3) {
+      isTerminatingRef.current = true;
+      setProctorStatus('CRITICAL');
+      setProctorMessage('AUTO-TERMINATED (3 STRIKES)');
+      setActiveWarningModal({
+        strike: 3,
+        title: '⛔ ASSESSMENT TERMINATED (3 Strikes Exceeded)',
+        reason: `You have exceeded the maximum allowed proctoring violations (3 strikes). Latest infraction: ${reason}. Assessment is being auto-submitted.`,
+      });
+      addMalpracticeAlert('STRIKE_LIMIT_TERMINATION', `⛔ ASSESSMENT TERMINATED: 3 Strikes Exceeded (${reason}).`);
+
+      setTimeout(() => {
+        if (handleSubmitRef.current) handleSubmitRef.current();
+      }, 2500);
+    }
+  };
+
 
   useEffect(() => {
     if (pairingUrl) {
@@ -265,10 +405,11 @@ export function AssessmentApp() {
     setLoadingDashboard(true);
     try {
       const headers = { Authorization: `Bearer ${authToken}` };
-      const [profRes, oppsRes, weeklyRes] = await Promise.all([
+      const [profRes, oppsRes, weeklyRes, reattemptRes] = await Promise.all([
         fetch(`${API_BASE}/student/profile`, { headers }).catch(() => null),
         fetch(`${API_BASE}/opportunities/opted-in`, { headers }).catch(() => null),
         fetch(`${API_BASE}/weekly-tests`, { headers }).catch(() => null),
+        fetch(`${API_BASE}/assessment/my-reattempts`, { headers }).catch(() => null),
       ]);
 
       if (profRes && profRes.ok) {
@@ -292,10 +433,79 @@ export function AssessmentApp() {
         const testList = Array.isArray(d) ? d : (d.data || []);
         setWeeklyTests(testList);
       }
+      if (reattemptRes && reattemptRes.ok) {
+        const d = await reattemptRes.json();
+        const reqs = Array.isArray(d) ? d : (d.data || []);
+        const map: Record<string, any> = {};
+        reqs.forEach((r: any) => {
+          if (r.opportunityId) {
+            // Keep the latest request for this opportunity
+            if (!map[r.opportunityId] || new Date(r.createdAt).getTime() > new Date(map[r.opportunityId].createdAt).getTime()) {
+              map[r.opportunityId] = r;
+            }
+          }
+        });
+        setReattemptsMap(map);
+      }
     } catch (e) {
       console.warn('Error loading student dashboard data:', e);
     } finally {
       setLoadingDashboard(false);
+    }
+  };
+
+  const handleOpenReattemptModal = (oppId: string, oppTitle: string, companyName?: string, defaultTermination?: string) => {
+    setError('');
+    setReattemptSuccessMsg('');
+    setReattemptStudentReason('');
+    setShowReattemptModal({
+      oppId,
+      oppTitle,
+      companyName,
+      defaultTerminationReason: defaultTermination || 'Assessment terminated or submitted with proctoring incidents',
+    });
+  };
+
+  const handleSubmitReattemptRequest = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!showReattemptModal || !reattemptStudentReason.trim()) return;
+
+    setIsSubmittingReattempt(true);
+    setError('');
+    setReattemptSuccessMsg('');
+
+    try {
+      const activeToken = token || (await window.beyon?.auth?.getToken?.()) || null;
+      const res = await fetch(`${API_BASE}/assessment/reattempt-request`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(activeToken ? { Authorization: `Bearer ${activeToken}` } : {}),
+        },
+        body: JSON.stringify({
+          opportunityId: showReattemptModal.oppId,
+          studentReason: reattemptStudentReason.trim(),
+          terminationReason: showReattemptModal.defaultTerminationReason || 'Proctoring violation or network disconnection',
+        }),
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data.message || data.error || 'Failed to submit reattempt request');
+      }
+
+      setReattemptSuccessMsg('Reattempt request submitted successfully! The recruiter / company has been notified to review your appeal.');
+      if (activeToken) {
+        await fetchStudentDashboardData(activeToken);
+      }
+      setTimeout(() => {
+        setShowReattemptModal(null);
+        setReattemptSuccessMsg('');
+      }, 2000);
+    } catch (err: any) {
+      setError(err.message || 'Failed to submit reattempt request');
+    } finally {
+      setIsSubmittingReattempt(false);
     }
   };
 
@@ -417,57 +627,27 @@ export function AssessmentApp() {
       return;
     }
 
-    const handleFullscreenChange = (isFullscreen: boolean) => {
-      if (!isFullscreen) {
-        addMalpracticeAlert('FULLSCREEN_EXIT', 'Fullscreen mode exited — this has been recorded');
-        setProctoringWarnings(prev => [...prev, 'Fullscreen exited']);
-        if (session?.sessionId) {
-          apiFetch('/proctoring/event/fullscreen-exit', {
-            method: 'POST',
-            body: JSON.stringify({ sessionId: session.sessionId }),
-          }).catch(() => {});
-        }
+    const handleFullscreenChange = (fullscreen: boolean) => {
+      if (!fullscreen && step === 'exam') {
+        triggerRuleEngineViolation('FULLSCREEN_EXIT', 'Exited fullscreen examination mode', 'DESKTOP_SYSTEM');
       }
     };
 
-    const handleFocusChange = (hasFocus: boolean) => {
-      if (!hasFocus) {
-        addMalpracticeAlert('FOCUS_LOST', 'Tab / window switch detected — this has been recorded');
-        setProctoringWarnings(prev => [...prev, 'Window focus lost']);
-        if (session?.sessionId) {
-          apiFetch('/proctoring/event/focus-lost', {
-            method: 'POST',
-            body: JSON.stringify({ sessionId: session.sessionId }),
-          }).catch(() => {});
-        }
+    const handleFocusChange = (focused: boolean) => {
+      if (!focused && step === 'exam') {
+        triggerRuleEngineViolation('WINDOW_FOCUS_LOST', 'Window focus lost or application switched', 'DESKTOP_SYSTEM');
       }
     };
 
     const handleMinimize = () => {
-      addMalpracticeAlert('MINIMIZED', 'Application was minimized during the exam — this has been recorded');
-      setProctoringWarnings(prev => [...prev, 'Window minimized']);
-      if (session?.sessionId) {
-        apiFetch('/proctoring/event/suspicious', {
-          method: 'POST',
-          body: JSON.stringify({
-            sessionId: session.sessionId,
-            description: 'Candidate minimized the application during assessment',
-          }),
-        }).catch(() => {});
+      if (step === 'exam') {
+        triggerRuleEngineViolation('WINDOW_MINIMIZED', 'Assessment window was minimized', 'DESKTOP_SYSTEM');
       }
     };
 
     const handleBeforeQuit = () => {
-      addMalpracticeAlert('QUIT_ATTEMPT', 'Attempted to close the application — this has been recorded');
-      setProctoringWarnings(prev => [...prev, 'Attempted to quit']);
-      if (session?.sessionId) {
-        apiFetch('/proctoring/event/suspicious', {
-          method: 'POST',
-          body: JSON.stringify({
-            sessionId: session.sessionId,
-            description: 'Candidate attempted to quit during assessment',
-          }),
-        }).catch(() => {});
+      if (step === 'exam') {
+        triggerRuleEngineViolation('ATTEMPTED_QUIT', 'Candidate attempted to quit during active assessment', 'DESKTOP_SYSTEM');
       }
     };
 
@@ -492,7 +672,7 @@ export function AssessmentApp() {
           };
         }
 
-        // Setup Web Audio Analyser for Noise & Speech Detection
+        // Setup Web Audio Analyser for VAD & Speech Energy
         try {
           const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
           if (AudioContextClass) {
@@ -515,7 +695,7 @@ export function AssessmentApp() {
               }
               const rms = Math.sqrt(sumSquares / timeData.length);
 
-              // 2. Vocal Frequencies (Bins 2..45 in 512 FFT)
+              // 2. Vocal Frequencies (Bins 2..45 in 512 FFT ~ 85Hz to 255Hz)
               analyser.getByteFrequencyData(freqData);
               let voiceSum = 0;
               for (let i = 2; i < 45; i++) {
@@ -523,17 +703,19 @@ export function AssessmentApp() {
               }
               const voiceAvg = voiceSum / 43;
 
-              // High sensitivity noise/voice detection
-              if (rms > 0.035 || voiceAvg > 24) {
-                noiseStreakRef.current++;
-                if (noiseStreakRef.current === 1 || noiseStreakRef.current % 4 === 0) {
-                  setProctorStatus('WARNING');
-                  setProctorMessage('Noise / Voice Detected');
-                  addMalpracticeAlert('NOISE_DETECTED', `Noise / speech detected in exam room (${Math.round(rms * 100)}% acoustic energy). Please maintain silence.`);
-                  setProctoringWarnings(prev => [...prev, 'Acoustic noise / speech detected']);
+              // VAD speech detection threshold
+              if (rms > 0.045 || voiceAvg > 28) {
+                voiceStreakRef.current++;
+                if (voiceStreakRef.current >= 6) { // ~3.0s of continuous speech
+                  voiceStreakRef.current = 0;
+                  triggerRuleEngineViolation(
+                    'SUSPICIOUS_SPEECH',
+                    `Acoustic speech / conversation detected in exam room (${Math.round(rms * 100)}% energy)`,
+                    'MICROPHONE'
+                  );
                 }
               } else {
-                noiseStreakRef.current = 0;
+                voiceStreakRef.current = 0;
               }
             };
           }
@@ -564,6 +746,9 @@ export function AssessmentApp() {
           let phoneEdgeTransitions = 0;
           let totalLum = 0;
           let totalEdges = 0;
+          let sumSkinX = 0;
+          let sumSkinY = 0;
+          let totalSkinMass = 0;
           const colSkin = new Int32Array(160);
 
           for (let y = 0; y < 120; y++) {
@@ -583,7 +768,7 @@ export function AssessmentApp() {
                 }
               }
 
-              // Biometric YCbCr skin chrominance formula (rejects wooden walls, beige doors, yellow light)
+              // Biometric YCbCr skin chrominance formula
               const Y  =  0.299 * r + 0.587 * g + 0.114 * b;
               const Cb = -0.1687 * r - 0.3313 * g + 0.5 * b + 128;
               const Cr =  0.5 * r - 0.4187 * g - 0.0813 * b + 128;
@@ -596,18 +781,20 @@ export function AssessmentApp() {
                 (r - g > 8);
 
               if (isHumanSkin) {
+                totalSkinMass++;
+                sumSkinX += x;
+                sumSkinY += y;
+
                 if (x >= 35 && x <= 125 && y >= 10 && y <= 95) {
                   centerSkinPixels++;
                 }
-                // Record upper head column distribution (ignore hands/arms typing at desk y > 65)
+                // Record upper head column distribution (y <= 65)
                 if (y >= 10 && y <= 65) {
                   colSkin[x]++;
                 }
               }
 
-              // Smartphone / Electronic device detection:
-              // Only checks for active illuminated glowing screen held up in frame (lum > 230)
-              // NEVER checks dark pixels, so dark shirts/jackets will NEVER trigger!
+              // Smartphone / Electronic device screen detection (lum > 230)
               if (y >= 25 && y <= 100 && x >= 25 && x <= 135) {
                 if (lum > 230) {
                   phoneBrightPixels++;
@@ -624,50 +811,53 @@ export function AssessmentApp() {
           }
 
           const avgLum = totalLum / (160 * 120);
-          // Camera covered by finger/tape/hand:
-          // Low average luminance (< 22) OR extremely few edges (< 50) when average luminance is low (< 45) or flesh is flush on lens
           const isLaptopCameraCovered = (avgLum < 22) || (totalEdges < 50 && (avgLum < 45 || centerSkinPixels > 1000));
 
+          // RULE 1: Camera Lens Covered / Obstructed (Streak >= 3s)
           if (isLaptopCameraCovered) {
-            cameraCoverStreakRef.current = (cameraCoverStreakRef.current || 0) + 1;
-            if (cameraCoverStreakRef.current === 2) {
-              setProctorStatus('WARNING');
-              setProctorMessage('Camera Lens Covered / Obstructed');
-              addMalpracticeAlert('CAMERA_OBSTRUCTION', 'Warning: Laptop camera lens is covered or obstructed! Uncover lens immediately.');
-              setProctoringWarnings(prev => [...prev, 'Laptop camera covered or obstructed']);
+            cameraCoverStreakRef.current++;
+            if (cameraCoverStreakRef.current >= 6) {
+              cameraCoverStreakRef.current = 0;
+              triggerRuleEngineViolation('CAMERA_OBSTRUCTION', 'Camera lens is covered or obstructed', 'LAPTOP_FRONT');
             }
           } else {
             cameraCoverStreakRef.current = 0;
           }
 
-          // EVALUATION 1: Face Presence / Absence (Candidate left screen)
-          if (!isLaptopCameraCovered && centerSkinPixels < 140) {
+          // RULE 2: Candidate Absent / Left Viewport (Streak >= 4s)
+          if (!isLaptopCameraCovered && centerSkinPixels < 130) {
             absenceStreakRef.current++;
-            if (absenceStreakRef.current === 1) {
-              setProctorStatus('WARNING');
-              setProctorMessage('Face Not Detected');
-            } else if (absenceStreakRef.current === 2) {
-              setProctorStatus('WARNING');
-              setProctorMessage('Auto-terminating in 3s...');
-              addMalpracticeAlert('FACE_NOT_DETECTED', 'Face not detected in camera viewport! Auto-terminating in 3s if not returned.');
-              setProctoringWarnings(prev => [...prev, 'Candidate absent from screen']);
-            } else if (absenceStreakRef.current >= 5) { // ~3 seconds of continuous absence
-              isTerminatingRef.current = true;
-              setProctorStatus('CRITICAL');
-              setProctorMessage('AUTO-TERMINATED (ABSENT)');
-              addMalpracticeAlert('CRITICAL_ABSENCE_AUTO_TERMINATION', 'Assessment automatically terminated: Candidate left camera viewport during exam.');
-              if (handleSubmitRef.current) handleSubmitRef.current();
-              return;
+            if (absenceStreakRef.current >= 8) { // ~4.0s continuous absence
+              absenceStreakRef.current = 0;
+              triggerRuleEngineViolation('CANDIDATE_ABSENT', 'Candidate absent from camera viewport', 'LAPTOP_FRONT');
             }
           } else if (!isLaptopCameraCovered) {
-            if (absenceStreakRef.current > 0 && absenceStreakRef.current < 5) {
-              setProctorStatus('CLEAR');
-              setProctorMessage('Face Detected & Monitored');
-            }
             absenceStreakRef.current = 0;
           }
 
-          // EVALUATION 2: Multiple People (Two distinct head peaks separated by non-skin valley)
+          // RULE 3: Looking Away / Gaze Pose Deviation (Streak >= 3.5s)
+          if (!isLaptopCameraCovered && totalSkinMass > 150) {
+            const faceCenterX = sumSkinX / totalSkinMass;
+            const faceCenterY = sumSkinY / totalSkinMass;
+            const xOffset = (faceCenterX - 80) / 80;
+            const yOffset = (faceCenterY - 60) / 60;
+
+            const isLookingAway = Math.abs(xOffset) > 0.32 || yOffset > 0.38;
+            if (isLookingAway) {
+              lookAwayStreakRef.current++;
+              if (lookAwayStreakRef.current >= 7) { // ~3.5s continuous look away
+                lookAwayStreakRef.current = 0;
+                const dir = xOffset < -0.32 ? 'left' : xOffset > 0.32 ? 'right' : 'downwards';
+                triggerRuleEngineViolation('LOOKING_AWAY', `Candidate continuously looking away (${dir})`, 'LAPTOP_FRONT');
+              }
+            } else {
+              lookAwayStreakRef.current = 0;
+            }
+          } else {
+            lookAwayStreakRef.current = 0;
+          }
+
+          // RULE 4: Multiple People in Viewport (Streak >= 2.5s)
           let leftHeadMass = 0;
           let rightHeadMass = 0;
           let valleyColumns = 0;
@@ -680,38 +870,22 @@ export function AssessmentApp() {
             }
           }
 
-          // Only genuine two heads: both peaks have substantial facial mass and are separated by a valley
           const hasTwoDistinctHeads = leftHeadMass > 600 && rightHeadMass > 600 && valleyColumns >= 6;
           if (hasTwoDistinctHeads) {
             multiPersonStreakRef.current++;
-            if (multiPersonStreakRef.current === 6) { // ~3.6s continuous presence of second head
-              setProctorStatus('WARNING');
-              setProctorMessage('Multiple People in Frame');
-              addMalpracticeAlert('MULTIPLE_PEOPLE_DETECTED', 'Warning: Additional person detected in camera view');
-              setProctoringWarnings(prev => [...prev, 'Multiple persons detected']);
+            if (multiPersonStreakRef.current >= 5) { // ~2.5s continuous multiple people
+              multiPersonStreakRef.current = 0;
+              triggerRuleEngineViolation('MULTIPLE_PEOPLE', 'Multiple people detected in examination view', 'LAPTOP_FRONT');
             }
           } else {
             multiPersonStreakRef.current = 0;
           }
 
-          // EVALUATION 3: Phone / Unauthorized Device -> IMMEDIATE EXIT
-          // Requires an active, bright illuminated electronic screen held in frame
-          const isPhoneInFrame = phoneBrightPixels > 380 && phoneEdgeTransitions > 120;
-          if (isPhoneInFrame) {
-            phoneStreakRef.current++;
-            if (phoneStreakRef.current >= 4) { // ~2.4s of confirmed active glowing screen
-              isTerminatingRef.current = true;
-              setProctorStatus('CRITICAL');
-              setProctorMessage('AUTO-TERMINATED (PHONE DETECTED)');
-              addMalpracticeAlert('DEVICE_MALPRACTICE_TERMINATION', 'CRITICAL VIOLATION: Unauthorized mobile phone screen detected. Assessment immediately terminated.');
-              setProctoringWarnings(prev => [...prev, 'Mobile device detected - Test Terminated']);
-              if (handleSubmitRef.current) handleSubmitRef.current();
-              return;
-            }
-          } else {
-            phoneStreakRef.current = 0;
+          if (!isLaptopCameraCovered && centerSkinPixels >= 130 && !hasTwoDistinctHeads && strikeCountRef.current === 0) {
+            setProctorStatus('CLEAR');
+            setProctorMessage('Face Detected & Monitored');
           }
-        }, 600);
+        }, 500);
 
       } catch {
         setExamCameraReady(false);
@@ -741,33 +915,36 @@ export function AssessmentApp() {
 
                 const type = inc.incidentType;
                 if (type === 'PHONE_DETECTED' || type === 'POSSIBLE_QUESTION_CAPTURE') {
-                  isTerminatingRef.current = true;
-                  setProctorStatus('CRITICAL');
-                  setProctorMessage('AUTO-TERMINATED (PHONE DETECTED)');
-                  addMalpracticeAlert('CRITICAL_PHONE_TERMINATION', 'CRITICAL VIOLATION: Unauthorized mobile phone detected by proctoring sensors. Assessment terminated.');
-                  if (handleSubmitRef.current) handleSubmitRef.current();
-                  return;
-                } else if (type === 'SECOND_PERSON' || type === 'POSSIBLE_EXTERNAL_ASSISTANCE') {
-                  setProctorStatus('WARNING');
-                  setProctorMessage('Multiple People in Frame');
-                  addMalpracticeAlert('DUALVIEW_SECOND_PERSON', 'Warning: Additional person detected in camera view');
-                  setProctoringWarnings(prev => [...prev, 'Multiple persons detected']);
+                  triggerRuleEngineViolation(
+                    'PHONE_DETECTED',
+                    'Unauthorized mobile device detected in camera view',
+                    'MOBILE_SIDE',
+                    false /* Progressive strikes with warning modal */
+                  );
+                } else if (type === 'SECOND_PERSON' || type === 'MULTIPLE_PEOPLE') {
+                  triggerRuleEngineViolation(
+                    'MULTIPLE_PEOPLE',
+                    'Additional person detected in secondary camera view',
+                    'MOBILE_SIDE'
+                  );
                 } else if (type === 'CAMERA_TAMPERING' || type === 'CAMERA_COVERED' || type === 'CAMERA_OBSTRUCTION') {
-                  setProctorStatus('WARNING');
-                  setProctorMessage('Secondary Camera Obstructed');
-                  addMalpracticeAlert('SECONDARY_CAMERA_OBSTRUCTION', 'Warning: Mobile/Environmental camera lens is obstructed or covered.');
-                  setProctoringWarnings(prev => [...prev, 'Mobile camera obstructed or covered']);
+                  triggerRuleEngineViolation(
+                    'CAMERA_OBSTRUCTION',
+                    'Secondary camera lens is obstructed or covered',
+                    'MOBILE_SIDE'
+                  );
                 } else if (type === 'CANDIDATE_ABSENT' || type === 'NO_PERSON_DETECTED' || type === 'SUSTAINED_ABSENCE') {
-                  setProctorStatus('WARNING');
-                  setProctorMessage('Candidate Left Workspace');
-                  addMalpracticeAlert('CANDIDATE_ABSENT_WORKSPACE', 'Warning: Candidate is not visible in mobile/environmental camera viewport.');
-                  setProctoringWarnings(prev => [...prev, 'Candidate left mobile camera view']);
+                  triggerRuleEngineViolation(
+                    'CANDIDATE_ABSENT',
+                    'Candidate absent from workspace in secondary camera view',
+                    'MOBILE_SIDE'
+                  );
                 }
               }
             }
           }
         } catch {}
-      }, 2500);
+      }, 2000);
     }
 
     // Maximize + lock after a short delay to avoid race on startup
@@ -1556,35 +1733,145 @@ export function AssessmentApp() {
                       <span className={styles.assessmentDurationChip}>
                         <i className="bx bx-time-five" /> {opp.durationMinutes || 60} Mins &middot; {opp.totalQuestions || 20} Questions
                       </span>
-                      {opp.applicationStatus === 'ASSESSED' || opp.assessmentScore != null ? (
-                        <button
-                          className={styles.btnTakeTest}
-                          disabled
-                          type="button"
-                          style={{
-                            background: '#f0fdf4',
-                            color: '#15803d',
-                            border: '1.5px solid #16a34a',
-                            cursor: 'default',
-                            opacity: 1,
-                          }}
-                        >
-                          <i className="bx bx-check-circle" /> Completed ({opp.assessmentScore ?? 0}%)
-                        </button>
-                      ) : (
-                        <button
-                          className={styles.btnTakeTest}
-                          onClick={() => handleTakeTest(opp.id, opp.title, opp.durationMinutes || 60, opp.totalQuestions || 20)}
-                          disabled={isStartingAssessment}
-                          type="button"
-                        >
-                          {isStartingAssessment ? (
-                            <><i className="bx bx-loader-alt bx-spin" /> Launching...</>
-                          ) : (
-                            <><i className="bx bx-rocket" /> Start Assessment</>
-                          )}
-                        </button>
-                      )}
+                      {(() => {
+                        const reattempt = reattemptsMap[opp.id];
+                        const isCompleted = opp.applicationStatus === 'ASSESSED' || opp.assessmentScore != null;
+
+                        // Case 1: Reattempt Approved by Company -> Ready to start fresh test!
+                        if (reattempt && reattempt.status === 'APPROVED') {
+                          return (
+                            <button
+                              className={styles.btnTakeTest}
+                              onClick={() => handleTakeTest(opp.id, opp.title, opp.durationMinutes || 60, opp.totalQuestions || 20)}
+                              disabled={isStartingAssessment}
+                              type="button"
+                              style={{
+                                background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)',
+                                borderColor: '#059669',
+                                color: '#ffffff',
+                              }}
+                            >
+                              {isStartingAssessment ? (
+                                <><i className="bx bx-loader-alt bx-spin" /> Launching...</>
+                              ) : (
+                                <><i className="bx bx-play-circle" /> Reattempt Approved &middot; Start</>
+                              )}
+                            </button>
+                          );
+                        }
+
+                        // Case 2: Reattempt Request Pending Recruiter Review
+                        if (reattempt && reattempt.status === 'PENDING') {
+                          return (
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
+                              <button
+                                className={styles.btnTakeTest}
+                                disabled
+                                type="button"
+                                style={{
+                                  background: '#fffbeb',
+                                  color: '#b45309',
+                                  border: '1.5px solid #fcd34d',
+                                  cursor: 'not-allowed',
+                                  opacity: 1,
+                                  fontSize: '0.82rem',
+                                  padding: '10px 16px',
+                                }}
+                              >
+                                <i className="bx bx-time-five bx-spin" /> Reattempt Pending Approval
+                              </button>
+                              <span style={{ fontSize: '0.7rem', color: '#92400e', fontWeight: 600 }}>
+                                Sent to {opp.companyName || 'Company Recruiter'}
+                              </span>
+                            </div>
+                          );
+                        }
+
+                        // Case 3: Reattempt Rejected by Company (can re-appeal if desired)
+                        if (reattempt && reattempt.status === 'REJECTED') {
+                          return (
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
+                              <button
+                                className={styles.btnTakeTest}
+                                onClick={() => handleOpenReattemptModal(opp.id, opp.title, opp.companyName, 'Previous request was rejected')}
+                                type="button"
+                                style={{
+                                  background: '#fef2f2',
+                                  color: '#dc2626',
+                                  border: '1.5px solid #f87171',
+                                  fontSize: '0.82rem',
+                                  padding: '10px 16px',
+                                }}
+                              >
+                                <i className="bx bx-refresh" /> Reattempt Rejected &middot; Re-apply
+                              </button>
+                              {reattempt.reviewNotes && (
+                                <span style={{ fontSize: '0.68rem', color: '#b91c1c', maxWidth: '240px', textAlign: 'right' }}>
+                                  Note: {reattempt.reviewNotes}
+                                </span>
+                              )}
+                            </div>
+                          );
+                        }
+
+                        // Case 4: Already Completed or Assessed (Prompt to Request Reattempt)
+                        if (isCompleted) {
+                          return (
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '6px' }}>
+                              <button
+                                className={styles.btnTakeTest}
+                                disabled
+                                type="button"
+                                style={{
+                                  background: '#f0fdf4',
+                                  color: '#15803d',
+                                  border: '1.5px solid #16a34a',
+                                  cursor: 'default',
+                                  opacity: 1,
+                                  padding: '8px 16px',
+                                  fontSize: '0.85rem',
+                                }}
+                              >
+                                <i className="bx bx-check-circle" /> Score: {opp.assessmentScore ?? 0}%
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleOpenReattemptModal(opp.id, opp.title, opp.companyName, `Assessment ended with score ${opp.assessmentScore ?? 0}%`)}
+                                style={{
+                                  background: '#f8fafc',
+                                  border: '1px solid #cbd5e1',
+                                  color: '#1e293b',
+                                  padding: '6px 12px',
+                                  fontSize: '0.75rem',
+                                  fontWeight: 700,
+                                  cursor: 'pointer',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '4px',
+                                }}
+                              >
+                                <i className="bx bx-reset" /> Request Reattempt
+                              </button>
+                            </div>
+                          );
+                        }
+
+                        // Case 5: Fresh, not attempted yet
+                        return (
+                          <button
+                            className={styles.btnTakeTest}
+                            onClick={() => handleTakeTest(opp.id, opp.title, opp.durationMinutes || 60, opp.totalQuestions || 20)}
+                            disabled={isStartingAssessment}
+                            type="button"
+                          >
+                            {isStartingAssessment ? (
+                              <><i className="bx bx-loader-alt bx-spin" /> Launching...</>
+                            ) : (
+                              <><i className="bx bx-rocket" /> Start Assessment</>
+                            )}
+                          </button>
+                        );
+                      })()}
                       <span className={styles.assessmentFootnote}>
                         Requires Secondary Phone Camera
                       </span>
@@ -2062,9 +2349,34 @@ export function AssessmentApp() {
                   </div>
                 )}
               </div>
+              <div style={{ marginTop: 8, padding: '8px 10px', background: strikeCount > 0 ? '#fef2f2' : '#f8fafc', border: `1px solid ${strikeCount > 0 ? '#fca5a5' : '#e2e8f0'}`, borderRadius: 4 }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 5 }}>
+                  <span style={{ fontSize: '0.68rem', fontWeight: 700, color: strikeCount >= 2 ? '#b91c1c' : strikeCount === 1 ? '#c2410c' : '#475569' }}>
+                    <i className="bx bx-shield-quarter" style={{ marginRight: 4 }} /> Violation Strikes:
+                  </span>
+                  <span style={{ fontSize: '0.68rem', fontWeight: 800, color: strikeCount >= 2 ? '#b91c1c' : strikeCount === 1 ? '#c2410c' : '#16a34a' }}>
+                    {strikeCount} / 3
+                  </span>
+                </div>
+                <div style={{ display: 'flex', gap: 4 }}>
+                  {[1, 2, 3].map((s) => (
+                    <div
+                      key={s}
+                      style={{
+                        flex: 1,
+                        height: 5,
+                        borderRadius: 3,
+                        background: s <= strikeCount ? (strikeCount >= 3 ? '#dc2626' : '#ea580c') : '#cbd5e1',
+                        boxShadow: s <= strikeCount ? '0 0 6px rgba(234, 88, 12, 0.4)' : 'none',
+                        transition: 'background 0.3s',
+                      }}
+                    />
+                  ))}
+                </div>
+              </div>
               {proctoringWarnings.length > 0 && (
-                <div className={styles.warnCount}>
-                  <i className="bx bx-error" /> {proctoringWarnings.length} warning{proctoringWarnings.length !== 1 ? 's' : ''} recorded
+                <div className={styles.warnCount} style={{ marginTop: 6 }}>
+                  <i className="bx bx-error" /> {proctoringWarnings.length} violation{proctoringWarnings.length !== 1 ? 's' : ''} logged
                 </div>
               )}
             </div>
@@ -2348,6 +2660,16 @@ export function AssessmentApp() {
               </div>
 
               <div style={{ marginTop: 12, display: 'flex', gap: 12, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+                {activeOpportunity && (
+                  <button
+                    type="button"
+                    className={styles.btnSecondary}
+                    onClick={() => handleOpenReattemptModal(activeOpportunity.id, activeOpportunity.title, activeOpportunity.companyName, malpracticeAlerts.length > 0 ? `Terminated with ${malpracticeAlerts.length} proctoring violations` : `Completed with ${results?.accuracy ?? 0}% accuracy`)}
+                    style={{ background: '#fef3c7', borderColor: '#fde047', color: '#854d0e', fontWeight: 700 }}
+                  >
+                    <i className="bx bx-reset" /> Request Reattempt from Company
+                  </button>
+                )}
                 <button
                   className={styles.btnSecondary}
                   onClick={() => setShowSettingsModal(true)}
@@ -2372,6 +2694,120 @@ export function AssessmentApp() {
             </div>
           </div>
         </main>
+      )}
+
+      {/* Reattempt Request Submission Modal */}
+      {showReattemptModal && (
+        <div className={styles.modalOverlay} style={{ zIndex: 9998, background: 'rgba(15, 23, 42, 0.85)' }}>
+          <div className={styles.modalCard} style={{ maxWidth: 560 }}>
+            <div className={styles.modalHeader}>
+              <div className={styles.modalTitle}>
+                <i className="bx bx-reset" style={{ color: '#1c2d81' }} />
+                <span>Request Assessment Reattempt</span>
+              </div>
+              <button
+                className={styles.modalCloseBtn}
+                onClick={() => {
+                  setShowReattemptModal(null);
+                  setReattemptSuccessMsg('');
+                  setError('');
+                }}
+              >
+                <i className="bx bx-x" />
+              </button>
+            </div>
+            <form onSubmit={handleSubmitReattemptRequest}>
+              <div className={styles.modalBody} style={{ padding: '20px 24px' }}>
+                <div style={{ padding: '12px 14px', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '4px', marginBottom: '14px' }}>
+                  <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#1e40af' }}>
+                    {showReattemptModal.oppTitle}
+                  </div>
+                  {showReattemptModal.companyName && (
+                    <div style={{ fontSize: '0.78rem', color: '#3b82f6', marginTop: '2px' }}>
+                      <i className="bx bx-building" /> {showReattemptModal.companyName}
+                    </div>
+                  )}
+                </div>
+
+                {reattemptSuccessMsg ? (
+                  <div style={{ padding: '16px', background: '#ecfdf5', border: '1px solid #a7f3d0', color: '#065f46', borderRadius: '4px', fontSize: '0.85rem', lineHeight: 1.5, textAlign: 'center' }}>
+                    <i className="bx bx-check-circle" style={{ fontSize: '24px', display: 'block', marginBottom: '6px', color: '#059669' }} />
+                    {reattemptSuccessMsg}
+                  </div>
+                ) : (
+                  <>
+                    <p style={{ fontSize: '0.84rem', color: '#475569', lineHeight: 1.5, margin: '0 0 14px 0' }}>
+                      If your assessment was terminated due to a proctoring false positive, camera glitch, or power interruption, you can request an appeal. The hiring team will review your session logs and incident history to approve or deny a retake attempt.
+                    </p>
+
+                    {error && (
+                      <div style={{ padding: '10px 14px', background: '#fef2f2', border: '1px solid #fecaca', color: '#991b1b', fontSize: '0.8rem', borderRadius: '4px', marginBottom: '12px' }}>
+                        <i className="bx bx-error" style={{ marginRight: 6 }} /> {error}
+                      </div>
+                    )}
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '14px' }}>
+                      <label style={{ fontSize: '0.78rem', fontWeight: 700, color: '#1e293b', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                        Reason for Reattempt Appeal <span style={{ color: '#dc2626' }}>*</span>
+                      </label>
+                      <textarea
+                        rows={4}
+                        placeholder="Explain what happened (e.g. 'Sudden power outage/Wi-Fi disconnection during question 8' or 'Front camera glitched when shifting posture')..."
+                        value={reattemptStudentReason}
+                        onChange={(e) => setReattemptStudentReason(e.target.value)}
+                        required
+                        style={{
+                          width: '100%',
+                          padding: '10px 12px',
+                          border: '1.5px solid #cbd5e1',
+                          borderRadius: '4px',
+                          fontFamily: 'inherit',
+                          fontSize: '0.85rem',
+                          color: '#0f172a',
+                          resize: 'vertical',
+                          outline: 'none',
+                        }}
+                      />
+                    </div>
+
+                    <div style={{ fontSize: '0.75rem', color: '#64748b', background: '#f8fafc', padding: '8px 12px', border: '1px solid #e2e8f0', borderRadius: '4px' }}>
+                      <i className="bx bx-shield-quarter" style={{ marginRight: 4, color: '#1c2d81' }} />
+                      Session proctoring incident records and dual-camera flags will be shared with the recruiter for verification.
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {!reattemptSuccessMsg && (
+                <div className={styles.modalFooter}>
+                  <button
+                    type="button"
+                    className={styles.btnSecondary}
+                    onClick={() => {
+                      setShowReattemptModal(null);
+                      setError('');
+                    }}
+                    disabled={isSubmittingReattempt}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className={styles.btnPrimary}
+                    disabled={isSubmittingReattempt || !reattemptStudentReason.trim()}
+                    style={{ background: '#1c2d81', borderColor: '#1c2d81' }}
+                  >
+                    {isSubmittingReattempt ? (
+                      <><i className="bx bx-loader-alt bx-spin" /> Submitting Appeal...</>
+                    ) : (
+                      <><i className="bx bx-send" /> Submit Reattempt Appeal</>
+                    )}
+                  </button>
+                </div>
+              )}
+            </form>
+          </div>
+        </div>
       )}
 
       {/* Bottom Bar — System Status & Quick Actions */}
@@ -2573,6 +3009,108 @@ export function AssessmentApp() {
           </div>
         </div>
       )}
+
+      {/* Proctoring Violation Strike Modal Overlay */}
+      {activeWarningModal && (
+        <div className={styles.modalOverlay} style={{ zIndex: 9999, background: 'rgba(15, 23, 42, 0.88)' }}>
+          <div
+            className={styles.modalCard}
+            style={{
+              maxWidth: 520,
+              border: `2px solid ${activeWarningModal.strike >= 3 ? '#dc2626' : '#ea580c'}`,
+              boxShadow: activeWarningModal.strike >= 3 ? '0 0 30px rgba(220, 38, 38, 0.4)' : '0 0 25px rgba(234, 88, 12, 0.35)',
+            }}
+          >
+            <div
+              className={styles.modalHeader}
+              style={{
+                background: activeWarningModal.strike >= 3 ? '#fef2f2' : '#fff7ed',
+                borderBottom: `1px solid ${activeWarningModal.strike >= 3 ? '#fca5a5' : '#fdba74'}`,
+              }}
+            >
+              <div
+                className={styles.modalTitle}
+                style={{
+                  color: activeWarningModal.strike >= 3 ? '#991b1b' : '#c2410c',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                }}
+              >
+                <i className={`bx ${activeWarningModal.strike >= 3 ? 'bx-error-circle' : 'bx-error'}`} style={{ fontSize: 22 }} />
+                <span>{activeWarningModal.title}</span>
+              </div>
+            </div>
+            <div className={styles.modalBody} style={{ padding: '20px 24px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+                <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#475569' }}>
+                  Recorded Strikes:
+                </span>
+                <span style={{ fontSize: '0.85rem', fontWeight: 800, color: activeWarningModal.strike >= 3 ? '#dc2626' : '#ea580c' }}>
+                  {activeWarningModal.strike} / 3 Strikes
+                </span>
+              </div>
+              <div style={{ display: 'flex', gap: 6, marginBottom: 16 }}>
+                {[1, 2, 3].map((s) => (
+                  <div
+                    key={s}
+                    style={{
+                      flex: 1,
+                      height: 8,
+                      borderRadius: 4,
+                      background: s <= activeWarningModal.strike ? (activeWarningModal.strike >= 3 ? '#dc2626' : '#f97316') : '#e2e8f0',
+                      boxShadow: s <= activeWarningModal.strike ? '0 0 8px rgba(220, 38, 38, 0.35)' : 'none',
+                    }}
+                  />
+                ))}
+              </div>
+
+              <div
+                style={{
+                  padding: '14px 16px',
+                  background: activeWarningModal.strike >= 3 ? '#fef2f2' : '#f8fafc',
+                  border: `1px solid ${activeWarningModal.strike >= 3 ? '#fecaca' : '#e2e8f0'}`,
+                  borderRadius: 6,
+                  lineHeight: 1.6,
+                  fontSize: '0.88rem',
+                  color: '#1e293b',
+                  fontWeight: 500,
+                }}
+              >
+                {activeWarningModal.reason}
+              </div>
+
+              <div style={{ marginTop: 14, fontSize: '0.78rem', color: '#64748b', lineHeight: 1.5 }}>
+                {activeWarningModal.strike >= 3 ? (
+                  <span style={{ color: '#dc2626', fontWeight: 700 }}>
+                    Assessment session has ended. All recorded answers and proctoring logs are being finalized.
+                  </span>
+                ) : (
+                  <span>
+                    Notice: Video frames and acoustic signals are continuously logged. Any further infraction will result in immediate disqualification.
+                  </span>
+                )}
+              </div>
+            </div>
+            <div className={styles.modalFooter}>
+              {activeWarningModal.strike < 3 ? (
+                <button
+                  className={styles.btnPrimary}
+                  style={{ width: '100%', padding: '12px 20px', background: '#ea580c', borderColor: '#ea580c' }}
+                  onClick={() => setActiveWarningModal(null)}
+                >
+                  <i className="bx bx-check-circle" /> I Acknowledge &amp; Return to Exam
+                </button>
+              ) : (
+                <div style={{ textAlign: 'center', width: '100%', fontWeight: 700, color: '#dc2626', fontSize: '0.85rem' }}>
+                  <i className="bx bx-loader-alt bx-spin" style={{ marginRight: 6 }} /> Auto-submitting assessment session...
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+

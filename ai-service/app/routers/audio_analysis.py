@@ -10,13 +10,22 @@ async def analyze_audio_chunk(req: AudioChunkRequest):
     voice_active = rms > 30.0
     second_voice = False
 
-    # Elevated sustained audio with pitch variation implies conversation
+    # Elevated sustained audio with speech energy implies conversation
     if rms > 55.0:
         second_voice = True
-        events.append(DetectionEvent(eventType="SECOND_VOICE", confidence=0.85, metadata={"rms": rms}))
-        events.append(DetectionEvent(eventType="CONVERSATION_SUSPECTED", confidence=0.80, metadata={"rms": rms}))
+        events.append(DetectionEvent(
+            eventType="SUSPICIOUS_SPEECH",
+            confidence=0.88,
+            cameraSource="MICROPHONE",
+            metadata={"rms": rms, "speechActivity": "CONVERSATION_DETECTED"}
+        ))
     elif voice_active:
-        events.append(DetectionEvent(eventType="VOICE_DETECTED", confidence=0.75, metadata={"rms": rms}))
+        events.append(DetectionEvent(
+            eventType="SUSPICIOUS_SPEECH",
+            confidence=0.75,
+            cameraSource="MICROPHONE",
+            metadata={"rms": rms, "speechActivity": "VOICE_DETECTED"}
+        ))
 
     return AudioChunkResponse(
         voiceActivity=voice_active,

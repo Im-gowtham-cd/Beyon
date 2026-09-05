@@ -7,8 +7,11 @@ class LaptopFrameRequest(BaseModel):
     timestamp: Optional[int] = None
 
 class DetectionEvent(BaseModel):
-    eventType: str
+    eventType: str  # "PHONE_DETECTED", "MULTIPLE_PEOPLE", "CANDIDATE_ABSENT", "LOOKING_AWAY", "SUSPICIOUS_SPEECH", "CAMERA_OBSTRUCTION"
     confidence: float
+    cameraSource: Optional[str] = "LAPTOP_FRONT"  # "LAPTOP_FRONT", "MOBILE_SIDE", "MICROPHONE"
+    durationSeconds: Optional[float] = 0.0
+    timestampMs: Optional[int] = None
     metadata: Optional[Dict[str, Any]] = None
 
 class LaptopFrameResponse(BaseModel):
@@ -41,6 +44,7 @@ class MobileFrameResponse(BaseModel):
 class AudioChunkRequest(BaseModel):
     audioData: Optional[str] = None  # Base64 encoded audio or WAV
     rmsLevel: Optional[float] = None
+    frequencyData: Optional[List[float]] = None
     timestamp: Optional[int] = None
 
 class AudioChunkResponse(BaseModel):

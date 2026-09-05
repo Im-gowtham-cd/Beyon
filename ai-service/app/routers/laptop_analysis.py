@@ -22,7 +22,7 @@ async def analyze_laptop_frame(req: LaptopFrameRequest):
             return LaptopFrameResponse(
                 facePresent=False, faceCount=0, headPose="UNKNOWN",
                 gazeDirection="UNKNOWN", confidence=0.0,
-                events=[DetectionEvent(eventType="CAMERA_COVERED", confidence=0.9)]
+                events=[DetectionEvent(eventType="CAMERA_OBSTRUCTION", confidence=0.95, cameraSource="LAPTOP_FRONT")]
             )
 
         h, w = img.shape[:2]
@@ -31,13 +31,18 @@ async def analyze_laptop_frame(req: LaptopFrameRequest):
 
         # Camera cover / obstruction check
         if mean_brightness < 12.0:
-            events.append(DetectionEvent(eventType="CAMERA_COVERED", confidence=0.95, metadata={"meanBrightness": mean_brightness}))
+            events.append(DetectionEvent(
+                eventType="CAMERA_OBSTRUCTION",
+                confidence=0.95,
+                cameraSource="LAPTOP_FRONT",
+                metadata={"meanBrightness": mean_brightness}
+            ))
             return LaptopFrameResponse(
                 facePresent=False, faceCount=0, headPose="CENTER",
                 gazeDirection="CENTER", confidence=0.95, events=events
             )
 
-        # Skin tone detection in YCrCb color space
+        # 1. Skin tone detection in YCrCb color space
         ycrcb = cv2.cvtColor(img, cv2.COLOR_BGR2YCrCb)
         lower_skin = np.array([0, 133, 77], dtype=np.uint8)
         upper_skin = np.array([255, 173, 127], dtype=np.uint8)
@@ -58,33 +63,77 @@ async def analyze_laptop_frame(req: LaptopFrameRequest):
             if area > min_area:
                 x, y, cw, ch = cv2.boundingRect(c)
                 aspect = float(ch) / max(float(cw), 1.0)
-                if 0.9 <= aspect <= 2.2:
+                if 0.8 <= aspect <= 2.4:
                     face_contours.append((x, y, cw, ch, area))
 
         face_count = len(face_contours)
         face_present = face_count > 0
         head_pose = "CENTER"
         gaze_direction = "CENTER"
-        confidence = 0.88
+        confidence = 0.90
 
         if face_count == 0:
-            events.append(DetectionEvent(eventType="FACE_MISSING", confidence=0.88))
+            events.append(DetectionEvent(
+                eventType="CANDIDATE_ABSENT",
+                confidence=0.90,
+                cameraSource="LAPTOP_FRONT",
+                metadata={"reason": "no_face_in_frame"}
+            ))
         elif face_count > 1:
-            events.append(DetectionEvent(eventType="MULTIPLE_FACES", confidence=0.92, metadata={"count": face_count}))
+            events.append(DetectionEvent(
+                eventType="MULTIPLE_PEOPLE",
+                confidence=0.92,
+                cameraSource="LAPTOP_FRONT",
+                metadata={"count": face_count}
+            ))
         else:
             x, y, cw, ch, _ = face_contours[0]
             face_center_x = x + cw / 2.0
+            face_center_y = y + ch / 2.0
             frame_center_x = w / 2.0
+            frame_center_y = h / 2.0
             x_offset = (face_center_x - frame_center_x) / (w / 2.0)
+            y_offset = (face_center_y - frame_center_y) / (h / 2.0)
 
             if x_offset < -0.30:
                 head_pose = "LEFT"
                 gaze_direction = "LEFT"
-                events.append(DetectionEvent(eventType="CANDIDATE_GAZE_TOWARD_HELPER", confidence=0.88, metadata={"offset": float(x_offset)}))
+                events.append(DetectionEvent(
+                    eventType="LOOKING_AWAY",
+                    confidence=0.88,
+                    cameraSource="LAPTOP_FRONT",
+                    metadata={"offset": float(x_offset), "direction": "LEFT"}
+                ))
             elif x_offset > 0.30:
                 head_pose = "RIGHT"
                 gaze_direction = "RIGHT"
-                events.append(DetectionEvent(eventType="CANDIDATE_GAZE_TOWARD_HELPER", confidence=0.88, metadata={"offset": float(x_offset)}))
+                events.append(DetectionEvent(
+                    eventType="LOOKING_AWAY",
+                    confidence=0.88,
+                    cameraSource="LAPTOP_FRONT",
+                    metadata={"offset": float(x_offset), "direction": "RIGHT"}
+                ))
+            elif y_offset > 0.35:
+                head_pose = "DOWN"
+                gaze_direction = "DOWN"
+                events.append(DetectionEvent(
+                    eventType="LOOKING_AWAY",
+                    confidence=0.85,
+                    cameraSource="LAPTOP_FRONT",
+                    metadata={"offset": float(y_offset), "direction": "DOWN"}
+                ))
+
+        # 2. Handheld glowing phone / screen detection in front view (YOLO Object Detector)
+        from app.services.yolo_detector import detect_objects_yolo
+        _, yolo_phone, yolo_objs = detect_objects_yolo(img)
+        if yolo_phone:
+            phone_bbox = next((obj.get("bbox") for obj in yolo_objs if obj.get("label") == "phone"), None)
+            events.append(DetectionEvent(
+                eventType="PHONE_DETECTED",
+                confidence=0.95,
+                cameraSource="LAPTOP_FRONT",
+                metadata={"bbox": phone_bbox, "source": "yolo_model"}
+            ))
 
         return LaptopFrameResponse(
             facePresent=face_present,

@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/context/AuthContext';
 import { InstitutionSidebar } from './InstitutionSidebar';
@@ -64,7 +64,7 @@ export function InstitutionLayout() {
               <button
                 type="button"
                 className={styles.utilityBtn}
-                onClick={() => navigate('/notifications')}
+                onClick={() => navigate('/institution/notifications')}
                 title="Notifications"
               >
                 <Bell size={16} />

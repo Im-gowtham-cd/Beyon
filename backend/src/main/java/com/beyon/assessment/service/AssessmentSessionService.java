@@ -32,6 +32,11 @@ public class AssessmentSessionService {
     private final com.beyon.practice.repository.OpportunityApplicationRepository applicationRepository;
     private final com.beyon.recruitment.repository.RecruitmentApplicationRepository recruitmentApplicationRepository;
     private final com.beyon.institution.repository.PlacementDriveRepository placementDriveRepository;
+    private final com.beyon.assessment.repository.AssessmentReattemptRequestRepository reattemptRequestRepository;
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private com.beyon.identity.repository.UserRepository userRepository;
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private com.beyon.profile.repository.StudentProfileRepository studentProfileRepository;
     private final SecureRandom secureRandom = new SecureRandom();
 
     public AssessmentSessionService(
@@ -51,7 +56,8 @@ public class AssessmentSessionService {
             com.beyon.practice.repository.QuestionRepository questionRepository,
             com.beyon.practice.repository.OpportunityApplicationRepository applicationRepository,
             com.beyon.recruitment.repository.RecruitmentApplicationRepository recruitmentApplicationRepository,
-            com.beyon.institution.repository.PlacementDriveRepository placementDriveRepository) {
+            com.beyon.institution.repository.PlacementDriveRepository placementDriveRepository,
+            @org.springframework.beans.factory.annotation.Autowired(required = false) com.beyon.assessment.repository.AssessmentReattemptRequestRepository reattemptRequestRepository) {
         this.sessionRepository = sessionRepository;
         this.policyRepository = policyRepository;
         this.answerRepository = answerRepository;
@@ -69,27 +75,41 @@ public class AssessmentSessionService {
         this.applicationRepository = applicationRepository;
         this.recruitmentApplicationRepository = recruitmentApplicationRepository;
         this.placementDriveRepository = placementDriveRepository;
+        this.reattemptRequestRepository = reattemptRequestRepository;
     }
 
     public AssessmentSession createSession(UUID applicationId, UUID studentId, UUID opportunityId, int questionCount, int durationMinutes) {
-        // 1. Single attempt guard: Check if student has already completed assessment for this opportunity
+        // 1. Single attempt guard & Reattempt verification
         if (opportunityId != null && studentId != null) {
-            List<AssessmentSession> oppSessions = sessionRepository.findByStudentIdAndOpportunityIdOrderByCreatedAtDesc(studentId, opportunityId);
-            for (AssessmentSession s : oppSessions) {
-                if ("SUBMITTED".equals(s.getStatus()) || "COMPLETED".equals(s.getStatus()) || "EVALUATED".equals(s.getStatus()) || "TERMINATED".equals(s.getStatus())) {
-                    throw new com.beyon.common.exception.ConflictException("You have already completed and submitted the assessment for this placement drive. Retakes are not permitted.");
-                }
-                if ("CREATED".equals(s.getStatus()) || "LAUNCHED".equals(s.getStatus()) || "IN_PROGRESS".equals(s.getStatus())) {
-                    return s;
-                }
-            }
+            boolean isApprovedForReattempt = reattemptRequestRepository != null &&
+                    reattemptRequestRepository.findFirstByStudentIdAndOpportunityIdAndStatusOrderByCreatedAtDesc(studentId, opportunityId, "APPROVED").isPresent();
 
-            if (applicationRepository != null) {
-                applicationRepository.findByOpportunityIdAndStudentId(opportunityId, studentId).ifPresent(app -> {
-                    if ("ASSESSED".equalsIgnoreCase(app.getStatus()) || app.getAssessmentScore() != null) {
-                        throw new com.beyon.common.exception.ConflictException("You have already completed and submitted the assessment for this placement drive. Retakes are not permitted.");
+            if (isApprovedForReattempt) {
+                // Consume the approved reattempt so only 1 new session can be launched
+                reattemptRequestRepository.findFirstByStudentIdAndOpportunityIdAndStatusOrderByCreatedAtDesc(studentId, opportunityId, "APPROVED")
+                        .ifPresent(req -> {
+                            req.setStatus("CONSUMED");
+                            req.setReviewedAt(OffsetDateTime.now());
+                            reattemptRequestRepository.save(req);
+                        });
+            } else {
+                List<AssessmentSession> oppSessions = sessionRepository.findByStudentIdAndOpportunityIdOrderByCreatedAtDesc(studentId, opportunityId);
+                for (AssessmentSession s : oppSessions) {
+                    if ("SUBMITTED".equals(s.getStatus()) || "COMPLETED".equals(s.getStatus()) || "EVALUATED".equals(s.getStatus()) || "TERMINATED".equals(s.getStatus())) {
+                        throw new com.beyon.common.exception.ConflictException("You have already completed or were terminated from this drive assessment. To retake, please submit a Reattempt Request to the company.");
                     }
-                });
+                    if ("CREATED".equals(s.getStatus()) || "LAUNCHED".equals(s.getStatus()) || "IN_PROGRESS".equals(s.getStatus())) {
+                        return s;
+                    }
+                }
+
+                if (applicationRepository != null) {
+                    applicationRepository.findByOpportunityIdAndStudentId(opportunityId, studentId).ifPresent(app -> {
+                        if ("ASSESSED".equalsIgnoreCase(app.getStatus()) || app.getAssessmentScore() != null) {
+                            throw new com.beyon.common.exception.ConflictException("You have already completed or were terminated from this drive assessment. To retake, please submit a Reattempt Request to the company.");
+                        }
+                    });
+                }
             }
         }
 
@@ -98,11 +118,17 @@ public class AssessmentSessionService {
             if (existing.isPresent()) {
                 AssessmentSession s = existing.get();
                 if ("SUBMITTED".equals(s.getStatus()) || "COMPLETED".equals(s.getStatus()) || "EVALUATED".equals(s.getStatus()) || "TERMINATED".equals(s.getStatus())) {
-                    throw new com.beyon.common.exception.ConflictException("You have already completed and submitted this assessment. Retakes are not permitted.");
+                    boolean isApprovedForReattempt = reattemptRequestRepository != null &&
+                            reattemptRequestRepository.findFirstByStudentIdAndOpportunityIdAndStatusOrderByCreatedAtDesc(studentId, opportunityId, "APPROVED").isPresent();
+                    if (!isApprovedForReattempt) {
+                        throw new com.beyon.common.exception.ConflictException("You have already completed or were terminated from this assessment. To retake, please submit a Reattempt Request to the company.");
+                    }
+                } else {
+                    return s;
                 }
-                return s;
             }
         }
+
 
         // 2. Derive question count and duration minutes from drive configuration
         int resolvedDuration = durationMinutes;
@@ -652,25 +678,83 @@ public class AssessmentSessionService {
 
     public Map<String, Object> getCompanyResults(UUID sessionId) {
         Map<String, Object> results = getSessionResults(sessionId);
-        results.remove("proctoringEvents");
         results.put("summary", results.get("integrityStatus"));
         return results;
     }
 
     public List<Map<String, Object>> getActiveSessions() {
         List<AssessmentSession> sessions = sessionRepository.findAll();
+        sessions.sort((a, b) -> {
+            if (a.getCreatedAt() == null || b.getCreatedAt() == null) return 0;
+            return b.getCreatedAt().compareTo(a.getCreatedAt());
+        });
         return sessions.stream().map(s -> {
             Map<String, Object> map = new HashMap<>();
             map.put("id", s.getId());
+            map.put("sessionId", s.getId());
             map.put("studentId", s.getStudentId());
             map.put("opportunityId", s.getOpportunityId());
             map.put("applicationId", s.getApplicationId());
             map.put("status", s.getStatus());
             map.put("score", s.getScore());
             map.put("accuracy", s.getAccuracy());
+            map.put("totalQuestions", s.getTotalQuestions());
+            map.put("questionsAttempted", s.getQuestionsAttempted());
+            map.put("questionsCorrect", s.getQuestionsCorrect());
+            map.put("timeUsedSeconds", s.getTimeUsedSeconds());
+            map.put("integrityStatus", s.getIntegrityStatus() != null ? s.getIntegrityStatus() : "CLEAN");
+            map.put("warningCount", s.getWarningCount());
+            map.put("criticalEventCount", s.getCriticalEventCount());
             map.put("startedAt", s.getStartedAt());
             map.put("expiresAt", s.getExpiresAt());
             map.put("completedAt", s.getCompletedAt());
+            map.put("createdAt", s.getCreatedAt());
+
+            String candidateName = null;
+            String candidateEmail = null;
+            String department = null;
+            String college = null;
+            if (s.getStudentId() != null) {
+                if (userRepository != null) {
+                    var uOpt = userRepository.findById(s.getStudentId());
+                    if (uOpt.isPresent()) {
+                        candidateEmail = uOpt.get().getEmail();
+                        candidateName = uOpt.get().getDisplayName();
+                        if (candidateName == null || candidateName.trim().isEmpty()) {
+                            candidateName = candidateEmail != null ? candidateEmail.split("@")[0] : "Verified Candidate";
+                        }
+                    }
+                }
+                if (studentProfileRepository != null) {
+                    var pOpt = studentProfileRepository.findByUserId(s.getStudentId());
+                    if (pOpt.isPresent()) {
+                        department = pOpt.get().getDepartment();
+                        college = pOpt.get().getInstitution();
+                    }
+                }
+            }
+            map.put("candidateName", candidateName != null && !candidateName.isEmpty() ? candidateName : "Verified Candidate");
+            map.put("candidateEmail", candidateEmail != null ? candidateEmail : "candidate@beyon.edu");
+            map.put("department", department != null ? department : "Computer Science");
+            map.put("college", college != null ? college : "Partner Campus");
+
+            String oppTitle = null;
+            String assessmentTitle = null;
+            if (s.getOpportunityId() != null && opportunityRepository != null) {
+                var oppOpt = opportunityRepository.findById(s.getOpportunityId());
+                if (oppOpt.isPresent()) {
+                    oppTitle = oppOpt.get().getTitle();
+                    if (oppOpt.get().getAssessmentId() != null && assessmentConfigRepository != null) {
+                        var cfgOpt = assessmentConfigRepository.findById(oppOpt.get().getAssessmentId());
+                        if (cfgOpt.isPresent()) {
+                            assessmentTitle = cfgOpt.get().getTitle();
+                        }
+                    }
+                }
+            }
+            map.put("opportunityTitle", oppTitle != null ? oppTitle : "Campus Recruitment Drive");
+            map.put("assessmentTitle", assessmentTitle != null ? assessmentTitle : (oppTitle != null ? oppTitle + " Assessment" : "Technical Benchmark Assessment"));
+
             return map;
         }).collect(Collectors.toList());
     }

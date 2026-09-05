@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/context/AuthContext';
 import { CompanySidebar } from './CompanySidebar';
@@ -64,7 +64,7 @@ export function CompanyLayout() {
               <button
                 type="button"
                 className={styles.utilityBtn}
-                onClick={() => navigate('/notifications')}
+                onClick={() => navigate('/company/notifications')}
                 title="Notifications"
               >
                 <Bell size={16} />

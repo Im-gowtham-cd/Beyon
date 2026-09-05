@@ -312,6 +312,55 @@ public class DualViewProctoringController {
     // Incidents & Evidence
     // ──────────────────────────────────────────────────────────────────────────
 
+    /** Direct violation incident logging from Desktop Lockdown AI Rule Engine */
+    @PostMapping("/{id}/incidents")
+    public ResponseEntity<?> createIncident(
+            @PathVariable UUID id,
+            @RequestBody Map<String, Object> body) {
+        String incidentType = (String) body.getOrDefault("incidentType", "POLICY_VIOLATION");
+        String severity = (String) body.getOrDefault("severity", "MEDIUM");
+        double confidence = body.get("confidence") instanceof Number
+                ? ((Number) body.get("confidence")).doubleValue() : 0.85;
+        int riskContribution = body.get("riskContribution") instanceof Number
+                ? ((Number) body.get("riskContribution")).intValue() : 25;
+        String questionId = (String) body.get("questionId");
+        
+        List<String> sources = new ArrayList<>();
+        if (body.get("sources") instanceof List<?> list) {
+            for (Object item : list) {
+                if (item != null) sources.add(item.toString());
+            }
+        }
+        if (sources.isEmpty() && body.get("source") != null) {
+            sources.add(body.get("source").toString());
+        }
+
+        ProctoringIncident incident = incidentService.createIncident(
+                id, incidentType, severity, confidence, riskContribution, questionId, sources, sources.size()
+        );
+
+        String evidenceBase64 = (String) body.get("evidenceBase64");
+        if (evidenceBase64 != null && !evidenceBase64.isBlank()) {
+            try {
+                if (evidenceBase64.contains(",")) {
+                    evidenceBase64 = evidenceBase64.substring(evidenceBase64.indexOf(",") + 1);
+                }
+                byte[] imageBytes = Base64.getDecoder().decode(evidenceBase64);
+                String deviceSource = sources.isEmpty() ? "LAPTOP_CAMERA" : sources.get(0);
+                incidentService.recordFrameEvidence(incident.getId(), deviceSource, imageBytes, id);
+            } catch (Exception e) {
+                System.err.println("[DualViewProctoringController] Failed to record snapshot evidence: " + e.getMessage());
+            }
+        }
+
+        return ResponseEntity.ok(Map.of(
+            "incidentId", incident.getId(),
+            "incidentType", incident.getIncidentType(),
+            "severity", incident.getSeverity(),
+            "status", "RECORDED"
+        ));
+    }
+
     /** List all incidents for a session */
     @GetMapping("/{id}/incidents")
     public ResponseEntity<?> getIncidents(@PathVariable UUID id) {

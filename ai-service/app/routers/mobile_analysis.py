@@ -24,7 +24,7 @@ async def analyze_mobile_frame(req: MobileFrameRequest):
                 personCount=0, secondaryDeviceDetected=False,
                 detectedObjects=[], confidence=0.0,
                 cameraObstructed=True, candidateAbsent=False,
-                events=[DetectionEvent(eventType="CAMERA_OBSTRUCTION", confidence=0.95, metadata={"reason": "invalid_frame"})]
+                events=[DetectionEvent(eventType="CAMERA_OBSTRUCTION", confidence=0.95, cameraSource="MOBILE_SIDE", metadata={"reason": "invalid_frame"})]
             )
 
         h, w = img.shape[:2]
@@ -52,6 +52,7 @@ async def analyze_mobile_frame(req: MobileFrameRequest):
             events.append(DetectionEvent(
                 eventType="CAMERA_OBSTRUCTION",
                 confidence=0.96,
+                cameraSource="MOBILE_SIDE",
                 metadata={
                     "mean_brightness": round(mean_brightness, 2),
                     "laplacian_var": round(laplacian_var, 2),
@@ -79,16 +80,16 @@ async def analyze_mobile_frame(req: MobileFrameRequest):
         skin_mask = cv2.morphologyEx(skin_mask, cv2.MORPH_DILATE, kernel, iterations=2)
         contours, _ = cv2.findContours(skin_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
-        # Candidate heads: upper 45% of frame (arms/hands on desk are in y > 0.45 * h)
+        # Candidate heads: upper 60% of frame (arms/hands on desk are in lower frame)
         head_candidates = []
-        min_head_area = 0.035 * (w * h)
+        min_head_area = 0.02 * (w * h)
         for c in contours:
             area = cv2.contourArea(c)
             if area > min_head_area:
                 x, y, cw, ch = cv2.boundingRect(c)
-                if y < 0.45 * h:
+                if y < 0.60 * h:
                     aspect = float(ch) / max(float(cw), 1.0)
-                    if 0.8 <= aspect <= 2.2:
+                    if 0.7 <= aspect <= 2.5:
                         cx = x + cw / 2.0
                         cy = y + ch / 2.0
                         head_candidates.append({
@@ -97,67 +98,82 @@ async def analyze_mobile_frame(req: MobileFrameRequest):
                             "area": area
                         })
 
-        person_count = 0
-        if len(head_candidates) == 1:
-            person_count = 1
-            detected_objects.append(DetectedObject(label="person", confidence=0.92))
-        elif len(head_candidates) >= 2:
-            head_candidates.sort(key=lambda item: item["area"], reverse=True)
-            primary_head = head_candidates[0]
-            primary_cx = primary_head["center"][0]
+        # --- YOLO OBJECT & PHONE DETECTION ---
+        from app.services.yolo_detector import detect_objects_yolo
+        yolo_persons, yolo_phone, yolo_objs = detect_objects_yolo(img)
 
-            has_genuine_second_head = False
-            for other in head_candidates[1:]:
-                other_cx = other["center"][0]
-                if abs(primary_cx - other_cx) > (0.35 * w):
-                    has_genuine_second_head = True
-                    break
+        if len(yolo_objs) > 0:
+            for obj in yolo_objs:
+                detected_objects.append(DetectedObject(
+                    label=obj["label"],
+                    confidence=obj["confidence"],
+                    bbox=obj.get("bbox")
+                ))
 
-            if has_genuine_second_head:
-                person_count = 2
-                events.append(DetectionEvent(eventType="SECOND_PERSON", confidence=0.92, metadata={"count": 2}))
-                detected_objects.append(DetectedObject(label="person", confidence=0.92))
-            else:
+        if yolo_persons > 0:
+            person_count = yolo_persons
+            if person_count >= 2:
+                events.append(DetectionEvent(
+                    eventType="MULTIPLE_PEOPLE",
+                    confidence=0.94,
+                    cameraSource="MOBILE_SIDE",
+                    metadata={"count": person_count}
+                ))
+        else:
+            # Fallback to skin & head contour analysis if YOLO not loaded
+            person_count = 0
+            if len(head_candidates) == 1:
                 person_count = 1
                 detected_objects.append(DetectedObject(label="person", confidence=0.92))
-        elif len(contours) > 0:
-            total_skin_area = sum(cv2.contourArea(c) for c in contours)
-            if total_skin_area > 0.03 * (w * h):
-                person_count = 1
-                detected_objects.append(DetectedObject(label="person", confidence=0.88))
+            elif len(head_candidates) >= 2:
+                head_candidates.sort(key=lambda item: item["area"], reverse=True)
+                primary_head = head_candidates[0]
+                primary_cx = primary_head["center"][0]
+
+                has_genuine_second_head = False
+                for other in head_candidates[1:]:
+                    other_cx = other["center"][0]
+                    if abs(primary_cx - other_cx) > (0.28 * w):
+                        has_genuine_second_head = True
+                        break
+
+                if has_genuine_second_head:
+                    person_count = 2
+                    events.append(DetectionEvent(
+                        eventType="MULTIPLE_PEOPLE",
+                        confidence=0.92,
+                        cameraSource="MOBILE_SIDE",
+                        metadata={"count": 2}
+                    ))
+                    detected_objects.append(DetectedObject(label="person", confidence=0.92))
+                else:
+                    person_count = 1
+                    detected_objects.append(DetectedObject(label="person", confidence=0.92))
+            elif len(contours) > 0:
+                total_skin_area = sum(cv2.contourArea(c) for c in contours)
+                if total_skin_area > 0.03 * (w * h):
+                    person_count = 1
+                    detected_objects.append(DetectedObject(label="person", confidence=0.88))
 
         # Check candidate absence: no person detected in viewport
         candidate_absent = (person_count == 0)
         if candidate_absent:
             events.append(DetectionEvent(
-                eventType="NO_PERSON_DETECTED",
+                eventType="CANDIDATE_ABSENT",
                 confidence=0.95,
+                cameraSource="MOBILE_SIDE",
                 metadata={"reason": "candidate_left_workspace"}
             ))
 
-        # --- SECONDARY DEVICE SCREEN DETECTION ---
-        secondary_device = False
-        blurred = cv2.GaussianBlur(gray, (5, 5), 0)
-        _, bright_thresh = cv2.threshold(blurred, 220, 255, cv2.THRESH_BINARY)
-        screen_contours, _ = cv2.findContours(bright_thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-
-        for c in screen_contours:
-            peri = cv2.arcLength(c, True)
-            approx = cv2.approxPolyDP(c, 0.05 * peri, True)
-            if len(approx) == 4:
-                (x, y, cw, ch) = cv2.boundingRect(approx)
-                area = cw * ch
-                if 0.03 * (w * h) < area < 0.12 * (w * h):
-                    aspect = float(max(cw, ch)) / max(float(min(cw, ch)), 1.0)
-                    if 1.6 <= aspect <= 2.3:
-                        mask = np.zeros(gray.shape, dtype=np.uint8)
-                        cv2.drawContours(mask, [c], -1, 255, -1)
-                        mean_val = cv2.mean(gray, mask=mask)[0]
-                        if mean_val > 215:
-                            secondary_device = True
-                            detected_objects.append(DetectedObject(label="phone", confidence=0.92, bbox=[x, y, cw, ch]))
-                            events.append(DetectionEvent(eventType="PHONE_DETECTED", confidence=0.92, metadata={"bbox": [x, y, cw, ch]}))
-                            break
+        # Secondary phone detection: ONLY when verified by object model
+        secondary_device = yolo_phone
+        if secondary_device:
+            events.append(DetectionEvent(
+                eventType="PHONE_DETECTED",
+                confidence=0.95,
+                cameraSource="MOBILE_SIDE",
+                metadata={"source": "yolo_model"}
+            ))
 
         return MobileFrameResponse(
             personCount=person_count,
@@ -175,4 +191,4 @@ async def analyze_mobile_frame(req: MobileFrameRequest):
             detectedObjects=[], confidence=0.0,
             cameraObstructed=False, candidateAbsent=False,
             events=[DetectionEvent(eventType="ANALYSIS_ERROR", confidence=1.0, metadata={"error": str(e)})]
-        )
+        )
