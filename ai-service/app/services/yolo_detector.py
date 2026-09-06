@@ -61,8 +61,8 @@ def detect_objects_yolo(image_bgr: np.ndarray) -> Tuple[int, bool, List[Dict[str
                     bh = by2 - by
                     box_area = bw * bh
 
-                    if label == "person" and conf >= 0.45:
-                        if box_area > 0.015 * total_area:
+                    if label == "person" and conf >= 0.55:
+                        if box_area > 0.03 * total_area:
                             person_count += 1
                             detected_objects.append({
                                 "label": "person",
@@ -70,8 +70,9 @@ def detect_objects_yolo(image_bgr: np.ndarray) -> Tuple[int, bool, List[Dict[str
                                 "bbox": [int(bx), int(by), int(bw), int(bh)]
                             })
 
-                    elif (label in ["cell phone", "phone", "mobile phone", "smartphone"] and conf >= 0.28) or                          (label in ["remote", "gadget"] and conf >= 0.35):
-                        if 0.003 * total_area < box_area < 0.45 * total_area:
+                    elif (label in ["cell phone", "phone", "mobile phone", "smartphone"] and conf >= 0.28) or \
+                         (label in ["remote", "gadget"] and conf >= 0.40):
+                        if 0.003 * total_area < box_area < 0.50 * total_area:
                             cell_phone_detected = True
                             detected_objects.append({
                                 "label": "phone",
@@ -110,7 +111,7 @@ def detect_objects_yolo(image_bgr: np.ndarray) -> Tuple[int, bool, List[Dict[str
                         x, y, cw, ch = cv2.boundingRect(approx)
                         aspect = float(max(cw, ch)) / max(float(min(cw, ch)), 1.0)
 
-                        if 1.6 <= aspect <= 2.4:
+                        if 1.4 <= aspect <= 2.8:
                             roi = gray[y:y+ch, x:x+cw]
                             roi_std = float(np.std(roi))
                             roi_mean = float(np.mean(roi))

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Award,
   Briefcase,
@@ -50,21 +50,6 @@ export function PlacementDashboardPage() {
     loadData();
   }, [loadData]);
 
-  const registerForPlacement = async () => {
-    setActionLoading(true);
-    try {
-      await api.post('/placement/register', { placementPreference: 'WILLING' });
-      await loadData();
-      setBannerMsg('Successfully registered for Campus Placements 2025–2026!');
-      setTimeout(() => setBannerMsg(null), 4000);
-    } catch {
-      setBannerMsg('Failed to register. Please try again.');
-      setTimeout(() => setBannerMsg(null), 4000);
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
   const handleTogglePlacementStatus = async (targetStatus: string) => {
     setActionLoading(true);
     try {
@@ -100,9 +85,7 @@ export function PlacementDashboardPage() {
     );
   }
 
-  const reg = myStatus?.registration;
   const isPlaced = myStatus?.isPlaced || myStatus?.placementStatus === 'PLACED' || myRecords.some((r) => r.status === 'PLACED');
-  const placementStatus = isPlaced ? 'PLACED' : (myStatus?.placementStatus || reg?.placementStatus || 'PLACEMENT_SEEKING');
 
   const totalApps = myStatus?.totalApplications || myRecords.length || 4;
   const offeredCount = myRecords.filter((r) => r.status === 'OFFERED' || r.status === 'ACCEPTED' || r.status === 'PLACED').length || (isPlaced ? 1 : 0);
@@ -579,7 +562,7 @@ export function PlacementDashboardPage() {
           <div className={styles.profileItem}>
             <span className={styles.profileLabel}>Placement Preference</span>
             <span className={styles.profileValue} style={{ color: '#1c2d81' }}>
-              {myStatus?.placementPreference || reg?.placementPreference || 'WILLING (Eligible for all drives)'}
+              {myStatus?.placementPreference || myStatus?.registration?.placementPreference || 'WILLING (Eligible for all drives)'}
             </span>
           </div>
 

@@ -62,6 +62,43 @@ public class InstitutionService {
         return institutionStudentRepository.findByInstitutionIdAndPlacementStatus(institutionId, status);
     }
 
+    public List<Map<String, Object>> getStudentsWithDetails(UUID institutionId, String status) {
+        List<InstitutionStudent> list = (status != null && !status.isBlank())
+                ? institutionStudentRepository.findByInstitutionIdAndPlacementStatus(institutionId, status)
+                : institutionStudentRepository.findByInstitutionId(institutionId);
+
+        List<Map<String, Object>> results = new ArrayList<>();
+        for (InstitutionStudent is : list) {
+            Map<String, Object> map = new LinkedHashMap<>();
+            map.put("id", is.getId());
+            map.put("studentId", is.getStudentId());
+            map.put("institutionId", is.getInstitutionId());
+            map.put("department", is.getDepartment());
+            map.put("batch", is.getBatch());
+            map.put("placementStatus", is.getPlacementStatus());
+            map.put("verified", is.isVerified());
+            map.put("createdAt", is.getCreatedAt());
+            map.put("updatedAt", is.getUpdatedAt());
+
+            userRepository.findById(is.getStudentId()).ifPresent(u -> {
+                map.put("email", u.getEmail());
+                map.put("displayName", u.getDisplayName());
+                map.put("profileStatus", u.getProfileStatus() != null ? u.getProfileStatus().name() : "INCOMPLETE");
+            });
+
+            studentProfileRepository.findByUserId(is.getStudentId()).ifPresent(sp -> {
+                map.put("registrationNumber", sp.getRegistrationNumber());
+                map.put("cgpa", sp.getCgpa());
+                map.put("degree", sp.getDegree());
+                map.put("phone", sp.getPhone());
+                map.put("completionPct", sp.getCompletionPct());
+            });
+
+            results.add(map);
+        }
+        return results;
+    }
+
     @Transactional
     public InstitutionStudent addStudent(UUID institutionId, UUID studentId, String department, String batch) {
         if (institutionStudentRepository.findByInstitutionIdAndStudentId(institutionId, studentId).isPresent()) {

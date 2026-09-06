@@ -32,6 +32,9 @@ public class DualViewProctoringController {
             .connectTimeout(java.time.Duration.ofMillis(2000))
             .build();
     private final com.fasterxml.jackson.databind.ObjectMapper objectMapper = new com.fasterxml.jackson.databind.ObjectMapper();
+    private final Map<UUID, Integer> secondPersonStreakMap = new java.util.concurrent.ConcurrentHashMap<>();
+    private final Map<UUID, Integer> absentStreakMap = new java.util.concurrent.ConcurrentHashMap<>();
+    private final Map<UUID, Long> lastIncidentTimeMap = new java.util.concurrent.ConcurrentHashMap<>();
 
     public DualViewProctoringController(
             DualViewProctoringService dvService,
@@ -244,27 +247,54 @@ public class DualViewProctoringController {
                         }
                     }
 
+                    long now = System.currentTimeMillis();
+                    long lastInc = lastIncidentTimeMap.getOrDefault(id, 0L);
+
                     if (Boolean.TRUE.equals(obstructed)) {
                         cameraObstructed = true;
                         correlationEngine.recordSignal(id.toString(), "CAMERA_COVERED", "MOBILE_CAMERA", 0.96, null);
-                        incidentService.createIncident(id, "CAMERA_TAMPERING", "CRITICAL", 0.96, 30, null, List.of("MOBILE_CAMERA"), 1);
+                        if (now - lastInc > 6000) {
+                            lastIncidentTimeMap.put(id, now);
+                            incidentService.createIncident(id, "CAMERA_TAMPERING", "CRITICAL", 0.96, 30, null, List.of("MOBILE_CAMERA"), 1);
+                        }
                         warningMessage = "WARNING: Camera lens covered or obstructed! Uncover lens immediately!";
                     } else if (Boolean.TRUE.equals(absent) || personCount == 0) {
-                        candidateAbsent = true;
-                        correlationEngine.recordSignal(id.toString(), "FACE_MISSING", "MOBILE_CAMERA", 0.95, null);
-                        incidentService.createIncident(id, "CANDIDATE_ABSENT", "HIGH", 0.95, 20, null, List.of("MOBILE_CAMERA"), 1);
-                        warningMessage = "WARNING: Candidate not visible in workspace view! Return immediately!";
-                    } else if (personCount > 1) {
-                        secondPersonDetected = true;
-                        correlationEngine.recordSignal(id.toString(), "SECOND_PERSON", "MOBILE_CAMERA", 0.92, null);
-                        incidentService.createIncident(id, "SECOND_PERSON", "HIGH", 0.92, 25, null, List.of("MOBILE_CAMERA"), 1);
-                        warningMessage = "WARNING: Additional person detected in secondary camera view";
+                        int streak = absentStreakMap.merge(id, 1, Integer::sum);
+                        if (streak >= 3) {
+                            candidateAbsent = true;
+                            correlationEngine.recordSignal(id.toString(), "FACE_MISSING", "MOBILE_CAMERA", 0.95, null);
+                            if (now - lastInc > 8000) {
+                                lastIncidentTimeMap.put(id, now);
+                                incidentService.createIncident(id, "CANDIDATE_ABSENT", "HIGH", 0.95, 20, null, List.of("MOBILE_CAMERA"), 1);
+                            }
+                            warningMessage = "WARNING: Candidate not visible in workspace view! Return immediately!";
+                        }
+                    } else {
+                        absentStreakMap.put(id, 0);
+                    }
+
+                    if (personCount > 1) {
+                        int pStreak = secondPersonStreakMap.merge(id, 1, Integer::sum);
+                        if (pStreak >= 3) {
+                            secondPersonDetected = true;
+                            correlationEngine.recordSignal(id.toString(), "SECOND_PERSON", "MOBILE_CAMERA", 0.92, null);
+                            if (now - lastInc > 8000) {
+                                lastIncidentTimeMap.put(id, now);
+                                incidentService.createIncident(id, "SECOND_PERSON", "HIGH", 0.92, 25, null, List.of("MOBILE_CAMERA"), 1);
+                            }
+                            warningMessage = "WARNING: Additional person detected in secondary camera view";
+                        }
+                    } else {
+                        secondPersonStreakMap.put(id, 0);
                     }
 
                     if (Boolean.TRUE.equals(secondaryDevice)) {
                         phoneDetected = true;
                         correlationEngine.recordSignal(id.toString(), "PHONE_DETECTED", "MOBILE_CAMERA", 0.98, null);
-                        incidentService.createIncident(id, "PHONE_DETECTED", "CRITICAL", 0.98, 50, null, List.of("MOBILE_CAMERA"), 1);
+                        if (now - lastInc > 6000) {
+                            lastIncidentTimeMap.put(id, now);
+                            incidentService.createIncident(id, "PHONE_DETECTED", "CRITICAL", 0.98, 50, null, List.of("MOBILE_CAMERA"), 1);
+                        }
                         warningMessage = "CRITICAL VIOLATION: Mobile phone detected! Test terminating!";
                     }
                 }

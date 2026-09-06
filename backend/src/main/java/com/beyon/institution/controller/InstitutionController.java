@@ -40,14 +40,11 @@ public class InstitutionController {
     }
 
     @GetMapping("/students")
-    public ResponseEntity<ApiResponse<List<InstitutionStudent>>> getStudents(
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getStudents(
             Authentication auth,
             @RequestParam(required = false) String status) {
         UUID instId = extractUserId(auth);
-        if (status != null && !status.isBlank()) {
-            return ResponseEntity.ok(ApiResponse.ok(institutionService.getStudentsByStatus(instId, status)));
-        }
-        return ResponseEntity.ok(ApiResponse.ok(institutionService.getStudents(instId)));
+        return ResponseEntity.ok(ApiResponse.ok(institutionService.getStudentsWithDetails(instId, status)));
     }
 
     @PostMapping("/students")

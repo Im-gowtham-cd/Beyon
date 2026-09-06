@@ -186,6 +186,9 @@ export function AssessmentApp() {
     OTHER: 0,
   });
   const lastStrikeTimeRef = useRef(0);
+  const lastCategoryWarnTimeRef = useRef<Record<string, number>>({
+    PHONE: 0, PERSON: 0, SOUND: 0, ABSENT: 0, GAZE: 0, OTHER: 0,
+  });
   const absenceStreakRef = useRef(0);
   const cameraCoverStreakRef = useRef(0);
   const multiPersonStreakRef = useRef(0);
@@ -196,6 +199,7 @@ export function AssessmentApp() {
   const proctorIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const handleSubmitRef = useRef<(() => void) | null>(null);
 
+  const [strikeCount, setStrikeCount] = useState(0);
   const [procSessionId, setProcSessionId] = useState<string | null>(null);
   const [pairingToken, setPairingToken] = useState<string | null>(null);
   const [pairingUrl, setPairingUrl] = useState<string | null>(null);
@@ -259,98 +263,113 @@ export function AssessmentApp() {
   };
 
   const getMaxWarningsForCategory = (cat: 'PHONE' | 'PERSON' | 'SOUND' | 'ABSENT' | 'GAZE' | 'OTHER'): number => {
+    // ONLY the PERSON category (second person detected) can terminate.
+    // Every other category is warning-only (high maxAllowed = never terminates).
     switch (cat) {
-      case 'PHONE': return 0;
-      case 'PERSON': return 1;
-      case 'SOUND': return 3;
-      case 'ABSENT': return 2;
-      case 'GAZE': return 3;
-      default: return 3;
+      case 'PERSON': return 1;  // 1 warning then terminate if a 2nd real person appears
+      case 'PHONE': return 99;  // just warn, never auto-terminate for phone
+      case 'SOUND': return 99;
+      case 'ABSENT': return 99;
+      case 'GAZE': return 99;
+      default: return 99;
     }
   };
-
   const triggerRuleEngineViolation = (
     eventType: string,
     reason: string,
     cameraSource: string = 'LAPTOP_FRONT',
-    isInstantKill: boolean = false
+    _isInstantKill: boolean = false
   ) => {
     if (isTerminatingRef.current) return;
 
     const snapshot = captureFrameBase64();
     const category = getViolationCategory(eventType);
-    const maxAllowed = getMaxWarningsForCategory(category);
+    const now = Date.now();
 
-    if (isInstantKill || maxAllowed === 0) {
-      isTerminatingRef.current = true;
-      setProctorStatus('CRITICAL');
-      setProctorMessage('AUTO-TERMINATED (PHONE DETECTED)');
+    // Only PERSON violations can ever terminate the assessment
+    if (category !== 'PERSON') {
+      // Per-category independent debounce: 12s cooldown per category
+      const lastWarn = lastCategoryWarnTimeRef.current[category] || 0;
+      if (now - lastWarn < 12000) return;
+      lastCategoryWarnTimeRef.current[category] = now;
+
+      categoryStrikesRef.current[category] = (categoryStrikesRef.current[category] || 0) + 1;
+      const catCount = categoryStrikesRef.current[category];
+
+      let title = '⚠️ Proctoring Notice';
+      let detail = reason;
+      if (category === 'ABSENT') {
+        title = '⚠️ Absence Detected';
+        detail = `${reason}. Please return to your workstation immediately. Your assessment is still running.`;
+      } else if (category === 'SOUND') {
+        title = '🔊 Noise Detected';
+        detail = `${reason}. Please maintain silence in the exam room. This is warning #${catCount}.`;
+      } else if (category === 'GAZE') {
+        title = '👁️ Gaze Alert';
+        detail = `${reason}. Please keep your eyes on the screen at all times. Warning #${catCount}.`;
+      } else if (category === 'PHONE') {
+        title = '📱 Device Detected';
+        detail = `${reason}. Unauthorized devices are not permitted. Warning #${catCount}.`;
+      }
+
+      setProctorStatus('WARNING');
+      setProctorMessage(`⚠️ ${reason}`);
       setActiveWarningModal({
-        strike: 1,
-        maxStrikes: 0,
-        isTerminated: true,
-        title: 'CRITICAL VIOLATION: MOBILE PHONE DETECTED',
-        reason: `Unauthorized mobile device detected (${cameraSource}). In accordance with strict examination security policy (0 warnings allowed for mobile phones), this session has been immediately terminated and logged.`,
+        strike: catCount,
+        maxStrikes: 99,
+        isTerminated: false,
+        title,
+        reason: detail,
       });
-      addMalpracticeAlert('CRITICAL_PHONE_TERMINATION', `🚨 CRITICAL VIOLATION: ${reason}. Assessment terminated.`);
-      setProctoringWarnings(prev => [...prev, `[INSTANT TERMINATION - 0 WARNINGS] ${reason} (${cameraSource})`]);
-
-      logProctoringIncident(eventType, 'CRITICAL', 0.98, reason, cameraSource, snapshot);
-
-      setTimeout(() => {
-        if (handleSubmitRef.current) handleSubmitRef.current();
-      }, 2200);
+      addMalpracticeAlert(`NOTICE_${category}_${catCount}`, `⚠️ ${reason}`);
+      setProctoringWarnings(prev => [...prev, `[${category} WARNING #${catCount}] ${reason} (${cameraSource})`]);
+      logProctoringIncident(eventType, 'MEDIUM', 0.80, reason, cameraSource, snapshot);
       return;
     }
 
-    const now = Date.now();
-    if (now - lastStrikeTimeRef.current < 3000) return;
+    // PERSON violation — the only thing that can terminate
+    if (now - lastStrikeTimeRef.current < 4000) return;
     lastStrikeTimeRef.current = now;
 
     strikeCountRef.current += 1;
     categoryStrikesRef.current[category] = (categoryStrikesRef.current[category] || 0) + 1;
     const catStrikes = categoryStrikesRef.current[category];
-    const totalStrikes = strikeCountRef.current;
-    setStrikeCount(totalStrikes);
-
-    const isTerminated = catStrikes > maxAllowed;
+    setStrikeCount(strikeCountRef.current);
 
     setProctoringWarnings(prev => [
       ...prev,
-      `[${category} WARNING ${catStrikes}/${maxAllowed}] ${reason} (${cameraSource})`
+      `[PERSON WARNING ${catStrikes}] ${reason} (${cameraSource})`
     ]);
 
-    const severity = isTerminated ? 'CRITICAL' : catStrikes === maxAllowed ? 'HIGH' : 'MEDIUM';
-    logProctoringIncident(eventType, severity, 0.90, reason, cameraSource, snapshot);
+    logProctoringIncident(eventType, catStrikes > 1 ? 'CRITICAL' : 'HIGH', 0.92, reason, cameraSource, snapshot);
 
-    if (isTerminated) {
+    if (catStrikes > 1) {
       isTerminatingRef.current = true;
       setProctorStatus('CRITICAL');
-      setProctorMessage(`AUTO-TERMINATED (${category} LIMIT EXCEEDED)`);
+      setProctorMessage('AUTO-TERMINATED: SECOND PERSON IN EXAM ROOM');
       setActiveWarningModal({
         strike: catStrikes,
-        maxStrikes: maxAllowed,
+        maxStrikes: 1,
         isTerminated: true,
-        title: `⛔ ASSESSMENT TERMINATED (${category} Limit Exceeded)`,
-        reason: `You have exceeded the maximum allowed warnings for ${category.toLowerCase()} violations (${maxAllowed} allowed). Latest infraction: ${reason}. Assessment is being auto-submitted.`,
+        title: '⛔ ASSESSMENT TERMINATED — Second Person Detected',
+        reason: `Another person was confirmed in your examination space. As per examination policy, your session has been automatically terminated and flagged for review. Reason: ${reason}.`,
       });
-      addMalpracticeAlert('STRIKE_LIMIT_TERMINATION', `⛔ TERMINATED: ${category} Limit Exceeded (${reason}).`);
+      addMalpracticeAlert('SECOND_PERSON_TERMINATION', `⛔ TERMINATED: Second person detected (${reason}).`);
 
       setTimeout(() => {
         if (handleSubmitRef.current) handleSubmitRef.current();
       }, 2500);
     } else {
       setProctorStatus('WARNING');
-      setProctorMessage(`${category} Warning ${catStrikes}/${maxAllowed}: ${reason}`);
-      const isFinal = catStrikes === maxAllowed;
+      setProctorMessage(`🚨 WARNING: Another person detected! Remove them immediately.`);
       setActiveWarningModal({
-        strike: catStrikes,
-        maxStrikes: maxAllowed,
+        strike: 1,
+        maxStrikes: 1,
         isTerminated: false,
-        title: isFinal ? `🚨 FINAL WARNING (${catStrikes} of ${maxAllowed})` : `Proctoring Warning (${catStrikes} of ${maxAllowed})`,
-        reason: `${reason}. You have ${maxAllowed - catStrikes} warning(s) remaining for ${category.toLowerCase()} before automatic session termination.`,
+        title: '🚨 FINAL WARNING — Another Person Detected',
+        reason: `${reason}. If another person appears in your camera view again, your assessment will be immediately and permanently terminated. Remove all other people from your room now.`,
       });
-      addMalpracticeAlert(`VIOLATION_${category}_${catStrikes}`, `⚠️ Warning (${catStrikes}/${maxAllowed}): ${reason}`);
+      addMalpracticeAlert('PERSON_WARNING_1', `🚨 FINAL WARNING: ${reason}`);
     }
   };
 
@@ -739,13 +758,17 @@ export function AssessmentApp() {
               }
               const voiceAvg = voiceSum / 43;
 
-              if (rms > 0.045 || voiceAvg > 28) {
+              // Real proctoring sound threshold:
+              // rms > 0.07 = clearly audible sound (~typing is 0.01-0.03, whisper ~0.04, speech ~0.07+)
+              // OR voiceAvg > 35 = voice-band frequencies active
+              // Sustained for 5 consecutive checks (~1.25s at 250ms interval)
+              if (rms > 0.07 || voiceAvg > 35) {
                 voiceStreakRef.current++;
-                if (voiceStreakRef.current >= 6) {
+                if (voiceStreakRef.current >= 5) {
                   voiceStreakRef.current = 0;
                   triggerRuleEngineViolation(
                     'SUSPICIOUS_SPEECH',
-                    `Acoustic speech / conversation detected in exam room (${Math.round(rms * 100)}% energy)`,
+                    `Noise detected in exam room (level: ${Math.round(rms * 100)}%)`,
                     'MICROPHONE'
                   );
                 }
@@ -761,6 +784,7 @@ export function AssessmentApp() {
         canvas.height = 120;
         const ctx = canvas.getContext('2d', { willReadFrequently: true });
 
+        // 250ms interval = 4 samples/second for fast detection
         proctorIntervalRef.current = setInterval(() => {
           if (isTerminatingRef.current) return;
           if (!examVideoRef.current || examVideoRef.current.readyState < 2 || !ctx) return;
@@ -843,9 +867,10 @@ export function AssessmentApp() {
           const avgLum = totalLum / (160 * 120);
           const isLaptopCameraCovered = (avgLum < 22) || (totalEdges < 50 && (avgLum < 45 || centerSkinPixels > 1000));
 
+          // Camera covered: 4 frames × 250ms = 1s
           if (isLaptopCameraCovered) {
             cameraCoverStreakRef.current++;
-            if (cameraCoverStreakRef.current >= 6) {
+            if (cameraCoverStreakRef.current >= 4) {
               cameraCoverStreakRef.current = 0;
               triggerRuleEngineViolation('CAMERA_OBSTRUCTION', 'Camera lens is covered or obstructed', 'LAPTOP_FRONT');
             }
@@ -853,29 +878,31 @@ export function AssessmentApp() {
             cameraCoverStreakRef.current = 0;
           }
 
-          if (!isLaptopCameraCovered && centerSkinPixels < 130) {
+          // Absence: 60 center skin pixels threshold, 8 frames × 250ms = 2s before warning
+          if (!isLaptopCameraCovered && centerSkinPixels < 60) {
             absenceStreakRef.current++;
             if (absenceStreakRef.current >= 8) {
               absenceStreakRef.current = 0;
-              triggerRuleEngineViolation('CANDIDATE_ABSENT', 'Candidate absent from camera viewport', 'LAPTOP_FRONT');
+              triggerRuleEngineViolation('CANDIDATE_ABSENT', 'Candidate has left the camera view', 'LAPTOP_FRONT');
             }
           } else if (!isLaptopCameraCovered) {
             absenceStreakRef.current = 0;
           }
 
-          if (!isLaptopCameraCovered && totalSkinMass > 150) {
+          // Look-away: 8 frames × 250ms = 2s sustained gaze deviation
+          if (!isLaptopCameraCovered && totalSkinMass > 100) {
             const faceCenterX = sumSkinX / totalSkinMass;
             const faceCenterY = sumSkinY / totalSkinMass;
             const xOffset = (faceCenterX - 80) / 80;
             const yOffset = (faceCenterY - 60) / 60;
 
-            const isLookingAway = Math.abs(xOffset) > 0.32 || yOffset > 0.38;
+            const isLookingAway = Math.abs(xOffset) > 0.38 || yOffset > 0.45;
             if (isLookingAway) {
               lookAwayStreakRef.current++;
-              if (lookAwayStreakRef.current >= 7) {
+              if (lookAwayStreakRef.current >= 8) {
                 lookAwayStreakRef.current = 0;
-                const dir = xOffset < -0.32 ? 'left' : xOffset > 0.32 ? 'right' : 'downwards';
-                triggerRuleEngineViolation('LOOKING_AWAY', `Candidate continuously looking away (${dir})`, 'LAPTOP_FRONT');
+                const dir = xOffset < -0.38 ? 'left' : xOffset > 0.38 ? 'right' : 'downwards';
+                triggerRuleEngineViolation('LOOKING_AWAY', `Candidate looking ${dir} — eyes off screen`, 'LAPTOP_FRONT');
               }
             } else {
               lookAwayStreakRef.current = 0;
@@ -884,34 +911,11 @@ export function AssessmentApp() {
             lookAwayStreakRef.current = 0;
           }
 
-          let leftHeadMass = 0;
-          let rightHeadMass = 0;
-          let valleyColumns = 0;
-          for (let x = 10; x < 150; x++) {
-            if (colSkin[x] >= 5) {
-              if (x < 75) leftHeadMass += colSkin[x];
-              else if (x > 85) rightHeadMass += colSkin[x];
-            } else if (colSkin[x] < 2 && x >= 50 && x <= 110) {
-              valleyColumns++;
-            }
-          }
-
-          const hasTwoDistinctHeads = leftHeadMass > 600 && rightHeadMass > 600 && valleyColumns >= 6;
-          if (hasTwoDistinctHeads) {
-            multiPersonStreakRef.current++;
-            if (multiPersonStreakRef.current >= 5) {
-              multiPersonStreakRef.current = 0;
-              triggerRuleEngineViolation('MULTIPLE_PEOPLE', 'Multiple people detected in examination view', 'LAPTOP_FRONT');
-            }
-          } else {
-            multiPersonStreakRef.current = 0;
-          }
-
-          if (!isLaptopCameraCovered && centerSkinPixels >= 130 && !hasTwoDistinctHeads && strikeCountRef.current === 0) {
+          if (!isLaptopCameraCovered && centerSkinPixels >= 60 && strikeCountRef.current === 0) {
             setProctorStatus('CLEAR');
             setProctorMessage('Face Detected & Monitored');
           }
-        }, 500);
+        }, 250);
 
       } catch {
         setExamCameraReady(false);
@@ -1258,6 +1262,7 @@ export function AssessmentApp() {
     }
 
     window.beyon?.assessment?.unlockWindow();
+    setActiveWarningModal(null);
     setStep('submitting');
 
     const payloadAnswers: Record<string, any> = {};
@@ -3021,6 +3026,9 @@ export function AssessmentApp() {
               style={{
                 background: activeWarningModal.isTerminated ? '#fef2f2' : '#fff7ed',
                 borderBottom: `1px solid ${activeWarningModal.isTerminated ? '#fca5a5' : '#fdba74'}`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
               }}
             >
               <div
@@ -3035,6 +3043,29 @@ export function AssessmentApp() {
                 <i className={`bx ${activeWarningModal.isTerminated ? 'bx-error-circle' : 'bx-error'}`} style={{ fontSize: 22 }} />
                 <span>{activeWarningModal.title}</span>
               </div>
+              <button
+                type="button"
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontSize: '1.25rem',
+                  color: activeWarningModal.isTerminated ? '#991b1b' : '#c2410c',
+                  fontWeight: 700,
+                  padding: '4px 8px',
+                }}
+                onClick={() => {
+                  setActiveWarningModal(null);
+                  if (activeWarningModal.isTerminated && handleSubmitRef.current) {
+                    handleSubmitRef.current();
+                  } else {
+                    setProctorStatus('CLEAR');
+                  }
+                }}
+                aria-label="Close"
+              >
+                ✕
+              </button>
             </div>
             <div className={styles.modalBody} style={{ padding: '20px 24px' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
@@ -3096,19 +3127,36 @@ export function AssessmentApp() {
                 )}
               </div>
             </div>
-            <div className={styles.modalFooter}>
+            <div className={styles.modalFooter} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {!activeWarningModal.isTerminated ? (
                 <button
                   className={styles.btnPrimary}
                   style={{ width: '100%', padding: '12px 20px', background: '#ea580c', borderColor: '#ea580c' }}
-                  onClick={() => setActiveWarningModal(null)}
+                  onClick={() => {
+                    setActiveWarningModal(null);
+                    setProctorStatus('CLEAR');
+                  }}
                 >
                   <i className="bx bx-check-circle" /> I Acknowledge &amp; Return to Exam
                 </button>
               ) : (
-                <div style={{ textAlign: 'center', width: '100%', fontWeight: 700, color: '#dc2626', fontSize: '0.85rem' }}>
-                  <i className="bx bx-loader-alt bx-spin" style={{ marginRight: 6 }} /> Auto-submitting assessment session...
-                </div>
+                <>
+                  <div style={{ textAlign: 'center', width: '100%', fontWeight: 700, color: '#dc2626', fontSize: '0.85rem' }}>
+                    <i className="bx bx-loader-alt bx-spin" style={{ marginRight: 6 }} /> Auto-submitting assessment session...
+                  </div>
+                  <button
+                    className={styles.btnPrimary}
+                    style={{ width: '100%', padding: '12px 20px', background: '#dc2626', borderColor: '#dc2626' }}
+                    onClick={() => {
+                      setActiveWarningModal(null);
+                      if (handleSubmitRef.current) {
+                        handleSubmitRef.current();
+                      }
+                    }}
+                  >
+                    <i className="bx bx-log-out-circle" /> View Results &amp; Exit Assessment
+                  </button>
+                </>
               )}
             </div>
           </div>

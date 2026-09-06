@@ -277,27 +277,38 @@ public class AssessmentSessionService {
         AssessmentSession session = sessionRepository.findById(sessionId)
                 .orElseThrow(() -> new RuntimeException("Session not found"));
 
-        if (!"CREATED".equals(session.getStatus()) && !"SYSTEM_CHECK".equals(session.getStatus()) && !"LAUNCHED".equals(session.getStatus()) && !"VERIFYING".equals(session.getStatus())) {
+        if ("IN_PROGRESS".equals(session.getStatus())) {
+            return session;
+        }
+
+        if (!"CREATED".equals(session.getStatus()) && !"SYSTEM_CHECK".equals(session.getStatus()) && !"LAUNCHED".equals(session.getStatus()) && !"VERIFYING".equals(session.getStatus()) && !"READY".equals(session.getStatus())) {
             throw new RuntimeException("Session not ready to start. Current status: " + session.getStatus());
         }
 
         session.setStatus("IN_PROGRESS");
         session.setStartedAt(OffsetDateTime.now());
-        session.setExpiresAt(OffsetDateTime.now().plusMinutes(session.getDurationMinutes()));
+        int duration = (session.getDurationMinutes() != null && session.getDurationMinutes() > 0) ? session.getDurationMinutes() : 60;
+        session.setExpiresAt(OffsetDateTime.now().plusMinutes(duration));
         session.setLastHeartbeatAt(OffsetDateTime.now());
 
-        List<UUID> shuffled = new ArrayList<>(questionIds);
-        Collections.shuffle(shuffled);
+        if (questionIds != null && !questionIds.isEmpty()) {
+            Set<UUID> uniqueIds = new LinkedHashSet<>(questionIds);
+            List<UUID> shuffled = new ArrayList<>(uniqueIds);
+            Collections.shuffle(shuffled);
 
-        List<AssessmentQuestionOrder> orderEntities = new ArrayList<>();
-        for (int i = 0; i < shuffled.size(); i++) {
-            AssessmentQuestionOrder order = new AssessmentQuestionOrder();
-            order.setSessionId(sessionId);
-            order.setQuestionId(shuffled.get(i));
-            order.setSortOrder(i + 1);
-            orderEntities.add(order);
+            questionOrderRepository.deleteBySessionId(sessionId);
+            questionOrderRepository.flush();
+
+            List<AssessmentQuestionOrder> orderEntities = new ArrayList<>();
+            for (int i = 0; i < shuffled.size(); i++) {
+                AssessmentQuestionOrder order = new AssessmentQuestionOrder();
+                order.setSessionId(sessionId);
+                order.setQuestionId(shuffled.get(i));
+                order.setSortOrder(i + 1);
+                orderEntities.add(order);
+            }
+            questionOrderRepository.saveAll(orderEntities);
         }
-        questionOrderRepository.saveAll(orderEntities);
 
         audit(sessionId, session.getStudentId(), "START", "Assessment started", null, null, null);
         return sessionRepository.save(session);

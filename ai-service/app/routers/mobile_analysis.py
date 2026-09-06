@@ -105,6 +105,7 @@ async def analyze_mobile_frame(req: MobileFrameRequest):
         if yolo_persons > 0:
             person_count = yolo_persons
             if person_count >= 2:
+                # Require genuine multiple persons
                 events.append(DetectionEvent(
                     eventType="MULTIPLE_PEOPLE",
                     confidence=0.94,
@@ -113,38 +114,12 @@ async def analyze_mobile_frame(req: MobileFrameRequest):
                 ))
         else:
             person_count = 0
-            if len(head_candidates) == 1:
-                person_count = 1
-                detected_objects.append(DetectedObject(label="person", confidence=0.92))
-            elif len(head_candidates) >= 2:
-                head_candidates.sort(key=lambda item: item["area"], reverse=True)
-                primary_head = head_candidates[0]
-                primary_cx = primary_head["center"][0]
-
-                has_genuine_second_head = False
-                for other in head_candidates[1:]:
-                    other_cx = other["center"][0]
-                    if abs(primary_cx - other_cx) > (0.28 * w):
-                        has_genuine_second_head = True
-                        break
-
-                if has_genuine_second_head:
-                    person_count = 2
-                    events.append(DetectionEvent(
-                        eventType="MULTIPLE_PEOPLE",
-                        confidence=0.92,
-                        cameraSource="MOBILE_SIDE",
-                        metadata={"count": 2}
-                    ))
-                    detected_objects.append(DetectedObject(label="person", confidence=0.92))
-                else:
-                    person_count = 1
-                    detected_objects.append(DetectedObject(label="person", confidence=0.92))
-            elif len(contours) > 0:
+            if len(contours) > 0:
                 total_skin_area = sum(cv2.contourArea(c) for c in contours)
-                if total_skin_area > 0.03 * (w * h):
+                # If skin is detected (face, neck, hands on keyboard/desk), the candidate is present
+                if total_skin_area > 0.015 * (w * h):
                     person_count = 1
-                    detected_objects.append(DetectedObject(label="person", confidence=0.88))
+                    detected_objects.append(DetectedObject(label="person", confidence=0.90))
 
         candidate_absent = (person_count == 0)
         if candidate_absent:

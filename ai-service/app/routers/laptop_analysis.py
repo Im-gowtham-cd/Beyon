@@ -53,34 +53,27 @@ async def analyze_laptop_frame(req: LaptopFrameRequest):
         contours, _ = cv2.findContours(skin_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
         face_contours = []
-        min_area = 0.03 * (w * h)
+        min_area = 0.02 * (w * h)
         for c in contours:
             area = cv2.contourArea(c)
             if area > min_area:
                 x, y, cw, ch = cv2.boundingRect(c)
                 aspect = float(ch) / max(float(cw), 1.0)
-                if 0.8 <= aspect <= 2.4:
+                if 0.6 <= aspect <= 2.8:
                     face_contours.append((x, y, cw, ch, area))
 
-        face_count = len(face_contours)
-        face_present = face_count > 0
+        face_present = len(face_contours) > 0
+        face_count = 1 if face_present else 0
         head_pose = "CENTER"
         gaze_direction = "CENTER"
         confidence = 0.90
 
-        if face_count == 0:
+        if not face_present:
             events.append(DetectionEvent(
                 eventType="CANDIDATE_ABSENT",
                 confidence=0.90,
                 cameraSource="LAPTOP_FRONT",
                 metadata={"reason": "no_face_in_frame"}
-            ))
-        elif face_count > 1:
-            events.append(DetectionEvent(
-                eventType="MULTIPLE_PEOPLE",
-                confidence=0.92,
-                cameraSource="LAPTOP_FRONT",
-                metadata={"count": face_count}
             ))
         else:
             x, y, cw, ch, _ = face_contours[0]
