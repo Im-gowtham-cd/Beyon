@@ -339,6 +339,9 @@ public class DualViewProctoringController {
         int riskContribution = body.get("riskContribution") instanceof Number
                 ? ((Number) body.get("riskContribution")).intValue() : 25;
         String questionId = (String) body.get("questionId");
+        String testName = (String) body.get("testName");
+        String studentName = (String) body.get("studentName");
+        String warningName = (String) body.getOrDefault("warningName", incidentType);
 
         List<String> sources = new ArrayList<>();
         if (body.get("sources") instanceof List<?> list) {
@@ -362,7 +365,7 @@ public class DualViewProctoringController {
                 }
                 byte[] imageBytes = Base64.getDecoder().decode(evidenceBase64);
                 String deviceSource = sources.isEmpty() ? "LAPTOP_CAMERA" : sources.get(0);
-                incidentService.recordFrameEvidence(incident.getId(), deviceSource, imageBytes, id);
+                incidentService.recordFrameEvidence(incident.getId(), deviceSource, imageBytes, id, testName, studentName, warningName);
             } catch (Exception e) {
                 System.err.println("[DualViewProctoringController] Failed to record snapshot evidence: " + e.getMessage());
             }

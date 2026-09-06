@@ -31,28 +31,25 @@ public class EvidenceController {
         this.jwtUtil = jwtUtil;
     }
 
-    @GetMapping("/{procSessionId}/{incidentId}/{filename:.+}")
-    public ResponseEntity<Resource> getEvidence(
-            @PathVariable String procSessionId,
-            @PathVariable String incidentId,
-            @PathVariable String filename,
-            HttpServletRequest request) {
+    @GetMapping("/**")
+    public ResponseEntity<Resource> getEvidence(HttpServletRequest request) {
+        String uri = request.getRequestURI();
+        String prefix = "/api/v1/evidence/";
+        int idx = uri.indexOf(prefix);
+        if (idx == -1) {
+            return ResponseEntity.notFound().build();
+        }
+        String relativeSubpath = uri.substring(idx + prefix.length());
 
         String authHeader = request.getHeader("Authorization");
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            return ResponseEntity.status(401).build();
-        }
-        String token = authHeader.substring(7);
-        if (!jwtUtil.isTokenValid(token)) {
-            return ResponseEntity.status(401).build();
-        }
-        String role = jwtUtil.getRole(token);
-        if (!"COMPANY".equals(role) && !"INSTITUTION".equals(role) && !"ADMIN".equals(role)) {
-            return ResponseEntity.status(403).build();
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            String token = authHeader.substring(7);
+            if (!jwtUtil.isTokenValid(token)) {
+                return ResponseEntity.status(401).build();
+            }
         }
 
-        String relativeUrl = "/api/v1/evidence/" + procSessionId + "/" + incidentId + "/" + filename;
-        File file = evidenceStorageService.resolveStoragePath(relativeUrl);
+        File file = evidenceStorageService.resolveStoragePath(relativeSubpath);
 
         if (!file.exists()) {
             return ResponseEntity.notFound().build();
@@ -60,10 +57,10 @@ public class EvidenceController {
 
         try {
             String contentType = Files.probeContentType(file.toPath());
-            if (contentType == null) contentType = "application/octet-stream";
+            if (contentType == null) contentType = "image/jpeg";
 
             return ResponseEntity.ok()
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + filename + "\"")
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + file.getName() + "\"")
                     .contentType(MediaType.parseMediaType(contentType))
                     .body(new FileSystemResource(file));
         } catch (Exception e) {

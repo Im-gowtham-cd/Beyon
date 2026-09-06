@@ -241,6 +241,9 @@ export function AssessmentApp() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           incidentType,
+          warningName: incidentType,
+          testName: selectedExamTitle || 'Campus Technical Assessment',
+          studentName: user?.displayName || user?.email || 'Student',
           severity,
           confidence,
           riskContribution: severity === 'CRITICAL' ? 100 : severity === 'HIGH' ? 35 : 20,

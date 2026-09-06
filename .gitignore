@@ -129,3 +129,5 @@ sql-server.info
 *.patch
 .freebuff
 presentation/
+
+backend\uploads\evidence

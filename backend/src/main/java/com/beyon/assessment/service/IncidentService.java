@@ -81,8 +81,21 @@ public class IncidentService {
             String deviceSource,
             byte[] imageBytes,
             UUID procSessionId) {
+        return recordFrameEvidence(incidentId, deviceSource, imageBytes, procSessionId, null, null, null);
+    }
 
-        String url = evidenceStorageService.storeFrame(procSessionId, incidentId, deviceSource, imageBytes);
+    public ProctoringEvidence recordFrameEvidence(
+            UUID incidentId,
+            String deviceSource,
+            byte[] imageBytes,
+            UUID procSessionId,
+            String testName,
+            String studentName,
+            String warningName) {
+
+        String url = evidenceStorageService.storeFrame(
+                procSessionId, incidentId, deviceSource, imageBytes, testName, studentName, warningName
+        );
 
         ProctoringEvidence evidence = new ProctoringEvidence();
         evidence.setIncidentId(incidentId);
