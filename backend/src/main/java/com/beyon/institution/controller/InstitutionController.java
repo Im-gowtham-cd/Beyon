@@ -40,14 +40,11 @@ public class InstitutionController {
     }
 
     @GetMapping("/students")
-    public ResponseEntity<ApiResponse<List<InstitutionStudent>>> getStudents(
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getStudents(
             Authentication auth,
             @RequestParam(required = false) String status) {
         UUID instId = extractUserId(auth);
-        if (status != null && !status.isBlank()) {
-            return ResponseEntity.ok(ApiResponse.ok(institutionService.getStudentsByStatus(instId, status)));
-        }
-        return ResponseEntity.ok(ApiResponse.ok(institutionService.getStudents(instId)));
+        return ResponseEntity.ok(ApiResponse.ok(institutionService.getStudentsWithDetails(instId, status)));
     }
 
     @PostMapping("/students")
@@ -104,8 +101,17 @@ public class InstitutionController {
         return ResponseEntity.ok(ApiResponse.ok(institutionService.approveDrive(driveId, instId)));
     }
 
+    @GetMapping("/drives/{driveId}/applications")
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getDriveApplications(
+            Authentication auth,
+            @PathVariable UUID driveId) {
+        UUID instId = extractUserId(auth);
+        return ResponseEntity.ok(ApiResponse.ok(institutionService.getDriveApplications(driveId, instId)));
+    }
+
     private UUID extractUserId(Authentication auth) {
         JwtUserDetails details = (JwtUserDetails) auth.getDetails();
         return UUID.fromString(details.getUserId());
     }
 }
+

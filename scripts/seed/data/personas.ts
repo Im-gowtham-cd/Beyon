@@ -1,9 +1,5 @@
-// ============================================================
-// Beyon Seed — Fixed Test Account Definitions
-// ============================================================
-
 export interface TestAccount {
-  id: string;           // Deterministic Appwrite user ID (for idempotency)
+  id: string;
   email: string;
   password: string;
   name: string;
@@ -12,12 +8,12 @@ export interface TestAccount {
   emailVerified: boolean;
   institutionKey?: string;
   companyKey?: string;
-  persona?: "A" | "B" | "C" | "D";  // Student persona type
+  persona?: "A" | "B" | "C" | "D";
   extraData?: Record<string, any>;
 }
 
 export const FIXED_ACCOUNTS: TestAccount[] = [
-  // ─── Platform Admins ───
+
   {
     id: "beyon-superadmin-0001",
     email: "superadmin@example.beyon.test",
@@ -45,7 +41,7 @@ export const FIXED_ACCOUNTS: TestAccount[] = [
     status: "ACTIVE",
     emailVerified: true,
   },
-  // ─── Students ───
+
   {
     id: "beyon-student-strong-0001",
     email: "student.strong@example.beyon.test",
@@ -101,12 +97,12 @@ export const FIXED_ACCOUNTS: TestAccount[] = [
     name: "Sneha Pillai",
     role: "STUDENT",
     status: "ACTIVE",
-    emailVerified: false,  // Deliberately unverified
+    emailVerified: false,
     institutionKey: "INST_0006",
     persona: "B",
     extraData: { cgpa: null, coins: 0, placement_preference: null, department: null, graduation_year: null },
   },
-  // ─── Exam Candidates ───
+
   {
     id: "beyon-exam-candidate-0001",
     email: "exam.candidate1@example.beyon.test",
@@ -167,7 +163,7 @@ export const FIXED_ACCOUNTS: TestAccount[] = [
     persona: "B",
     extraData: { cgpa: 8.1, coins: 1000, assessment_state: "SUBMITTED", placement_preference: "PLACEMENT_WILLING", department: "IT", graduation_year: 2027 },
   },
-  // ─── Company Accounts ───
+
   {
     id: "beyon-recruiter-0001",
     email: "recruiter@example.beyon.test",
@@ -188,7 +184,7 @@ export const FIXED_ACCOUNTS: TestAccount[] = [
     emailVerified: true,
     companyKey: "COMP_0001",
   },
-  // ─── Institution Accounts ───
+
   {
     id: "beyon-inst-admin-0001",
     email: "institution.admin@example.beyon.test",
@@ -219,7 +215,7 @@ export const FIXED_ACCOUNTS: TestAccount[] = [
     emailVerified: true,
     institutionKey: "INST_0001",
   },
-  // ─── Mentor / Alumni ───
+
   {
     id: "beyon-mentor-0001",
     email: "mentor@example.beyon.test",
@@ -241,11 +237,9 @@ export const FIXED_ACCOUNTS: TestAccount[] = [
   },
 ];
 
-// All student roles for convenience
 export const STUDENT_ROLES = ["STUDENT"];
 
-// Roles that need institution_id
 export const INSTITUTION_ROLES = ["INSTITUTION", "STUDENT"];
 
-// Roles that need company_id
 export const COMPANY_ROLES = ["COMPANY"];
+

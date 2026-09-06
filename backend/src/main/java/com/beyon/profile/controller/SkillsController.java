@@ -39,3 +39,4 @@ public class SkillsController {
         return ResponseEntity.ok(ApiResponse.ok(List.of()));
     }
 }
+

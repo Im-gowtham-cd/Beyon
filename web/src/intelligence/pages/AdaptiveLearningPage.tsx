@@ -139,3 +139,4 @@ export function AdaptiveLearningPage() {
     </div>
   );
 }
+

@@ -62,3 +62,4 @@ public class ApiResponse<T> {
     public PaginationMeta getPagination() { return pagination; }
     public void setPagination(PaginationMeta v) { this.pagination = v; }
 }
+

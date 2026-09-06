@@ -69,3 +69,4 @@ class CacheServiceTest {
         assertFalse(cacheService.acquireLock("lock:123", Duration.ofSeconds(30)));
     }
 }
+

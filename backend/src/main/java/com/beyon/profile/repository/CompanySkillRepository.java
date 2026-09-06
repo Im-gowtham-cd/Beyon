@@ -9,3 +9,4 @@ public interface CompanySkillRepository extends JpaRepository<CompanySkill, UUID
     List<CompanySkill> findByUserId(UUID userId);
     void deleteByUserId(UUID userId);
 }
+

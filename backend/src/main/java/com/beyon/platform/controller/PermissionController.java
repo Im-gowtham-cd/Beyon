@@ -41,3 +41,4 @@ public class PermissionController {
         return ResponseEntity.ok(permissionService.getAllPermissions());
     }
 }
+

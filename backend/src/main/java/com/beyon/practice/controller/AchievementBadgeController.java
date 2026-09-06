@@ -36,3 +36,4 @@ public class AchievementBadgeController {
         throw new RuntimeException("Unauthorized");
     }
 }
+

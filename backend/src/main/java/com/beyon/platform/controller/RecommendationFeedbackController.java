@@ -37,3 +37,4 @@ public class RecommendationFeedbackController {
         return ResponseEntity.ok(feedbackService.getSignalCounts(userId, recType));
     }
 }
+

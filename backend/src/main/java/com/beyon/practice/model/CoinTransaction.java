@@ -55,3 +55,4 @@ public class CoinTransaction {
     public void setBalanceAfter(long balanceAfter) { this.balanceAfter = balanceAfter; }
     public Instant getCreatedAt() { return createdAt; }
 }
+

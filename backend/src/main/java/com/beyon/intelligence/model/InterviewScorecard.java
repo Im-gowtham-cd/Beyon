@@ -33,3 +33,4 @@ public class InterviewScorecard {
     public OffsetDateTime getSubmittedAt() { return submittedAt; } public void setSubmittedAt(OffsetDateTime v) { this.submittedAt = v; }
     public OffsetDateTime getCreatedAt() { return createdAt; } public void setCreatedAt(OffsetDateTime v) { this.createdAt = v; }
 }
+

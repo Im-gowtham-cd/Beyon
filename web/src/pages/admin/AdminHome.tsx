@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Users,
   ShieldCheck,
@@ -53,7 +53,7 @@ export function AdminHome() {
         setHealth(h.data || null);
       }
     } catch {
-      /* fallback */
+
     } finally {
       setLoading(false);
     }
@@ -80,16 +80,17 @@ export function AdminHome() {
     return matchesSearch && matchesRole;
   });
 
-  const totalUsers = overview?.totalUsers || 190;
-  const activeInstitutions = overview?.activeInstitutions || 25;
-  const activeCompanies = overview?.activeCompanies || 30;
-  const totalAssessments = overview?.totalAssessments || 16;
-  const totalPlacements = overview?.totalPlacements || 61;
-  const totalCoins = overview?.totalCoinsEarned || 245000;
+  const totalUsers = overview?.totalUsers ?? usersList.length ?? 0;
+  const activeInstitutions = overview?.activeInstitutions ?? 0;
+  const activeCompanies = overview?.activeCompanies ?? 0;
+  const totalAssessments = overview?.totalAssessments ?? 0;
+  const totalPlacements = overview?.totalPlacements ?? 0;
+  const totalCoins = overview?.totalCoinsEarned ?? 0;
+  const totalQuestions = overview?.totalQuestions ?? 0;
 
   return (
     <div className={styles.page}>
-      {/* Top Welcome Command Banner */}
+
       <section className={styles.welcomeHero}>
         <div className={styles.welcomeInfo}>
           <div className={styles.badgeRow}>
@@ -128,7 +129,6 @@ export function AdminHome() {
         </div>
       </section>
 
-      {/* KPI Grid */}
       <div className={styles.kpiGrid}>
         <div className={styles.kpiCard}>
           <div className={styles.kpiHeader}>
@@ -139,7 +139,7 @@ export function AdminHome() {
           </div>
           <div className={styles.kpiValue}>{totalUsers}</div>
           <span className={styles.kpiSub}>
-            <CheckCircle2 size={13} /> 100% Active in Dolt DB
+            <CheckCircle2 size={13} /> {totalUsers > 0 ? 'Active in Dolt DB' : 'No accounts'}
           </span>
         </div>
 
@@ -152,7 +152,7 @@ export function AdminHome() {
           </div>
           <div className={styles.kpiValue}>{totalPlacements}</div>
           <span className={styles.kpiSub}>
-            <TrendingUp size={13} /> 61 Corporate Offers Live
+            <TrendingUp size={13} /> {totalPlacements} Corporate Offers Live
           </span>
         </div>
 
@@ -165,7 +165,7 @@ export function AdminHome() {
           </div>
           <div className={styles.kpiValue}>{totalAssessments} Tests</div>
           <span className={styles.kpiSub}>
-            <CheckCircle2 size={13} /> 357 Verified Technical Questions
+            <CheckCircle2 size={13} /> {totalQuestions} Verified Technical Questions
           </span>
         </div>
 
@@ -203,7 +203,6 @@ export function AdminHome() {
         </div>
       )}
 
-      {/* Tabs */}
       <div className={styles.tabBar}>
         <button
           onClick={() => setActiveTab('users')}
@@ -238,7 +237,6 @@ export function AdminHome() {
         </button>
       </div>
 
-      {/* Tab 1: Users */}
       {activeTab === 'users' && (
         <div>
           <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center', marginBottom: '16px' }}>
@@ -364,7 +362,6 @@ export function AdminHome() {
         </div>
       )}
 
-      {/* Tab 2: Health */}
       {activeTab === 'health' && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '16px' }}>
           <div className={styles.powerCard}>
@@ -459,7 +456,6 @@ export function AdminHome() {
         </div>
       )}
 
-      {/* Tab 3: Actions */}
       {activeTab === 'actions' && (
         <div className={styles.powerActionGrid}>
           <div className={styles.powerCard}>
@@ -528,7 +524,6 @@ export function AdminHome() {
         </div>
       )}
 
-      {/* Tab 4: Activity */}
       {activeTab === 'activity' && (
         <div className={styles.tableCard}>
           <div style={{ padding: '16px 20px', borderBottom: '1px solid #e2e8f0', fontWeight: 700, color: '#0f172a' }}>
@@ -596,3 +591,4 @@ export function AdminHome() {
     </div>
   );
 }
+

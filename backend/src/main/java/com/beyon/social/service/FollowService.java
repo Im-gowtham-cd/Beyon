@@ -58,3 +58,4 @@ public class FollowService {
         return followRepository.countByFollowingIdAndFollowType(userId, type);
     }
 }
+

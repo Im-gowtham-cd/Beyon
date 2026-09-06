@@ -79,7 +79,7 @@ class BackgroundJobServiceTest {
 
         jobService.processJobs();
 
-        // save is called twice: once for PROCESSING, once for PENDING retry
         verify(jobRepo, atLeast(2)).save(any());
     }
 }
+

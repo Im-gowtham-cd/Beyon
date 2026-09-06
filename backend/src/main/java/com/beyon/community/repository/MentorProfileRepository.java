@@ -11,3 +11,4 @@ public interface MentorProfileRepository extends JpaRepository<MentorProfile, UU
     List<MentorProfile> findByAvailability(String availability);
     boolean existsByUserId(UUID userId);
 }
+

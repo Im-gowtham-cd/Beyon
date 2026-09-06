@@ -24,3 +24,4 @@ public class ConsentRecord {
     public String getUserAgent() { return userAgent; } public void setUserAgent(String v) { this.userAgent = v; }
     public OffsetDateTime getCreatedAt() { return createdAt; } public void setCreatedAt(OffsetDateTime v) { this.createdAt = v; }
 }
+

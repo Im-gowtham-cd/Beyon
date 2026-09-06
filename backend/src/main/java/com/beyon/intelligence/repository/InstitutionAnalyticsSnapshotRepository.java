@@ -11,3 +11,4 @@ public interface InstitutionAnalyticsSnapshotRepository extends JpaRepository<In
     Optional<InstitutionAnalyticsSnapshot> findByInstitutionIdAndSnapshotDate(UUID institutionId, LocalDate date);
     List<InstitutionAnalyticsSnapshot> findByInstitutionIdOrderBySnapshotDateDesc(UUID institutionId);
 }
+

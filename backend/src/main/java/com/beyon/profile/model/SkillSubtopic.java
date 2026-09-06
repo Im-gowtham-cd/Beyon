@@ -57,3 +57,4 @@ public class SkillSubtopic {
     public Instant getCreatedAt() { return createdAt; }
     public Instant getUpdatedAt() { return updatedAt; }
 }
+

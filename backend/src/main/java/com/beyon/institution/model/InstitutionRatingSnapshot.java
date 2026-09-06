@@ -97,3 +97,4 @@ public class InstitutionRatingSnapshot {
     public void setSnapshotDate(LocalDate snapshotDate) { this.snapshotDate = snapshotDate; }
     public Instant getCreatedAt() { return createdAt; }
 }
+

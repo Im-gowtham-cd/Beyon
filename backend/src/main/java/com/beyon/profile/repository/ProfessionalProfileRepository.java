@@ -8,3 +8,4 @@ import java.util.UUID;
 public interface ProfessionalProfileRepository extends JpaRepository<ProfessionalProfile, UUID> {
     Optional<ProfessionalProfile> findByUserId(UUID userId);
 }
+

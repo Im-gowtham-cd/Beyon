@@ -23,3 +23,4 @@ public class AuditService {
         auditEventRepository.save(event);
     }
 }
+

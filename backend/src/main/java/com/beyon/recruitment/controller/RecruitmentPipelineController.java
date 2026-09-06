@@ -86,3 +86,4 @@ public class RecruitmentPipelineController {
         throw new RuntimeException("Unauthorized");
     }
 }
+

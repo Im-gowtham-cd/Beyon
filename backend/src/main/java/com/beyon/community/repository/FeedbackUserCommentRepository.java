@@ -8,3 +8,4 @@ import java.util.UUID;
 public interface FeedbackUserCommentRepository extends JpaRepository<FeedbackUserComment, UUID> {
     List<FeedbackUserComment> findByReportIdOrderByCreatedAtAsc(UUID reportId);
 }
+

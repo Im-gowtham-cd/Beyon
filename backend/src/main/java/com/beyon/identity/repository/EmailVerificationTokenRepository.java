@@ -10,3 +10,4 @@ public interface EmailVerificationTokenRepository extends JpaRepository<EmailVer
     Optional<EmailVerificationToken> findByTokenHash(String tokenHash);
     Optional<EmailVerificationToken> findByUserIdAndConsumedFalse(UUID userId);
 }
+

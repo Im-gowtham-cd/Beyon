@@ -1,9 +1,10 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { OnboardingLayout } from '../../onboarding/components/OnboardingLayout';
 
 export function UnauthorizedPage() {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
 
   const roleLabels: Record<string, string> = {
     STUDENT: 'Student Workspace (/student/home)',
@@ -13,6 +14,11 @@ export function UnauthorizedPage() {
   };
 
   const dashboardPath = user ? `/${user.role.toLowerCase()}/home` : '/login';
+
+  const handleSwitchToInstitution = () => {
+    logout();
+    navigate('/login', { state: { suggestedEmail: 'beyonengineeringcollege@beyon.init' } });
+  };
 
   return (
     <OnboardingLayout currentStep={0} totalSteps={0}>
@@ -26,7 +32,7 @@ export function UnauthorizedPage() {
         <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-lg)', maxWidth: 540, margin: '0 0 var(--space-md)', lineHeight: 1.5 }}>
           {user ? (
             <>
-              You are logged in as <strong>{user.email}</strong> with role <strong>{user.role}</strong>. This page requires different role permissions or an institution-verified profile.
+              You are currently logged in as <strong>{user.email}</strong> with role <strong>{user.role}</strong>. This page requires <strong>INSTITUTION</strong> or <strong>ADMIN</strong> permissions.
             </>
           ) : (
             "You don't have permission to access this area."
@@ -35,19 +41,38 @@ export function UnauthorizedPage() {
         <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-sm)', maxWidth: 500, margin: '0 0 var(--space-2xl)' }}>
           {user && (
             <>
-              Your designated portal is: <strong>{roleLabels[user.role] || user.role}</strong>
+              Your active workspace is: <strong>{roleLabels[user.role] || user.role}</strong>. To access the Institution Placement Cell, please sign in with your institution account.
             </>
           )}
         </p>
-        <div style={{ display: 'flex', gap: 'var(--space-md)' }}>
-          <Link to={dashboardPath} style={{ padding: '12px 28px', background: '#1c2d81', border: 'none', borderRadius: 'var(--radius-sm)', color: '#fed601', fontSize: 'var(--text-base)', fontWeight: 'var(--font-semibold)', textDecoration: 'none', cursor: 'pointer' }}>
-            Go to My Portal
+        <div style={{ display: 'flex', gap: 'var(--space-md)', flexWrap: 'wrap', justifyContent: 'center' }}>
+          <button
+            onClick={handleSwitchToInstitution}
+            style={{
+              padding: '12px 28px',
+              background: '#1c2d81',
+              border: 'none',
+              borderRadius: 'var(--radius-sm)',
+              color: '#fed601',
+              fontSize: 'var(--text-base)',
+              fontWeight: 'var(--font-semibold)',
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}
+          >
+            <span>Sign in as Institution</span>
+          </button>
+          <Link to={dashboardPath} style={{ padding: '12px 24px', background: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: 'var(--radius-sm)', color: '#475569', fontWeight: 600, fontSize: 'var(--text-base)', textDecoration: 'none', cursor: 'pointer' }}>
+            Back to My Portal
           </Link>
-          <button onClick={() => logout()} style={{ padding: '12px 24px', background: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: 'var(--radius-sm)', color: '#475569', fontWeight: 600, fontSize: 'var(--text-base)', cursor: 'pointer' }}>
-            Switch Account
+          <button onClick={() => logout()} style={{ padding: '12px 24px', background: '#ffffff', border: '1px solid #cbd5e1', borderRadius: 'var(--radius-sm)', color: '#64748b', fontWeight: 600, fontSize: 'var(--text-base)', cursor: 'pointer' }}>
+            Log Out
           </button>
         </div>
       </div>
     </OnboardingLayout>
   );
 }
+

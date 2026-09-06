@@ -58,14 +58,12 @@ public class CareerAdvisorService {
             .orElseThrow(() -> new RuntimeException("Session not found"));
         if (!session.getStudentId().equals(studentId)) throw new RuntimeException("Forbidden");
 
-        // Save user message
         AdvisorChatMessage userMsg = new AdvisorChatMessage();
         userMsg.setSessionId(sessionId);
         userMsg.setRole("user");
         userMsg.setContent(question);
         messageRepo.save(userMsg);
 
-        // Generate deterministic response based on Beyon data
         String response = generateResponse(question, studentId);
         String dataRefs = generateDataReferences(question, studentId);
 
@@ -283,3 +281,4 @@ public class CareerAdvisorService {
         };
     }
 }
+

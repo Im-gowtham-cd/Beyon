@@ -11,3 +11,4 @@ public interface PlacementOfferRepository extends JpaRepository<PlacementOffer, 
     List<PlacementOffer> findByOfferStatus(String status);
     long countByOfferStatus(String status);
 }
+

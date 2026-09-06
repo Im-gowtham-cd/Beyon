@@ -28,3 +28,4 @@ public class Message {
     public Boolean getIsDeleted() { return isDeleted; } public void setIsDeleted(Boolean v) { this.isDeleted = v; }
     public OffsetDateTime getCreatedAt() { return createdAt; } public void setCreatedAt(OffsetDateTime v) { this.createdAt = v; }
 }
+

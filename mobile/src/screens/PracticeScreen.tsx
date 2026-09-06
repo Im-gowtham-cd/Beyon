@@ -83,7 +83,7 @@ export const PracticeScreen: React.FC = () => {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      {/* Category Pills */}
+
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.catScroll}>
         {categories.map(cat => (
           <TouchableOpacity
@@ -96,13 +96,11 @@ export const PracticeScreen: React.FC = () => {
         ))}
       </ScrollView>
 
-      {/* Progress & Score Bar */}
       <View style={styles.statusBar}>
         <Text style={styles.statusText}>Question {currentIdx + 1} of {SAMPLE_QUESTIONS.length}</Text>
         <Text style={styles.scoreText}>Score: +{score} XP</Text>
       </View>
 
-      {/* Question Card */}
       <View style={styles.questionCard}>
         <View style={styles.questionHeader}>
           <Text style={styles.categoryTag}>{q.category}</Text>
@@ -112,7 +110,6 @@ export const PracticeScreen: React.FC = () => {
         <Text style={styles.questionTitle}>{q.title}</Text>
         <Text style={styles.questionText}>{q.question}</Text>
 
-        {/* Options */}
         <View style={styles.optionsList}>
           {q.options.map(opt => {
             const isSelected = selectedOption === opt.id;
@@ -138,7 +135,6 @@ export const PracticeScreen: React.FC = () => {
           })}
         </View>
 
-        {/* Explanation Card */}
         {submitted && (
           <View style={[styles.explanationCard, isCorrect ? styles.explanationCorrect : styles.explanationWrong]}>
             <Text style={styles.explanationTitle}>
@@ -148,7 +144,6 @@ export const PracticeScreen: React.FC = () => {
           </View>
         )}
 
-        {/* Actions */}
         <View style={styles.actionRow}>
           {!submitted ? (
             <TouchableOpacity
@@ -336,12 +331,14 @@ const styles = StyleSheet.create({
     lineHeight: 16,
   },
   actionRow: {
-    marginTop: 4,
+    marginTop: 6,
   },
   submitBtn: {
+    height: 46,
     backgroundColor: colors.primary,
-    paddingVertical: 12,
     alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 0,
   },
   submitBtnDisabled: {
     opacity: 0.5,
@@ -350,15 +347,20 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontWeight: '800',
     fontSize: 13,
+    letterSpacing: 0.5,
   },
   nextBtn: {
+    height: 46,
     backgroundColor: colors.accent,
-    paddingVertical: 12,
     alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 0,
   },
   nextBtnText: {
     color: colors.primary,
     fontWeight: '900',
     fontSize: 13,
+    letterSpacing: 0.5,
   },
 });
+

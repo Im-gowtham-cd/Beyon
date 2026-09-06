@@ -76,3 +76,4 @@ export interface FeedbackStats {
   byRole: Record<string, number>;
   byVersion: Record<string, number>;
 }
+

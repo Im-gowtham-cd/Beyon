@@ -42,3 +42,4 @@ export function OnboardingProgress({ steps, currentStepIndex }: Props) {
     </div>
   );
 }
+

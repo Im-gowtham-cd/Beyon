@@ -34,6 +34,9 @@ public class Skill {
     @Column(nullable = false, updatable = false)
     private Instant createdAt = Instant.now();
 
+    @Transient
+    private int topicCount;
+
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
     public String getName() { return name; }
@@ -49,4 +52,7 @@ public class Skill {
     public boolean isActive() { return active; }
     public void setActive(boolean active) { this.active = active; }
     public Instant getCreatedAt() { return createdAt; }
+    public int getTopicCount() { return topicCount; }
+    public void setTopicCount(int topicCount) { this.topicCount = topicCount; }
 }
+

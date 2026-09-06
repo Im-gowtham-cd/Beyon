@@ -9,3 +9,4 @@ public interface PersonalizedFeedItemRepository extends JpaRepository<Personaliz
     List<PersonalizedFeedItem> findByStudentIdAndDismissedFalseOrderByRelevanceScoreDescCreatedAtDesc(UUID studentId);
     long countByStudentIdAndDismissedFalse(UUID studentId);
 }
+

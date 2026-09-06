@@ -44,3 +44,4 @@ public class FraudController {
         return ResponseEntity.ok(fraudService.getUserLedger(userId));
     }
 }
+

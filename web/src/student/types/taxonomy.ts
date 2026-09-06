@@ -84,3 +84,4 @@ export const LEARNING_STATUS_ICONS: Record<LearningStatus, string> = {
   ASSESSMENT_READY: '✓',
   MASTERED: '★',
 };
+

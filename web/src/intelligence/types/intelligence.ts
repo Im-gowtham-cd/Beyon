@@ -186,7 +186,6 @@ export interface GrowthScore {
   improvements: { skillName: string; currentLevel: string; targetLevel: string }[];
 }
 
-// Phase 151-160: Career Intelligence
 export interface SkillTaxonomyNode {
   id: string;
   parentId?: string;
@@ -320,3 +319,4 @@ export interface PersonalizedFeedItem {
   priority: number;
   createdAt: string;
 }
+

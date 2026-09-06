@@ -70,3 +70,4 @@ public class PrivacyService {
         auditService.logAccountDeletion(userId, ipAddress);
     }
 }
+

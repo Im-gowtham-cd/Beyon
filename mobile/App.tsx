@@ -60,25 +60,21 @@ function MainApp() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="dark-content" backgroundColor={colors.surface} />
-      
-      {/* Top Header */}
+
       <Header
         subtitle={getSubtitle()}
         onOpenSettings={() => setShowSettingsModal(true)}
       />
 
-      {/* Screen Body */}
       <View style={styles.body}>
         {renderScreen()}
       </View>
 
-      {/* Bottom Navigation */}
       <BottomTabBar
         activeTab={activeTab}
         onSelectTab={setActiveTab}
       />
 
-      {/* Backend API Settings Modal */}
       <Modal
         visible={showSettingsModal}
         animationType="slide"
@@ -109,3 +105,4 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 });
+

@@ -52,7 +52,6 @@ public class ProfessionalIdentityService {
         this.notificationService = notificationService;
     }
 
-    // Phase 181: Certificate Generation
     public BeyonCertificate generateCertificate(UUID studentId, String type, String title, String skillName, String issuerName, Integer score) {
         BeyonCertificate cert = new BeyonCertificate();
         cert.setStudentId(studentId);
@@ -67,7 +66,6 @@ public class ProfessionalIdentityService {
         return certRepo.save(cert);
     }
 
-    // Phase 182: Credential Verification
     public Map<String, Object> verifyCredential(String certificateNumber) {
         BeyonCertificate cert = certRepo.findByCertificateNumber(certificateNumber)
             .orElseThrow(() -> new RuntimeException("Certificate not found"));
@@ -87,9 +85,8 @@ public class ProfessionalIdentityService {
         return result;
     }
 
-    // Phase 184: Skill Endorsements
     public SkillEndorsement endorseSkill(UUID studentId, UUID skillId, UUID endorserId, String endorserName, String endorserType, String level) {
-        // Prevent duplicate endorsement from same person
+
         List<SkillEndorsement> existing = endorseRepo.findByStudentIdAndSkillIdAndStatus(studentId, skillId, "ACTIVE");
         boolean alreadyEndorsed = existing.stream().anyMatch(e -> e.getEndorserId().equals(endorserId));
         if (alreadyEndorsed) throw new RuntimeException("Already endorsed this skill");
@@ -125,7 +122,6 @@ public class ProfessionalIdentityService {
         return result;
     }
 
-    // Phase 185: Professional Profile
     public ProfessionalProfile createOrUpdateProfile(UUID userId, ProfessionalProfile updates) {
         ProfessionalProfile profile = profileRepo.findByUserId(userId)
             .orElseGet(() -> {
@@ -162,7 +158,6 @@ public class ProfessionalIdentityService {
         return result;
     }
 
-    // Phase 186: Portfolio Builder
     public PortfolioProject addProject(UUID studentId, PortfolioProject project) {
         project.setStudentId(studentId);
         project.setSortOrder(projectRepo.findByStudentIdOrderBySortOrder(studentId).size());
@@ -197,7 +192,6 @@ public class ProfessionalIdentityService {
         return projectRepo.save(project);
     }
 
-    // Phase 187: Portfolio Verification
     public PortfolioVerification requestVerification(UUID projectId, UUID verifierId, String verifierType) {
         PortfolioVerification verify = new PortfolioVerification();
         verify.setProjectId(projectId);
@@ -225,9 +219,8 @@ public class ProfessionalIdentityService {
         return verifyRepo.save(verify);
     }
 
-    // Phase 189: Resume Generator
     public GeneratedResume generateResume(UUID studentId, UUID templateId) {
-        // Build sections from verified data
+
         List<BeyonCertificate> certs = certRepo.findByStudentIdOrderByIssuedAtDesc(studentId);
         List<SkillEndorsement> endorsements = endorseRepo.findByStudentIdAndStatusOrderByCreatedAtDesc(studentId, "ACTIVE");
         List<PortfolioProject> projects = projectRepo.findByStudentIdOrderBySortOrder(studentId);
@@ -288,3 +281,4 @@ public class ProfessionalIdentityService {
         return "BYN-" + prefix + "-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
     }
 }
+

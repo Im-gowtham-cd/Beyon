@@ -1,12 +1,7 @@
-// ============================================================
-// Beyon Seed System — Configuration & Environment Guard
-// ============================================================
-
 import { execSync } from "child_process";
 import * as path from "path";
 import * as fs from "fs";
 
-// ─── Environment Guard ────────────────────────────────────────
 const FORBIDDEN_ENVS = ["production", "prod", "live"];
 
 export function assertNotProduction(forceOverride = false): void {
@@ -34,7 +29,6 @@ export function assertNotProduction(forceOverride = false): void {
   }
 }
 
-// ─── Paths ────────────────────────────────────────────────────
 export const DOLT_DB_DIR = path.resolve(
   path.join(import.meta.dir, "..", "..")
 );
@@ -42,9 +36,8 @@ export const DOCS_DIR = path.resolve(
   path.join(import.meta.dir, "..", "..", "docs")
 );
 
-// ─── Seed Configuration ───────────────────────────────────────
 export interface SeedConfig {
-  seed: number;          // PRNG seed for determinism
+  seed: number;
   environment: string;
   counts: {
     students: number;
@@ -89,3 +82,4 @@ export function loadConfig(overrides: Partial<SeedConfig["counts"]> = {}): SeedC
     },
   };
 }
+

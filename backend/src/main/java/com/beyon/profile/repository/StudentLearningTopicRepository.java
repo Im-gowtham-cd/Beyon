@@ -12,3 +12,4 @@ public interface StudentLearningTopicRepository extends JpaRepository<StudentLea
     boolean existsByStudentIdAndTopicId(UUID studentId, UUID topicId);
     Optional<StudentLearningTopic> findByStudentIdAndTopicId(UUID studentId, UUID topicId);
 }
+

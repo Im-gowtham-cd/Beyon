@@ -116,3 +116,4 @@ export function SkillSelector({ skills, onChange }: Props) {
     </div>
   );
 }
+

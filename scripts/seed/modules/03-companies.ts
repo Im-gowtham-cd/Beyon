@@ -1,7 +1,3 @@
-// ============================================================
-// Module 03 — Company Seeder
-// ============================================================
-
 import { doltBatch, esc, escNum, toUUID } from "../engine/dolt.js";
 import { COMPANIES } from "../data/companies.js";
 
@@ -49,3 +45,4 @@ export async function seedCompanies(): Promise<void> {
 export function getCompanyUserId(key: string): string | null {
   return companyUserIds[key] ?? null;
 }
+

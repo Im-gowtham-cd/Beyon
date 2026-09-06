@@ -11,3 +11,4 @@ public interface RecruitmentDriveRepository extends JpaRepository<RecruitmentDri
     List<RecruitmentDrive> findByStatusInOrderByCreatedAtDesc(List<String> statuses);
     List<RecruitmentDrive> findByTargetingModeAndStatusOrderByCreatedAtDesc(String targetingMode, String status);
 }
+

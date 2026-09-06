@@ -8,7 +8,6 @@ import type { SeedConfig } from "../config.js";
 export const testIds: string[] = [];
 export const assessmentSessionIds: string[] = [];
 
-/** Ensure skillIds and companyUserIds are populated from DB if running standalone */
 async function ensureRefsLoaded(): Promise<void> {
   if (Object.keys(skillIds).length === 0) {
     const rows = doltQuery("SELECT id, slug FROM skills");
@@ -40,7 +39,6 @@ export async function seedAssessments(cfg: SeedConfig): Promise<void> {
   const testStmts: string[] = [];
   const testQStmts: string[] = [];
 
-  // ─── Fixed Assessment Fixture ───
   const fixtureId = toUUID("beyon-test-java-backend-001");
   testIds.push(fixtureId);
   const compUserId = companyUserIds["COMP_0001"] ?? null;
@@ -55,7 +53,6 @@ export async function seedAssessments(cfg: SeedConfig): Promise<void> {
      );`
   );
 
-  // Attach questions to fixture
   const sampleCount = Math.min(28, questionIds.length);
   const allFixtureQIds = rng.pickN(questionIds, sampleCount);
 
@@ -68,11 +65,9 @@ export async function seedAssessments(cfg: SeedConfig): Promise<void> {
     );
   }
 
-  // ─── Daily Challenges (365 days historical timeline) ───
   const dailyChallengeStmts: string[] = [];
   const today = new Date();
 
-  // Seed 365 days of challenges for fixed active students, and 30 days for others
   const challengeStudents = [
     toUUID("beyon-student-strong-0001"),
     toUUID("beyon-student-placement-0001"),
@@ -105,7 +100,6 @@ export async function seedAssessments(cfg: SeedConfig): Promise<void> {
     }
   }
 
-  // ─── Generated Company Assessments ───
   const COMP_KEYS = Object.keys(companyUserIds).slice(0, cfg.counts.assessments);
   for (let i = 0; i < COMP_KEYS.length; i++) {
     const compKey = COMP_KEYS[i];
@@ -130,7 +124,6 @@ export async function seedAssessments(cfg: SeedConfig): Promise<void> {
        );`
     );
 
-    // Attach random questions
     const qSample = rng.pickN(questionIds, Math.min(qCount, questionIds.length));
     for (let qi = 0; qi < qSample.length; qi++) {
       const tqId = toUUID(`beyon-tq-comp-${i}-${qi}`);
@@ -141,7 +134,6 @@ export async function seedAssessments(cfg: SeedConfig): Promise<void> {
     }
   }
 
-  // ─── Test Attempts (1-Year Timeline) ───
   const attemptStmts: string[] = [];
   const testPool = [...testIds];
   let attemptIdx = 0;
@@ -169,7 +161,6 @@ export async function seedAssessments(cfg: SeedConfig): Promise<void> {
     }
   }
 
-  // ─── Student Question Practice Attempts ───
   const qAttemptStmts: string[] = [];
   let qaIdx = 0;
   for (const sId of challengeStudents) {
@@ -202,3 +193,4 @@ export async function seedAssessments(cfg: SeedConfig): Promise<void> {
   console.log(`  ✅ ${attemptStmts.length} historical test attempts`);
   console.log(`  ✅ ${qAttemptStmts.length} student practice attempts`);
 }
+

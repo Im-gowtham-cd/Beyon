@@ -22,11 +22,13 @@ export const questionApi = {
 };
 
 export const practiceApi = {
-  getQuestions: (params?: { skillId?: string; topicId?: string; difficulty?: string }) => {
+  getQuestions: (params?: { skillId?: string; topicId?: string; difficulty?: string; page?: number; size?: number }) => {
     const q = new URLSearchParams();
     if (params?.skillId) q.set('skillId', params.skillId);
     if (params?.topicId) q.set('topicId', params.topicId);
     if (params?.difficulty) q.set('difficulty', params.difficulty);
+    if (params?.page !== undefined) q.set('page', String(params.page));
+    if (params?.size !== undefined) q.set('size', String(params.size));
     return api.get<Question[]>(`/practice/questions?${q.toString()}`);
   },
   getQuestion: (id: string) => api.get<Question>(`/practice/questions/${id}`),
@@ -42,6 +44,19 @@ export const dailyChallengeApi = {
   complete: (id: string, correct: boolean, timeSpentSeconds?: number) =>
     api.post<DailyChallenge>(`/daily-challenge/${id}/complete`, { correct, timeSpentSeconds }),
   getHistory: () => api.get<DailyChallenge[]>('/daily-challenge/history'),
+  getDailySet: (count = 15) => api.get<any[]>(`/daily-challenge/set?count=${count}`),
+  getRecallSet: (count = 10) => api.get<any[]>(`/daily-challenge/recall-set?count=${count}`),
+  submitSprint: (data: { questionId: string; selectedOptionId: string; timeSpentSeconds?: number }) =>
+    api.post<{
+      correct: boolean;
+      explanation: string;
+      xpEarned: number;
+      coinsEarned: number;
+      correctOptionId?: string;
+      correctOptionText?: string;
+    }>('/daily-challenge/submit-sprint', data),
+  claimBonus: (data: { sessionType: string; scorePercentage: number }) =>
+    api.post<{ success: boolean; coinsAwarded: number; message: string }>('/daily-challenge/claim-bonus', data),
 };
 
 export const coinApi = {
@@ -94,3 +109,4 @@ export const streakApi = {
   getInfo: () => api.get<StreakInfo>('/streak'),
   getFreezes: () => api.get<number>('/streak/freezes'),
 };
+

@@ -45,3 +45,4 @@ public class CoinController {
         return UUID.fromString(details.getUserId());
     }
 }
+

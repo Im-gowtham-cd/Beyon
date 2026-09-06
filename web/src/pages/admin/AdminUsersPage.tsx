@@ -21,7 +21,7 @@ export function AdminUsersPage() {
         setUsers(data.data || []);
       }
     } catch {
-      /* fallback */
+
     } finally {
       setLoading(false);
     }

@@ -24,3 +24,4 @@ public class FeedbackStatusHistory {
     public String getNote() { return note; } public void setNote(String v) { this.note = v; }
     public OffsetDateTime getCreatedAt() { return createdAt; } public void setCreatedAt(OffsetDateTime v) { this.createdAt = v; }
 }
+

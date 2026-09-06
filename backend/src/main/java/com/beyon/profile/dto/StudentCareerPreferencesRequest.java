@@ -20,3 +20,4 @@ public class StudentCareerPreferencesRequest {
     public String getCareerGoal() { return careerGoal; }
     public void setCareerGoal(String careerGoal) { this.careerGoal = careerGoal; }
 }
+

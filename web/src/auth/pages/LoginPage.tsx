@@ -52,8 +52,14 @@ export function LoginPage() {
       login(response.accessToken, response.user);
 
       const profileStatus = response.user.profileStatus;
+      const accountStatus = response.user.status;
 
-      if (profileStatus === 'SUSPENDED') {
+      if (profileStatus === 'REJECTED' || accountStatus === 'REJECTED') {
+        navigate('/account-rejected');
+        return;
+      }
+
+      if (profileStatus === 'SUSPENDED' || accountStatus === 'SUSPENDED') {
         navigate('/account-suspended');
         return;
       }
@@ -65,8 +71,11 @@ export function LoginPage() {
       }
 
       if (
+        profileStatus === 'PENDING_SUPER_ADMIN_VERIFICATION' ||
+        accountStatus === 'PENDING_SUPER_ADMIN_VERIFICATION' ||
         profileStatus === 'PENDING_INSTITUTION_VERIFICATION' ||
-        profileStatus === 'PENDING_COMPANY_VERIFICATION'
+        profileStatus === 'PENDING_COMPANY_VERIFICATION' ||
+        accountStatus === 'PENDING_VERIFICATION'
       ) {
         navigate('/verification-pending');
         return;
@@ -84,7 +93,22 @@ export function LoginPage() {
       }, 1000);
     } catch (err) {
       const apiErr = err as ApiError;
-      showToast(apiErr.message || 'Invalid credentials. Please try again.', true);
+      const errMsg = apiErr.message || '';
+      if (
+        (apiErr.status === 403 || apiErr.status === 401) &&
+        (errMsg.toLowerCase().includes('reject') || errMsg.toLowerCase().includes('super admin'))
+      ) {
+        navigate('/account-rejected', { state: { message: errMsg, email } });
+        return;
+      }
+      if (
+        (apiErr.status === 403 || apiErr.status === 401) &&
+        errMsg.toLowerCase().includes('suspend')
+      ) {
+        navigate('/account-suspended', { state: { message: errMsg, email } });
+        return;
+      }
+      showToast(errMsg || 'Invalid credentials. Please try again.', true);
     } finally {
       setLoading(false);
     }
@@ -94,7 +118,7 @@ export function LoginPage() {
     <div className={styles.loginPage}>
       <main className={styles.loginMain}>
         <div className={styles.loginCard}>
-          {/* Left Aside */}
+
           <aside className={styles.loginAside}>
             <div className={styles.asideBrand}>
               <span className={styles.asideMark} aria-hidden="true" />
@@ -125,7 +149,6 @@ export function LoginPage() {
             </div>
           </aside>
 
-          {/* Right Panel */}
           <section className={styles.loginPanel}>
             <span className="section-label">Beyon Portal</span>
             <h1>Sign In</h1>
@@ -244,3 +267,4 @@ export function LoginPage() {
     </div>
   );
 }
+

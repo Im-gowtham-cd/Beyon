@@ -19,11 +19,14 @@
         android:gravity="center_vertical"
         app:layout_constraintTop_toTopOf="parent">
 
-        <View
-            android:layout_width="10dp"
-            android:layout_height="10dp"
-            android:background="@color/accent"
-            android:layout_marginEnd="8dp" />
+        <ImageView
+            android:id="@+id/ivHeaderLogo"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:src="@drawable/logo_icon"
+            android:scaleType="fitCenter"
+            android:contentDescription="Beyon Official Logo"
+            android:layout_marginEnd="10dp" />
 
         <LinearLayout
             android:layout_width="0dp"
@@ -37,6 +40,7 @@
                 android:layout_height="wrap_content"
                 android:text="Beyon Mobile"
                 android:textColor="@color/primary"
+                android:fontFamily="@font/clash_display"
                 android:textSize="18sp"
                 android:textStyle="bold" />
 
@@ -45,6 +49,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Direct Backend Gateway (10.0.2.2:8085)"
+                android:fontFamily="@font/clash_display"
                 android:textColor="@color/text_muted"
                 android:textSize="10sp" />
         </LinearLayout>
@@ -61,6 +66,7 @@
             android:paddingBottom="4dp"
             android:text="⚡ 340"
             android:textColor="@color/primary"
+            android:fontFamily="@font/clash_display"
             android:textSize="12sp"
             android:textStyle="bold"
             android:layout_marginEnd="8dp" />

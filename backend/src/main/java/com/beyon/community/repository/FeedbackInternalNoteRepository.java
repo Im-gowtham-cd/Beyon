@@ -8,3 +8,4 @@ import java.util.UUID;
 public interface FeedbackInternalNoteRepository extends JpaRepository<FeedbackInternalNote, UUID> {
     List<FeedbackInternalNote> findByReportIdOrderByCreatedAtAsc(UUID reportId);
 }
+

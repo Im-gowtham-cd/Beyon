@@ -13,3 +13,4 @@ public interface AssessmentAnswerRepository extends JpaRepository<AssessmentAnsw
     long countBySessionIdAndIsCorrectTrue(UUID sessionId);
     long countBySessionIdAndAnsweredAtIsNotNull(UUID sessionId);
 }
+

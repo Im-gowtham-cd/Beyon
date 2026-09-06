@@ -11,3 +11,4 @@ public interface ProjectApplicationRepository extends JpaRepository<ProjectAppli
     List<ProjectApplication> findByProjectId(UUID projectId);
     Optional<ProjectApplication> findByProjectIdAndStudentId(UUID projectId, UUID studentId);
 }
+

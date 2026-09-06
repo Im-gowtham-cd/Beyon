@@ -45,3 +45,4 @@ public class StudentAchievementBadge {
     public void setBadgeIcon(String badgeIcon) { this.badgeIcon = badgeIcon; }
     public Instant getEarnedAt() { return earnedAt; }
 }
+

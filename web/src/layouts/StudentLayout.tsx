@@ -13,7 +13,7 @@ export function StudentLayout() {
 
   return (
     <div className={styles.layout}>
-      {/* Mobile Top Bar */}
+
       <div className={styles.mobileBar}>
         <button
           type="button"
@@ -32,7 +32,7 @@ export function StudentLayout() {
       </div>
 
       <div className={styles.bodyWrapper}>
-        {/* Full-Height Fixed Left Sidebar */}
+
         <StudentSidebar
           mobileOpen={mobileSidebarOpen}
           onCloseMobile={() => setMobileSidebarOpen(false)}
@@ -40,11 +40,10 @@ export function StudentLayout() {
           onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
         />
 
-        {/* Primary Main Workspace Canvas */}
         <main
           className={`${styles.mainContent} ${sidebarCollapsed ? styles.mainContentCollapsed : ''}`}
         >
-          {/* Top Utility Bar */}
+
           <header className={styles.topUtilityBar}>
             <div className={styles.utilityLeft}>
               <span className={styles.portalTag}>
@@ -90,3 +89,4 @@ export function StudentLayout() {
     </div>
   );
 }
+

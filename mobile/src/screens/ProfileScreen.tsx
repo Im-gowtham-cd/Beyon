@@ -19,7 +19,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onOpenSettings }) 
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      {/* Profile Card */}
+
       <View style={styles.profileCard}>
         <View style={styles.avatar}>
           <Text style={styles.avatarText}>{user?.name ? user.name[0] : 'U'}</Text>
@@ -42,7 +42,6 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onOpenSettings }) 
         </View>
       </View>
 
-      {/* Metrics Row */}
       <View style={styles.statsCard}>
         <View style={styles.statCol}>
           <Text style={styles.statVal}>{user?.xpPoints ?? 1850}</Text>
@@ -58,7 +57,6 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onOpenSettings }) 
         </View>
       </View>
 
-      {/* Verified Certifications & Badges */}
       <Text style={styles.sectionHeader}>Verified Credentials &amp; Certifications</Text>
       <View style={styles.certList}>
         {[
@@ -78,7 +76,6 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onOpenSettings }) 
         ))}
       </View>
 
-      {/* Settings & Logout */}
       <View style={styles.btnRow}>
         <TouchableOpacity style={styles.settingsBtn} onPress={onOpenSettings}>
           <Text style={styles.settingsBtnText}>⚙️ Backend Service Settings</Text>
@@ -263,3 +260,4 @@ const styles = StyleSheet.create({
     color: colors.danger,
   },
 });
+

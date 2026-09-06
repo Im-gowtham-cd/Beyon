@@ -24,3 +24,4 @@ public class ReputationEvent {
     public UUID getReferenceId() { return referenceId; } public void setReferenceId(UUID v) { this.referenceId = v; }
     public OffsetDateTime getCreatedAt() { return createdAt; } public void setCreatedAt(OffsetDateTime v) { this.createdAt = v; }
 }
+

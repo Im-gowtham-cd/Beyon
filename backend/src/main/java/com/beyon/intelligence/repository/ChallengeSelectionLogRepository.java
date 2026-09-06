@@ -8,3 +8,4 @@ import java.util.UUID;
 public interface ChallengeSelectionLogRepository extends JpaRepository<ChallengeSelectionLog, UUID> {
     List<ChallengeSelectionLog> findTop50ByStudentIdOrderBySelectedAtDesc(UUID studentId);
 }
+

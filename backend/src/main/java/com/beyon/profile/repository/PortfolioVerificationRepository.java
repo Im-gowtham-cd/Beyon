@@ -8,3 +8,4 @@ import java.util.UUID;
 public interface PortfolioVerificationRepository extends JpaRepository<PortfolioVerification, UUID> {
     List<PortfolioVerification> findByProjectId(UUID projectId);
 }
+

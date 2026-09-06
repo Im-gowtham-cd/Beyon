@@ -18,3 +18,4 @@ export function AuthButton({ loading, variant = 'primary', children, disabled, .
     </button>
   );
 }
+

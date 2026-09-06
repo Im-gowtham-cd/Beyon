@@ -45,3 +45,4 @@ public class LeaderboardService {
                 studentId, "GLOBAL", "GLOBAL", "ALL_TIME");
     }
 }
+

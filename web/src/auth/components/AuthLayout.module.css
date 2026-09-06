@@ -21,6 +21,14 @@
   text-decoration: none;
 }
 
+.logoImg {
+  height: 54px;
+  width: auto;
+  max-width: 220px;
+  object-fit: contain;
+  display: block;
+}
+
 .logoIcon {
   width: 40px;
   height: 40px;
@@ -41,3 +49,4 @@
   font-size: var(--text-2xl);
   color: var(--color-text);
 }
+

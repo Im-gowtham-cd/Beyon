@@ -35,3 +35,4 @@ public class StudentProjectRequest {
     public Boolean getFeatured() { return featured; }
     public void setFeatured(Boolean featured) { this.featured = featured; }
 }
+

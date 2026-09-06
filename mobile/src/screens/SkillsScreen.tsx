@@ -47,7 +47,7 @@ export const SkillsScreen: React.FC = () => {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      {/* Header card */}
+
       <View style={styles.headerCard}>
         <Text style={styles.tag}>CURRICULUM &amp; TAXONOMY</Text>
         <Text style={styles.title}>109 Verified Skills Matrix</Text>
@@ -56,7 +56,6 @@ export const SkillsScreen: React.FC = () => {
         </Text>
       </View>
 
-      {/* Domain filters */}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterScroll}>
         <TouchableOpacity
           style={[styles.filterPill, selectedDomain === 'ALL' && styles.filterPillActive]}
@@ -75,7 +74,6 @@ export const SkillsScreen: React.FC = () => {
         ))}
       </ScrollView>
 
-      {/* Domain groups */}
       {filtered.map(group => (
         <View key={group.domain} style={styles.domainCard}>
           <View style={styles.domainHeader}>
@@ -91,7 +89,6 @@ export const SkillsScreen: React.FC = () => {
                   <Text style={styles.masteryText}>{s.mastery}%</Text>
                 </View>
 
-                {/* Progress bar */}
                 <View style={styles.progressBarBg}>
                   <View style={[styles.progressBarFill, { width: `${s.mastery}%`, backgroundColor: group.color }]} />
                 </View>
@@ -243,3 +240,4 @@ const styles = StyleSheet.create({
     color: colors.success,
   },
 });
+

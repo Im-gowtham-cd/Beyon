@@ -58,3 +58,4 @@ public class DailyChallenge {
     public void setCorrect(Boolean correct) { this.correct = correct; }
     public Instant getCreatedAt() { return createdAt; }
 }
+

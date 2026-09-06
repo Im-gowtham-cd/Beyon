@@ -10,3 +10,4 @@ public interface SkillLevelRepository extends JpaRepository<SkillLevel, UUID> {
     List<SkillLevel> findByStudentIdOrderByTotalXpDesc(UUID studentId);
     Optional<SkillLevel> findByStudentIdAndSkillId(UUID studentId, UUID skillId);
 }
+

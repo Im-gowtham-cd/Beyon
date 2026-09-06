@@ -24,3 +24,4 @@ public class JwtUserDetails {
         return role;
     }
 }
+

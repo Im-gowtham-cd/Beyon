@@ -41,7 +41,7 @@ export function PrivacySettingsPage() {
         ]);
         setSettings(s);
         setConsents(c);
-      } catch { /* */ }
+      } catch {  }
       setLoading(false);
     }
     load();
@@ -53,7 +53,7 @@ export function PrivacySettingsPage() {
       await api.put('/privacy/settings', settings);
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
-    } catch { /* */ }
+    } catch {  }
     setSaving(false);
   }
 
@@ -67,7 +67,7 @@ export function PrivacySettingsPage() {
       a.download = 'beyon-data-export.json';
       a.click();
       URL.revokeObjectURL(url);
-    } catch { /* */ }
+    } catch {  }
   }
 
   async function handleDeleteRequest() {
@@ -75,7 +75,7 @@ export function PrivacySettingsPage() {
       try {
         await api.post('/privacy/delete-request');
         alert('Deletion request submitted. You will be notified when it is processed.');
-      } catch { /* */ }
+      } catch {  }
     }
   }
 
@@ -164,3 +164,4 @@ export function PrivacySettingsPage() {
     </div>
   );
 }
+

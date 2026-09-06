@@ -11,3 +11,4 @@ public interface WeeklyTestRepository extends JpaRepository<WeeklyTest, UUID> {
     Optional<WeeklyTest> findByWeekNumberAndYear(Integer weekNumber, Integer year);
     List<WeeklyTest> findTop5ByOrderByCreatedAtDesc();
 }
+

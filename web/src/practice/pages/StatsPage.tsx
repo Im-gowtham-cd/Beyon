@@ -26,7 +26,7 @@ export function StatsPage() {
         setStreak(st);
         setBadges(b);
         setRank(r);
-      } catch { /* */ }
+      } catch {  }
       setLoading(false);
     }
     load();
@@ -111,3 +111,4 @@ export function StatsPage() {
     </div>
   );
 }
+

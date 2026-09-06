@@ -1,8 +1,4 @@
-﻿// ============================================================
-// Module 14 — Institution Students & Placements Seeder
-// Seeds institution student relationships, verification queues,
-// representatives, multi-year placement history, and NIRF ratings.
-// ============================================================
+﻿
 
 import { doltBatch, esc, doltQuery, toUUID } from "../engine/dolt.js";
 import { studentUserIds } from "./04-users.js";
@@ -52,7 +48,6 @@ export async function seedInstitutionStudentsAndPlacements(cfg: SeedConfig): Pro
   ];
   const BATCHES = ["2022-2026", "2023-2027", "2021-2025"];
 
-  // ─── 1. Link Students to Institutions (with Pending vs Verified) ───
   const instStudentStmts: string[] = [];
   let sIdx = 0;
 
@@ -83,7 +78,6 @@ export async function seedInstitutionStudentsAndPlacements(cfg: SeedConfig): Pro
   doltBatch(instStudentStmts, 100);
   console.log(`  ✅ ${sIdx} student-institution links & verification queue records`);
 
-  // ─── 2. Institution Placement Officers & Representatives ───
   const repStmts: string[] = [];
   let rIdx = 0;
   for (const instId of instIdList) {
@@ -106,7 +100,6 @@ export async function seedInstitutionStudentsAndPlacements(cfg: SeedConfig): Pro
   doltBatch(repStmts, 50);
   console.log(`  ✅ ${rIdx} institution placement officers & representatives`);
 
-  // ─── 3. Multi-Year Placement History (2023, 2024, 2025) ───
   const histStmts: string[] = [];
   const YEARS = [
     { year: "2024-2025", placed: 420, pct: 93.5, avg: 1250000.00, high: 4400000.00 },
@@ -129,7 +122,6 @@ export async function seedInstitutionStudentsAndPlacements(cfg: SeedConfig): Pro
   doltBatch(histStmts, 50);
   console.log(`  ✅ ${hIdx} multi-year placement history records`);
 
-  // ─── 4. Real-Time Institution Placement Stats ───
   const statStmts: string[] = [];
   let stIdx = 0;
   for (const instId of instIdList) {
@@ -151,7 +143,6 @@ export async function seedInstitutionStudentsAndPlacements(cfg: SeedConfig): Pro
   doltBatch(statStmts, 50);
   console.log(`  ✅ ${stIdx} real-time institution placement stats`);
 
-  // ─── 5. Institution Ratings & NIRF Scorecards ───
   const ratingStmts: string[] = [];
   let ratIdx = 0;
   for (const instId of instIdList) {
@@ -179,7 +170,6 @@ export async function seedInstitutionStudentsAndPlacements(cfg: SeedConfig): Pro
   doltBatch(ratingStmts, 50);
   console.log(`  ✅ ${ratIdx} institution rating snapshots & scorecards`);
 
-  // ─── 6. Placement Records & Offers ───
   const placRecStmts: string[] = [];
   const ROLES = ["Software Development Engineer (SDE-1)", "Backend Microservices Engineer", "Full-Stack Engineer", "AI/ML Associate", "Cloud Solutions Engineer"];
   const COMPANIES = ["Google Cloud", "Microsoft IDC", "Amazon AWS", "Salesforce", "Atlassian", "Oracle Cloud"];
@@ -212,3 +202,4 @@ export async function seedInstitutionStudentsAndPlacements(cfg: SeedConfig): Pro
   doltBatch(placRecStmts, 50);
   console.log(`  ✅ ${pRecCount} verified recruitment placement offer records`);
 }
+

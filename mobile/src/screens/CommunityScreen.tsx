@@ -9,7 +9,7 @@ export const CommunityScreen: React.FC = () => {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      {/* Header card */}
+
       <View style={styles.headerCard}>
         <Text style={styles.tag}>GLOBAL PEER NETWORK</Text>
         <Text style={styles.title}>Beyon Engineering Community</Text>
@@ -18,12 +18,10 @@ export const CommunityScreen: React.FC = () => {
         </Text>
       </View>
 
-      {/* Action banner */}
       <TouchableOpacity style={styles.postBtn} onPress={handlePost}>
         <Text style={styles.postBtnText}>✍️ Start Technical Discussion or Project</Text>
       </TouchableOpacity>
 
-      {/* Feed items */}
       <Text style={styles.sectionHeader}>Trending Engineering Discussions</Text>
       <View style={styles.feedList}>
         {[
@@ -197,3 +195,4 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
 });
+

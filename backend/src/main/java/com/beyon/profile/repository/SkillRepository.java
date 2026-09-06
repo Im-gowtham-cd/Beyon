@@ -16,7 +16,7 @@ public interface SkillRepository extends JpaRepository<Skill, UUID> {
 
     boolean existsByNameIgnoreCase(String name);
 
-    @Query("SELECT s FROM Skill s WHERE s.active = true AND LOWER(s.name) LIKE LOWER(CONCAT('%', :search, '%')) ORDER BY s.name")
+    @Query(value = "SELECT * FROM skills WHERE is_active = 1 AND (LOWER(name) LIKE CONCAT('%', LOWER(:search), '%') OR LOWER(description) LIKE CONCAT('%', LOWER(:search), '%') OR LOWER(category) LIKE CONCAT('%', LOWER(:search), '%')) ORDER BY name", nativeQuery = true)
     List<Skill> searchByName(@Param("search") String search, Pageable pageable);
 
     @Query("SELECT s FROM Skill s WHERE s.active = true AND s.category = :category ORDER BY s.name")
@@ -27,3 +27,4 @@ public interface SkillRepository extends JpaRepository<Skill, UUID> {
 
     List<Skill> findByCategoryIdAndActiveTrue(UUID categoryId);
 }
+

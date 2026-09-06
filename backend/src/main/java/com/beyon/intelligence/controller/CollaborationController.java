@@ -74,3 +74,4 @@ public class CollaborationController {
         throw new RuntimeException("Unauthorized");
     }
 }
+

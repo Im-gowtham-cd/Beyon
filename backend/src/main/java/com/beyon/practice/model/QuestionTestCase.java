@@ -50,3 +50,4 @@ public class QuestionTestCase {
     public void setHidden(boolean hidden) { this.hidden = hidden; }
     public Instant getCreatedAt() { return createdAt; }
 }
+

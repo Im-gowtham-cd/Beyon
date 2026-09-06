@@ -116,3 +116,4 @@ public class PortfolioAnalysisService {
         return BigDecimal.valueOf(score);
     }
 }
+

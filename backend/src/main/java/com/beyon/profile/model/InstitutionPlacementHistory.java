@@ -50,3 +50,4 @@ public class InstitutionPlacementHistory {
     public void setHighestPackage(BigDecimal highestPackage) { this.highestPackage = highestPackage; }
     public Instant getCreatedAt() { return createdAt; }
 }
+

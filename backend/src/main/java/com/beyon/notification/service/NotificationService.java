@@ -68,3 +68,4 @@ public class NotificationService {
         return notificationRepository.findByUserIdAndType(userId, type);
     }
 }
+

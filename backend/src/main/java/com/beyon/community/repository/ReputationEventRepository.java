@@ -8,3 +8,4 @@ import java.util.UUID;
 public interface ReputationEventRepository extends JpaRepository<ReputationEvent, UUID> {
     List<ReputationEvent> findByUserIdOrderByCreatedAtDesc(UUID userId);
 }
+

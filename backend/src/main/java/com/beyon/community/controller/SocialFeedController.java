@@ -58,3 +58,4 @@ public class SocialFeedController {
         throw new RuntimeException("Unauthorized");
     }
 }
+

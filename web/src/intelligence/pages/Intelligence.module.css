@@ -195,3 +195,109 @@
 .postLink { color: #6366f1; text-decoration: none; font-weight: 500; }
 .skillBarTrack { flex: 1; height: 6px; background: #f3f4f6; border-radius: 3px; overflow: hidden; }
 .skillBarFill { height: 100%; background: #6366f1; border-radius: 3px; transition: width 0.3s; }
+
+.btnPrimary {
+  height: 38px;
+  min-height: 38px;
+  padding: 0 18px;
+  background: #1c2d81;
+  color: #ffffff;
+  border: 1px solid #1c2d81;
+  font-size: 0.82rem;
+  font-weight: 700;
+  border-radius: 0px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-sizing: border-box;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.btnPrimary:hover {
+  background: #15246e;
+  border-color: #15246e;
+  box-shadow: 0 4px 12px rgba(28, 45, 129, 0.2);
+}
+
+.btnPrimary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btnSecondary {
+  height: 38px;
+  min-height: 38px;
+  padding: 0 16px;
+  background: #ffffff;
+  color: #1c2d81;
+  border: 1px solid #cbd5e1;
+  font-size: 0.82rem;
+  font-weight: 700;
+  border-radius: 0px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-sizing: border-box;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.btnSecondary:hover {
+  background: #f8fafc;
+  border-color: #1c2d81;
+}
+
+.btnOutline {
+  height: 38px;
+  min-height: 38px;
+  padding: 0 16px;
+  background: transparent;
+  color: #1c2d81;
+  border: 1.5px solid #1c2d81;
+  font-size: 0.82rem;
+  font-weight: 700;
+  border-radius: 0px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-sizing: border-box;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.btnOutline:hover {
+  background: #1c2d81;
+  color: #ffffff;
+}
+
+.btnDanger {
+  height: 38px;
+  min-height: 38px;
+  padding: 0 16px;
+  background: #dc2626;
+  color: #ffffff;
+  border: 1px solid #dc2626;
+  font-size: 0.82rem;
+  font-weight: 700;
+  border-radius: 0px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-sizing: border-box;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.btnDanger:hover {
+  background: #b91c1c;
+}
+

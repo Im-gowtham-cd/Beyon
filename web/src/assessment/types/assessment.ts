@@ -106,3 +106,4 @@ export interface RemainingTime {
   expired: boolean;
   serverTime: string;
 }
+

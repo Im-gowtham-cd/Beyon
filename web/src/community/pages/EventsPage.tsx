@@ -29,7 +29,7 @@ export function EventsPage() {
       try {
         const e = await api.get<EventItem[]>('/events');
         setEvents(e);
-      } catch { /* */ }
+      } catch {  }
       setLoading(false);
     }
     load();
@@ -39,7 +39,7 @@ export function EventsPage() {
     try {
       await api.post(`/events/${eventId}/register`);
       setEvents(prev => prev.map(e => e.id === eventId ? { ...e, registeredCount: e.registeredCount + 1 } : e));
-    } catch { /* */ }
+    } catch {  }
   }
 
   function getTypeIcon(type: string) {
@@ -110,3 +110,4 @@ export function EventsPage() {
     </div>
   );
 }
+

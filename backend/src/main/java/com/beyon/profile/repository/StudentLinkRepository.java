@@ -9,3 +9,4 @@ public interface StudentLinkRepository extends JpaRepository<StudentLink, UUID> 
     List<StudentLink> findByUserId(UUID userId);
     void deleteByUserId(UUID userId);
 }
+

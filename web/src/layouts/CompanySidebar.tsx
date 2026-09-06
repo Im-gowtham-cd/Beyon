@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { NavLink, Link } from 'react-router-dom';
 import { useAuth } from '../auth/context/AuthContext';
 import {
@@ -14,6 +14,7 @@ import {
   LineChart,
   Building2,
   MessageSquare,
+  Bell,
   ChevronLeft,
   ChevronRight,
 } from 'lucide-react';
@@ -35,15 +36,17 @@ export function CompanySidebar({
   const { user } = useAuth();
   const [profileData, setProfileData] = useState<any>(null);
   const [activeJobsCount, setActiveJobsCount] = useState<number>(0);
+  const [candidatesCount, setCandidatesCount] = useState<number>(0);
 
   useEffect(() => {
     async function loadCompanyData() {
       try {
         const token = localStorage.getItem('beyon_token') || localStorage.getItem('beyon_access_token');
         if (!token) return;
-        const [profRes, oppRes] = await Promise.all([
+        const [profRes, oppRes, candRes] = await Promise.all([
           fetch('/api/v1/profile', { headers: { Authorization: `Bearer ${token}` } }).catch(() => null),
           fetch('/api/v1/opportunities', { headers: { Authorization: `Bearer ${token}` } }).catch(() => null),
+          fetch('/api/v1/recruitment/candidates', { headers: { Authorization: `Bearer ${token}` } }).catch(() => null),
         ]);
         if (profRes && profRes.ok) {
           const p = await profRes.json();
@@ -55,8 +58,14 @@ export function CompanySidebar({
             setActiveJobsCount(o.data.length);
           }
         }
+        if (candRes && candRes.ok) {
+          const c = await candRes.json();
+          if (Array.isArray(c.data)) {
+            setCandidatesCount(c.data.length);
+          }
+        }
       } catch {
-        /* fallback */
+
       }
     }
     loadCompanyData();
@@ -74,7 +83,7 @@ export function CompanySidebar({
     {
       title: 'Talent & AI Screening',
       items: [
-        { to: '/company/candidates', icon: UserCheck, label: 'AI Candidate Discovery', badge: '100+ Verified', badgeType: 'gold' },
+        { to: '/company/candidates', icon: UserCheck, label: 'AI Candidate Discovery', badge: candidatesCount > 0 ? `${candidatesCount} Verified` : undefined, badgeType: 'gold' },
         { to: '/company/pipeline', icon: GitCommit, label: 'Recruitment Pipeline' },
         { to: '/company/candidate-intelligence', icon: Brain, label: 'Candidate Intelligence' },
       ],
@@ -91,6 +100,7 @@ export function CompanySidebar({
       title: 'Analytics & Settings',
       items: [
         { to: '/company/analytics', icon: LineChart, label: 'Hiring Analytics' },
+        { to: '/company/notifications', icon: Bell, label: 'Notifications' },
         { to: '/company/profile', icon: Building2, label: 'Company Profile' },
         { to: '/company/messages', icon: MessageSquare, label: 'Direct Messaging' },
       ],
@@ -109,11 +119,11 @@ export function CompanySidebar({
     <aside
       className={`${styles.sidebar} ${collapsed ? styles.sidebarCollapsed : ''} ${mobileOpen ? styles.sidebarMobileOpen : ''}`}
     >
-      {/* Brand Header */}
+
       <div className={styles.brandHeader}>
         <Link to="/company/home" className={styles.brandLink}>
-          <div className={styles.brandLogo}>
-            <span>B</span>
+          <div className={styles.brandLogo} style={{ background: 'transparent', boxShadow: 'none' }}>
+            <img src="/logo-icon.png" alt="Beyon" style={{ width: '32px', height: '32px', objectFit: 'contain' }} />
           </div>
           {!collapsed && (
             <div className={styles.brandInfo}>
@@ -124,9 +134,8 @@ export function CompanySidebar({
         </Link>
       </div>
 
-      {/* Sidebar Scrollable Body */}
       <div className={styles.sidebarScroll}>
-        {/* User Card */}
+
         <div className={`${styles.userCard} ${collapsed ? styles.userCardCollapsed : ''}`}>
           <div className={styles.userInfo}>
             <div className={styles.avatar}>
@@ -151,7 +160,6 @@ export function CompanySidebar({
           )}
         </div>
 
-        {/* Navigation Sections */}
         {navSections.map((section) => (
           <div key={section.title} className={styles.navSection}>
             {!collapsed && <span className={styles.sectionTitle}>{section.title}</span>}
@@ -187,7 +195,6 @@ export function CompanySidebar({
         ))}
       </div>
 
-      {/* Footer Utility Actions */}
       <div className={styles.footerSection}>
         {onToggleCollapse && (
           <button
@@ -204,3 +211,4 @@ export function CompanySidebar({
     </aside>
   );
 }
+

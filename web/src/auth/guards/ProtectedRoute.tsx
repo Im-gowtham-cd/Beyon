@@ -20,6 +20,20 @@ export function ProtectedRoute() {
 
   const path = location.pathname;
 
+  if (profileStatus === 'REJECTED' || user?.status === 'REJECTED') {
+    if (path !== '/account-rejected') {
+      return <Navigate to="/account-rejected" replace />;
+    }
+    return <Outlet />;
+  }
+
+  if (profileStatus === 'SUSPENDED' || user?.status === 'SUSPENDED') {
+    if (path !== '/account-suspended') {
+      return <Navigate to="/account-suspended" replace />;
+    }
+    return <Outlet />;
+  }
+
   if (path.startsWith('/onboarding/')) {
     return <Outlet />;
   }
@@ -32,15 +46,18 @@ export function ProtectedRoute() {
     return <Navigate to="/login" replace />;
   }
 
-  if (profileStatus === 'SUSPENDED') {
-    return <Navigate to="/account-suspended" replace />;
-  }
-
-  if (profileStatus === 'PENDING_INSTITUTION_VERIFICATION' || profileStatus === 'PENDING_COMPANY_VERIFICATION') {
+  if (
+    profileStatus === 'PENDING_SUPER_ADMIN_VERIFICATION' ||
+    profileStatus === 'PENDING_INSTITUTION_VERIFICATION' ||
+    profileStatus === 'PENDING_COMPANY_VERIFICATION' ||
+    profileStatus === 'PENDING_VERIFICATION'
+  ) {
     if (!path.startsWith('/verification-pending')) {
       return <Navigate to="/verification-pending" replace />;
     }
+    return <Outlet />;
   }
 
   return <Outlet />;
 }
+

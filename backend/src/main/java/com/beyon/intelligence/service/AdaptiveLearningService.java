@@ -100,7 +100,6 @@ public class AdaptiveLearningService {
         step.setCompletedAt(OffsetDateTime.now());
         step.setUpdatedAt(OffsetDateTime.now());
 
-        // Unlock next step
         List<AdaptiveLearningStep> steps = stepRepo.findByPathIdOrderByStepOrder(step.getPathId());
         for (AdaptiveLearningStep s : steps) {
             if (s.getStepOrder() == step.getStepOrder() + 1 && "LOCKED".equals(s.getState())) {
@@ -112,7 +111,6 @@ public class AdaptiveLearningService {
             }
         }
 
-        // Update path progress
         AdaptiveLearningPath path = pathRepo.findById(step.getPathId()).orElse(null);
         if (path != null) {
             long completed = steps.stream().filter(s -> "COMPLETED".equals(s.getState())).count();
@@ -163,3 +161,4 @@ public class AdaptiveLearningService {
         };
     }
 }
+

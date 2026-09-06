@@ -48,3 +48,4 @@ public class InstitutionAnalyticsSnapshot {
     public String getPlacementTrend() { return placementTrend; } public void setPlacementTrend(String v) { this.placementTrend = v; }
     public OffsetDateTime getCreatedAt() { return createdAt; } public void setCreatedAt(OffsetDateTime v) { this.createdAt = v; }
 }
+

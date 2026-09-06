@@ -25,15 +25,21 @@ export function StudentHome() {
   const { user } = useAuth();
   const [profileData, setProfileData] = useState<any>(null);
   const [dailyChallenge, setDailyChallenge] = useState<any>(null);
+  const [coins, setCoins] = useState<number>(0);
+  const [streak, setStreak] = useState<number>(0);
+  const [stats, setStats] = useState<any>(null);
 
   useEffect(() => {
     async function loadData() {
       try {
         const token = localStorage.getItem('beyon_token') || localStorage.getItem('beyon_access_token');
         if (token) {
-          const [profRes, chalRes] = await Promise.all([
+          const [profRes, chalRes, coinRes, streakRes, statsRes] = await Promise.all([
             fetch('/api/v1/student/profile', { headers: { Authorization: `Bearer ${token}` } }).catch(() => null),
             fetch('/api/v1/daily-challenge/today', { headers: { Authorization: `Bearer ${token}` } }).catch(() => null),
+            fetch('/api/v1/coins/balance', { headers: { Authorization: `Bearer ${token}` } }).catch(() => null),
+            fetch('/api/v1/gamification/streak', { headers: { Authorization: `Bearer ${token}` } }).catch(() => null),
+            fetch('/api/v1/practice/stats', { headers: { Authorization: `Bearer ${token}` } }).catch(() => null),
           ]);
           if (profRes && profRes.ok) {
             const data = await profRes.json();
@@ -43,9 +49,21 @@ export function StudentHome() {
             const data = await chalRes.json();
             setDailyChallenge(data.data || null);
           }
+          if (coinRes && coinRes.ok) {
+            const data = await coinRes.json();
+            setCoins(data.data ?? 0);
+          }
+          if (streakRes && streakRes.ok) {
+            const data = await streakRes.json();
+            setStreak(data.data?.currentStreak ?? 0);
+          }
+          if (statsRes && statsRes.ok) {
+            const data = await statsRes.json();
+            setStats(data.data || null);
+          }
         }
       } catch {
-        /* fallback gracefully */
+
       }
     }
     loadData();
@@ -123,7 +141,7 @@ export function StudentHome() {
 
   return (
     <div className={styles.page}>
-      {/* Hero Welcome Banner */}
+
       <section className={styles.welcomeHero}>
         <div className={styles.welcomeInfo}>
           <div className={styles.badgeRow}>
@@ -148,53 +166,71 @@ export function StudentHome() {
           <div className={styles.statMetric}>
             <span className={styles.statMetricLabel}>Beyon Coins</span>
             <span className={`${styles.statMetricValue} ${styles.goldVal}`}>
-              <Coins size={16} style={{ color: '#b45309' }} /> {profileData?.beyonCoins || 250}
+              <Coins size={16} style={{ color: '#b45309' }} /> {coins}
             </span>
           </div>
           <div className={styles.statDivider} />
           <div className={styles.statMetric}>
             <span className={styles.statMetricLabel}>Daily Streak</span>
             <span className={styles.statMetricValue}>
-              <Flame size={16} style={{ color: '#ea580c', display: 'inline' }} /> 18 Days
+              <Flame size={16} style={{ color: '#ea580c', display: 'inline' }} /> {streak} {streak === 1 ? 'Day' : 'Days'}
             </span>
           </div>
           <div className={styles.statDivider} />
           <div className={styles.statMetric}>
             <span className={styles.statMetricLabel}>Accuracy</span>
-            <span className={styles.statMetricValue}>87.4%</span>
+            <span className={styles.statMetricValue}>
+              {stats?.totalAttempted && stats.totalAttempted > 0
+                ? `${((stats.totalSolved / stats.totalAttempted) * 100).toFixed(1)}%`
+                : '0.0%'}
+            </span>
           </div>
         </div>
       </section>
 
-      {/* Main Grid: Modules & Side Widgets */}
       <div className={styles.dashboardGrid}>
         <div className={styles.mainContent}>
-          {/* Daily Challenge Spotlight Banner */}
-          <div className={styles.spotlightBanner}>
-            <div className={styles.spotlightIcon}>
-              <Target size={24} style={{ color: '#fed601' }} />
-            </div>
-            <div className={styles.spotlightBody}>
-              <span className={styles.spotlightTag}>
-                Today&apos;s Featured Challenge &middot; +50 Coins
-              </span>
-              <h3>
-                {dailyChallenge?.question?.title ||
-                  'CUDA Kernel Memory Divergence & Shared Memory Bank Optimization'}
-              </h3>
-              <p>
-                {dailyChallenge?.question?.description?.slice(0, 120) ||
-                  'Analyze warp scheduling bottlenecks, optimize memory coalescing, and earn verified competence badges.'}
-                ...
-              </p>
-            </div>
-            <Link to="/daily-challenge" className={styles.spotlightAction}>
-              <span>Solve Challenge</span>
-              <ArrowRight size={14} />
-            </Link>
-          </div>
 
-          {/* Core Modules Grid */}
+          {dailyChallenge?.question ? (
+            <div className={styles.spotlightBanner}>
+              <div className={styles.spotlightIcon}>
+                <Target size={24} style={{ color: '#fed601' }} />
+              </div>
+              <div className={styles.spotlightBody}>
+                <span className={styles.spotlightTag}>
+                  Today&apos;s Featured Challenge &middot; +50 Coins
+                </span>
+                <h3>{dailyChallenge.question.title}</h3>
+                <p>
+                  {dailyChallenge.question.description?.slice(0, 140) || 'Solve today’s curated challenge to earn coins.'}...
+                </p>
+              </div>
+              <Link to="/daily-challenge" className={styles.spotlightAction}>
+                <span>Solve Challenge</span>
+                <ArrowRight size={14} />
+              </Link>
+            </div>
+          ) : (
+            <div className={styles.spotlightBanner}>
+              <div className={styles.spotlightIcon}>
+                <Code2 size={24} style={{ color: '#fed601' }} />
+              </div>
+              <div className={styles.spotlightBody}>
+                <span className={styles.spotlightTag}>
+                  Practice Arena Active
+                </span>
+                <h3>Technical &amp; Coding Challenge Bank</h3>
+                <p>
+                  Solve practice questions, improve algorithmic proficiency, and earn Beyon Coins across multiple topics.
+                </p>
+              </div>
+              <Link to="/practice" className={styles.spotlightAction}>
+                <span>Enter Arena</span>
+                <ArrowRight size={14} />
+              </Link>
+            </div>
+          )}
+
           <div className={styles.sectionHeader}>
             <h2 className={styles.sectionTitle}>
               <Sparkles size={18} style={{ color: '#1c2d81' }} /> Workspace Modules
@@ -227,12 +263,10 @@ export function StudentHome() {
           </div>
         </div>
 
-        {/* Sidebar Column */}
         <div className={styles.sideCol}>
-          {/* Active Learning Widget */}
+
           <LearningWidget />
 
-          {/* Quick Benchmark Test Card */}
           <div className={styles.sideCard}>
             <div className={styles.sideCardHeader}>
               <ShieldCheck size={18} style={{ color: '#1c2d81' }} />
@@ -247,24 +281,23 @@ export function StudentHome() {
             </Link>
           </div>
 
-          {/* Cohort Enrollment Card */}
           <div className={styles.sideCard}>
             <div className={styles.sideCardHeader}>
               <BookOpen size={18} style={{ color: '#1c2d81' }} />
-              <h4>Cohort Enrollment</h4>
+              <h4>Academic Enrollment</h4>
             </div>
             <div className={styles.enrollmentMeta}>
               <div>
-                <strong>Track:</strong> Advanced Parallel &amp; GPU Systems
+                <strong>Program:</strong> {profileData?.degree ? `${profileData.degree} · ${profileData.department || 'General'}` : 'Engineering Degree'}
               </div>
               <div>
-                <strong>Institution:</strong> Premier Engineering Consortium
+                <strong>Institution:</strong> {profileData?.institution || 'Campus Not Specified'}
               </div>
               <div>
                 <strong>Status:</strong>{' '}
                 <span className={styles.statusLive}>
                   <Radio size={12} style={{ display: 'inline', marginRight: '4px' }} />
-                  Active Scholar
+                  {profileData ? 'Verified Scholar' : 'Active Candidate'}
                 </span>
               </div>
             </div>
@@ -274,3 +307,4 @@ export function StudentHome() {
     </div>
   );
 }
+

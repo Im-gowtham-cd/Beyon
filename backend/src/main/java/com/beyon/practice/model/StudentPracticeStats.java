@@ -73,3 +73,4 @@ public class StudentPracticeStats {
     public void setTotalTimeSeconds(long totalTimeSeconds) { this.totalTimeSeconds = totalTimeSeconds; }
     public Instant getUpdatedAt() { return updatedAt; }
 }
+

@@ -10,3 +10,4 @@ public interface StudentLearningSkillRepository extends JpaRepository<StudentLea
     List<StudentLearningSkill> findByUserIdOrderByCreatedAtDesc(UUID userId);
     boolean existsByUserIdAndSkillNameIgnoreCase(UUID userId, String skillName);
 }
+

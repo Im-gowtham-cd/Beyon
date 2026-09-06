@@ -8,7 +8,6 @@
   width: 100%;
 }
 
-/* Mobile Header Bar */
 .mobileBar {
   display: none;
   height: 56px;
@@ -43,7 +42,6 @@
   position: relative;
 }
 
-/* Main Workspace Canvas offset from fixed 270px sidebar */
 .mainContent {
   margin-left: 270px;
   width: calc(100% - 270px);
@@ -60,7 +58,6 @@
   width: calc(100% - 76px);
 }
 
-/* Top Utility Header */
 .topUtilityBar {
   height: 56px;
   min-height: 56px;
@@ -177,3 +174,4 @@
     padding: 0 16px;
   }
 }
+

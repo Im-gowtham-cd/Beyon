@@ -114,3 +114,4 @@ public class ChallengeParticipation {
     public Instant getEvaluatedAt() { return evaluatedAt; }
     public void setEvaluatedAt(Instant evaluatedAt) { this.evaluatedAt = evaluatedAt; }
 }
+

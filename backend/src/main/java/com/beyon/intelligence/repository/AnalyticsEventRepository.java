@@ -22,3 +22,4 @@ public interface AnalyticsEventRepository extends JpaRepository<AnalyticsEvent, 
     @Query("SELECT FUNCTION('DATE', a.createdAt), COUNT(a) FROM AnalyticsEvent a WHERE a.createdAt >= :since GROUP BY FUNCTION('DATE', a.createdAt) ORDER BY FUNCTION('DATE', a.createdAt) DESC")
     List<Object[]> countEventsByDay(java.time.OffsetDateTime since);
 }
+

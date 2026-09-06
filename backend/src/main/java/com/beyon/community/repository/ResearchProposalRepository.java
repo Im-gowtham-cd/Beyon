@@ -9,3 +9,4 @@ public interface ResearchProposalRepository extends JpaRepository<ResearchPropos
     List<ResearchProposal> findByProposerIdOrderByCreatedAtDesc(UUID proposerId);
     List<ResearchProposal> findByStatus(String status);
 }
+

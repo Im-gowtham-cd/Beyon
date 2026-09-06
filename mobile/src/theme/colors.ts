@@ -28,7 +28,8 @@ export const colors = {
 
 export const theme = {
   colors,
-  radius: 0, // Enforce zero border-radius across the entire application
+  radius: 0,
   fontHeading: 'System',
   fontBody: 'System',
 };
+

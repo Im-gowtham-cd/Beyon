@@ -116,7 +116,6 @@ export function StudentOnboarding() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // Sub-forms for adding projects and certifications
   const [showAddProject, setShowAddProject] = useState(false);
   const [newProject, setNewProject] = useState<ProjectEntry>({
     name: '',
@@ -139,16 +138,29 @@ export function StudentOnboarding() {
     credentialUrl: '',
   });
 
-  // Custom role & industry inputs
   const [customRole, setCustomRole] = useState('');
   const [customIndustry, setCustomIndustry] = useState('');
   const [newSkillName, setNewSkillName] = useState('');
   const [newSkillCategory, setNewSkillCategory] = useState('Languages');
   const [newSkillProficiency, setNewSkillProficiency] = useState<'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED' | 'EXPERT'>('INTERMEDIATE');
 
-  // Pre-load existing profile data if available
+  const [registeredInstitutions, setRegisteredInstitutions] = useState<any[]>([]);
+  const [isCustomInstitution, setIsCustomInstitution] = useState(false);
+
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    async function loadInstitutions() {
+      try {
+        const res = await api.get('/onboarding/institutions');
+        const list = Array.isArray((res as any)?.data) ? (res as any).data : Array.isArray(res) ? res : [];
+        setRegisteredInstitutions(list);
+      } catch {
+
+      }
+    }
+    loadInstitutions();
+
     async function loadExistingProfile() {
       try {
         const res = await api.get('/student/profile');
@@ -172,7 +184,7 @@ export function StudentOnboarding() {
           }));
         }
       } catch {
-        // Fallback to initial empty form
+
       }
     }
     loadExistingProfile();
@@ -328,10 +340,9 @@ export function StudentOnboarding() {
     setLoading(true);
     setError('');
     try {
-      // 1. Submit to Onboarding Endpoint (persists profile, skills, projects, certs, links & sets ACTIVE status)
+
       await api.post('/onboarding/student', form);
 
-      // 2. Also update profile directly to ensure dual persistence
       await api.put('/student/profile', {
         phone: form.phone,
         gender: form.gender,
@@ -346,11 +357,9 @@ export function StudentOnboarding() {
         aboutMe: form.aboutMe,
       }).catch(() => {});
 
-      // 3. Refresh profile status in AuthContext so ProtectedRoute knows profile is COMPLETED
       await refreshProfileStatus().catch(() => {});
 
-      // 4. Navigate directly to student dashboard
-      navigate('/student/home');
+      navigate('/verification-pending');
     } catch {
       setError("We encountered an error saving your profile. Your information is preserved; please retry.");
     } finally {
@@ -364,7 +373,7 @@ export function StudentOnboarding() {
 
   return (
     <div className={styles.pageContainer}>
-      {/* ── Top Platform Header ── */}
+
       <header className={styles.topHeader}>
         <Link to="/" className={styles.brandLink}>
           <div className={styles.brandLogo}>B</div>
@@ -384,7 +393,6 @@ export function StudentOnboarding() {
         </div>
       </header>
 
-      {/* ── Hero Welcome Banner ── */}
       <div className={styles.heroWrapper}>
         <div className={styles.welcomeHero}>
           <div className={styles.badgeRow}>
@@ -407,11 +415,10 @@ export function StudentOnboarding() {
         </div>
       </div>
 
-      {/* ── Main Workspace Grid ── */}
       <div className={styles.mainWorkspace}>
-        {/* ── Left Sticky Sidebar Guide ── */}
+
         <aside className={styles.asideGuide}>
-          {/* Active Step Info Card */}
+
           <div className={styles.currentStepInfoCard}>
             <span className={styles.stepNumLabel}>
               <StepIcon size={14} /> Step {step + 1}
@@ -426,7 +433,6 @@ export function StudentOnboarding() {
             </p>
           </div>
 
-          {/* Vertical Step Roadmap */}
           <div className={styles.stepTrackerCard}>
             <div className={styles.trackerTitle}>Onboarding Roadmap</div>
             <div className={styles.trackerList}>
@@ -461,7 +467,6 @@ export function StudentOnboarding() {
             </div>
           </div>
 
-          {/* Verification Benefits Card */}
           <div className={styles.benefitsCard}>
             <div className={styles.benefitsTitle}>
               <Sparkles size={14} color="#1c2d81" /> Scholar Benefits
@@ -487,7 +492,6 @@ export function StudentOnboarding() {
           </div>
         </aside>
 
-        {/* ── Right Form Workspace ── */}
         <main className={styles.formCard}>
           {error && (
             <div className={styles.errorAlert}>
@@ -501,7 +505,6 @@ export function StudentOnboarding() {
             </div>
           )}
 
-          {/* ═════════ STEP 0: PERSONAL INFORMATION ═════════ */}
           {step === 0 && (
             <div className={styles.sectionBlock}>
               <div className={styles.sectionHeader}>
@@ -608,7 +611,6 @@ export function StudentOnboarding() {
             </div>
           )}
 
-          {/* ═════════ STEP 1: ACADEMIC CREDENTIALS ═════════ */}
           {step === 1 && (
             <div className={styles.sectionBlock}>
               <div className={styles.sectionHeader}>
@@ -626,17 +628,68 @@ export function StudentOnboarding() {
               <div className={styles.fieldsGrid}>
                 <div className={styles.fieldGroup} style={{ gridColumn: '1 / -1' }}>
                   <label className={styles.fieldLabel} htmlFor="institution">
-                    <Building2 size={13} /> College / University Name <span className={styles.requiredAsterisk}>*</span>
+                    <Building2 size={13} /> Select Registered College / University <span className={styles.requiredAsterisk}>*</span>
                   </label>
-                  <input
-                    id="institution"
-                    type="text"
-                    className={styles.textInput}
-                    placeholder="e.g. PSG College of Technology, Coimbatore"
-                    value={form.institution}
-                    onChange={e => update('institution', e.target.value)}
-                  />
-                  <span className={styles.fieldHint}>Must match your official institutional email domain</span>
+
+                  {registeredInstitutions.length > 0 ? (
+                    <>
+                      <select
+                        id="institution"
+                        className={styles.selectInput}
+                        value={isCustomInstitution ? '__CUSTOM__' : form.institution}
+                        onChange={e => {
+                          const val = e.target.value;
+                          if (val === '__CUSTOM__') {
+                            setIsCustomInstitution(true);
+                            update('institution', '');
+                          } else {
+                            setIsCustomInstitution(false);
+                            update('institution', val);
+                          }
+                        }}
+                      >
+                        <option value="">-- Select your registered college in Beyon --</option>
+                        {registeredInstitutions.map((inst: any) => (
+                          <option key={inst.id || inst.name} value={inst.name}>
+                            {inst.name} {inst.city ? `(${inst.city}, ${inst.state || ''})` : ''} {inst.grade ? `[NAAC ${inst.grade}]` : ''}
+                          </option>
+                        ))}
+                        <option value="__CUSTOM__">+ Other / Enter College Name Manually</option>
+                      </select>
+
+                      {isCustomInstitution && (
+                        <div style={{ marginTop: '8px' }}>
+                          <input
+                            type="text"
+                            className={styles.textInput}
+                            placeholder="Enter your college / institution name"
+                            value={form.institution}
+                            onChange={e => update('institution', e.target.value)}
+                            autoFocus
+                          />
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <input
+                      id="institution"
+                      type="text"
+                      className={styles.textInput}
+                      placeholder="e.g. Beyon Engineering College, Coimbatore"
+                      value={form.institution}
+                      onChange={e => update('institution', e.target.value)}
+                    />
+                  )}
+
+                  <span className={styles.fieldHint}>
+                    {form.institution && registeredInstitutions.some((i: any) => i.name === form.institution) ? (
+                      <span style={{ color: '#15803d', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                        ✓ Verified Beyon Campus Partner &middot; Automatic Placement Roster Synchronization
+                      </span>
+                    ) : (
+                      'Choose from verified Beyon institutions or enter your institution name'
+                    )}
+                  </span>
                 </div>
 
                 <div className={styles.fieldGroup}>
@@ -723,7 +776,6 @@ export function StudentOnboarding() {
                 </div>
               </div>
 
-              {/* Placement Preference Selection */}
               <div style={{ marginTop: '10px' }}>
                 <label className={styles.fieldLabel}>
                   <Briefcase size={13} /> Campus Placement &amp; Internship Intent <span className={styles.requiredAsterisk}>*</span>
@@ -763,7 +815,6 @@ export function StudentOnboarding() {
             </div>
           )}
 
-          {/* ═════════ STEP 2: CAREER OBJECTIVES ═════════ */}
           {step === 2 && (
             <div className={styles.sectionBlock}>
               <div className={styles.sectionHeader}>
@@ -778,7 +829,6 @@ export function StudentOnboarding() {
                 </div>
               </div>
 
-              {/* Target Roles Chips */}
               <div className={styles.fieldGroup}>
                 <label className={styles.fieldLabel}>
                   Target Job Roles <span className={styles.requiredAsterisk}>*</span>
@@ -814,7 +864,6 @@ export function StudentOnboarding() {
                   })}
                 </div>
 
-                {/* Custom Role Input */}
                 <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
                   <input
                     type="text"
@@ -848,7 +897,6 @@ export function StudentOnboarding() {
                 </div>
               </div>
 
-              {/* Target Industries Chips */}
               <div className={styles.fieldGroup} style={{ marginTop: '14px' }}>
                 <label className={styles.fieldLabel}>Preferred Industries</label>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '4px' }}>
@@ -914,7 +962,6 @@ export function StudentOnboarding() {
                 </div>
               </div>
 
-              {/* Preferred Work Mode */}
               <div className={styles.fieldGroup} style={{ marginTop: '14px' }}>
                 <label className={styles.fieldLabel}>Workplace Flexibility Mode</label>
                 <div className={styles.workTypeRow}>
@@ -936,7 +983,6 @@ export function StudentOnboarding() {
                 </div>
               </div>
 
-              {/* Professional Bio */}
               <div className={styles.fieldGroup} style={{ marginTop: '14px' }}>
                 <label className={styles.fieldLabel} htmlFor="aboutMe">
                   <FileText size={13} /> Professional Summary / Bio
@@ -954,7 +1000,6 @@ export function StudentOnboarding() {
             </div>
           )}
 
-          {/* ═════════ STEP 3: SKILLS & PORTFOLIO ═════════ */}
           {step === 3 && (
             <div className={styles.sectionBlock}>
               <div className={styles.sectionHeader}>
@@ -969,11 +1014,9 @@ export function StudentOnboarding() {
                 </div>
               </div>
 
-              {/* Technical Skills Section */}
               <div className={styles.fieldGroup}>
                 <label className={styles.fieldLabel}>Active Technical Skills</label>
 
-                {/* Popular Skill Quick Add */}
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '8px' }}>
                   <span style={{ fontSize: '0.74rem', color: '#64748b', fontWeight: 600, alignSelf: 'center', marginRight: '4px' }}>
                     Quick add:
@@ -1007,7 +1050,6 @@ export function StudentOnboarding() {
                   })}
                 </div>
 
-                {/* Skill List Chips */}
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', minHeight: '40px', padding: '10px', background: '#ffffff', border: '1px solid #cbd5e1', borderRadius: '0px' }}>
                   {form.skills.length === 0 ? (
                     <span style={{ color: '#94a3b8', fontSize: '0.84rem' }}>No skills added yet. Add your core languages and frameworks below.</span>
@@ -1043,7 +1085,6 @@ export function StudentOnboarding() {
                   )}
                 </div>
 
-                {/* Add Skill Form Row */}
                 <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr auto', gap: '8px', marginTop: '8px' }}>
                   <input
                     type="text"
@@ -1101,7 +1142,6 @@ export function StudentOnboarding() {
                 </div>
               </div>
 
-              {/* Key Engineering Projects */}
               <div className={styles.fieldGroup} style={{ marginTop: '16px' }}>
                 <label className={styles.fieldLabel}>
                   <FolderGit2 size={13} /> Engineering Projects
@@ -1242,7 +1282,6 @@ export function StudentOnboarding() {
                 )}
               </div>
 
-              {/* Certifications */}
               <div className={styles.fieldGroup} style={{ marginTop: '16px' }}>
                 <label className={styles.fieldLabel}>
                   <Award size={13} /> Industry Certifications &amp; Badges
@@ -1348,7 +1387,6 @@ export function StudentOnboarding() {
                 )}
               </div>
 
-              {/* Online Social & Coding Links */}
               <div className={styles.fieldGroup} style={{ marginTop: '16px' }}>
                 <label className={styles.fieldLabel}>
                   <Globe size={13} /> Online Coding &amp; Portfolio Profiles
@@ -1410,7 +1448,6 @@ export function StudentOnboarding() {
             </div>
           )}
 
-          {/* ═════════ STEP 4: REVIEW & ACTIVATE ═════════ */}
           {step === 4 && (
             <div className={styles.sectionBlock}>
               <div className={styles.sectionHeader}>
@@ -1425,7 +1462,6 @@ export function StudentOnboarding() {
                 </div>
               </div>
 
-              {/* Live Candidate Preview Card */}
               <div className={styles.candidatePreviewCard}>
                 <div className={styles.candidateInfoLeft}>
                   <div className={styles.candidateAvatar}>
@@ -1454,9 +1490,8 @@ export function StudentOnboarding() {
                 </div>
               </div>
 
-              {/* Detailed Review Breakdown */}
               <div className={styles.reviewGrid}>
-                {/* Personal Card */}
+
                 <div className={styles.reviewCard}>
                   <div className={styles.reviewCardHeader}>
                     <span className={styles.reviewCardTitle}>
@@ -1484,7 +1519,6 @@ export function StudentOnboarding() {
                   </div>
                 </div>
 
-                {/* Academic Card */}
                 <div className={styles.reviewCard}>
                   <div className={styles.reviewCardHeader}>
                     <span className={styles.reviewCardTitle}>
@@ -1514,7 +1548,6 @@ export function StudentOnboarding() {
                   </div>
                 </div>
 
-                {/* Career Goals Card */}
                 <div className={styles.reviewCard}>
                   <div className={styles.reviewCardHeader}>
                     <span className={styles.reviewCardTitle}>
@@ -1545,7 +1578,6 @@ export function StudentOnboarding() {
                   </div>
                 </div>
 
-                {/* Portfolio Card */}
                 <div className={styles.reviewCard}>
                   <div className={styles.reviewCardHeader}>
                     <span className={styles.reviewCardTitle}>
@@ -1576,7 +1608,6 @@ export function StudentOnboarding() {
                 </div>
               </div>
 
-              {/* Reward Callout Box */}
               <div className={styles.rewardCallout}>
                 <div className={styles.rewardCalloutIcon}>
                   <Coins />
@@ -1591,7 +1622,6 @@ export function StudentOnboarding() {
             </div>
           )}
 
-          {/* ── Step Navigation Footer ── */}
           <div className={styles.navigationFooter}>
             {step > 0 ? (
               <button type="button" className={styles.backButton} onClick={handleBack}>
@@ -1632,3 +1662,4 @@ export function StudentOnboarding() {
     </div>
   );
 }
+

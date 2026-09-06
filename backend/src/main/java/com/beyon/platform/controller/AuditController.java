@@ -36,3 +36,4 @@ public class AuditController {
         throw new RuntimeException("Unauthorized");
     }
 }
+

@@ -45,9 +45,8 @@ export async function seedApplicationsAndCoins(cfg: SeedConfig): Promise<void> {
     return;
   }
 
-  // ─── Applications ───
   let appCount = 0;
-  const used = new Set<string>(); // prevent duplicate (student, opty)
+  const used = new Set<string>();
 
   for (let i = 0; i < cfg.counts.applications; i++) {
     const studentId = rng.pick(studentUserIds);
@@ -76,8 +75,6 @@ export async function seedApplicationsAndCoins(cfg: SeedConfig): Promise<void> {
     appCount++;
   }
 
-  // ─── Coin Ledger ───
-  // For every student, seed a chronological transaction history over 365 days
   let coinTxCount = 0;
   for (const studentId of studentUserIds) {
     const txCount = rng.int(8, 25);
@@ -111,7 +108,6 @@ export async function seedApplicationsAndCoins(cfg: SeedConfig): Promise<void> {
       coinTxCount++;
     }
 
-    // Update wallet balance
     coinStmts.push(
       `UPDATE coin_wallets SET balance = ${balance}, total_earned = ${balance + 300}, updated_at = NOW()
        WHERE student_id = ${esc(studentId)};`
@@ -124,3 +120,4 @@ export async function seedApplicationsAndCoins(cfg: SeedConfig): Promise<void> {
   console.log(`  ✅ ${appCount} applications`);
   console.log(`  ✅ ${coinTxCount} coin transactions`);
 }
+

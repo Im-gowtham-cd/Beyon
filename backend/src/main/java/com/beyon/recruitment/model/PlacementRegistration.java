@@ -31,3 +31,4 @@ public class PlacementRegistration {
     public OffsetDateTime getRegisteredAt() { return registeredAt; } public void setRegisteredAt(OffsetDateTime v) { this.registeredAt = v; }
     public OffsetDateTime getUpdatedAt() { return updatedAt; } public void setUpdatedAt(OffsetDateTime v) { this.updatedAt = v; }
 }
+

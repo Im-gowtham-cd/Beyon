@@ -31,3 +31,4 @@ export function OnboardingLayout({ currentStep, totalSteps, children }: Props) {
     </div>
   );
 }
+

@@ -35,6 +35,9 @@ public class CompanyOpportunity {
     @Column(precision = 4, scale = 2)
     private BigDecimal minCgpa;
 
+    @Column(precision = 6, scale = 2)
+    private BigDecimal packageLpa;
+
     @Column(columnDefinition = "TEXT")
     private String eligibleDepartments;
 
@@ -52,6 +55,12 @@ public class CompanyOpportunity {
 
     @Column(columnDefinition = "varchar(36)")
     private UUID assessmentId;
+
+    @Column(columnDefinition = "TEXT")
+    private String targetInstitutionIds;
+
+    @Column(columnDefinition = "TEXT")
+    private String targetInstitutionNames;
 
     @Column(nullable = false)
     private int applicationCount = 0;
@@ -84,6 +93,8 @@ public class CompanyOpportunity {
     public void setRemote(Boolean remote) { this.remote = remote; }
     public BigDecimal getMinCgpa() { return minCgpa; }
     public void setMinCgpa(BigDecimal minCgpa) { this.minCgpa = minCgpa; }
+    public BigDecimal getPackageLpa() { return packageLpa; }
+    public void setPackageLpa(BigDecimal packageLpa) { this.packageLpa = packageLpa; }
     public String getEligibleDepartments() { return eligibleDepartments; }
     public void setEligibleDepartments(String eligibleDepartments) { this.eligibleDepartments = eligibleDepartments; }
     public String getEligibleGraduationYears() { return eligibleGraduationYears; }
@@ -96,6 +107,10 @@ public class CompanyOpportunity {
     public void setMinBeyonCoins(int minBeyonCoins) { this.minBeyonCoins = minBeyonCoins; }
     public UUID getAssessmentId() { return assessmentId; }
     public void setAssessmentId(UUID assessmentId) { this.assessmentId = assessmentId; }
+    public String getTargetInstitutionIds() { return targetInstitutionIds; }
+    public void setTargetInstitutionIds(String targetInstitutionIds) { this.targetInstitutionIds = targetInstitutionIds; }
+    public String getTargetInstitutionNames() { return targetInstitutionNames; }
+    public void setTargetInstitutionNames(String targetInstitutionNames) { this.targetInstitutionNames = targetInstitutionNames; }
     public int getApplicationCount() { return applicationCount; }
     public void setApplicationCount(int applicationCount) { this.applicationCount = applicationCount; }
     public String getStatus() { return status; }
@@ -103,3 +118,4 @@ public class CompanyOpportunity {
     public Instant getCreatedAt() { return createdAt; }
     public Instant getUpdatedAt() { return updatedAt; }
 }
+

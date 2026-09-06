@@ -8,3 +8,4 @@ import java.util.UUID;
 public interface FeedbackAttachmentRepository extends JpaRepository<FeedbackAttachment, UUID> {
     List<FeedbackAttachment> findByReportIdOrderByCreatedAt(UUID reportId);
 }
+

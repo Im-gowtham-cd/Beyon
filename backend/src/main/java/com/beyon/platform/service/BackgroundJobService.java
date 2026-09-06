@@ -102,3 +102,4 @@ public class BackgroundJobService {
         return jobRepo.countByStatus("FAILED");
     }
 }
+

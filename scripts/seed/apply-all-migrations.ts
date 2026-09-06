@@ -28,7 +28,7 @@ async function main() {
         await conn.query(stmt);
         count++;
       } catch (err: any) {
-        // ignore already exists or duplicate index
+
       }
     }
     console.log(`✅ Applied ${f} (${count} statements)`);
@@ -44,3 +44,4 @@ main().catch(err => {
   console.error("Migration error:", err);
   process.exit(1);
 });
+

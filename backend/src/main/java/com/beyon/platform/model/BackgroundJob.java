@@ -36,3 +36,4 @@ public class BackgroundJob {
     public OffsetDateTime getCompletedAt() { return completedAt; } public void setCompletedAt(OffsetDateTime v) { this.completedAt = v; }
     public OffsetDateTime getNextRetryAt() { return nextRetryAt; } public void setNextRetryAt(OffsetDateTime v) { this.nextRetryAt = v; }
 }
+

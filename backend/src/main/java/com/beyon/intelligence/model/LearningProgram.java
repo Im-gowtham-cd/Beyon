@@ -49,3 +49,4 @@ public class LearningProgram {
     public Boolean getIsActive() { return isActive; } public void setIsActive(Boolean v) { this.isActive = v; }
     public OffsetDateTime getCreatedAt() { return createdAt; }
 }
+

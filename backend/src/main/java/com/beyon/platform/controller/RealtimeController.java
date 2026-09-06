@@ -68,3 +68,4 @@ public class RealtimeController {
         return ResponseEntity.ok(Map.of("message", "All marked as read"));
     }
 }
+

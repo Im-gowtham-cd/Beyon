@@ -26,3 +26,4 @@ public class FeedbackAttachment {
     public UUID getUploadedBy() { return uploadedBy; } public void setUploadedBy(UUID v) { this.uploadedBy = v; }
     public OffsetDateTime getCreatedAt() { return createdAt; } public void setCreatedAt(OffsetDateTime v) { this.createdAt = v; }
 }
+

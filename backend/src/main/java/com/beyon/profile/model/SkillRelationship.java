@@ -35,3 +35,4 @@ public class SkillRelationship {
     public void setRelationshipType(String relationshipType) { this.relationshipType = relationshipType; }
     public Instant getCreatedAt() { return createdAt; }
 }
+

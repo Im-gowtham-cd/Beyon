@@ -10,3 +10,4 @@ public interface StudentCareerProgressRepository extends JpaRepository<StudentCa
     List<StudentCareerProgress> findByStudentIdOrderByLastUpdatedAtDesc(UUID studentId);
     Optional<StudentCareerProgress> findByStudentIdAndCareerPathId(UUID studentId, UUID careerPathId);
 }
+

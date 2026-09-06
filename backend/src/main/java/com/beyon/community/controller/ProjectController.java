@@ -70,3 +70,4 @@ public class ProjectController {
         return ResponseEntity.ok(projectService.getMyApplications(extractUserId(auth)));
     }
 }
+

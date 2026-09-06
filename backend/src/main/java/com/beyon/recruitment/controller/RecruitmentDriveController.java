@@ -86,3 +86,4 @@ public class RecruitmentDriveController {
         return UUID.fromString(details.getUserId());
     }
 }
+

@@ -32,7 +32,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Initial mock / guest session initialization
+
     const initGuest = () => {
       const defaultUser: User = {
         id: 'usr-student-01',
@@ -74,7 +74,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setAuthToken(jwt);
       setUser(usr);
     } catch {
-      // Fallback for offline / demo testing
+
       const mockUser: User = {
         id: 'usr-demo',
         email,
@@ -153,3 +153,4 @@ export const useAuth = () => {
   }
   return context;
 };
+

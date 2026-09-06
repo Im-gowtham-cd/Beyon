@@ -30,3 +30,4 @@ public class ContentService {
 
     public List<ContentResource> getMyResources(UUID authorId) { return resourceRepo.findByAuthorIdOrderByCreatedAtDesc(authorId); }
 }
+

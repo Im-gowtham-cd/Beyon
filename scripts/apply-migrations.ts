@@ -13,10 +13,11 @@ for (const f of files) {
     try {
       doltExec(stmt);
     } catch {
-      // ignore table/column/index already exists
+
     }
   }
   console.log("✅ Applied migration:", f);
 }
 console.log("🎉 All migrations applied successfully!");
 process.exit(0);
+

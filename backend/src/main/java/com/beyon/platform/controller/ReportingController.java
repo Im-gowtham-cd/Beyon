@@ -40,3 +40,4 @@ public class ReportingController {
         return UUID.fromString(details.getUserId());
     }
 }
+

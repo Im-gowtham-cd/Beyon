@@ -38,7 +38,6 @@ public class CandidateDiscoveryService {
         this.skillRepo = skillRepo;
     }
 
-    // Phase 168: Auto-shortlist candidates based on configurable rules
     public List<Map<String, Object>> autoShortlist(UUID driveId, UUID companyId) {
         RecruitmentDrive drive = driveRepo.findById(driveId)
             .orElseThrow(() -> new RuntimeException("Drive not found"));
@@ -50,11 +49,9 @@ public class CandidateDiscoveryService {
         for (RecruitmentApplication app : applications) {
             if ("REJECTED".equals(app.getStatus()) || "WITHDRAWN".equals(app.getStatus())) continue;
 
-            // Calculate skill match
             BigDecimal skillMatch = calculateSkillMatch(app.getStudentId(), drive.getRequiredSkills());
             BigDecimal assessmentScore = app.getAssessmentScore() != null ? app.getAssessmentScore() : BigDecimal.ZERO;
 
-            // Overall score: 50% assessment + 50% skill match
             BigDecimal overall = assessmentScore.multiply(new BigDecimal("0.5"))
                 .add(skillMatch.multiply(new BigDecimal("0.5")))
                 .setScale(2, RoundingMode.HALF_UP);
@@ -69,10 +66,8 @@ public class CandidateDiscoveryService {
             ranked.add(candidate);
         }
 
-        // Sort by overall score descending
         ranked.sort((a, b) -> ((BigDecimal) b.get("overallScore")).compareTo((BigDecimal) a.get("overallScore")));
 
-        // Assign ranks
         for (int i = 0; i < ranked.size(); i++) {
             ranked.get(i).put("rank", i + 1);
         }
@@ -80,7 +75,6 @@ public class CandidateDiscoveryService {
         return ranked;
     }
 
-    // Phase 168: Shortlist a candidate
     public CandidateShortlist shortlistCandidate(UUID driveId, UUID studentId, UUID pipelineId, UUID shortlistedBy) {
         Optional<CandidateShortlist> existing = shortlistRepo.findByDriveIdAndStudentId(driveId, studentId);
         if (existing.isPresent()) return existing.get();
@@ -114,7 +108,6 @@ public class CandidateDiscoveryService {
         return shortlistRepo.save(shortlist);
     }
 
-    // Phase 164: Check student eligibility for a drive
     public Map<String, Object> checkEligibility(UUID studentId, UUID driveId) {
         RecruitmentDrive drive = driveRepo.findById(driveId)
             .orElseThrow(() -> new RuntimeException("Drive not found"));
@@ -154,3 +147,4 @@ public class CandidateDiscoveryService {
         return BigDecimal.valueOf(matched * 100 / required.length);
     }
 }
+

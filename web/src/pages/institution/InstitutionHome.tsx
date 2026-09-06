@@ -53,31 +53,87 @@ export function InstitutionHome() {
         setPendingStudents(Array.isArray(pendingRes) ? pendingRes : (pendingRes as any)?.data || []);
         setDrives(Array.isArray(drivesRes) ? drivesRes : (drivesRes as any)?.data || []);
       } catch {
-        /* fallback */
+
       }
     }
     loadData();
   }, []);
 
-  const instName = profileData?.institutionName || user?.name || 'PSG College of Technology';
+  const instName = profileData?.institutionName || user?.name || 'Institution Partner';
   const officerName = user?.name?.split(' ')[0] || 'Placement Officer';
 
-  const totalStudents = metrics?.totalStudents || students.length || 120;
-  const placementRate = metrics?.placementPercentage ? Number(metrics.placementPercentage).toFixed(1) : '92.4';
-  const studentsPlaced = metrics?.studentsPlaced || 60;
-  const activeDrivesCount = drives.length || 6;
+  const totalStudents = metrics?.totalStudents !== undefined ? metrics.totalStudents : students.length;
+  const studentsPlaced = metrics?.studentsPlaced !== undefined ? metrics.studentsPlaced : students.filter(s => s.placementStatus === 'PLACED' || s.placementStatus === 'OFFERED').length;
+  const placementRate = totalStudents > 0 ? ((studentsPlaced / totalStudents) * 100).toFixed(1) : '0.0';
+  const activeDrivesCount = drives.length;
   const pendingCount = pendingStudents.length;
 
-  const deptStats = [
-    { name: 'Computer Science and Engineering', count: 45, placed: '96.2%', avgCgpa: '9.12' },
-    { name: 'Information Technology', count: 32, placed: '94.5%', avgCgpa: '8.85' },
-    { name: 'Artificial Intelligence & Data Science', count: 28, placed: '95.0%', avgCgpa: '9.05' },
-    { name: 'Electronics and Communication', count: 25, placed: '89.4%', avgCgpa: '8.65' },
-  ];
+  const placedPackages = students
+    .map((s) => Number(s.packageLpa || s.ctcLpa))
+    .filter((p) => !isNaN(p) && p > 0);
+  const avgPackage = placedPackages.length > 0 ? (placedPackages.reduce((a, b) => a + b, 0) / placedPackages.length).toFixed(1) : null;
+  const maxPackage = placedPackages.length > 0 ? Math.max(...placedPackages).toFixed(1) : null;
+
+  const deptMap = new Map<string, { count: number; totalCgpa: number; placed: number }>();
+  students.forEach((s) => {
+    const d = s.department || 'Unassigned Department';
+    const entry = deptMap.get(d) || { count: 0, totalCgpa: 0, placed: 0 };
+    entry.count += 1;
+    if (s.cgpa) entry.totalCgpa += Number(s.cgpa);
+    if (s.placementStatus === 'PLACED' || s.placementStatus === 'OFFERED') entry.placed += 1;
+    deptMap.set(d, entry);
+  });
+  const deptStats = Array.from(deptMap.entries()).map(([name, val]) => ({
+    name,
+    count: val.count,
+    placed: val.count > 0 ? `${((val.placed / val.count) * 100).toFixed(1)}%` : '0.0%',
+    avgCgpa: val.count > 0 ? (val.totalCgpa / val.count).toFixed(2) : '-',
+  }));
+
+  const accreditationLabel = profileData?.accreditationGrade
+    ? `NAAC ${profileData.accreditationGrade} Accredited`
+    : 'Verified Academic Partner';
+
+  const isPendingVerification =
+    user?.status === 'PENDING_SUPER_ADMIN_VERIFICATION' ||
+    user?.status === 'PENDING_VERIFICATION' ||
+    user?.status === 'PENDING';
 
   return (
     <div className={styles.page}>
-      {/* Welcome Hero */}
+      {isPendingVerification && (
+        <div
+          style={{
+            padding: '16px 20px',
+            background: '#fffbeb',
+            border: '1px solid #fde68a',
+            marginBottom: '20px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '12px',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{ width: '40px', height: '40px', background: '#fef3c7', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#b45309', flexShrink: 0 }}>
+              <ShieldCheck size={22} />
+            </div>
+            <div>
+              <div style={{ fontWeight: 800, color: '#92400e', fontSize: '0.94rem' }}>
+                Account Pending Super Admin Approval
+              </div>
+              <div style={{ fontSize: '0.82rem', color: '#b45309', marginTop: '2px' }}>
+                Your institutional registration is currently in the <strong>Super Admin Verification Queue</strong>. Candidate discovery, corporate drives, and placements will be fully activated upon administrative verification.
+              </div>
+            </div>
+          </div>
+          <span style={{ fontSize: '0.74rem', fontWeight: 800, padding: '4px 10px', background: '#b45309', color: '#ffffff' }}>
+            STATUS: PENDING VERIFICATION
+          </span>
+        </div>
+      )}
+
       <section className={styles.welcomeHero}>
         <div className={styles.welcomeInfo}>
           <div className={styles.badgeRow}>
@@ -87,7 +143,7 @@ export function InstitutionHome() {
             </span>
             <span className={styles.verifiedBadge}>
               <ShieldCheck size={13} />
-              <span>NAAC A++ &middot; NIRF Verified Partner</span>
+              <span>{accreditationLabel}</span>
             </span>
           </div>
           <h1 className={styles.welcomeTitle}>
@@ -116,7 +172,6 @@ export function InstitutionHome() {
         </div>
       </section>
 
-      {/* 4 KPI Cards */}
       <div className={styles.kpiGrid}>
         <div className={styles.kpiCard}>
           <div className={styles.kpiHeader}>
@@ -151,9 +206,11 @@ export function InstitutionHome() {
               <ShieldCheck size={16} />
             </div>
           </div>
-          <div className={styles.kpiValue}>{metrics?.averagePackage ? `₹${Number(metrics.averagePackage).toFixed(1)} LPA` : '₹14.2 LPA'}</div>
+          <div className={styles.kpiValue}>
+            {avgPackage ? `₹${avgPackage} LPA` : 'No placement data yet'}
+          </div>
           <span className={styles.kpiSub}>
-            <CheckCircle2 size={14} /> Highest: ₹48.0 LPA
+            <CheckCircle2 size={14} /> {maxPackage ? `Highest: ₹${maxPackage} LPA` : 'Awaiting verified offers'}
           </span>
         </div>
 
@@ -171,7 +228,6 @@ export function InstitutionHome() {
         </div>
       </div>
 
-      {/* Fast Action Banner */}
       <div className={styles.actionBanner}>
         <div className={styles.actionBannerLeft}>
           <div className={styles.actionBannerIcon}>
@@ -198,7 +254,6 @@ export function InstitutionHome() {
         </div>
       </div>
 
-      {/* Main Grid: Student Roster + Right Sidebar */}
       <div className={styles.dashboardGrid}>
         <div className={styles.mainColumn}>
           <div className={styles.sectionHeader}>
@@ -227,92 +282,110 @@ export function InstitutionHome() {
                 </tr>
               </thead>
               <tbody>
-                {students.slice(0, 8).map((s) => (
-                  <tr key={s.id}>
-                    <td><code>{s.studentId?.slice(0, 8).toUpperCase()}</code></td>
-                    <td>
-                      <div className={styles.studentName}>{s.department || 'Computer Science and Engineering'}</div>
-                    </td>
-                    <td style={{ fontWeight: 400 }}>{s.batch || '2022-2026'}</td>
-                    <td>
-                      <span style={{ fontSize: '0.76rem', color: s.placementStatus === 'PLACED' ? '#15803d' : '#1c2d81', fontWeight: 600 }}>
-                        {s.placementStatus}
-                      </span>
-                    </td>
-                    <td>
-                      <span className={`${styles.statusBadge} ${s.verified ? styles.statusVerified : styles.statusPending}`}>
-                        {s.verified ? <CheckCircle2 size={11} /> : null} {s.verified ? 'VERIFIED' : 'PENDING'}
-                      </span>
-                    </td>
-                    <td>
-                      <span style={{ fontSize: '0.76rem', color: s.verified ? '#15803d' : '#d97706', fontWeight: 600 }}>
-                        {s.verified ? 'Authorized' : 'Pending Verification'}
-                      </span>
+                {students.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} style={{ textAlign: 'center', padding: '36px 16px', color: '#64748b' }}>
+                      No registered students for this institution yet. As students sign up and link their institution profile, their verified credentials will appear here.
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  students.slice(0, 8).map((s) => (
+                    <tr key={s.id}>
+                      <td><code>{s.studentId?.slice(0, 8).toUpperCase()}</code></td>
+                      <td>
+                        <div className={styles.studentName}>{s.department || 'Unassigned Department'}</div>
+                      </td>
+                      <td style={{ fontWeight: 400 }}>{s.batch || 'Current Batch'}</td>
+                      <td>
+                        <span style={{ fontSize: '0.76rem', color: s.placementStatus === 'PLACED' ? '#15803d' : '#1c2d81', fontWeight: 600 }}>
+                          {s.placementStatus || 'UNPLACED'}
+                        </span>
+                      </td>
+                      <td>
+                        <span className={`${styles.statusBadge} ${s.verified ? styles.statusVerified : styles.statusPending}`}>
+                          {s.verified ? <CheckCircle2 size={11} /> : null} {s.verified ? 'VERIFIED' : 'PENDING'}
+                        </span>
+                      </td>
+                      <td>
+                        <span style={{ fontSize: '0.76rem', color: s.verified ? '#15803d' : '#d97706', fontWeight: 600 }}>
+                          {s.verified ? 'Authorized' : 'Pending Verification'}
+                        </span>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
         </div>
 
-        {/* Right Aside */}
         <div className={styles.sideColumn}>
-          {/* Department Placement Summary */}
+
           <div className={styles.sideCard}>
             <div className={styles.sideCardHeader}>
               <Layers size={16} style={{ color: '#1c2d81' }} />
               <span>Department Placement Rates</span>
             </div>
             <div className={styles.deptList}>
-              {deptStats.map((d, idx) => (
-                <div key={idx} className={styles.deptItem}>
-                  <div>
-                    <div className={styles.deptName}>{d.name}</div>
-                    <div style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 400 }}>
-                      {d.count} Candidates &middot; Avg {d.avgCgpa} CGPA
-                    </div>
-                  </div>
-                  <span className={styles.deptMeta}>{d.placed}</span>
+              {deptStats.length === 0 ? (
+                <div style={{ padding: '16px 0', fontSize: '0.82rem', color: '#64748b' }}>
+                  Department metrics will calculate automatically as student profiles are verified.
                 </div>
-              ))}
+              ) : (
+                deptStats.map((d, idx) => (
+                  <div key={idx} className={styles.deptItem}>
+                    <div>
+                      <div className={styles.deptName}>{d.name}</div>
+                      <div style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 400 }}>
+                        {d.count} Candidates &middot; Avg {d.avgCgpa} CGPA
+                      </div>
+                    </div>
+                    <span className={styles.deptMeta}>{d.placed}</span>
+                  </div>
+                ))
+              )}
             </div>
           </div>
 
-          {/* Active Campus Drives Card */}
           <div className={styles.sideCard}>
             <div className={styles.sideCardHeader}>
               <Briefcase size={16} style={{ color: '#1c2d81' }} />
               <span>Visiting Corporate Drives</span>
             </div>
             <div className={styles.driveList}>
-              {drives.slice(0, 4).map((drv, idx) => (
-                <div
-                  key={drv.id || idx}
-                  style={{
-                    padding: '10px 12px',
-                    background: '#f8fafc',
-                    border: '1px solid #e2e8f0',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '3px',
-                  }}
-                >
-                  <div style={{ fontSize: '0.82rem', fontWeight: 700, color: '#0f172a' }}>{drv.title || 'Campus Placement Drive'}</div>
+              {drives.length === 0 ? (
+                <div style={{ padding: '16px 0', fontSize: '0.82rem', color: '#64748b' }}>
+                  No visiting corporate recruitment drives active.
+                </div>
+              ) : (
+                drives.slice(0, 4).map((drv, idx) => (
                   <div
+                    key={drv.id || idx}
                     style={{
-                      fontSize: '0.72rem',
-                      color: '#64748b',
+                      padding: '10px 12px',
+                      background: '#f8fafc',
+                      border: '1px solid #e2e8f0',
                       display: 'flex',
-                      justifyContent: 'space-between',
-                      fontWeight: 400,
+                      flexDirection: 'column',
+                      gap: '3px',
                     }}
                   >
-                    <span>Status: {drv.status}</span>
-                    <span style={{ color: '#1c2d81', fontWeight: 600 }}>{drv.appliedCount || drv.eligibleStudentCount || 25} Candidates</span>
+                    <div style={{ fontSize: '0.82rem', fontWeight: 700, color: '#0f172a' }}>{drv.title || 'Campus Placement Drive'}</div>
+                    <div
+                      style={{
+                        fontSize: '0.72rem',
+                        color: '#64748b',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        fontWeight: 400,
+                      }}
+                    >
+                      <span>Status: {drv.status}</span>
+                      <span style={{ color: '#1c2d81', fontWeight: 600 }}>{drv.appliedCount || drv.eligibleStudentCount || 0} Candidates</span>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
             <Link
               to="/institution/drives"
@@ -336,3 +409,4 @@ export function InstitutionHome() {
     </div>
   );
 }
+

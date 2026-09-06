@@ -10,3 +10,4 @@ public interface CollaborationProgramRepository extends JpaRepository<Collaborat
     List<CollaborationProgram> findByStatusAndProgramType(String status, String programType);
     List<CollaborationProgram> findByStatusIn(List<String> statuses);
 }
+

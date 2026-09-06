@@ -10,3 +10,4 @@ public interface EntityPostRepository extends JpaRepository<EntityPost, UUID> {
     List<EntityPost> findByVisibilityOrderByCreatedAtDesc(String visibility);
     List<EntityPost> findByPostTypeOrderByCreatedAtDesc(String postType);
 }
+

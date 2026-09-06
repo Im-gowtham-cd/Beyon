@@ -39,3 +39,4 @@ public class NotificationPreferencesController {
         throw new RuntimeException("Unauthorized");
     }
 }
+

@@ -9,3 +9,4 @@ import java.util.UUID;
 public interface StudentPracticeStatsRepository extends JpaRepository<StudentPracticeStats, UUID> {
     Optional<StudentPracticeStats> findByStudentId(UUID studentId);
 }
+

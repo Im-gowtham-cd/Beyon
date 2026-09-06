@@ -57,7 +57,6 @@ export function ProfessionalProfilePage() {
         </div>
       </div>
 
-      {/* Profile Header */}
       <div className={styles.profileHeader}>
         <div className={styles.profileName}>{p?.headline || 'Your Professional Headline'}</div>
         <div className={styles.profileAbout}>{p?.about || 'Add a professional summary to make your profile stand out.'}</div>
@@ -69,7 +68,6 @@ export function ProfessionalProfilePage() {
         </div>
       </div>
 
-      {/* Tabs */}
       <div className={styles.tabRow}>
         {['overview', 'certificates', 'endorsements', 'portfolio', 'resume', 'settings'].map(t => (
           <button key={t} className={`${styles.tabBtn} ${tab === t ? styles.tabActive : ''}`} onClick={() => setTab(t)}>
@@ -78,7 +76,6 @@ export function ProfessionalProfilePage() {
         ))}
       </div>
 
-      {/* Overview */}
       {tab === 'overview' && (
         <div className={styles.tabContent}>
           <div className={styles.sectionCard}>
@@ -119,7 +116,6 @@ export function ProfessionalProfilePage() {
         </div>
       )}
 
-      {/* Certificates */}
       {tab === 'certificates' && (
         <div className={styles.tabContent}>
           {certificates.length > 0 ? (
@@ -141,7 +137,6 @@ export function ProfessionalProfilePage() {
         </div>
       )}
 
-      {/* Endorsements */}
       {tab === 'endorsements' && (
         <div className={styles.tabContent}>
           {endorsements.length > 0 ? (
@@ -161,7 +156,6 @@ export function ProfessionalProfilePage() {
         </div>
       )}
 
-      {/* Portfolio */}
       {tab === 'portfolio' && (
         <div className={styles.tabContent}>
           <button className={styles.btnPrimary} onClick={() => addProject({ title: 'New Project', description: 'Add details...' })}>+ Add Project</button>
@@ -183,7 +177,6 @@ export function ProfessionalProfilePage() {
         </div>
       )}
 
-      {/* Resume */}
       {tab === 'resume' && (
         <div className={styles.tabContent}>
           <button className={styles.btnPrimary} onClick={generateResume}>Generate Resume</button>
@@ -204,7 +197,6 @@ export function ProfessionalProfilePage() {
         </div>
       )}
 
-      {/* Settings */}
       {tab === 'settings' && (
         <div className={styles.tabContent}>
           <div className={styles.sectionCard}>
@@ -225,3 +217,4 @@ export function ProfessionalProfilePage() {
     </div>
   );
 }
+

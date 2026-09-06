@@ -35,3 +35,4 @@ public class AssessmentSkillScore {
     public BigDecimal getDifficultyAvg() { return difficultyAvg; } public void setDifficultyAvg(BigDecimal v) { this.difficultyAvg = v; }
     public OffsetDateTime getCreatedAt() { return createdAt; } public void setCreatedAt(OffsetDateTime v) { this.createdAt = v; }
 }
+

@@ -69,3 +69,4 @@ public class SkillTaxonomyService {
         return taxonomyRepo.save(node);
     }
 }
+

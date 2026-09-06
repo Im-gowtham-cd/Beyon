@@ -40,7 +40,7 @@ export const AssessmentInfoScreen: React.FC = () => {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      {/* Desktop Requirement Banner */}
+
       <View style={styles.lockdownBanner}>
         <View style={styles.tagRow}>
           <View style={styles.badgeLockdown}>
@@ -49,12 +49,11 @@ export const AssessmentInfoScreen: React.FC = () => {
         </View>
         <Text style={styles.bannerTitle}>Proctored Assessment Center</Text>
         <Text style={styles.bannerSubtitle}>
-          To maintain strict academic and recruitment standards, examinations run exclusively in the 
+          To maintain strict academic and recruitment standards, examinations run exclusively in the
           <Text style={{ fontWeight: '900', color: colors.accent }}> Beyon Secure Desktop Client</Text> with AI biometric proctoring and fullscreen kiosk lockdown.
         </Text>
       </View>
 
-      {/* Security Checklist */}
       <View style={styles.checklistCard}>
         <Text style={styles.checklistTitle}>Desktop Examination Guidelines:</Text>
         <View style={styles.checkItem}>
@@ -75,7 +74,6 @@ export const AssessmentInfoScreen: React.FC = () => {
         </View>
       </View>
 
-      {/* Assigned Assessments */}
       <Text style={styles.sectionHeading}>Your Assigned Assessments</Text>
       <View style={styles.testList}>
         {ASSIGNED_TESTS.map(t => (
@@ -275,3 +273,4 @@ const styles = StyleSheet.create({
     color: colors.success,
   },
 });
+

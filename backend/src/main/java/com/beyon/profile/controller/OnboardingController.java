@@ -5,6 +5,8 @@ import com.beyon.identity.enums.AccountStatus;
 import com.beyon.identity.model.User;
 import com.beyon.identity.repository.UserRepository;
 import com.beyon.identity.security.JwtUserDetails;
+import com.beyon.institution.model.InstitutionStudent;
+import com.beyon.institution.repository.InstitutionStudentRepository;
 import com.beyon.practice.service.CoinService;
 import com.beyon.profile.enums.CertificationStatus;
 import com.beyon.profile.enums.PlacementPreference;
@@ -34,7 +36,9 @@ public class OnboardingController {
     private final StudentProjectRepository studentProjectRepository;
     private final StudentCertificationRepository studentCertificationRepository;
     private final StudentLinkRepository studentLinkRepository;
+    private final InstitutionStudentRepository institutionStudentRepository;
     private final CoinService coinService;
+    private final org.springframework.jdbc.core.JdbcTemplate jdbcTemplate;
 
     public OnboardingController(UserRepository userRepository,
                                 StudentProfileRepository studentProfileRepository,
@@ -44,7 +48,9 @@ public class OnboardingController {
                                 StudentProjectRepository studentProjectRepository,
                                 StudentCertificationRepository studentCertificationRepository,
                                 StudentLinkRepository studentLinkRepository,
-                                CoinService coinService) {
+                                InstitutionStudentRepository institutionStudentRepository,
+                                CoinService coinService,
+                                org.springframework.jdbc.core.JdbcTemplate jdbcTemplate) {
         this.userRepository = userRepository;
         this.studentProfileRepository = studentProfileRepository;
         this.companyProfileRepository = companyProfileRepository;
@@ -53,7 +59,22 @@ public class OnboardingController {
         this.studentProjectRepository = studentProjectRepository;
         this.studentCertificationRepository = studentCertificationRepository;
         this.studentLinkRepository = studentLinkRepository;
+        this.institutionStudentRepository = institutionStudentRepository;
         this.coinService = coinService;
+        this.jdbcTemplate = jdbcTemplate;
+    }
+
+    @GetMapping("/institutions")
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getRegisteredInstitutions() {
+        List<Map<String, Object>> institutions = jdbcTemplate.queryForList(
+                "SELECT ip.id, ip.user_id AS userId, ip.institution_name AS name, ip.institution_code AS code, " +
+                "ip.institution_type AS type, ip.city, ip.state, ip.accreditation_grade AS grade, " +
+                "ip.accreditations AS accreditations " +
+                "FROM institution_profiles ip " +
+                "INNER JOIN users u ON u.id = ip.user_id " +
+                "ORDER BY ip.institution_name ASC"
+        );
+        return ResponseEntity.ok(ApiResponse.ok(institutions));
     }
 
     @PostMapping("/student")
@@ -99,18 +120,38 @@ public class OnboardingController {
             } catch (Exception ignored) {}
         }
 
-        if (body.get("preferredJobRoles") instanceof List<?> roles) {
-            profile.setPreferredJobRoles(String.join(",", roles.stream().map(Object::toString).toList()));
-        }
-
-        if (body.get("preferredIndustries") instanceof List<?> industries) {
-            profile.setPreferredIndustries(String.join(",", industries.stream().map(Object::toString).toList()));
-        }
-
-        profile.setCompletionPct(100);
+        profile.setCompletionPct(90);
         studentProfileRepository.save(profile);
 
-        // Process Skills
+        String targetInst = profile.getInstitution();
+        if (targetInst != null && !targetInst.isBlank()) {
+            List<InstitutionProfile> matchingInstitutions = institutionProfileRepository.findAll();
+            InstitutionProfile matched = matchingInstitutions.stream()
+                    .filter(ip -> ip.getInstitutionName() != null &&
+                            (ip.getInstitutionName().equalsIgnoreCase(targetInst) ||
+                             targetInst.toLowerCase().contains(ip.getInstitutionName().toLowerCase()) ||
+                             ip.getInstitutionName().toLowerCase().contains(targetInst.toLowerCase())))
+                    .findFirst()
+                    .orElse(null);
+
+            if (matched != null) {
+                UUID instUserId = matched.getUserId();
+                InstitutionStudent instStudent = institutionStudentRepository
+                        .findByInstitutionIdAndStudentId(instUserId, userId)
+                        .orElseGet(() -> {
+                            InstitutionStudent is = new InstitutionStudent();
+                            is.setInstitutionId(instUserId);
+                            is.setStudentId(userId);
+                            return is;
+                        });
+                instStudent.setDepartment(profile.getDepartment());
+                instStudent.setBatch(profile.getAcademicYear() != null ? profile.getAcademicYear() : "Current Batch");
+                instStudent.setPlacementStatus("PENDING_VERIFICATION");
+                instStudent.setVerified(false);
+                institutionStudentRepository.save(instStudent);
+            }
+        }
+
         if (body.get("skills") instanceof List<?> skillsList) {
             for (Object item : skillsList) {
                 if (item instanceof Map<?, ?> smap && smap.get("skillName") != null) {
@@ -131,7 +172,6 @@ public class OnboardingController {
             }
         }
 
-        // Process Projects
         if (body.get("projects") instanceof List<?> projList) {
             for (Object item : projList) {
                 if (item instanceof Map<?, ?> pmap && pmap.get("name") != null) {
@@ -151,7 +191,6 @@ public class OnboardingController {
             }
         }
 
-        // Process Certifications
         if (body.get("certifications") instanceof List<?> certList) {
             for (Object item : certList) {
                 if (item instanceof Map<?, ?> cmap && cmap.get("name") != null) {
@@ -163,14 +202,13 @@ public class OnboardingController {
                         if (cmap.get("issuingOrg") != null) c.setIssuingOrg(cmap.get("issuingOrg").toString());
                         if (cmap.get("credentialId") != null) c.setCredentialId(cmap.get("credentialId").toString());
                         if (cmap.get("credentialUrl") != null) c.setCredentialUrl(cmap.get("credentialUrl").toString());
-                        c.setStatus(CertificationStatus.VERIFIED);
+                        c.setStatus(CertificationStatus.PENDING_VERIFICATION);
                         studentCertificationRepository.save(c);
                     }
                 }
             }
         }
 
-        // Process Links
         if (body.get("links") instanceof List<?> linkList) {
             for (Object item : linkList) {
                 if (item instanceof Map<?, ?> lmap && lmap.get("platform") != null && lmap.get("url") != null) {
@@ -186,22 +224,20 @@ public class OnboardingController {
             }
         }
 
-        // Mark user account active and profile completed
         userRepository.findById(userId).ifPresent(u -> {
-            u.setProfileStatus(AccountStatus.COMPLETED);
-            u.setStatus(AccountStatus.ACTIVE);
+            u.setProfileStatus(AccountStatus.PENDING_INSTITUTION_VERIFICATION);
+            u.setStatus(AccountStatus.PENDING_VERIFICATION);
             userRepository.save(u);
         });
 
-        // Award 100 Welcome Coins
         try {
             coinService.getOrCreateWallet(userId);
             coinService.earnCoins(userId, "ONBOARDING_COMPLETED", "ONBOARDING", userId);
         } catch (Exception ignored) {}
 
         return ResponseEntity.ok(ApiResponse.ok(Map.of(
-                "status", "COMPLETED",
-                "message", "Student profile successfully activated",
+                "status", "PENDING_INSTITUTION_VERIFICATION",
+                "message", "Student profile created. Awaiting institutional verification.",
                 "coinsAwarded", 100
         )));
     }
@@ -226,22 +262,25 @@ public class OnboardingController {
         if (body.get("officialEmail") != null) profile.setOfficialEmail(body.get("officialEmail").toString());
         if (body.get("phone") != null) profile.setPhone(body.get("phone").toString());
         if (body.get("country") != null) profile.setCountry(body.get("country").toString());
+        if (body.get("state") != null) profile.setState(body.get("state").toString());
         if (body.get("city") != null) profile.setCity(body.get("city").toString());
         if (body.get("headquarters") != null) profile.setHeadquarters(body.get("headquarters").toString());
         if (body.get("companySize") != null) profile.setCompanySize(body.get("companySize").toString());
         if (body.get("about") != null) profile.setAbout(body.get("about").toString());
+        if (body.get("linkedin") != null) profile.setLinkedin(body.get("linkedin").toString());
 
+        profile.setCompletionPct(100);
         companyProfileRepository.save(profile);
 
         userRepository.findById(userId).ifPresent(u -> {
-            u.setProfileStatus(AccountStatus.COMPLETED);
-            u.setStatus(AccountStatus.ACTIVE);
+            u.setProfileStatus(AccountStatus.PENDING_SUPER_ADMIN_VERIFICATION);
+            u.setStatus(AccountStatus.PENDING_SUPER_ADMIN_VERIFICATION);
             userRepository.save(u);
         });
 
         return ResponseEntity.ok(ApiResponse.ok(Map.of(
-                "status", "COMPLETED",
-                "message", "Company profile successfully activated"
+                "status", "PENDING_SUPER_ADMIN_VERIFICATION",
+                "message", "Company corporate profile submitted for Super Admin verification"
         )));
     }
 
@@ -265,20 +304,33 @@ public class OnboardingController {
         if (body.get("phone") != null) profile.setPhone(body.get("phone").toString());
         if (body.get("website") != null) profile.setWebsite(body.get("website").toString());
         if (body.get("country") != null) profile.setCountry(body.get("country").toString());
+        if (body.get("state") != null) profile.setState(body.get("state").toString());
         if (body.get("city") != null) profile.setCity(body.get("city").toString());
         if (body.get("address") != null) profile.setAddress(body.get("address").toString());
+        if (body.get("postalCode") != null) profile.setPostalCode(body.get("postalCode").toString());
+        if (body.get("affiliatedUniversity") != null) profile.setAffiliatedUniversity(body.get("affiliatedUniversity").toString());
+        if (body.get("accreditationGrade") != null) profile.setAccreditationGrade(body.get("accreditationGrade").toString());
+        if (body.get("accreditations") != null) profile.setAccreditations(body.get("accreditations").toString());
 
+        if (body.get("establishedYear") != null && !body.get("establishedYear").toString().isBlank()) {
+            try { profile.setEstablishedYear(Integer.parseInt(body.get("establishedYear").toString())); } catch (Exception ignored) {}
+        }
+        if (body.get("totalStudents") != null && !body.get("totalStudents").toString().isBlank()) {
+            try { profile.setTotalStudents(Integer.parseInt(body.get("totalStudents").toString())); } catch (Exception ignored) {}
+        }
+
+        profile.setCompletionPct(100);
         institutionProfileRepository.save(profile);
 
         userRepository.findById(userId).ifPresent(u -> {
-            u.setProfileStatus(AccountStatus.COMPLETED);
-            u.setStatus(AccountStatus.ACTIVE);
+            u.setProfileStatus(AccountStatus.PENDING_SUPER_ADMIN_VERIFICATION);
+            u.setStatus(AccountStatus.PENDING_SUPER_ADMIN_VERIFICATION);
             userRepository.save(u);
         });
 
         return ResponseEntity.ok(ApiResponse.ok(Map.of(
-                "status", "COMPLETED",
-                "message", "Institution profile successfully activated"
+                "status", "PENDING_SUPER_ADMIN_VERIFICATION",
+                "message", "Institution profile submitted for Super Admin verification"
         )));
     }
 
@@ -287,3 +339,4 @@ public class OnboardingController {
         return UUID.fromString(details.getUserId());
     }
 }
+

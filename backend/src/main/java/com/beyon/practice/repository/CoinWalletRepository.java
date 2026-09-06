@@ -9,3 +9,4 @@ import java.util.UUID;
 public interface CoinWalletRepository extends JpaRepository<CoinWallet, UUID> {
     Optional<CoinWallet> findByStudentId(UUID studentId);
 }
+

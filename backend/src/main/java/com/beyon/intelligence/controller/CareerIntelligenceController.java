@@ -42,7 +42,6 @@ public class CareerIntelligenceController {
         this.jwtUtil = jwtUtil;
     }
 
-    // ===== Phase 151: Skill Taxonomy =====
     @GetMapping("/taxonomy/roots")
     public ResponseEntity<?> getRootTaxonomyNodes() {
         return ResponseEntity.ok(taxonomyService.getRootNodes());
@@ -68,7 +67,6 @@ public class CareerIntelligenceController {
         return ResponseEntity.ok(taxonomyService.search(q));
     }
 
-    // ===== Phase 152: Student Skill Graph =====
     @GetMapping("/skill-graph")
     public ResponseEntity<?> getMySkillGraph(HttpServletRequest request) {
         UUID userId = extractUserId(request);
@@ -87,7 +85,6 @@ public class CareerIntelligenceController {
         return ResponseEntity.ok(graphService.getSkillStrengths(userId));
     }
 
-    // ===== Phase 153: Skill Gap Analysis =====
     @GetMapping("/skill-gaps/{careerPathId}")
     public ResponseEntity<?> analyzeSkillGaps(@PathVariable UUID careerPathId, HttpServletRequest request) {
         UUID userId = extractUserId(request);
@@ -100,7 +97,6 @@ public class CareerIntelligenceController {
         return ResponseEntity.ok(gapService.getTopGaps(userId, limit));
     }
 
-    // ===== Phase 157: Career Advisor =====
     @PostMapping("/advisor/sessions")
     public ResponseEntity<?> createAdvisorSession(HttpServletRequest request) {
         UUID userId = extractUserId(request);
@@ -126,7 +122,6 @@ public class CareerIntelligenceController {
         return ResponseEntity.ok(advisorService.askQuestion(sessionId, question, userId));
     }
 
-    // ===== Phase 155: Personalized Challenge Config =====
     @GetMapping("/challenge-config")
     public ResponseEntity<?> getChallengeConfig(HttpServletRequest request) {
         UUID userId = extractUserId(request);
@@ -145,7 +140,6 @@ public class CareerIntelligenceController {
         return ResponseEntity.ok(challengeEngine.getRecommendation(userId));
     }
 
-    // ===== Phase 156: Adaptive Learning =====
     @PostMapping("/adaptive-paths/{careerPathId}")
     public ResponseEntity<?> getOrCreateAdaptivePath(@PathVariable UUID careerPathId, HttpServletRequest request) {
         UUID userId = extractUserId(request);
@@ -164,14 +158,12 @@ public class CareerIntelligenceController {
         return ResponseEntity.ok(adaptiveService.getMyPaths(userId));
     }
 
-    // ===== Phase 158: Portfolio Intelligence =====
     @GetMapping("/portfolio/analyze")
     public ResponseEntity<?> analyzePortfolio(HttpServletRequest request) {
         UUID userId = extractUserId(request);
         return ResponseEntity.ok(portfolioService.analyze(userId));
     }
 
-    // ===== Phase 159: Opportunity Matching =====
     @GetMapping("/match/{opportunityId}")
     public ResponseEntity<?> calculateMatch(@PathVariable UUID opportunityId, HttpServletRequest request) {
         UUID userId = extractUserId(request);
@@ -184,13 +176,11 @@ public class CareerIntelligenceController {
         return ResponseEntity.ok(matchService.getMyMatches(userId));
     }
 
-    // ===== Phase 160: Career Intelligence Dashboard =====
     @GetMapping("/dashboard")
     public ResponseEntity<?> getDashboard(HttpServletRequest request) {
         UUID userId = extractUserId(request);
         Map<String, Object> dashboard = new LinkedHashMap<>();
 
-        // Skill graph summary
         List<Map<String, Object>> skillGraph = graphService.getStudentSkillGraph(userId);
         dashboard.put("skillCount", skillGraph.size());
         dashboard.put("averageProficiency", skillGraph.stream()
@@ -200,20 +190,16 @@ public class CareerIntelligenceController {
             .filter(s -> Boolean.TRUE.equals(s.get("verified")))
             .count());
 
-        // Strengths
         dashboard.put("strengths", graphService.getSkillStrengths(userId));
 
-        // Weak skills
         dashboard.put("weakSkills", gapService.getTopGaps(userId, 5));
 
-        // Portfolio analysis
         try {
             dashboard.put("portfolio", portfolioService.analyze(userId));
         } catch (Exception e) {
             dashboard.put("portfolio", Map.of("overallScore", 0));
         }
 
-        // Career readiness — check if any career path is started
         dashboard.put("careerReadiness", Map.of("score", 0, "pathsStarted", 0));
 
         return ResponseEntity.ok(dashboard);
@@ -225,3 +211,4 @@ public class CareerIntelligenceController {
         throw new RuntimeException("Unauthorized");
     }
 }
+

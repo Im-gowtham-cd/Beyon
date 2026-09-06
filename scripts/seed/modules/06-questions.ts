@@ -1,8 +1,3 @@
-// ============================================================
-// Module 06 — Comprehensive Real Question Bank Seeder
-// Real technical questions & authentic options across all domains
-// ============================================================
-
 import { doltBatch, esc, doltQuery, toUUID } from "../engine/dolt.js";
 import { skillIds } from "./01-skills.js";
 import { SeededRandom } from "../utils/faker.js";
@@ -10,7 +5,6 @@ import type { SeedConfig } from "../config.js";
 
 export const questionIds: string[] = [];
 
-/** Load skill IDs from DB if not already populated (for standalone modes) */
 async function ensureSkillIds(): Promise<void> {
   if (Object.keys(skillIds).length > 0) return;
   const rows = doltQuery("SELECT id, slug FROM skills");
@@ -30,9 +24,8 @@ interface QuestionDef {
   explanation: string;
 }
 
-// ─── AUTHENTIC QUESTION REPOSITORY (300+ Realistic Questions) ────────
 const REAL_QUESTIONS: QuestionDef[] = [
-  // ─── ANGULAR ───
+
   {
     title: "Angular Dependency Injection Scope",
     q: "In Angular, what is the scope of a service provided with providedIn: 'root'?",
@@ -132,7 +125,6 @@ const REAL_QUESTIONS: QuestionDef[] = [
     explanation: "Reducers are pure functions returning the next state."
   },
 
-  // ─── REACT ───
   {
     title: "React useEffect Cleanup Function",
     q: "When does the cleanup function returned inside a React useEffect hook execute?",
@@ -190,7 +182,6 @@ const REAL_QUESTIONS: QuestionDef[] = [
     explanation: "Custom hooks must start with 'use' and follow the Rules of Hooks (top-level only, no conditional calls)."
   },
 
-  // ─── JAVASCRIPT / TYPESCRIPT ───
   {
     title: "JavaScript Event Loop Order",
     q: "In what order will the following execute in JavaScript: Promise.resolve().then(...), setTimeout(..., 0), and synchronous console.log()?",
@@ -234,7 +225,6 @@ const REAL_QUESTIONS: QuestionDef[] = [
     explanation: "Interfaces support declaration merging where multiple declarations with the same identifier merge into one."
   },
 
-  // ─── JAVA ───
   {
     title: "Java Memory Model — Heap vs Stack",
     q: "In Java memory management, where are local primitive variables and object instances stored respectively?",
@@ -278,7 +268,6 @@ const REAL_QUESTIONS: QuestionDef[] = [
     explanation: "Virtual threads unmount from carrier threads during blocking I/O, allowing millions of concurrent threads with minimal memory."
   },
 
-  // ─── SPRING BOOT ───
   {
     title: "Spring Boot Auto-Configuration",
     q: "How does Spring Boot determine which auto-configuration beans to load at startup?",
@@ -308,7 +297,6 @@ const REAL_QUESTIONS: QuestionDef[] = [
     explanation: "Spring's default bean scope is Singleton, sharing one bean instance per IoC container context."
   },
 
-  // ─── PYTHON ───
   {
     title: "Python Global Interpreter Lock (GIL)",
     q: "What is the Global Interpreter Lock (GIL) in CPython and how does it affect multithreading?",
@@ -338,7 +326,6 @@ const REAL_QUESTIONS: QuestionDef[] = [
     explanation: "Yield turns a function into a generator, pausing execution and maintaining stack frame state for subsequent next() calls."
   },
 
-  // ─── SQL & DATABASES ───
   {
     title: "Database Indexing — B-Tree vs Hash Index",
     q: "Why are B-Tree indexes preferred over Hash indexes for general database queries?",
@@ -368,7 +355,6 @@ const REAL_QUESTIONS: QuestionDef[] = [
     explanation: "SERIALIZABLE is the highest isolation level, executing transactions sequentially to prevent all concurrency anomalies."
   },
 
-  // ─── DATA STRUCTURES & ALGORITHMS ───
   {
     title: "DSA — Binary Search Tree Time Complexity",
     q: "What is the worst-case search time complexity in an unbalanced Binary Search Tree?",
@@ -398,7 +384,6 @@ const REAL_QUESTIONS: QuestionDef[] = [
     explanation: "HashMap provides O(1) key lookup, while Doubly Linked List provides O(1) node removal and insertion to the front."
   },
 
-  // ─── SYSTEM DESIGN & CLOUD ───
   {
     title: "System Design — CAP Theorem",
     q: "According to the CAP Theorem, what tradeoff must a distributed system make in the presence of a Network Partition (P)?",
@@ -441,7 +426,6 @@ export async function seedQuestions(cfg: SeedConfig): Promise<void> {
   const targetCount = cfg.counts.questions || 300;
   const SKILL_KEYS_LIST = Object.keys(skillIds).length > 0 ? Object.keys(skillIds) : ["SKILL_JAVA", "SKILL_PYTHON", "SKILL_REACT", "SKILL_ANGULAR", "SKILL_SQL", "SKILL_DSA", "SKILL_SYSDESIGN", "SKILL_DEVOPS"];
 
-  // Clear previous dummy placeholder questions and options
   doltBatch([`DELETE FROM question_options WHERE option_text IN ('Option A', 'Option B', 'Option C', 'Option D');`], 1);
   doltBatch([`DELETE FROM questions WHERE title LIKE 'Practice question %';`], 1);
 
@@ -457,7 +441,6 @@ export async function seedQuestions(cfg: SeedConfig): Promise<void> {
     const title = i < REAL_QUESTIONS.length ? base.title : `${base.title} (Scenario ${Math.floor(i / REAL_QUESTIONS.length) + 1})`;
     const desc = base.q;
 
-    // Shuffle options so correct answer is distributed across A, B, C, D
     const shuffledOpts = base.opts.map((opt, idx) => ({ text: opt, wasCorrect: idx === base.correct }));
     rng.shuffle(shuffledOpts);
     const correctOptIndex = shuffledOpts.findIndex((o) => o.wasCorrect);
@@ -485,3 +468,4 @@ export async function seedQuestions(cfg: SeedConfig): Promise<void> {
 
   console.log(`  ✅ Successfully seeded ${questionIds.length} authentic technical questions with full options`);
 }
+

@@ -40,3 +40,4 @@ public class EntityPostService {
         return postRepo.findByPostTypeOrderByCreatedAtDesc(postType);
     }
 }
+

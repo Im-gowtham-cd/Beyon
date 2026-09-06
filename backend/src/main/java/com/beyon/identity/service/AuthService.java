@@ -99,12 +99,12 @@ public class AuthService {
         user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
         user.setDisplayName(request.getName());
         user.setRole(request.getRole());
-        user.setStatus(AccountStatus.ACTIVE);
-        user.setProfileStatus(AccountStatus.ACTIVE);
+
+        user.setStatus(AccountStatus.PENDING_VERIFICATION);
+        user.setProfileStatus(AccountStatus.INCOMPLETE);
         user.setEmailVerified(true);
         User savedUser = userRepository.save(user);
 
-        // Auto-initialize role-specific profile & assets immediately
         if (request.getRole() == UserRole.STUDENT) {
             StudentProfile profile = new StudentProfile();
             profile.setUserId(savedUser.getId());
@@ -112,7 +112,6 @@ public class AuthService {
             profile.setDegree("B.Tech");
             profile.setDepartment("Computer Science and Engineering");
             profile.setAcademicYear("3rd Year");
-            profile.setInstitution("Engineering College");
             profile.setPlacementPreference(com.beyon.profile.enums.PlacementPreference.PLACEMENT_WILLING);
             profile.setPreferredWorkType(com.beyon.profile.enums.WorkType.ANY);
             profile.setCompletionPct(60);
@@ -149,20 +148,39 @@ public class AuthService {
             throw new UnauthorizedException("Too many login attempts. Please try again later.");
         }
 
-        User user = userRepository.findByEmail(request.getEmail().toLowerCase())
+        String identifier = request.getEmail() != null ? request.getEmail().trim() : "";
+        User user = userRepository.findByEmail(identifier.toLowerCase())
                 .orElse(null);
 
-        if (user == null || !passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
+        if (user == null && !identifier.isEmpty()) {
+            StudentProfile profile = studentProfileRepository.findByRegistrationNumberIgnoreCase(identifier)
+                    .or(() -> studentProfileRepository.findByUsername(identifier))
+                    .orElse(null);
+            if (profile != null && profile.getUserId() != null) {
+                user = userRepository.findById(profile.getUserId()).orElse(null);
+            }
+        }
+
+        boolean matches = false;
+        if (user != null) {
+            matches = passwordEncoder.matches(request.getPassword(), user.getPasswordHash());
+        }
+
+        if (user == null || !matches) {
             auditService.log(AuditEventType.LOGIN_FAILURE, request.getEmail(), ipAddress, userAgent);
             throw new UnauthorizedException("Email or password is incorrect");
         }
 
-        if (user.getStatus() == AccountStatus.SUSPENDED) {
-            throw new ForbiddenException("Your account has been suspended");
+        if (user.getStatus() == AccountStatus.SUSPENDED || user.getProfileStatus() == AccountStatus.SUSPENDED) {
+            throw new ForbiddenException("Your account has been suspended by the administrator.");
         }
 
-        if (user.getStatus() == AccountStatus.DEACTIVATED) {
-            throw new ForbiddenException("Your account has been deactivated");
+        if (user.getStatus() == AccountStatus.DEACTIVATED || user.getProfileStatus() == AccountStatus.DEACTIVATED) {
+            throw new ForbiddenException("Your account has been deactivated.");
+        }
+
+        if (user.getStatus() == AccountStatus.REJECTED || user.getProfileStatus() == AccountStatus.REJECTED) {
+            throw new ForbiddenException("Your account registration was reviewed and rejected by the Super Administrator.");
         }
 
         rateLimitService.reset(rateLimitKey);
@@ -363,3 +381,4 @@ public class AuthService {
         }
     }
 }
+

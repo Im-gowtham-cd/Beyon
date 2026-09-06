@@ -1,0 +1,446 @@
+.pageContainer {
+  min-height: 100vh;
+  background-color: #f8fafc;
+  display: flex;
+  flex-direction: column;
+  color: #0f172a;
+  font-family: var(--font-sans, system-ui, -apple-system, sans-serif);
+}
+
+.topHeader {
+  height: 64px;
+  background: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 32px;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+}
+
+.brandLink {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+}
+
+.brandLogo {
+  width: 34px;
+  height: 34px;
+  background: #1c2d81;
+  color: #fed601;
+  font-family: var(--font-heading, 'ClashDisplay', sans-serif);
+  font-size: 1.25rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.brandTextGroup {
+  display: flex;
+  flex-direction: column;
+}
+
+.brandName {
+  font-family: var(--font-heading, 'ClashDisplay', sans-serif);
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1;
+}
+
+.brandTag {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.headerRight {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.rewardBadge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  color: #1c2d81;
+  padding: 6px 12px;
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.stepIndicatorBadge {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.stepHighlight {
+  color: #1c2d81;
+  font-weight: 800;
+}
+
+.heroWrapper {
+  background: #1c2d81;
+  color: #ffffff;
+  padding: 40px 32px 32px;
+}
+
+.welcomeHero {
+  max-width: 960px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.badgeRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.portalBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(254, 214, 1, 0.15);
+  border: 1px solid #fed601;
+  color: #fed601;
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 4px 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.verifiedBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  text-transform: uppercase;
+}
+
+.welcomeTitle {
+  font-family: var(--font-heading, 'ClashDisplay', sans-serif);
+  font-size: clamp(1.6rem, 2.5vw, 2.2rem);
+  font-weight: 800;
+  color: #ffffff;
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.welcomeSub {
+  font-size: 0.92rem;
+  color: #cbd5e1;
+  max-width: 720px;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.overallProgressBar {
+  width: 100%;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.15);
+  margin-top: 14px;
+  overflow: hidden;
+}
+
+.overallProgressFill {
+  height: 100%;
+  background: #fed601;
+  transition: width 0.3s ease;
+}
+
+.mainLayout {
+  max-width: 960px;
+  width: 100%;
+  margin: -24px auto 48px;
+  padding: 0 20px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.stepNavContainer {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  width: 100%;
+}
+
+@media (max-width: 768px) {
+  .stepNavContainer {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.stepNavItem {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-top: 3px solid transparent;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
+}
+
+.stepNavItem:hover {
+  background: #f8fafc;
+  border-color: #94a3b8;
+}
+
+.activeStep {
+  border-top-color: #1c2d81;
+  background: #ffffff;
+  border-color: #1c2d81;
+  box-shadow: 0 2px 8px rgba(28, 45, 129, 0.08);
+}
+
+.completedStep {
+  border-top-color: #15803d;
+}
+
+.stepNavIcon {
+  width: 32px;
+  height: 32px;
+  background: #f1f5f9;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.activeStep .stepNavIcon {
+  background: #1c2d81;
+  color: #fed601;
+}
+
+.completedStep .stepNavIcon {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.stepNavText {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.stepNavLabel {
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: #0f172a;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+.stepNavSub {
+  font-size: 0.7rem;
+  color: #64748b;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+.errorBanner {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #dc2626;
+  padding: 14px 18px;
+  font-size: 0.84rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.stepCard {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-top: 4px solid #1c2d81;
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+}
+
+.cardHeader {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.cardHeaderIcon {
+  width: 40px;
+  height: 40px;
+  background: #f1f5f9;
+  color: #1c2d81;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.cardTitle {
+  font-family: var(--font-heading, 'ClashDisplay', sans-serif);
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0;
+}
+
+.cardSubtitle {
+  font-size: 0.84rem;
+  color: #64748b;
+  margin: 4px 0 0;
+}
+
+.formGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 18px;
+}
+
+@media (max-width: 640px) {
+  .formGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.colSpan2 {
+  grid-column: 1 / -1;
+}
+
+.formLabel {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #334155;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.req {
+  color: #dc2626;
+}
+
+.textInput {
+  padding: 10px 14px;
+  font-size: 0.88rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 0px;
+  background: #ffffff;
+  color: #0f172a;
+  outline: none;
+  transition: all 0.15s ease;
+}
+
+.textInput:focus {
+  border-color: #1c2d81;
+  box-shadow: 0 0 0 1px #1c2d81;
+}
+
+.selectInput {
+  padding: 10px 14px;
+  font-size: 0.88rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 0px;
+  background: #ffffff;
+  color: #0f172a;
+  outline: none;
+  cursor: pointer;
+}
+
+.selectInput:focus {
+  border-color: #1c2d81;
+  box-shadow: 0 0 0 1px #1c2d81;
+}
+
+.navActionsRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 16px;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.nextBtn, .submitBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 26px;
+  background: #1c2d81;
+  color: #ffffff;
+  font-size: 0.88rem;
+  font-weight: 800;
+  border-radius: 0px;
+  border: 1px solid #1c2d81;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  margin-left: auto;
+}
+
+.nextBtn:hover, .submitBtn:hover {
+  background: #16246e;
+}
+
+.nextBtn:disabled, .submitBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.prevBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  background: #ffffff;
+  color: #1c2d81;
+  font-size: 0.88rem;
+  font-weight: 700;
+  border-radius: 0px;
+  border: 1px solid #cbd5e1;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.prevBtn:hover {
+  background: #f8fafc;
+  border-color: #94a3b8;
+}
+

@@ -10,3 +10,4 @@ public interface PermissionRepository extends JpaRepository<Permission, UUID> {
     @Query("SELECT p.name FROM Permission p JOIN RolePermissions rp ON rp.permission = p WHERE rp.role = :role")
     List<String> findPermissionNamesByRole(String role);
 }
+
