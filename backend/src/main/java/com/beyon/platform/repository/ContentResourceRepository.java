@@ -10,3 +10,4 @@ public interface ContentResourceRepository extends JpaRepository<ContentResource
     List<ContentResource> findByResourceTypeAndStatusOrderByCreatedAtDesc(String type, String status);
     List<ContentResource> findByAuthorIdOrderByCreatedAtDesc(UUID authorId);
 }
+

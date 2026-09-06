@@ -24,3 +24,4 @@ public class UserReputation {
     public Integer getUpvotesReceived() { return upvotesReceived; } public void setUpvotesReceived(Integer v) { this.upvotesReceived = v; }
     public OffsetDateTime getUpdatedAt() { return updatedAt; } public void setUpdatedAt(OffsetDateTime v) { this.updatedAt = v; }
 }
+

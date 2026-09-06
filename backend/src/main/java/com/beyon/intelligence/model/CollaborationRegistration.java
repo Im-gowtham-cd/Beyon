@@ -29,3 +29,4 @@ public class CollaborationRegistration {
     public OffsetDateTime getRegisteredAt() { return registeredAt; } public void setRegisteredAt(OffsetDateTime v) { this.registeredAt = v; }
     public OffsetDateTime getCompletedAt() { return completedAt; } public void setCompletedAt(OffsetDateTime v) { this.completedAt = v; }
 }
+

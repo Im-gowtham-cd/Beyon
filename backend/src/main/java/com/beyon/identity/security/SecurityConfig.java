@@ -15,9 +15,9 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableWebSecurity
 public class SecurityConfig {
 
-    private final JwtAuthFilter jwtAuthFilter;
+    private final com.beyon.identity.security.JwtAuthFilter jwtAuthFilter;
 
-    public SecurityConfig(JwtAuthFilter jwtAuthFilter) {
+    public SecurityConfig(com.beyon.identity.security.JwtAuthFilter jwtAuthFilter) {
         this.jwtAuthFilter = jwtAuthFilter;
     }
 
@@ -29,13 +29,15 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/actuator/**").permitAll()
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                .requestMatchers("/api/v1/public/**").permitAll()
                 .requestMatchers("/api/v1/auth/register").permitAll()
                 .requestMatchers("/api/v1/auth/login").permitAll()
                 .requestMatchers("/api/v1/auth/verify-email").permitAll()
                 .requestMatchers("/api/v1/auth/resend-verification").permitAll()
                 .requestMatchers("/api/v1/auth/forgot-password").permitAll()
                 .requestMatchers("/api/v1/auth/reset-password").permitAll()
-                .requestMatchers("/api/v1/auth/me").authenticated()
+                .requestMatchers(HttpMethod.GET, "/api/v1/onboarding/institutions").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/institutions/public").permitAll()
                 .requestMatchers("/api/v1/onboarding/**").authenticated()
                 .requestMatchers("/api/v1/profile").authenticated()
                 .requestMatchers("/api/v1/student/public/**").permitAll()
@@ -43,6 +45,8 @@ public class SecurityConfig {
                 .requestMatchers("/api/v1/skills/**").permitAll()
                 .requestMatchers("/api/v1/student/**").authenticated()
                 .requestMatchers("/api/v1/questions/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/practice/questions").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/practice/questions/**").permitAll()
                 .requestMatchers("/api/v1/practice/**").authenticated()
                 .requestMatchers("/api/v1/coins/**").authenticated()
                 .requestMatchers("/api/v1/daily-challenge/**").authenticated()
@@ -59,9 +63,11 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/v1/tests/{id}").permitAll()
                 .requestMatchers("/api/v1/tests/**").authenticated()
                 .requestMatchers("/api/v1/assessment/launch").permitAll()
-                .requestMatchers("/api/v1/assessment/session").authenticated()
+                .requestMatchers(HttpMethod.POST, "/api/v1/assessment/session").authenticated()
+                .requestMatchers("/api/v1/assessment/session/**").permitAll()
                 .requestMatchers("/api/v1/assessment/**").authenticated()
-                .requestMatchers("/api/v1/proctoring/**").authenticated()
+                .requestMatchers("/api/v1/proctoring/**").permitAll()
+                .requestMatchers("/api/v1/evidence/**").permitAll()
                 .requestMatchers("/api/v1/assessment-policies/**").authenticated()
                 .requestMatchers("/api/v1/evaluation/**").authenticated()
                 .requestMatchers("/api/v1/matching/**").authenticated()
@@ -131,3 +137,4 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 }
+

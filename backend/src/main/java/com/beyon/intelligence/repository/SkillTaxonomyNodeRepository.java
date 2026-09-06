@@ -12,3 +12,4 @@ public interface SkillTaxonomyNodeRepository extends JpaRepository<SkillTaxonomy
     List<SkillTaxonomyNode> findByParentIdIsNullAndActiveTrueOrderBySortOrder();
     List<SkillTaxonomyNode> findByActiveTrueOrderBySortOrder();
 }
+

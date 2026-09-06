@@ -72,3 +72,4 @@ public class ReputationService {
         return REPUTATION_POINTS.getOrDefault(eventType, 0);
     }
 }
+

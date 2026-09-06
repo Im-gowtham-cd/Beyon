@@ -9,3 +9,4 @@ public interface AssessmentConfigurationRepository extends JpaRepository<Assessm
     List<AssessmentConfiguration> findByCompanyIdOrderByCreatedAtDesc(UUID companyId);
     List<AssessmentConfiguration> findByStatus(String status);
 }
+

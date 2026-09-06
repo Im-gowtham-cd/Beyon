@@ -352,3 +352,4 @@ public class OnboardingService {
         return (filled * 100) / total;
     }
 }
+

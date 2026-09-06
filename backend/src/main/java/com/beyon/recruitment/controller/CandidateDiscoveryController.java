@@ -57,3 +57,4 @@ public class CandidateDiscoveryController {
         return UUID.fromString(details.getUserId());
     }
 }
+

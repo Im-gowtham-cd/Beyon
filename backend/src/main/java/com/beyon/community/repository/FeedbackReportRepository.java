@@ -34,3 +34,4 @@ public interface FeedbackReportRepository extends JpaRepository<FeedbackReport, 
 
     List<FeedbackReport> findByTitleContainingIgnoreCaseOrDescriptionContainingIgnoreCase(String title, String description);
 }
+

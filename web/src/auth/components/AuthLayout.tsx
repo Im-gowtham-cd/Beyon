@@ -7,11 +7,11 @@ export function AuthLayout({ children }: { children: ReactNode }) {
     <div className={styles.layout}>
       <div className={styles.container}>
         <Link to="/" className={styles.logo}>
-          <span className={styles.logoIcon}>B</span>
-          <span className={styles.logoText}>Beyon</span>
+          <img src="/logo-transparent.png" alt="Beyon" className={styles.logoImg} />
         </Link>
         {children}
       </div>
     </div>
   );
 }
+

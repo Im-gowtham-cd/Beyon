@@ -53,3 +53,4 @@ class RateLimiterServiceTest {
         assertTrue(rateLimiter.isAllowed("user-3", "api"));
     }
 }
+

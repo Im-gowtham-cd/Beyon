@@ -39,14 +39,15 @@ public class AdminDashboardService {
             Long totalStudents = queryCount("SELECT COUNT(*) FROM users WHERE role = 'STUDENT'");
             Long totalInstitutions = queryCount("SELECT COUNT(*) FROM users WHERE role = 'INSTITUTION'");
             Long totalCompanies = queryCount("SELECT COUNT(*) FROM users WHERE role = 'COMPANY'");
-            Long totalAssessments = queryCount("SELECT COUNT(*) FROM assessments");
-            Long totalTestAttempts = queryCount("SELECT COUNT(*) FROM test_sessions");
+            Long totalAssessments = queryCount("SELECT COUNT(*) FROM tests");
+            Long totalTestAttempts = queryCount("SELECT COUNT(*) FROM assessment_audit_events");
             Long totalApplications = queryCount("SELECT COUNT(*) FROM recruitment_applications");
-            Long totalPlacements = queryCount("SELECT COUNT(*) FROM recruitment_placements");
-            Long totalQuestions = queryCount("SELECT COUNT(*) FROM practice_questions");
+            Long totalPlacements = queryCount("SELECT COUNT(*) FROM recruitment_applications WHERE status = 'SELECTED' OR status = 'OFFERED'");
+            Long totalQuestions = queryCount("SELECT COUNT(*) FROM questions");
             Long totalOpportunities = queryCount("SELECT COUNT(*) FROM company_opportunities");
             Long totalCoinsEarned = querySum("SELECT SUM(balance) FROM coin_wallets");
-            Long pendingVerifications = queryCount("SELECT COUNT(*) FROM users WHERE profile_status LIKE 'PENDING%'");
+            Long totalCoinsSpent = querySum("SELECT SUM(total_spent) FROM coin_wallets");
+            Long pendingVerifications = queryCount("SELECT COUNT(*) FROM users WHERE status = 'PENDING_SUPER_ADMIN_VERIFICATION'");
 
             result.put("totalUsers", totalUsers != null ? totalUsers : 0);
             result.put("activeUsers", activeUsers != null ? activeUsers : 0);
@@ -60,18 +61,23 @@ public class AdminDashboardService {
             result.put("totalQuestions", totalQuestions != null ? totalQuestions : 0);
             result.put("totalOpportunities", totalOpportunities != null ? totalOpportunities : 0);
             result.put("totalCoinsEarned", totalCoinsEarned != null ? totalCoinsEarned : 0);
-            result.put("totalCoinsSpent", 38500L);
+            result.put("totalCoinsSpent", totalCoinsSpent != null ? totalCoinsSpent : 0);
             result.put("pendingVerifications", pendingVerifications != null ? pendingVerifications : 0);
             result.put("systemUptime", "99.98%");
             result.put("databaseEngine", "Dolt SQL Server v1.40.0");
         } catch (Exception e) {
-            result.put("totalUsers", 190);
-            result.put("activeUsers", 185);
-            result.put("activeInstitutions", 25);
-            result.put("activeCompanies", 30);
-            result.put("totalAssessments", 16);
-            result.put("totalApplications", 293);
-            result.put("totalPlacements", 61);
+            result.put("totalUsers", 0);
+            result.put("activeUsers", 0);
+            result.put("activeInstitutions", 0);
+            result.put("activeCompanies", 0);
+            result.put("totalAssessments", 0);
+            result.put("totalApplications", 0);
+            result.put("totalPlacements", 0);
+            result.put("totalQuestions", 0);
+            result.put("totalOpportunities", 0);
+            result.put("totalCoinsEarned", 0);
+            result.put("totalCoinsSpent", 0);
+            result.put("pendingVerifications", 0);
         }
         return result;
     }
@@ -107,7 +113,7 @@ public class AdminDashboardService {
                 "ip.placement_rate AS placementRate, ip.average_package AS avgPackage, u.status, u.profile_status AS profileStatus, " +
                 "ip.created_at AS createdAt " +
                 "FROM institution_profiles ip " +
-                "LEFT JOIN users u ON u.id = ip.user_id " +
+                "INNER JOIN users u ON u.id = ip.user_id " +
                 "ORDER BY ip.created_at DESC"
             );
         } catch (Exception e) {
@@ -122,7 +128,7 @@ public class AdminDashboardService {
                 "cp.city, cp.state, cp.company_type AS tier, " +
                 "u.status, u.email, cp.created_at AS createdAt " +
                 "FROM company_profiles cp " +
-                "LEFT JOIN users u ON u.id = cp.user_id " +
+                "INNER JOIN users u ON u.id = cp.user_id " +
                 "ORDER BY cp.created_at DESC"
             );
         } catch (Exception e) {
@@ -171,13 +177,16 @@ public class AdminDashboardService {
     }
 
     public List<Map<String, Object>> getRecentActivity() {
-        List<Map<String, Object>> list = new ArrayList<>();
-        list.add(Map.of("id", "act-1", "type", "VERIFICATION", "message", "New student Saranya Roy submitted academic verification for PSG Tech", "time", "10 mins ago", "status", "PENDING"));
-        list.add(Map.of("id", "act-2", "type", "ASSESSMENT", "message", "Aravind Swaminathan completed Backend Microservices Proctored Test (Score: 96%)", "time", "25 mins ago", "status", "SUCCESS"));
-        list.add(Map.of("id", "act-3", "type", "PLACEMENT", "message", "Google Cloud issued 28.5 LPA offer to Sneha Sundaram", "time", "1 hour ago", "status", "SUCCESS"));
-        list.add(Map.of("id", "act-4", "type", "DRIVE", "message", "Microsoft IDC published campus placement slot for 2026 Batch", "time", "2 hours ago", "status", "INFO"));
-        list.add(Map.of("id", "act-5", "type", "COIN_MINT", "message", "Daily Challenge streak reward distributed (1,450 coins to 58 students)", "time", "3 hours ago", "status", "SUCCESS"));
-        return list;
+        try {
+            List<Map<String, Object>> events = jdbcTemplate.queryForList(
+                "SELECT id, event_type AS type, user_email AS userEmail, details AS message, created_at AS time, " +
+                "'SUCCESS' AS status FROM audit_events ORDER BY created_at DESC LIMIT 10"
+            );
+            if (!events.isEmpty()) {
+                return events;
+            }
+        } catch (Exception ignored) {}
+        return Collections.emptyList();
     }
 
     private Long queryCount(String sql) {
@@ -225,3 +234,4 @@ public class AdminDashboardService {
         return trends;
     }
 }
+

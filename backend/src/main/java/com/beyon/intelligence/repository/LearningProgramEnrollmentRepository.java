@@ -10,3 +10,4 @@ public interface LearningProgramEnrollmentRepository extends JpaRepository<Learn
     List<LearningProgramEnrollment> findByStudentIdOrderByEnrolledAtDesc(UUID studentId);
     Optional<LearningProgramEnrollment> findByStudentIdAndProgramId(UUID studentId, UUID programId);
 }
+

@@ -90,3 +90,4 @@ public class EventService {
         return regRepo.findByEventId(eventId);
     }
 }
+

@@ -8,6 +8,8 @@ import java.util.UUID;
 public interface StudentProfileRepository extends JpaRepository<StudentProfile, UUID> {
     Optional<StudentProfile> findByUserId(UUID userId);
     Optional<StudentProfile> findByUsername(String username);
+    Optional<StudentProfile> findByRegistrationNumberIgnoreCase(String registrationNumber);
     boolean existsByUserId(UUID userId);
     boolean existsByUsername(String username);
 }
+

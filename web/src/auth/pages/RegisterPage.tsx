@@ -58,10 +58,10 @@ export function RegisterPage() {
       try {
         const loginRes = await authApi.login({ email, password });
         login(loginRes.accessToken, loginRes.user);
-        showToast('Registration successful! Redirecting to dashboard...');
+        showToast('Account created! Proceeding to setup your profile...');
         setTimeout(() => {
-          navigate(`/${role.toLowerCase()}/home`);
-        }, 600);
+          navigate(`/onboarding/${role.toLowerCase()}`);
+        }, 500);
       } catch {
         showToast('Registration successful! Please sign in.');
         setTimeout(() => {
@@ -70,7 +70,13 @@ export function RegisterPage() {
       }
     } catch (err) {
       const apiErr = err as ApiError;
-      showToast(apiErr.message || 'Registration failed. Please check your credentials and try again.', true);
+      const msg = apiErr.message || '';
+      if (apiErr.status === 409 || msg.toLowerCase().includes('already exists')) {
+        showToast('An account with this email already exists. Please sign in or use another email.', true);
+        setErrors(prev => ({ ...prev, email: 'This email is already registered' }));
+      } else {
+        showToast(msg || 'Registration failed. Please check your credentials and try again.', true);
+      }
     } finally {
       setLoading(false);
     }
@@ -80,7 +86,7 @@ export function RegisterPage() {
     <div className={styles.loginPage}>
       <main className={styles.loginMain}>
         <div className={styles.loginCard}>
-          {/* Left Aside - Exact same as Login */}
+
           <aside className={styles.loginAside}>
             <div className={styles.asideBrand}>
               <span className={styles.asideMark} aria-hidden="true" />
@@ -111,7 +117,6 @@ export function RegisterPage() {
             </div>
           </aside>
 
-          {/* Right Panel - Register with identical UX */}
           <section className={styles.loginPanel}>
             <span className="section-label">Beyon Portal</span>
             <h1>Create Account</h1>
@@ -268,3 +273,4 @@ export function RegisterPage() {
     </div>
   );
 }
+

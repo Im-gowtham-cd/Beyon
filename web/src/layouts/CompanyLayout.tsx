@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/context/AuthContext';
 import { CompanySidebar } from './CompanySidebar';
@@ -13,7 +13,7 @@ export function CompanyLayout() {
 
   return (
     <div className={styles.layout}>
-      {/* Mobile Top Bar */}
+
       <div className={styles.mobileBar}>
         <button
           type="button"
@@ -32,7 +32,7 @@ export function CompanyLayout() {
       </div>
 
       <div className={styles.bodyWrapper}>
-        {/* Full-Height Fixed Left Sidebar */}
+
         <CompanySidebar
           mobileOpen={mobileSidebarOpen}
           onCloseMobile={() => setMobileSidebarOpen(false)}
@@ -40,11 +40,10 @@ export function CompanyLayout() {
           onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
         />
 
-        {/* Primary Main Workspace Canvas */}
         <main
           className={`${styles.mainContent} ${sidebarCollapsed ? styles.mainContentCollapsed : ''}`}
         >
-          {/* Top Utility Bar */}
+
           <header className={styles.topUtilityBar}>
             <div className={styles.utilityLeft}>
               <span className={styles.portalTag}>
@@ -64,7 +63,7 @@ export function CompanyLayout() {
               <button
                 type="button"
                 className={styles.utilityBtn}
-                onClick={() => navigate('/notifications')}
+                onClick={() => navigate('/company/notifications')}
                 title="Notifications"
               >
                 <Bell size={16} />
@@ -98,3 +97,4 @@ export function CompanyLayout() {
     </div>
   );
 }
+

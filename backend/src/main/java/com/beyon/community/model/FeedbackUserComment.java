@@ -20,3 +20,4 @@ public class FeedbackUserComment {
     public String getContent() { return content; } public void setContent(String v) { this.content = v; }
     public OffsetDateTime getCreatedAt() { return createdAt; } public void setCreatedAt(OffsetDateTime v) { this.createdAt = v; }
 }
+

@@ -10,3 +10,4 @@ public interface AssessmentPolicyRepository extends JpaRepository<AssessmentPoli
     List<AssessmentPolicy> findByCompanyUserId(UUID companyUserId);
     Optional<AssessmentPolicy> findByOpportunityId(UUID opportunityId);
 }
+

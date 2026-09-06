@@ -53,3 +53,4 @@ public class OpportunityApplication {
     public void setAppliedAt(Instant appliedAt) { this.appliedAt = appliedAt; }
     public Instant getUpdatedAt() { return updatedAt; }
 }
+

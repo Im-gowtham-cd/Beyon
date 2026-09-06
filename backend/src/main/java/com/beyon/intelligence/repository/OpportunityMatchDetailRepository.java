@@ -8,3 +8,4 @@ import java.util.UUID;
 public interface OpportunityMatchDetailRepository extends JpaRepository<OpportunityMatchDetail, UUID> {
     Optional<OpportunityMatchDetail> findByStudentIdAndOpportunityId(UUID studentId, UUID opportunityId);
 }
+

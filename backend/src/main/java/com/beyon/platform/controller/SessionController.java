@@ -37,3 +37,4 @@ public class SessionController {
         return ResponseEntity.ok(Map.of("message", "All sessions revoked"));
     }
 }
+

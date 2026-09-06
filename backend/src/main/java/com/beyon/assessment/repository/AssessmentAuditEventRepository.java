@@ -10,3 +10,4 @@ public interface AssessmentAuditEventRepository extends JpaRepository<AuditEvent
     List<AuditEvent> findByUserIdOrderByCreatedAtDesc(UUID userId);
     List<AuditEvent> findByEventTypeOrderByCreatedAtDesc(String eventType);
 }
+

@@ -26,7 +26,7 @@ export function ReportContentModal({ targetType, targetId, onClose, onSuccess }:
       await api.post('/moderation/report', { targetType, targetId, reason, description });
       onSuccess();
       onClose();
-    } catch { /* */ }
+    } catch {  }
     setSubmitting(false);
   }
 
@@ -66,3 +66,4 @@ export function ReportContentModal({ targetType, targetId, onClose, onSuccess }:
     </div>
   );
 }
+

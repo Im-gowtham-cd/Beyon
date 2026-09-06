@@ -17,3 +17,4 @@ public class StudentSkillRequest {
     public String getProficiency() { return proficiency; }
     public void setProficiency(String proficiency) { this.proficiency = proficiency; }
 }
+

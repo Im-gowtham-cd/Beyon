@@ -30,3 +30,4 @@ public class FileDocument {
     public String getMetadata() { return metadata; } public void setMetadata(String v) { this.metadata = v; }
     public OffsetDateTime getCreatedAt() { return createdAt; } public void setCreatedAt(OffsetDateTime v) { this.createdAt = v; }
 }
+

@@ -12,7 +12,7 @@ export function GrowthIntelligencePage() {
       try {
         const s = await intelligenceApi.getMyGrowthScore();
         setScore(s);
-      } catch { /* */ }
+      } catch {  }
       setLoading(false);
     }
     load();
@@ -131,3 +131,4 @@ export function GrowthIntelligencePage() {
     </div>
   );
 }
+

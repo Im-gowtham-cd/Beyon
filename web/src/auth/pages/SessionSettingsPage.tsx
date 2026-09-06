@@ -20,7 +20,7 @@ export function SessionSettingsPage() {
       try {
         const s = await api.get<Session[]>('/sessions/active');
         setSessions(s);
-      } catch { /* */ }
+      } catch {  }
       setLoading(false);
     }
     load();
@@ -30,7 +30,7 @@ export function SessionSettingsPage() {
     try {
       await api.post(`/sessions/${sessionId}/revoke`);
       setSessions(prev => prev.filter(s => s.id !== sessionId));
-    } catch { /* */ }
+    } catch {  }
   }
 
   async function handleRevokeAll() {
@@ -38,7 +38,7 @@ export function SessionSettingsPage() {
       try {
         await api.post('/sessions/revoke-all');
         setSessions([]);
-      } catch { /* */ }
+      } catch {  }
     }
   }
 
@@ -81,3 +81,4 @@ export function SessionSettingsPage() {
     </div>
   );
 }
+

@@ -39,3 +39,4 @@ public class OpportunityMatchDetail {
     public OffsetDateTime getCalculatedAt() { return calculatedAt; } public void setCalculatedAt(OffsetDateTime v) { this.calculatedAt = v; }
     public OffsetDateTime getCreatedAt() { return createdAt; } public void setCreatedAt(OffsetDateTime v) { this.createdAt = v; }
 }
+

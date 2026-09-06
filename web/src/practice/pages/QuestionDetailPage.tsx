@@ -30,7 +30,7 @@ export function QuestionDetailPage() {
         if (opts && opts.length > 0) {
           setOptions(opts);
         } else if (q.questionType === 'MCQ' || q.questionType === 'TRUE_FALSE') {
-          // Fallback options if options weren't seeded for this specific item
+
           const fallbackOpts: QuestionOption[] = q.questionType === 'TRUE_FALSE'
             ? [
                 { id: `${id}-opt-1`, questionId: id, optionText: 'True', correct: true, displayOrder: 1 },
@@ -221,3 +221,4 @@ export function QuestionDetailPage() {
     </div>
   );
 }
+

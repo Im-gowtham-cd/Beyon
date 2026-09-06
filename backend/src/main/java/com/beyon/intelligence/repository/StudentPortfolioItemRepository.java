@@ -9,3 +9,4 @@ public interface StudentPortfolioItemRepository extends JpaRepository<StudentPor
     List<StudentPortfolioItem> findByStudentIdOrderByCreatedAtDesc(UUID studentId);
     List<StudentPortfolioItem> findByStudentIdAndItemTypeOrderByCreatedAtDesc(UUID studentId, String itemType);
 }
+

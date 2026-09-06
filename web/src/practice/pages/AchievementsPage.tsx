@@ -18,7 +18,7 @@ export function AchievementsPage() {
         ]);
         setAchievements(a);
         setStreak(s);
-      } catch { /* */ }
+      } catch {  }
       setLoading(false);
     }
     load();
@@ -97,3 +97,4 @@ export function AchievementsPage() {
     </div>
   );
 }
+

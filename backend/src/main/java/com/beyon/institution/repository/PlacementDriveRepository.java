@@ -10,4 +10,7 @@ public interface PlacementDriveRepository extends JpaRepository<PlacementDrive, 
     List<PlacementDrive> findByInstitutionIdOrderByCreatedAtDesc(UUID institutionId);
     List<PlacementDrive> findByCompanyUserIdOrderByCreatedAtDesc(UUID companyUserId);
     List<PlacementDrive> findByInstitutionIdAndStatus(UUID institutionId, String status);
+    List<PlacementDrive> findByOpportunityId(UUID opportunityId);
+    java.util.Optional<PlacementDrive> findByOpportunityIdAndInstitutionId(UUID opportunityId, UUID institutionId);
 }
+

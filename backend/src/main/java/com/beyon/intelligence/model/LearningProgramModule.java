@@ -30,3 +30,4 @@ public class LearningProgramModule {
     public Integer getDurationMinutes() { return durationMinutes; } public void setDurationMinutes(Integer v) { this.durationMinutes = v; }
     public OffsetDateTime getCreatedAt() { return createdAt; }
 }
+

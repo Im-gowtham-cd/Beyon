@@ -25,13 +25,13 @@ public class AssessmentBuilderController {
         UUID userId = extractUserId(request);
         return ResponseEntity.ok(ApiResponse.ok(builderService.create(userId,
             (String) body.get("title"), (String) body.get("description"),
-            body.get("durationMinutes") != null ? (Integer) body.get("durationMinutes") : null,
-            body.get("totalQuestions") != null ? (Integer) body.get("totalQuestions") : null,
+            parseInteger(body.get("durationMinutes")),
+            parseInteger(body.get("totalQuestions")),
             parseBigDecimal(body.get("passingScore")),
             body.get("negativeMarking") != null ? (Boolean) body.get("negativeMarking") : null,
             parseBigDecimal(body.get("negativeMarks")),
-            body.get("attemptLimit") != null ? (Integer) body.get("attemptLimit") : null,
-            body.get("coinCost") != null ? (Integer) body.get("coinCost") : null,
+            parseInteger(body.get("attemptLimit")),
+            parseInteger(body.get("coinCost")),
             body.get("adaptiveEnabled") != null ? (Boolean) body.get("adaptiveEnabled") : null)));
     }
 
@@ -78,6 +78,17 @@ public class AssessmentBuilderController {
         return ResponseEntity.ok(ApiResponse.ok(builderService.searchQuestions(difficulty, type, skillId)));
     }
 
+    @PatchMapping("/questions/{id}")
+    public ResponseEntity<?> updateQuestion(@PathVariable UUID id, @RequestBody Map<String, Object> body) {
+        return ResponseEntity.ok(ApiResponse.ok(builderService.updateQuestion(id, body)));
+    }
+
+    @DeleteMapping("/questions/{id}")
+    public ResponseEntity<?> deleteQuestion(@PathVariable UUID id) {
+        builderService.deleteQuestion(id);
+        return ResponseEntity.ok(ApiResponse.ok(Map.of("deleted", true, "id", id)));
+    }
+
     @GetMapping("/questions/stats")
     public ResponseEntity<?> getStats(HttpServletRequest request) {
         return ResponseEntity.ok(ApiResponse.ok(builderService.getQuestionBankStats(extractUserId(request))));
@@ -87,6 +98,16 @@ public class AssessmentBuilderController {
         String auth = request.getHeader("Authorization");
         if (auth != null && auth.startsWith("Bearer ")) return jwtUtil.getUserId(auth.substring(7));
         throw new RuntimeException("Unauthorized");
+    }
+
+    private Integer parseInteger(Object val) {
+        if (val == null) return null;
+        if (val instanceof Number) return ((Number) val).intValue();
+        try {
+            return Integer.parseInt(val.toString());
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     private BigDecimal parseBigDecimal(Object val) {
@@ -99,3 +120,4 @@ public class AssessmentBuilderController {
         return UUID.fromString(val.toString());
     }
 }
+

@@ -59,6 +59,9 @@ public class Question {
     @Column(nullable = false, length = 20)
     private String status = "DRAFT";
 
+    @Transient
+    private java.util.List<QuestionOption> options;
+
     @Column(nullable = false)
     private int version = 1;
 
@@ -114,4 +117,7 @@ public class Question {
     public void setCreatedBy(UUID createdBy) { this.createdBy = createdBy; }
     public Instant getCreatedAt() { return createdAt; }
     public Instant getUpdatedAt() { return updatedAt; }
+    public java.util.List<QuestionOption> getOptions() { return options; }
+    public void setOptions(java.util.List<QuestionOption> options) { this.options = options; }
 }
+

@@ -12,6 +12,7 @@ public interface AssessmentSessionRepository extends JpaRepository<AssessmentSes
     Optional<AssessmentSession> findByLaunchToken(String launchToken);
     Optional<AssessmentSession> findByApplicationId(UUID applicationId);
     List<AssessmentSession> findByStudentIdOrderByCreatedAtDesc(UUID studentId);
+    List<AssessmentSession> findByStudentIdAndOpportunityIdOrderByCreatedAtDesc(UUID studentId, UUID opportunityId);
     List<AssessmentSession> findByOpportunityIdAndStatusIn(UUID opportunityId, List<String> statuses);
 
     @Query("SELECT s FROM AssessmentSession s WHERE s.status IN ('CREATED','LAUNCHED','VERIFYING','SYSTEM_CHECK','IN_PROGRESS') AND s.expiresAt < CURRENT_TIMESTAMP")
@@ -22,3 +23,4 @@ public interface AssessmentSessionRepository extends JpaRepository<AssessmentSes
 
     long countByOpportunityIdAndIntegrityStatusIn(UUID opportunityId, List<String> statuses);
 }
+

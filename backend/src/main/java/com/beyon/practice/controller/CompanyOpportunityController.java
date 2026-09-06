@@ -25,11 +25,26 @@ public class CompanyOpportunityController {
 
     @GetMapping
     public ResponseEntity<ApiResponse<List<CompanyOpportunity>>> getOpportunities(
+            Authentication auth,
             @RequestParam(required = false) UUID companyId) {
         if (companyId != null) {
             return ResponseEntity.ok(ApiResponse.ok(companyService.getCompanyOpportunities(companyId)));
         }
+        if (auth != null && auth.getDetails() instanceof JwtUserDetails details) {
+            if ("COMPANY".equals(details.getRole())) {
+                UUID companyUserId = UUID.fromString(details.getUserId());
+                return ResponseEntity.ok(ApiResponse.ok(companyService.getCompanyOpportunities(companyUserId)));
+            } else if ("STUDENT".equals(details.getRole())) {
+                UUID studentId = UUID.fromString(details.getUserId());
+                return ResponseEntity.ok(ApiResponse.ok(companyService.getOpportunitiesForStudent(studentId)));
+            }
+        }
         return ResponseEntity.ok(ApiResponse.ok(companyService.getPublishedOpportunities()));
+    }
+
+    @GetMapping("/active-institutions")
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getActiveInstitutions() {
+        return ResponseEntity.ok(ApiResponse.ok(companyService.getActiveInstitutions()));
     }
 
     @GetMapping("/{id}")
@@ -37,10 +52,15 @@ public class CompanyOpportunityController {
         return ResponseEntity.ok(ApiResponse.ok(companyService.getOpportunity(id)));
     }
 
+    @GetMapping("/{id}/questions")
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getOpportunityQuestions(@PathVariable UUID id) {
+        return ResponseEntity.ok(ApiResponse.ok(companyService.getOpportunityQuestions(id)));
+    }
+
     @PostMapping
-    public ResponseEntity<ApiResponse<CompanyOpportunity>> createOpportunity(Authentication auth, @RequestBody CompanyOpportunity opp) {
+    public ResponseEntity<ApiResponse<CompanyOpportunity>> createOpportunity(Authentication auth, @RequestBody Map<String, Object> body) {
         UUID companyUserId = extractUserId(auth);
-        return ResponseEntity.ok(ApiResponse.ok(companyService.createOpportunity(companyUserId, opp)));
+        return ResponseEntity.ok(ApiResponse.ok(companyService.createOpportunityWithQuestions(companyUserId, body)));
     }
 
     @PutMapping("/{id}")
@@ -67,8 +87,15 @@ public class CompanyOpportunityController {
         return ResponseEntity.ok(ApiResponse.ok(companyService.getApplications(studentId)));
     }
 
+    @GetMapping("/opted-in")
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getOptedInOpportunities(Authentication auth) {
+        UUID studentId = extractUserId(auth);
+        return ResponseEntity.ok(ApiResponse.ok(companyService.getOptedInOpportunities(studentId)));
+    }
+
     private UUID extractUserId(Authentication auth) {
         JwtUserDetails details = (JwtUserDetails) auth.getDetails();
         return UUID.fromString(details.getUserId());
     }
 }
+

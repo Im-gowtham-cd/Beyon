@@ -9,3 +9,4 @@ public interface CareerOutcomeRepository extends JpaRepository<CareerOutcome, UU
     List<CareerOutcome> findByStudentIdOrderByCreatedAtDesc(UUID studentId);
     List<CareerOutcome> findByOutcomeTypeAndIsCurrentTrue(String outcomeType);
 }
+

@@ -28,7 +28,7 @@ export const AuthScreen: React.FC = () => {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      {/* Brand Header */}
+
       <View style={styles.brandCard}>
         <View style={styles.logoMark} />
         <Text style={styles.brandTitle}>Beyon Mobile</Text>
@@ -37,9 +37,8 @@ export const AuthScreen: React.FC = () => {
         </Text>
       </View>
 
-      {/* Auth Card */}
       <View style={styles.authCard}>
-        {/* Tab switcher */}
+
         <View style={styles.tabRow}>
           <TouchableOpacity
             style={[styles.tabBtn, !isRegister && styles.tabBtnActive]}
@@ -57,7 +56,6 @@ export const AuthScreen: React.FC = () => {
 
         {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
-        {/* Inputs */}
         {isRegister && (
           <View style={styles.inputGroup}>
             <Text style={styles.inputLabel}>Full Name</Text>
@@ -119,7 +117,6 @@ export const AuthScreen: React.FC = () => {
           </View>
         )}
 
-        {/* Submit */}
         <TouchableOpacity
           style={styles.submitBtn}
           onPress={handleSubmit}
@@ -134,7 +131,6 @@ export const AuthScreen: React.FC = () => {
           )}
         </TouchableOpacity>
 
-        {/* Demo Fast Login */}
         <TouchableOpacity
           style={styles.demoBtn}
           onPress={() => login('gowtham@example.com', 'password123')}
@@ -259,27 +255,33 @@ const styles = StyleSheet.create({
     color: '#ffffff',
   },
   submitBtn: {
+    height: 46,
     backgroundColor: colors.primary,
-    paddingVertical: 12,
     alignItems: 'center',
-    marginTop: 8,
+    justifyContent: 'center',
+    marginTop: 10,
+    borderRadius: 0,
   },
   submitBtnText: {
     color: '#ffffff',
     fontWeight: '900',
     fontSize: 13,
+    letterSpacing: 0.5,
   },
   demoBtn: {
+    height: 44,
     backgroundColor: colors.surfaceSubtle,
     borderWidth: 1,
     borderColor: colors.border,
-    paddingVertical: 10,
     alignItems: 'center',
+    justifyContent: 'center',
     marginTop: 10,
+    borderRadius: 0,
   },
   demoBtnText: {
     color: colors.primary,
     fontWeight: '800',
-    fontSize: 11,
+    fontSize: 12,
   },
 });
+

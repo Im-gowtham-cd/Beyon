@@ -9,3 +9,4 @@ public interface CareerPathSkillRepository extends JpaRepository<CareerPathSkill
     List<CareerPathSkill> findByCareerPathIdOrderBySortOrder(UUID careerPathId);
     List<CareerPathSkill> findByCareerPathIdAndRequiredTrue(UUID careerPathId);
 }
+

@@ -31,22 +31,178 @@ public class CompanyService {
     private final CoinService coinService;
     private final RecruitmentApplicationRepository recruitmentAppRepo;
 
+    private final com.beyon.profile.repository.InstitutionProfileRepository institutionProfileRepository;
+    private final com.beyon.institution.repository.PlacementDriveRepository placementDriveRepository;
+    private final com.beyon.institution.repository.InstitutionStudentRepository institutionStudentRepository;
+    private final com.beyon.practice.repository.QuestionRepository questionRepository;
+    private final com.beyon.practice.repository.QuestionOptionRepository questionOptionRepository;
+    private final com.beyon.assessment.repository.AssessmentConfigurationRepository assessmentConfigRepository;
+
     public CompanyService(CompanyOpportunityRepository opportunityRepository,
                           OpportunityApplicationRepository applicationRepository,
                           UserRepository userRepository,
                           StudentProfileRepository studentProfileRepository,
                           CoinService coinService,
-                          RecruitmentApplicationRepository recruitmentAppRepo) {
+                          RecruitmentApplicationRepository recruitmentAppRepo,
+                          com.beyon.profile.repository.InstitutionProfileRepository institutionProfileRepository,
+                          com.beyon.institution.repository.PlacementDriveRepository placementDriveRepository,
+                          com.beyon.institution.repository.InstitutionStudentRepository institutionStudentRepository,
+                          com.beyon.practice.repository.QuestionRepository questionRepository,
+                          com.beyon.practice.repository.QuestionOptionRepository questionOptionRepository,
+                          com.beyon.assessment.repository.AssessmentConfigurationRepository assessmentConfigRepository) {
         this.opportunityRepository = opportunityRepository;
         this.applicationRepository = applicationRepository;
         this.userRepository = userRepository;
         this.studentProfileRepository = studentProfileRepository;
         this.coinService = coinService;
         this.recruitmentAppRepo = recruitmentAppRepo;
+        this.institutionProfileRepository = institutionProfileRepository;
+        this.placementDriveRepository = placementDriveRepository;
+        this.institutionStudentRepository = institutionStudentRepository;
+        this.questionRepository = questionRepository;
+        this.questionOptionRepository = questionOptionRepository;
+        this.assessmentConfigRepository = assessmentConfigRepository;
+    }
+
+    public List<Map<String, Object>> getActiveInstitutions() {
+        List<User> activeUsers = userRepository.findByRoleAndStatus(
+                com.beyon.identity.enums.UserRole.INSTITUTION,
+                com.beyon.identity.enums.AccountStatus.ACTIVE
+        );
+        List<com.beyon.profile.model.StudentProfile> allStudentProfiles = studentProfileRepository.findAll();
+
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (User u : activeUsers) {
+            Map<String, Object> map = new LinkedHashMap<>();
+            map.put("id", u.getId());
+            map.put("name", u.getDisplayName());
+            map.put("email", u.getEmail());
+            institutionProfileRepository.findByUserId(u.getId()).ifPresent(prof -> {
+                if (prof.getInstitutionName() != null && !prof.getInstitutionName().isBlank()) {
+                    map.put("name", prof.getInstitutionName());
+                }
+                map.put("code", prof.getInstitutionCode());
+                map.put("city", prof.getCity());
+                map.put("state", prof.getState());
+                map.put("grade", prof.getAccreditationGrade());
+                map.put("type", prof.getInstitutionType());
+            });
+
+            String instName = (String) map.get("name");
+            Set<String> depts = new LinkedHashSet<>();
+
+            for (com.beyon.profile.model.StudentProfile sp : allStudentProfiles) {
+                if (sp.getDepartment() != null && !sp.getDepartment().isBlank()) {
+                    if (instName != null && sp.getInstitution() != null &&
+                        (sp.getInstitution().equalsIgnoreCase(instName) || instName.toLowerCase().contains(sp.getInstitution().toLowerCase()))) {
+                        depts.add(sp.getDepartment().trim());
+                    }
+                }
+            }
+
+            depts.add("Computer Science and Engineering");
+            depts.add("Information Technology");
+            depts.add("Artificial Intelligence & Data Science");
+            depts.add("Electronics and Communication Engineering");
+            depts.add("Electrical and Electronics Engineering");
+            depts.add("Mechanical Engineering");
+            depts.add("Civil Engineering");
+            depts.add("Cybersecurity & Digital Forensics");
+
+            map.put("departments", new ArrayList<>(depts));
+            result.add(map);
+        }
+        return result;
     }
 
     public List<CompanyOpportunity> getCompanyOpportunities(UUID companyUserId) {
         return opportunityRepository.findByCompanyUserIdOrderByCreatedAtDesc(companyUserId);
+    }
+
+    public Set<UUID> resolveStudentInstitutionIds(UUID studentId) {
+        Set<UUID> instIds = new LinkedHashSet<>();
+
+        studentProfileRepository.findByUserId(studentId).ifPresent(profile -> {
+            if (profile.getInstitution() != null && !profile.getInstitution().isBlank()) {
+                String instName = profile.getInstitution().trim();
+                List<User> instUsers = userRepository.findByRole(com.beyon.identity.enums.UserRole.INSTITUTION);
+                for (User iu : instUsers) {
+                    if (iu.getDisplayName() != null &&
+                        (iu.getDisplayName().equalsIgnoreCase(instName) ||
+                         instName.toLowerCase().contains(iu.getDisplayName().toLowerCase()) ||
+                         iu.getDisplayName().toLowerCase().contains(instName.toLowerCase()))) {
+                        instIds.add(iu.getId());
+                    }
+                }
+                institutionProfileRepository.findAll().forEach(ip -> {
+                    if ((ip.getInstitutionName() != null &&
+                         (ip.getInstitutionName().equalsIgnoreCase(instName) ||
+                          instName.toLowerCase().contains(ip.getInstitutionName().toLowerCase()) ||
+                          ip.getInstitutionName().toLowerCase().contains(instName.toLowerCase()))) ||
+                        (ip.getInstitutionCode() != null && ip.getInstitutionCode().equalsIgnoreCase(instName))) {
+                        instIds.add(ip.getUserId());
+                    }
+                });
+            }
+        });
+
+        try {
+            institutionStudentRepository.findByStudentId(studentId).forEach(is -> {
+                if (is.getInstitutionId() != null) {
+                    instIds.add(is.getInstitutionId());
+                }
+            });
+        } catch (Exception ignored) {}
+
+        return instIds;
+    }
+
+    public boolean isOpportunityVisibleAndApprovedForStudent(CompanyOpportunity opp, UUID studentId) {
+
+        if (!"CAMPUS_DRIVE".equalsIgnoreCase(opp.getOpportunityType()) &&
+            (opp.getTargetInstitutionIds() == null || opp.getTargetInstitutionIds().isBlank())) {
+            return true;
+        }
+
+        Set<UUID> studentInstIds = resolveStudentInstitutionIds(studentId);
+        if (studentInstIds.isEmpty()) {
+            return false;
+        }
+
+        String targetIdsStr = opp.getTargetInstitutionIds();
+        if (targetIdsStr == null || targetIdsStr.isBlank()) {
+
+            for (UUID sInstId : studentInstIds) {
+                var driveOpt = placementDriveRepository.findByOpportunityIdAndInstitutionId(opp.getId(), sInstId);
+                if (driveOpt.isPresent() && "APPROVED".equalsIgnoreCase(driveOpt.get().getStatus())) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        List<String> targetIds = Arrays.stream(targetIdsStr.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .toList();
+
+        for (UUID sInstId : studentInstIds) {
+            if (targetIds.contains(sInstId.toString())) {
+                var driveOpt = placementDriveRepository.findByOpportunityIdAndInstitutionId(opp.getId(), sInstId);
+                if (driveOpt.isPresent() && "APPROVED".equalsIgnoreCase(driveOpt.get().getStatus())) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    public List<CompanyOpportunity> getOpportunitiesForStudent(UUID studentId) {
+        List<CompanyOpportunity> all = opportunityRepository.findByStatusOrderByCreatedAtDesc("PUBLISHED");
+        return all.stream()
+                .filter(opp -> isOpportunityVisibleAndApprovedForStudent(opp, studentId))
+                .toList();
     }
 
     public List<CompanyOpportunity> getPublishedOpportunities() {
@@ -61,7 +217,180 @@ public class CompanyService {
     @Transactional
     public CompanyOpportunity createOpportunity(UUID companyUserId, CompanyOpportunity opp) {
         opp.setCompanyUserId(companyUserId);
-        return opportunityRepository.save(opp);
+        CompanyOpportunity saved = opportunityRepository.save(opp);
+
+        if ("CAMPUS_DRIVE".equalsIgnoreCase(saved.getOpportunityType()) &&
+            saved.getTargetInstitutionIds() != null &&
+            !saved.getTargetInstitutionIds().isBlank()) {
+
+            String[] instIds = saved.getTargetInstitutionIds().split(",");
+            for (String idStr : instIds) {
+                String clean = idStr.trim();
+                if (!clean.isEmpty()) {
+                    try {
+                        UUID instId = UUID.fromString(clean);
+                        com.beyon.institution.model.PlacementDrive pd = new com.beyon.institution.model.PlacementDrive();
+                        pd.setOpportunityId(saved.getId());
+                        pd.setInstitutionId(instId);
+                        pd.setCompanyUserId(companyUserId);
+                        pd.setTitle(saved.getTitle());
+                        pd.setDescription(saved.getDescription());
+                        pd.setStatus("PENDING_APPROVAL");
+                        if (saved.getPackageLpa() != null) {
+                            pd.setPackageLpa(saved.getPackageLpa());
+                        }
+                        placementDriveRepository.save(pd);
+                    } catch (Exception ignored) {}
+                }
+            }
+        }
+
+        return saved;
+    }
+
+    @Transactional
+    public CompanyOpportunity createOpportunityWithQuestions(UUID companyUserId, Map<String, Object> payload) {
+        CompanyOpportunity opp = new CompanyOpportunity();
+        opp.setCompanyUserId(companyUserId);
+        opp.setTitle((String) payload.get("title"));
+        opp.setDescription((String) payload.get("description"));
+        opp.setOpportunityType(payload.get("opportunityType") != null ? (String) payload.get("opportunityType") : "CAMPUS_DRIVE");
+        opp.setLocation((String) payload.get("location"));
+        opp.setRemote(Boolean.TRUE.equals(payload.get("remote")));
+        if (payload.get("packageLpa") != null) {
+            try {
+                opp.setPackageLpa(new BigDecimal(payload.get("packageLpa").toString()));
+            } catch (Exception ignored) {}
+        }
+        if (payload.get("minCgpa") != null) {
+            try {
+                opp.setMinCgpa(new BigDecimal(payload.get("minCgpa").toString()));
+            } catch (Exception ignored) {}
+        }
+        opp.setEligibleDepartments((String) payload.get("eligibleDepartments"));
+        opp.setEligibleGraduationYears((String) payload.get("eligibleGraduationYears"));
+        opp.setRequiredSkills((String) payload.get("requiredSkills"));
+        opp.setPreferredSkills((String) payload.get("preferredSkills"));
+        if (payload.get("minBeyonCoins") != null) {
+            try {
+                opp.setMinBeyonCoins(((Number) payload.get("minBeyonCoins")).intValue());
+            } catch (Exception ignored) {}
+        }
+        opp.setTargetInstitutionIds((String) payload.get("targetInstitutionIds"));
+        opp.setTargetInstitutionNames((String) payload.get("targetInstitutionNames"));
+        opp.setStatus(payload.get("status") != null ? (String) payload.get("status") : "PUBLISHED");
+
+        int durationMins = payload.get("durationMinutes") != null ? ((Number) payload.get("durationMinutes")).intValue() : 60;
+        int passingScore = payload.get("passingScore") != null ? ((Number) payload.get("passingScore")).intValue() : 65;
+
+        List<Map<String, Object>> questionsData = (List<Map<String, Object>>) payload.get("questions");
+        int totalQuestions = (questionsData != null && !questionsData.isEmpty()) ? questionsData.size() : (payload.get("totalQuestions") != null ? ((Number) payload.get("totalQuestions")).intValue() : 20);
+
+        com.beyon.assessment.model.AssessmentConfiguration assessmentConfig = new com.beyon.assessment.model.AssessmentConfiguration();
+        assessmentConfig.setCompanyId(companyUserId);
+        assessmentConfig.setTitle(opp.getTitle() + " Assessment");
+        assessmentConfig.setDescription("Official Proctored Assessment for " + opp.getTitle());
+        assessmentConfig.setDurationMinutes(durationMins);
+        assessmentConfig.setTotalQuestions(totalQuestions);
+        assessmentConfig.setPassingScore(new BigDecimal(passingScore));
+        assessmentConfig.setStatus("PUBLISHED");
+        assessmentConfig.setAdaptiveEnabled(Boolean.TRUE.equals(payload.get("adaptiveEnabled")));
+        com.beyon.assessment.model.AssessmentConfiguration savedConfig = assessmentConfigRepository.save(assessmentConfig);
+        opp.setAssessmentId(savedConfig.getId());
+
+        CompanyOpportunity savedOpp = opportunityRepository.save(opp);
+
+        if (questionsData != null && !questionsData.isEmpty()) {
+            for (int i = 0; i < questionsData.size(); i++) {
+                Map<String, Object> qMap = questionsData.get(i);
+                com.beyon.practice.model.Question q = new com.beyon.practice.model.Question();
+                String qTitle = qMap.get("title") != null ? (String) qMap.get("title") : "Question " + (i + 1);
+                q.setTitle(qTitle);
+                q.setDescription(qMap.get("description") != null ? (String) qMap.get("description") : qTitle);
+                q.setQuestionType(qMap.get("questionType") != null ? (String) qMap.get("questionType") : "MCQ_SINGLE");
+                q.setDifficulty(qMap.get("difficulty") != null ? (String) qMap.get("difficulty") : "MEDIUM");
+                q.setExplanation((String) qMap.get("explanation"));
+                q.setCreatedBy(companyUserId);
+                q.setStatus("PUBLISHED");
+                q.setTags("opportunity:" + savedOpp.getId() + ",assessment:" + savedConfig.getId());
+                com.beyon.practice.model.Question savedQ = questionRepository.save(q);
+
+                List<Map<String, Object>> optionsData = (List<Map<String, Object>>) qMap.get("options");
+                if (optionsData != null) {
+                    for (int optIdx = 0; optIdx < optionsData.size(); optIdx++) {
+                        Map<String, Object> optMap = optionsData.get(optIdx);
+                        com.beyon.practice.model.QuestionOption opt = new com.beyon.practice.model.QuestionOption();
+                        opt.setQuestionId(savedQ.getId());
+                        opt.setOptionText((String) optMap.get("optionText"));
+                        opt.setCorrect(Boolean.TRUE.equals(optMap.get("isCorrect")) || Boolean.TRUE.equals(optMap.get("correct")));
+                        opt.setDisplayOrder(optIdx + 1);
+                        opt.setExplanation((String) optMap.get("explanation"));
+                        questionOptionRepository.save(opt);
+                    }
+                }
+            }
+        }
+
+        if ("CAMPUS_DRIVE".equalsIgnoreCase(savedOpp.getOpportunityType()) &&
+            savedOpp.getTargetInstitutionIds() != null &&
+            !savedOpp.getTargetInstitutionIds().isBlank()) {
+
+            String[] instIds = savedOpp.getTargetInstitutionIds().split(",");
+            for (String idStr : instIds) {
+                String clean = idStr.trim();
+                if (!clean.isEmpty()) {
+                    try {
+                        UUID instId = UUID.fromString(clean);
+                        com.beyon.institution.model.PlacementDrive pd = new com.beyon.institution.model.PlacementDrive();
+                        pd.setOpportunityId(savedOpp.getId());
+                        pd.setInstitutionId(instId);
+                        pd.setCompanyUserId(companyUserId);
+                        pd.setTitle(savedOpp.getTitle());
+                        pd.setDescription(savedOpp.getDescription());
+                        pd.setStatus("PENDING_APPROVAL");
+                        if (savedOpp.getPackageLpa() != null) {
+                            pd.setPackageLpa(savedOpp.getPackageLpa());
+                        }
+                        placementDriveRepository.save(pd);
+                    } catch (Exception ignored) {}
+                }
+            }
+        }
+
+        return savedOpp;
+    }
+
+    public List<Map<String, Object>> getOpportunityQuestions(UUID opportunityId) {
+        String tag = "opportunity:" + opportunityId;
+        List<com.beyon.practice.model.Question> questions = questionRepository.findByTagsContainingOrderByCreatedAtAsc(tag);
+
+        if (questions.isEmpty()) {
+            questions = questionRepository.findByStatusOrderByCreatedAtDesc("PUBLISHED", org.springframework.data.domain.PageRequest.of(0, 20));
+        }
+
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (com.beyon.practice.model.Question q : questions) {
+            Map<String, Object> qMap = new LinkedHashMap<>();
+            qMap.put("id", q.getId());
+            qMap.put("title", q.getTitle());
+            qMap.put("description", q.getDescription());
+            qMap.put("questionType", q.getQuestionType());
+            qMap.put("difficulty", q.getDifficulty());
+            qMap.put("explanation", q.getExplanation());
+
+            List<com.beyon.practice.model.QuestionOption> options = questionOptionRepository.findByQuestionIdOrderByDisplayOrder(q.getId());
+            List<Map<String, Object>> optList = new ArrayList<>();
+            for (com.beyon.practice.model.QuestionOption opt : options) {
+                Map<String, Object> optMap = new LinkedHashMap<>();
+                optMap.put("id", opt.getId());
+                optMap.put("optionText", opt.getOptionText());
+                optMap.put("displayOrder", opt.getDisplayOrder());
+                optList.add(optMap);
+            }
+            qMap.put("options", optList);
+            result.add(qMap);
+        }
+        return result;
     }
 
     @Transactional
@@ -118,6 +447,39 @@ public class CompanyService {
                 eligible = false;
                 reasons.add("Placement preference is set to Not Seeking");
             }
+
+            if ("CAMPUS_DRIVE".equalsIgnoreCase(opp.getOpportunityType()) ||
+                (opp.getTargetInstitutionIds() != null && !opp.getTargetInstitutionIds().isBlank())) {
+                Set<UUID> studentInstIds = resolveStudentInstitutionIds(studentId);
+                if (studentInstIds.isEmpty()) {
+                    eligible = false;
+                    reasons.add("Your student profile is not linked to any verified partner institution");
+                } else {
+                    String targetIdsStr = opp.getTargetInstitutionIds();
+                    List<String> targetIds = (targetIdsStr != null && !targetIdsStr.isBlank())
+                            ? Arrays.stream(targetIdsStr.split(",")).map(String::trim).filter(s -> !s.isEmpty()).toList()
+                            : Collections.emptyList();
+
+                    boolean isTargeted = targetIds.isEmpty() || studentInstIds.stream().anyMatch(id -> targetIds.contains(id.toString()));
+                    if (!isTargeted) {
+                        eligible = false;
+                        reasons.add("This campus recruitment drive is not open to your institution");
+                    } else {
+                        boolean isApproved = false;
+                        for (UUID sInstId : studentInstIds) {
+                            var driveOpt = placementDriveRepository.findByOpportunityIdAndInstitutionId(opp.getId(), sInstId);
+                            if (driveOpt.isPresent() && "APPROVED".equalsIgnoreCase(driveOpt.get().getStatus())) {
+                                isApproved = true;
+                                break;
+                            }
+                        }
+                        if (!isApproved) {
+                            eligible = false;
+                            reasons.add("Campus drive is awaiting verification & approval by your institution's placement cell");
+                        }
+                    }
+                }
+            }
         }
 
         Map<String, Object> result = new HashMap<>();
@@ -157,13 +519,27 @@ public class CompanyService {
         OpportunityApplication savedApp = applicationRepository.save(app);
 
         try {
+            List<com.beyon.institution.model.PlacementDrive> matchingDrives = placementDriveRepository.findByOpportunityId(opportunityId);
+            com.beyon.institution.model.PlacementDrive matchedDrive = matchingDrives.isEmpty() ? null : matchingDrives.get(0);
+
             if (!recruitmentAppRepo.existsByOpportunityIdAndStudentId(opportunityId, studentId)) {
                 RecruitmentApplication recApp = new RecruitmentApplication();
                 recApp.setOpportunityId(opportunityId);
                 recApp.setStudentId(studentId);
                 recApp.setStatus("APPLIED");
                 recApp.setCoinsSpent(opp.getMinBeyonCoins());
+                recApp.setAppliedAt(Instant.now());
+                if (matchedDrive != null) {
+                    recApp.setDriveId(matchedDrive.getId());
+                    recApp.setInstitutionId(matchedDrive.getInstitutionId());
+                }
                 recruitmentAppRepo.save(recApp);
+            }
+
+            if (matchedDrive != null) {
+                matchedDrive.setAppliedCount(matchedDrive.getAppliedCount() + 1);
+                matchedDrive.setApplicantCount(matchedDrive.getAppliedCount());
+                placementDriveRepository.save(matchedDrive);
             }
         } catch (Exception ignored) {}
 
@@ -174,7 +550,58 @@ public class CompanyService {
         return applicationRepository.findByStudentIdOrderByUpdatedAtDesc(studentId);
     }
 
+    public List<Map<String, Object>> getOptedInOpportunities(UUID studentId) {
+        List<OpportunityApplication> apps = applicationRepository.findByStudentIdOrderByUpdatedAtDesc(studentId);
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (OpportunityApplication app : apps) {
+            opportunityRepository.findById(app.getOpportunityId()).ifPresent(opp -> {
+                Map<String, Object> map = new LinkedHashMap<>();
+                map.put("id", opp.getId());
+                map.put("applicationId", app.getId());
+                map.put("title", opp.getTitle());
+                String companyName = "Beyon Partner";
+                if (opp.getCompanyUserId() != null) {
+                    var companyUser = userRepository.findById(opp.getCompanyUserId()).orElse(null);
+                    if (companyUser != null && companyUser.getDisplayName() != null) {
+                        companyName = companyUser.getDisplayName();
+                    }
+                }
+                map.put("companyName", companyName);
+                map.put("role", opp.getTitle());
+                map.put("opportunityType", opp.getOpportunityType());
+                map.put("location", opp.getLocation());
+                map.put("packageLpa", opp.getPackageLpa() != null ? opp.getPackageLpa() : java.math.BigDecimal.valueOf(12.0));
+                map.put("eligibleDepartments", opp.getEligibleDepartments());
+                map.put("requiredSkills", opp.getRequiredSkills());
+                map.put("minCgpa", opp.getMinCgpa());
+
+                int duration = 60;
+                int totalQ = 20;
+                if (opp.getAssessmentId() != null) {
+                    var configOpt = assessmentConfigRepository.findById(opp.getAssessmentId());
+                    if (configOpt.isPresent()) {
+                        duration = configOpt.get().getDurationMinutes();
+                        totalQ = configOpt.get().getTotalQuestions();
+                    }
+                }
+                List<com.beyon.practice.model.Question> customQs = questionRepository.findByTagsContainingOrderByCreatedAtAsc("opportunity:" + opp.getId());
+                if (!customQs.isEmpty()) {
+                    totalQ = customQs.size();
+                }
+                map.put("durationMinutes", duration);
+                map.put("totalQuestions", totalQ);
+                map.put("applicationStatus", app.getStatus());
+                map.put("assessmentScore", app.getAssessmentScore());
+                map.put("appliedAt", app.getAppliedAt());
+                map.put("status", opp.getStatus());
+                result.add(map);
+            });
+        }
+        return result;
+    }
+
     public List<OpportunityApplication> getOpportunityApplications(UUID opportunityId) {
         return applicationRepository.findByOpportunityId(opportunityId);
     }
 }
+

@@ -41,3 +41,4 @@ public class GrowthIntelligenceController {
         throw new RuntimeException("Unauthorized");
     }
 }
+

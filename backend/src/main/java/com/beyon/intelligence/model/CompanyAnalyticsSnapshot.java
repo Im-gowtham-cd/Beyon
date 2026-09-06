@@ -42,3 +42,4 @@ public class CompanyAnalyticsSnapshot {
     public String getFunnelData() { return funnelData; } public void setFunnelData(String v) { this.funnelData = v; }
     public OffsetDateTime getCreatedAt() { return createdAt; } public void setCreatedAt(OffsetDateTime v) { this.createdAt = v; }
 }
+

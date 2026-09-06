@@ -9,3 +9,4 @@ public interface InterviewScheduleRepository extends JpaRepository<InterviewSche
     List<InterviewSchedule> findByApplicationId(UUID applicationId);
     List<InterviewSchedule> findByInterviewerIdAndStatus(UUID interviewerId, String status);
 }
+

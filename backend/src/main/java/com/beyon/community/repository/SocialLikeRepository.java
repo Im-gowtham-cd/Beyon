@@ -10,3 +10,4 @@ public interface SocialLikeRepository extends JpaRepository<SocialLike, UUID> {
     long countByTargetTypeAndTargetId(String targetType, UUID targetId);
     boolean existsByUserIdAndTargetTypeAndTargetId(UUID userId, String targetType, UUID targetId);
 }
+

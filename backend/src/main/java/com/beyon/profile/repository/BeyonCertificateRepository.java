@@ -11,3 +11,4 @@ public interface BeyonCertificateRepository extends JpaRepository<BeyonCertifica
     Optional<BeyonCertificate> findByCertificateNumber(String certificateNumber);
     long countByStudentId(UUID studentId);
 }
+

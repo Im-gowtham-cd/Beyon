@@ -26,3 +26,4 @@ public class AnalyticsEvent {
     public String getSessionId() { return sessionId; } public void setSessionId(String v) { this.sessionId = v; }
     public OffsetDateTime getCreatedAt() { return createdAt; } public void setCreatedAt(OffsetDateTime v) { this.createdAt = v; }
 }
+

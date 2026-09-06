@@ -34,6 +34,12 @@ public class StudentLearningTopic {
     @PreUpdate
     protected void onUpdate() { this.updatedAt = Instant.now(); }
 
+    @Transient
+    private String topicName;
+
+    @Transient
+    private UUID skillId;
+
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
     public UUID getStudentId() { return studentId; }
@@ -46,4 +52,9 @@ public class StudentLearningTopic {
     public void setStatus(String status) { this.status = status; }
     public Instant getStartedAt() { return startedAt; }
     public Instant getUpdatedAt() { return updatedAt; }
+    public String getTopicName() { return topicName; }
+    public void setTopicName(String topicName) { this.topicName = topicName; }
+    public UUID getSkillId() { return skillId; }
+    public void setSkillId(UUID skillId) { this.skillId = skillId; }
 }
+

@@ -48,6 +48,11 @@ class HomeFragment : Fragment() {
         binding.cardNavAssessment.setOnClickListener {
             mainActivity?.showAssessmentLockdownDialog()
         }
+
+        binding.cardNavDualViewProctor.setOnClickListener {
+            val intent = android.content.Intent(requireContext(), com.beyon.app.DualViewProctorActivity::class.java)
+            startActivity(intent)
+        }
     }
 
     override fun onDestroyView() {

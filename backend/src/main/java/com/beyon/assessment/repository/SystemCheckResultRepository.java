@@ -9,3 +9,4 @@ public interface SystemCheckResultRepository extends JpaRepository<SystemCheckRe
     List<SystemCheckResult> findBySessionIdOrderByCheckedAt(UUID sessionId);
     long countBySessionIdAndStatus(UUID sessionId, String status);
 }
+

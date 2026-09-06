@@ -101,3 +101,4 @@ public class ChallengeService {
         return participationRepo.findByChallengeId(challengeId);
     }
 }
+

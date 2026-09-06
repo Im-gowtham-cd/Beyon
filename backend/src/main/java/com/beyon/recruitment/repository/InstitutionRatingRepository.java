@@ -8,3 +8,4 @@ import java.util.UUID;
 public interface InstitutionRatingRepository extends JpaRepository<InstitutionRating, UUID> {
     Optional<InstitutionRating> findByInstitutionId(UUID institutionId);
 }
+

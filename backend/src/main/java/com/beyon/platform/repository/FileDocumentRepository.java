@@ -10,3 +10,4 @@ public interface FileDocumentRepository extends JpaRepository<FileDocument, UUID
     List<FileDocument> findByUserIdAndFileTypeOrderByCreatedAtDesc(UUID userId, String fileType);
     long countByUserId(UUID userId);
 }
+

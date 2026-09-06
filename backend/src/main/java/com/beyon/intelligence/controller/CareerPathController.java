@@ -58,3 +58,4 @@ public class CareerPathController {
         throw new RuntimeException("Unauthorized");
     }
 }
+

@@ -24,3 +24,4 @@ public class TeamMember {
     public String getStatus() { return status; } public void setStatus(String v) { this.status = v; }
     public OffsetDateTime getJoinedAt() { return joinedAt; } public void setJoinedAt(OffsetDateTime v) { this.joinedAt = v; }
 }
+

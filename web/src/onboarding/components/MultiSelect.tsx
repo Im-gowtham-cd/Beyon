@@ -31,7 +31,6 @@ export function MultiSelect({ id, label, options, selected, onChange, required, 
     }
   }
 
-  // Combine standard options and custom selected options
   const allDisplayOptions = Array.from(new Set([...options, ...selected]));
 
   return (
@@ -83,3 +82,4 @@ export function MultiSelect({ id, label, options, selected, onChange, required, 
     </div>
   );
 }
+

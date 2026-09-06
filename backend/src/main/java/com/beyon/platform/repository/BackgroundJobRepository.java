@@ -23,3 +23,4 @@ public interface BackgroundJobRepository extends JpaRepository<BackgroundJob, UU
     @Query("DELETE FROM BackgroundJob j WHERE j.status = 'COMPLETED' AND j.completedAt < :cutoff")
     int deleteCompletedBefore(@Param("cutoff") OffsetDateTime cutoff);
 }
+

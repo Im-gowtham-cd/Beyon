@@ -9,3 +9,4 @@ public interface CoinTransactionLedgerRepository extends JpaRepository<CoinTrans
     List<CoinTransactionLedger> findByUserIdOrderByCreatedAtDesc(UUID userId);
     List<CoinTransactionLedger> findByReferenceTypeAndReferenceId(String referenceType, UUID referenceId);
 }
+

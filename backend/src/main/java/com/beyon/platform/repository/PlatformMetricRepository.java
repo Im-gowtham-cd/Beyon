@@ -9,3 +9,4 @@ public interface PlatformMetricRepository extends JpaRepository<PlatformMetric, 
     List<PlatformMetric> findByMetricNameOrderByRecordedAtDesc(String metricName);
     List<PlatformMetric> findTop100ByOrderByRecordedAtDesc();
 }
+

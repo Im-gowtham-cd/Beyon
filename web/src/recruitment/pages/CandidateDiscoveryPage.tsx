@@ -1,73 +1,165 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Search,
   UserCheck,
   Check,
-  Building,
+  Building2,
+  ShieldCheck,
+  Clock,
+  MessageSquare,
 } from 'lucide-react';
 import styles from './CandidateDiscoveryPage.module.css';
 
+interface CandidateProfile {
+  id: string;
+  studentId: string;
+  name: string;
+  email?: string;
+  college: string;
+  degree: string;
+  department: string;
+  batch?: string;
+  cgpa: number;
+  skills: string[];
+  benchmarkScore: number | null;
+  applicationId?: string;
+  applicationStatus?: string;
+  appliedOpportunityId?: string;
+}
+
 export function CandidateDiscoveryPage() {
+  const navigate = useNavigate();
   const [opportunities, setOpportunities] = useState<any[]>([]);
   const [selectedOppId, setSelectedOppId] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState('');
   const [minCgpaFilter, setMinCgpaFilter] = useState<number>(0);
   const [shortlistedSet, setShortlistedSet] = useState<Set<string>>(new Set());
-  const [candidates, setCandidates] = useState<any[]>([]);
+  const [candidates, setCandidates] = useState<CandidateProfile[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function loadData() {
       try {
         const token = localStorage.getItem('beyon_token') || localStorage.getItem('beyon_access_token');
-        const res = await fetch('/api/v1/opportunities', {
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-        });
-        if (res.ok) {
-          const data = await res.json();
+        const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+
+        const [oppsRes, candRes, appsRes] = await Promise.all([
+          fetch('/api/v1/opportunities', { headers }).catch(() => null),
+          fetch('/api/v1/recruitment/candidates', { headers }).catch(() => null),
+          fetch('/api/v1/recruitment/applications', { headers }).catch(() => null),
+        ]);
+
+        if (oppsRes && oppsRes.ok) {
+          const data = await oppsRes.json();
           if (Array.isArray(data.data) && data.data.length > 0) {
             setOpportunities(data.data);
             setSelectedOppId(data.data[0].id);
           }
         }
 
-        const appRes = await fetch('/api/v1/recruitment/applications', {
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-        }).catch(() => null);
+        let fetchedCandidates: CandidateProfile[] = [];
 
-        if (appRes && appRes.ok) {
-          const appData = await appRes.json();
-          if (Array.isArray(appData.data) && appData.data.length > 0) {
-            const mapped = appData.data.map((app: any, idx: number) => ({
-              id: app.id || `c-${idx}`,
-              studentId: app.studentId,
-              name: app.studentName || `Candidate ${idx + 1}`,
-              college: app.institutionName || 'PSG College of Technology',
-              degree: 'B.E Computer Science',
-              batch: '2026',
-              cgpa: app.cgpa || 9.12,
-              skills: ['Java', 'Spring Boot', 'MySQL', 'REST APIs', 'React'],
-              benchmarkScore: app.assessmentScore || 92,
-              skillMatch: 95,
-              overallScore: 94,
-              avatar: (app.studentName || 'SC').slice(0, 2).toUpperCase(),
+        if (candRes && candRes.ok) {
+          const cData = await candRes.json();
+          if (Array.isArray(cData.data) && cData.data.length > 0) {
+            fetchedCandidates = cData.data.map((c: any) => ({
+              id: c.id || c.studentId,
+              studentId: c.studentId || c.id,
+              name: c.studentName || c.name || 'Verified Candidate',
+              email: c.studentEmail || c.email,
+              college: c.institutionName || c.college || 'Partner Institution',
+              degree: c.degree || 'Degree Pending',
+              department: c.department || 'General',
+              batch: c.batch,
+              cgpa: Number(c.cgpa) || 0,
+              skills: Array.isArray(c.skills) ? c.skills : [],
+              benchmarkScore: c.assessmentScore != null ? Number(c.assessmentScore) : null,
+              applicationId: c.applicationId,
+              applicationStatus: c.applicationStatus,
+              appliedOpportunityId: c.appliedOpportunityId,
             }));
-            setCandidates(mapped);
           }
         }
+
+        if (fetchedCandidates.length === 0 && appsRes && appsRes.ok) {
+          const appData = await appsRes.json();
+          if (Array.isArray(appData.data) && appData.data.length > 0) {
+            fetchedCandidates = appData.data.map((app: any) => ({
+              id: app.id || app.studentId,
+              studentId: app.studentId,
+              name: app.studentName || app.name || 'Verified Candidate',
+              email: app.studentEmail || app.email,
+              college: app.institutionName || app.college || 'Partner Institution',
+              degree: app.degree || 'Undergraduate',
+              department: app.department || 'Computer Science',
+              batch: app.batch,
+              cgpa: Number(app.cgpa) || 0,
+              skills: Array.isArray(app.skills) ? app.skills : [],
+              benchmarkScore: app.assessmentScore != null ? Number(app.assessmentScore) : null,
+              applicationId: app.id,
+              applicationStatus: app.status,
+              appliedOpportunityId: app.opportunityId,
+            }));
+          }
+        }
+
+        setCandidates(fetchedCandidates);
+
+        const initialShortlisted = new Set<string>();
+        fetchedCandidates.forEach((c) => {
+          if (c.applicationStatus === 'SHORTLISTED') {
+            initialShortlisted.add(c.id);
+          }
+        });
+        setShortlistedSet(initialShortlisted);
       } catch {
-        /* fallback */
+        setCandidates([]);
+      } finally {
+        setLoading(false);
       }
     }
     loadData();
   }, []);
 
-  const toggleShortlist = (id: string) => {
-    setShortlistedSet((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
+  const toggleShortlist = async (candidate: CandidateProfile) => {
+    const isCurrentlyShortlisted = shortlistedSet.has(candidate.id);
+    const nextSet = new Set(shortlistedSet);
+
+    if (isCurrentlyShortlisted) {
+      nextSet.delete(candidate.id);
+    } else {
+      nextSet.add(candidate.id);
+    }
+    setShortlistedSet(nextSet);
+
+    try {
+      const token = localStorage.getItem('beyon_token') || localStorage.getItem('beyon_access_token');
+      const oppId = selectedOppId || (opportunities.length > 0 ? opportunities[0].id : null);
+
+      if (oppId && token) {
+        await fetch('/api/v1/recruitment/shortlist', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            studentId: candidate.studentId,
+            opportunityId: oppId,
+          }),
+        });
+      }
+    } catch {
+
+    }
+  };
+
+  const handleContactCandidate = (candidate: CandidateProfile) => {
+    const targetId = candidate.studentId || candidate.id;
+    const nameParam = encodeURIComponent(candidate.name || 'Candidate');
+    const emailParam = encodeURIComponent(candidate.email || '');
+    navigate(`/company/messages?recipientId=${targetId}&name=${nameParam}&email=${emailParam}`);
   };
 
   const filteredCandidates = candidates.filter((c) => {
@@ -75,19 +167,40 @@ export function CandidateDiscoveryPage() {
       !searchQuery ||
       c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       c.college.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      c.skills.some((s: string) => s.toLowerCase().includes(searchQuery.toLowerCase()));
+      c.department.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      c.skills.some((s) => s.toLowerCase().includes(searchQuery.toLowerCase()));
 
     const matchesCgpa = c.cgpa >= minCgpaFilter;
     return matchesSearch && matchesCgpa;
   });
 
+  const validCgpaCandidates = candidates.filter((c) => c.cgpa > 0);
+  const avgCgpa =
+    validCgpaCandidates.length > 0
+      ? (validCgpaCandidates.reduce((acc, c) => acc + c.cgpa, 0) / validCgpaCandidates.length).toFixed(2)
+      : '0.00';
+
+  const scoredCandidates = candidates.filter((c) => c.benchmarkScore !== null);
+  const avgBenchmark =
+    scoredCandidates.length > 0
+      ? (scoredCandidates.reduce((acc, c) => acc + (c.benchmarkScore || 0), 0) / scoredCandidates.length).toFixed(1) + '%'
+      : 'Pending';
+
   return (
     <div className={styles.page}>
+
       <div className={styles.pageHeader}>
-        <div>
+        <div className={styles.headerInfo}>
+          <div className={styles.badgeRow}>
+            <span className={styles.portalBadge}>AI Candidate Discovery</span>
+            <span className={styles.verifiedBadge}>
+              <ShieldCheck size={12} />
+              <span>Verified Partner Campuses</span>
+            </span>
+          </div>
           <h1 className={styles.title}>AI Candidate Discovery &amp; Talent Search</h1>
           <p className={styles.subtitle}>
-            Search across verified scholars with authenticated academic CGPAs, benchmark test scores, and AI skill matching
+            Explore and shortlist verified scholars with verified academic CGPAs, proctored assessments, and verified skills
           </p>
         </div>
       </div>
@@ -95,199 +208,197 @@ export function CandidateDiscoveryPage() {
       <div className={styles.statsRow}>
         <div className={styles.statCard}>
           <span className={styles.statLabel}>Verified Candidate Pool</span>
-          <span className={styles.statValue}>{candidates.length || '120+'} Scholars</span>
+          <span className={styles.statValue}>{candidates.length} Candidates</span>
+          <span className={styles.statSub}>Scholars in partner network</span>
         </div>
         <div className={styles.statCard}>
-          <span className={styles.statLabel}>Avg Benchmark Score</span>
-          <span className={styles.statValue} style={{ color: '#15803d' }}>89.2%</span>
+          <span className={styles.statLabel}>Average Academic CGPA</span>
+          <span className={styles.statValue} style={{ color: '#0284c7' }}>
+            {avgCgpa}
+          </span>
+          <span className={styles.statSub}>Across registered candidates</span>
+        </div>
+        <div className={styles.statCard}>
+          <span className={styles.statLabel}>Assessment Benchmark</span>
+          <span className={styles.statValue} style={{ color: '#15803d' }}>
+            {avgBenchmark}
+          </span>
+          <span className={styles.statSub}>Proctored technical tests</span>
         </div>
         <div className={styles.statCard}>
           <span className={styles.statLabel}>Shortlisted for Tech Rounds</span>
-          <span className={styles.statValue} style={{ color: '#1c2d81' }}>{shortlistedSet.size} Selected</span>
-        </div>
-        <div className={styles.statCard}>
-          <span className={styles.statLabel}>Active Opportunities</span>
-          <span className={styles.statValue}>{opportunities.length || 35} Roles</span>
+          <span className={styles.statValue} style={{ color: '#1c2d81' }}>
+            {shortlistedSet.size} Selected
+          </span>
+          <span className={styles.statSub}>Synchronized to pipeline</span>
         </div>
       </div>
 
-      <div className={styles.filterRow}>
-        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
-          <div style={{ position: 'relative' }}>
-            <Search
-              size={15}
-              style={{
-                position: 'absolute',
-                left: '12px',
-                top: '50%',
-                transform: 'translateY(-50%)',
-                color: '#94a3b8',
-              }}
-            />
+      <div className={styles.controlsRow}>
+        <div className={styles.filterGroup}>
+          <div className={styles.searchWrap}>
+            <Search size={15} className={styles.searchIcon} />
             <input
               type="text"
               className={styles.searchInput}
-              style={{ paddingLeft: '34px', minWidth: '280px' }}
-              placeholder="Search by skill, name, college..."
+              placeholder="Search by candidate name, skill, college, department..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
 
           <select
-            className={styles.searchInput}
+            className={styles.selectInput}
             value={selectedOppId}
             onChange={(e) => setSelectedOppId(e.target.value)}
           >
-            <option value="">All Open Job Requisitions</option>
+            <option value="">Target All Active Openings</option>
             {opportunities.map((opp) => (
               <option key={opp.id} value={opp.id}>
-                {opp.title} ({opp.opportunityType || 'FULL_TIME'})
+                {opp.title} ({opp.opportunityType?.replace('_', ' ') || 'CAMPUS DRIVE'})
               </option>
             ))}
           </select>
 
           <select
-            className={styles.searchInput}
+            className={styles.selectInput}
             value={minCgpaFilter}
             onChange={(e) => setMinCgpaFilter(Number(e.target.value))}
           >
-            <option value={0}>All CGPA Ranges</option>
-            <option value={8.0}>Min 8.0 CGPA</option>
-            <option value={8.5}>Min 8.5 CGPA</option>
-            <option value={9.0}>Min 9.0 CGPA (Top 5%)</option>
+            <option value={0}>All Academic CGPA Ranges</option>
+            <option value={7.0}>Min 7.0+ CGPA</option>
+            <option value={7.5}>Min 7.5+ CGPA</option>
+            <option value={8.0}>Min 8.0+ CGPA</option>
+            <option value={8.5}>Min 8.5+ CGPA (High Honor)</option>
           </select>
         </div>
+
+        <span className={styles.resultsCount}>
+          {filteredCandidates.length} Candidates Available
+        </span>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '16px' }}>
-        {filteredCandidates.map((c) => {
-          const isShortlisted = shortlistedSet.has(c.id);
-          return (
-            <div
-              key={c.id}
-              style={{
-                background: '#ffffff',
-                border: isShortlisted ? '1.5px solid #1c2d81' : '1px solid #e2e8f0',
-                padding: '20px',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '14px',
-                position: 'relative',
-              }}
-            >
-              <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                <div
-                  style={{
-                    width: '42px',
-                    height: '42px',
-                    borderRadius: '4px',
-                    background: '#1c2d81',
-                    color: '#ffffff',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontWeight: 700,
-                    fontSize: '0.9rem',
-                    flexShrink: 0,
-                  }}
-                >
-                  {c.avatar}
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#0f172a', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {c.name}
-                  </h3>
-                  <div style={{ fontSize: '0.78rem', color: '#64748b', display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}>
-                    <Building size={12} />
-                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.college}</span>
+      {loading ? (
+        <div className={styles.emptyState}>
+          <Clock size={32} style={{ color: '#1c2d81', animation: 'spin 2s linear infinite' }} />
+          <p className={styles.emptySub}>Loading verified candidate directory...</p>
+        </div>
+      ) : filteredCandidates.length === 0 ? (
+        <div className={styles.emptyState}>
+          <UserCheck size={40} style={{ color: '#cbd5e1' }} />
+          <h3 className={styles.emptyTitle}>No candidates matched your search criteria</h3>
+          <p className={styles.emptySub}>
+            Try adjusting your CGPA or keyword filters to browse more verified scholars from our academic network.
+          </p>
+        </div>
+      ) : (
+        <div className={styles.candidateGrid}>
+          {filteredCandidates.map((c) => {
+            const isShortlisted = shortlistedSet.has(c.id);
+            return (
+              <div
+                key={c.id}
+                className={`${styles.candidateCard} ${isShortlisted ? styles.candidateCardShortlisted : ''}`}
+              >
+
+                <div className={styles.cardHeader}>
+                  <div className={styles.avatar}>
+                    {c.name.slice(0, 2).toUpperCase()}
+                  </div>
+                  <div className={styles.nameGroup}>
+                    <h3 className={styles.candidateName}>{c.name}</h3>
+                    <div className={styles.institutionRow}>
+                      <Building2 size={12} style={{ color: '#1c2d81', flexShrink: 0 }} />
+                      <span>{c.college}</span>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', background: '#f8fafc', padding: '10px 12px', border: '1px solid #e2e8f0' }}>
-                <div>
-                  <div style={{ fontSize: '0.68rem', color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>CGPA</div>
-                  <div style={{ fontSize: '0.88rem', fontWeight: 800, color: '#0f172a' }}>{c.cgpa}</div>
+                <div className={styles.deptInfo}>
+                  <span>{c.degree} · {c.department}</span>
+                  {c.batch && <span>Batch {c.batch}</span>}
                 </div>
-                <div>
-                  <div style={{ fontSize: '0.68rem', color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>Assessment</div>
-                  <div style={{ fontSize: '0.88rem', fontWeight: 800, color: '#15803d' }}>{c.benchmarkScore}%</div>
-                </div>
-                <div>
-                  <div style={{ fontSize: '0.68rem', color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>AI Match</div>
-                  <div style={{ fontSize: '0.88rem', fontWeight: 800, color: '#1c2d81' }}>{c.skillMatch}%</div>
-                </div>
-              </div>
 
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                {c.skills.map((s: string) => (
-                  <span
-                    key={s}
-                    style={{
-                      fontSize: '0.72rem',
-                      background: '#eff6ff',
-                      color: '#1d4ed8',
-                      border: '1px solid #bfdbfe',
-                      padding: '2px 8px',
-                      borderRadius: '2px',
-                      fontWeight: 600,
-                    }}
+                <div className={styles.metricRow}>
+                  <div className={styles.metricBlock}>
+                    <span className={styles.metricLabel}>Academic CGPA</span>
+                    <span className={styles.metricVal}>
+                      {c.cgpa > 0 ? (
+                        <span style={{ color: '#0f172a' }}>{c.cgpa}</span>
+                      ) : (
+                        <span style={{ color: '#94a3b8' }}>N/A</span>
+                      )}
+                    </span>
+                  </div>
+                  <div className={styles.metricBlock}>
+                    <span className={styles.metricLabel}>Assessment</span>
+                    <span className={styles.metricVal}>
+                      {c.benchmarkScore != null ? (
+                        <span style={{ color: '#15803d' }}>{c.benchmarkScore}%</span>
+                      ) : (
+                        <span style={{ color: '#94a3b8' }}>Pending</span>
+                      )}
+                    </span>
+                  </div>
+                  <div className={styles.metricBlock}>
+                    <span className={styles.metricLabel}>Status</span>
+                    <span className={styles.metricVal} style={{ fontSize: '0.78rem', color: isShortlisted ? '#15803d' : '#64748b' }}>
+                      {isShortlisted ? 'Shortlisted' : 'Available'}
+                    </span>
+                  </div>
+                </div>
+
+                <div className={styles.skillsContainer}>
+                  <span className={styles.skillsLabel}>Verified Technical Skills</span>
+                  <div className={styles.skillsList}>
+                    {c.skills.length > 0 ? (
+                      c.skills.map((s, idx) => (
+                        <span key={idx} className={styles.skillBadge}>
+                          {s.replace('SKILL_', '')}
+                        </span>
+                      ))
+                    ) : (
+                      <span style={{ fontSize: '0.75rem', color: '#94a3b8', fontStyle: 'italic' }}>
+                        Profile skills under verification
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                <div className={styles.cardActions}>
+                  <button
+                    className={`${styles.btnShortlist} ${isShortlisted ? styles.btnShortlistedActive : ''}`}
+                    onClick={() => toggleShortlist(c)}
                   >
-                    {s}
-                  </span>
-                ))}
+                    {isShortlisted ? (
+                      <>
+                        <Check size={14} />
+                        <span>Shortlisted for Interview</span>
+                      </>
+                    ) : (
+                      <>
+                        <UserCheck size={14} />
+                        <span>Shortlist Candidate</span>
+                      </>
+                    )}
+                  </button>
+
+                  <button
+                    type="button"
+                    className={styles.btnContact}
+                    onClick={() => handleContactCandidate(c)}
+                    title={`Open direct chat with ${c.name}`}
+                  >
+                    <MessageSquare size={14} />
+                    <span>Message</span>
+                  </button>
+                </div>
               </div>
-
-              <button
-                onClick={() => toggleShortlist(c.id)}
-                style={{
-                  marginTop: 'auto',
-                  padding: '9px 14px',
-                  background: isShortlisted ? '#dcfce7' : '#1c2d81',
-                  color: isShortlisted ? '#15803d' : '#ffffff',
-                  border: isShortlisted ? '1px solid #bbf7d0' : '1px solid #1c2d81',
-                  borderRadius: '3px',
-                  fontWeight: 700,
-                  fontSize: '0.82rem',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '6px',
-                }}
-              >
-                {isShortlisted ? (
-                  <>
-                    <Check size={14} />
-                    <span>Shortlisted for Technical Interview</span>
-                  </>
-                ) : (
-                  <>
-                    <UserCheck size={14} />
-                    <span>Shortlist Candidate</span>
-                  </>
-                )}
-              </button>
-            </div>
-          );
-        })}
-
-        {filteredCandidates.length === 0 && (
-          <div style={{
-            gridColumn: '1 / -1',
-            padding: '48px 24px',
-            textAlign: 'center',
-            background: '#ffffff',
-            border: '1px solid #e2e8f0',
-            color: '#64748b',
-          }}>
-            <UserCheck size={36} style={{ color: '#1c2d81', margin: '0 auto 12px auto', display: 'block' }} />
-            <h4 style={{ margin: '0 0 6px 0', fontSize: '1rem', fontWeight: 800, color: '#020617' }}>No Candidates Found</h4>
-            <p style={{ margin: 0, fontSize: '0.84rem' }}>Candidates matching your active filter criteria will appear here automatically.</p>
-          </div>
-        )}
-      </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
+

@@ -15,3 +15,4 @@ public class VerifyEmailRequest {
         this.token = token;
     }
 }
+

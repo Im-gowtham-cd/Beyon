@@ -8,3 +8,4 @@ import java.util.UUID;
 public interface FeedbackStatusHistoryRepository extends JpaRepository<FeedbackStatusHistory, UUID> {
     List<FeedbackStatusHistory> findByReportIdOrderByCreatedAtAsc(UUID reportId);
 }
+

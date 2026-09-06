@@ -131,3 +131,4 @@ public class InstitutionOnboardingRequest {
         public void setDepartment(String department) { this.department = department; }
     }
 }
+

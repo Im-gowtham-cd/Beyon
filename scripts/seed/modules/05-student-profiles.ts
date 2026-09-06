@@ -1,8 +1,3 @@
-// ============================================================
-// Module 05 — Student Profile Seeder
-// Creates student_profiles, student_skills, coin_wallets
-// ============================================================
-
 import { doltBatch, doltExec, esc, escNum, toUUID } from "../engine/dolt.js";
 import { FIXED_ACCOUNTS } from "../data/personas.js";
 import { INSTITUTIONS } from "../data/institutions.js";
@@ -39,7 +34,6 @@ export async function seedStudentProfiles(cfg: SeedConfig): Promise<void> {
 
   const instKeys = Object.keys(institutionUserIds);
 
-  // ─── Fixed Accounts student profiles ───
   for (const acc of FIXED_ACCOUNTS) {
     if (acc.role !== "STUDENT") continue;
     const uid = toUUID(acc.id);
@@ -57,7 +51,6 @@ export async function seedStudentProfiles(cfg: SeedConfig): Promise<void> {
     skillStmts.push(...buildSkillsSql(uid, rng, acc.persona ?? "B"));
   }
 
-  // ─── Generated students ───
   let genIndex = 0;
   for (const userId of studentUserIds) {
     if (!FIXED_ACCOUNTS.some(a => toUUID(a.id) === userId)) {
@@ -67,7 +60,6 @@ export async function seedStudentProfiles(cfg: SeedConfig): Promise<void> {
       const acad = makeStudentAcademics(rng, personaType);
       const coins = makeCoins(rng, personaType);
 
-      // Pick a random institution
       const instKey = rng.pick(instKeys);
       const instUserId = institutionUserIds[instKey] ?? null;
 
@@ -87,7 +79,6 @@ export async function seedStudentProfiles(cfg: SeedConfig): Promise<void> {
     certStmts.push(...buildCertsSql(userId, rng));
     achieveStmts.push(...buildAchievementsSql(userId, rng));
 
-    // Streaks
     const currentStreak = rng.int(2, 60);
     const longestStreak = Math.max(currentStreak, rng.int(15, 280));
     const streakId = toUUID(`beyon-streak-${userId}`);
@@ -96,7 +87,6 @@ export async function seedStudentProfiles(cfg: SeedConfig): Promise<void> {
        VALUES (${esc(streakId)}, ${esc(userId)}, ${currentStreak}, ${longestStreak}, CURDATE(), DATE_SUB(NOW(), INTERVAL ${rng.int(30, 360)} DAY), NOW());`
     );
 
-    // Practice stats
     const attempted = rng.int(25, 280);
     const solved = Math.floor(attempted * (rng.int(70, 96) / 100));
     const timeSpent = attempted * rng.int(60, 300);
@@ -141,7 +131,7 @@ function buildStudentProfileSql(
 ): string {
   const profId = toUUID(`beyon-sp-${userId}`);
   const completion = cgpa && department && graduationYear ? 85 : 20;
-  // institution column stores text name (from the schema: varchar(200))
+
   const instName = institutionUserId ? `Beyon Test Institution` : null;
   return `INSERT IGNORE INTO student_profiles
     (id, user_id, institution, degree, department, graduation_year, cgpa, placement_preference,
@@ -214,3 +204,4 @@ function buildAchievementsSql(studentId: string, rng: SeededRandom): string[] {
       VALUES (${esc(id)}, ${esc(studentId)}, ${esc(a.title)}, ${esc(a.desc)}, ${esc(a.cat)}, ${esc(a.org)}, '2025-11-20', NOW(), NOW());`;
   });
 }
+

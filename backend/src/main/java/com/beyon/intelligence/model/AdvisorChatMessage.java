@@ -22,3 +22,4 @@ public class AdvisorChatMessage {
     public String getDataReferences() { return dataReferences; } public void setDataReferences(String v) { this.dataReferences = v; }
     public OffsetDateTime getCreatedAt() { return createdAt; } public void setCreatedAt(OffsetDateTime v) { this.createdAt = v; }
 }
+

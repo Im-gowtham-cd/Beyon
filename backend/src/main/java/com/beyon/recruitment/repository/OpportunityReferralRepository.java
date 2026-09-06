@@ -9,3 +9,4 @@ public interface OpportunityReferralRepository extends JpaRepository<Opportunity
     List<OpportunityReferral> findByReferrerIdOrderByCreatedAtDesc(UUID referrerId);
     List<OpportunityReferral> findByStatusOrderByCreatedAtDesc(String status);
 }
+

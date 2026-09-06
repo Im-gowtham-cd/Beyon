@@ -38,26 +38,28 @@ export function StudentSidebar({
   onToggleCollapse,
 }: StudentSidebarProps) {
   const { user } = useAuth();
-  const [coins, setCoins] = useState<number>(250);
-  const [streak, setStreak] = useState<number>(18);
+  const [coins, setCoins] = useState<number>(0);
+  const [streak, setStreak] = useState<number>(0);
 
   useEffect(() => {
     async function fetchStats() {
       try {
         const token = localStorage.getItem('beyon_token') || localStorage.getItem('beyon_access_token');
         if (!token) return;
-        const res = await fetch('/api/v1/practice/stats', {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        if (res.ok) {
-          const data = await res.json();
-          if (data.data) {
-            if (data.data.currentStreak !== undefined) setStreak(data.data.currentStreak);
-            if (data.data.coinsBalance !== undefined) setCoins(data.data.coinsBalance);
-          }
+        const [coinRes, streakRes] = await Promise.all([
+          fetch('/api/v1/coins/balance', { headers: { Authorization: `Bearer ${token}` } }).catch(() => null),
+          fetch('/api/v1/gamification/streak', { headers: { Authorization: `Bearer ${token}` } }).catch(() => null),
+        ]);
+        if (coinRes && coinRes.ok) {
+          const coinData = await coinRes.json();
+          setCoins(coinData.data ?? 0);
+        }
+        if (streakRes && streakRes.ok) {
+          const streakData = await streakRes.json();
+          setStreak(streakData.data?.currentStreak ?? 0);
         }
       } catch {
-        /* fallback */
+
       }
     }
     fetchStats();
@@ -115,11 +117,11 @@ export function StudentSidebar({
       <aside
         className={`${styles.sidebar} ${collapsed ? styles.sidebarCollapsed : ''} ${mobileOpen ? styles.sidebarOpenMobile : ''}`}
       >
-        {/* Brand Header */}
+
         <div className={styles.brandHeader}>
           <Link to="/student/home" className={styles.brandLink}>
-            <div className={styles.brandLogo}>
-              <span>B</span>
+            <div className={styles.brandLogo} style={{ background: 'transparent', boxShadow: 'none' }}>
+              <img src="/logo-icon.png" alt="Beyon" style={{ width: '32px', height: '32px', objectFit: 'contain' }} />
             </div>
             {!collapsed && (
               <div className={styles.brandInfo}>
@@ -130,9 +132,8 @@ export function StudentSidebar({
           </Link>
         </div>
 
-        {/* Sidebar Scrollable Body */}
         <div className={styles.sidebarScroll}>
-          {/* User Card */}
+
           <div className={`${styles.userCard} ${collapsed ? styles.userCardCollapsed : ''}`}>
             <div className={styles.userInfo}>
               <div className={styles.avatar}>
@@ -161,7 +162,6 @@ export function StudentSidebar({
             )}
           </div>
 
-          {/* Navigation Sections */}
           {navSections.map((section) => (
             <div key={section.title} className={styles.navSection}>
               {!collapsed && <span className={styles.sectionTitle}>{section.title}</span>}
@@ -197,7 +197,6 @@ export function StudentSidebar({
           ))}
         </div>
 
-        {/* Footer Utility Actions */}
         <div className={styles.footerSection}>
           {onToggleCollapse && (
             <button
@@ -215,3 +214,4 @@ export function StudentSidebar({
     </>
   );
 }
+

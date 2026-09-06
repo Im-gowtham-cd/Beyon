@@ -33,7 +33,7 @@ export function SearchBar() {
     try {
       const t = await api.get<SearchResult[]>('/search/trending?limit=5');
       setTrending(t);
-    } catch { /* */ }
+    } catch {  }
   }, []);
 
   useEffect(() => {
@@ -47,7 +47,7 @@ export function SearchBar() {
       try {
         const r = await api.get<SearchResult[]>(`/search?q=${encodeURIComponent(query)}&limit=10`);
         setResults(r);
-      } catch { /* */ }
+      } catch {  }
       setLoading(false);
     }, 300);
     return () => clearTimeout(timer);
@@ -114,3 +114,4 @@ export function SearchBar() {
     </div>
   );
 }
+

@@ -10,3 +10,4 @@ public interface StudentSkillRepository extends JpaRepository<StudentSkill, UUID
     boolean existsByUserIdAndSkillNameIgnoreCase(UUID userId, String skillName);
     void deleteByUserId(UUID userId);
 }
+

@@ -49,3 +49,4 @@ public class InstitutionPlacementStats {
     public String getCompanyTierDistribution() { return companyTierDistribution; } public void setCompanyTierDistribution(String v) { this.companyTierDistribution = v; }
     public OffsetDateTime getUpdatedAt() { return updatedAt; } public void setUpdatedAt(OffsetDateTime v) { this.updatedAt = v; }
 }
+

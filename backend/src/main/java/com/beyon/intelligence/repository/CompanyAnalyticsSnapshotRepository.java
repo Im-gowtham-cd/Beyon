@@ -11,3 +11,4 @@ public interface CompanyAnalyticsSnapshotRepository extends JpaRepository<Compan
     Optional<CompanyAnalyticsSnapshot> findByCompanyUserIdAndSnapshotDate(UUID companyId, LocalDate date);
     List<CompanyAnalyticsSnapshot> findByCompanyUserIdOrderBySnapshotDateDesc(UUID companyId);
 }
+

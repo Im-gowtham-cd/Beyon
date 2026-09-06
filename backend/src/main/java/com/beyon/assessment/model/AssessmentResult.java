@@ -39,3 +39,4 @@ public class AssessmentResult {
     public Integer getQuestionsCorrect() { return questionsCorrect; } public void setQuestionsCorrect(Integer v) { this.questionsCorrect = v; }
     public OffsetDateTime getCreatedAt() { return createdAt; } public void setCreatedAt(OffsetDateTime v) { this.createdAt = v; }
 }
+

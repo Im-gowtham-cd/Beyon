@@ -8,3 +8,4 @@ import java.util.UUID;
 public interface AdvisorChatMessageRepository extends JpaRepository<AdvisorChatMessage, UUID> {
     List<AdvisorChatMessage> findBySessionIdOrderByCreatedAtAsc(UUID sessionId);
 }
+

@@ -17,3 +17,4 @@ public interface RecruitmentApplicationRepository extends JpaRepository<Recruitm
     long countByOpportunityIdAndStatus(UUID opportunityId, String status);
     long countByDriveIdAndStatus(UUID driveId, String status);
 }
+

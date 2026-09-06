@@ -40,7 +40,6 @@ public class CompanyTierService {
         long placed = records.stream().filter(r -> "PLACED".equals(r.getStatus()) && r.getVerified()).count();
         profile.setHiringCount((int) placed);
 
-        // Average package
         BigDecimal avgPkg = records.stream()
             .filter(r -> r.getCtcAmount() != null)
             .map(PlacementRecord::getCtcAmount)
@@ -49,7 +48,6 @@ public class CompanyTierService {
             profile.setAveragePackage(avgPkg.divide(BigDecimal.valueOf(placed), 2, RoundingMode.HALF_UP));
         }
 
-        // Tier calculation
         String tier = calculateTier(profile);
         profile.setTier(tier);
         profile.setCalculationVersion(profile.getCalculationVersion() + 1);
@@ -88,3 +86,4 @@ public class CompanyTierService {
         return "STARTUP";
     }
 }
+

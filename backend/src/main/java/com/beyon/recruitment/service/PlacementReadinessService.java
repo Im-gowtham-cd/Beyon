@@ -42,7 +42,6 @@ public class PlacementReadinessService {
                 return s;
             });
 
-        // Skills score (from skill graph)
         List<StudentSkillGraph> skills = graphRepo.findByStudentIdOrderByProficiencyPctDesc(studentId);
         BigDecimal skillsScore = BigDecimal.ZERO;
         if (!skills.isEmpty()) {
@@ -53,12 +52,10 @@ public class PlacementReadinessService {
         }
         score.setSkillsScore(skillsScore);
 
-        // Practice score (from evidence count)
         int totalEvidence = skills.stream().mapToInt(StudentSkillGraph::getEvidenceCount).sum();
         BigDecimal practiceScore = BigDecimal.valueOf(Math.min(100, totalEvidence * 2)).setScale(2, RoundingMode.HALF_UP);
         score.setPracticeScore(practiceScore);
 
-        // Projects score
         List<StudentPortfolioItem> items = portfolioRepo.findByStudentIdOrderByCreatedAtDesc(studentId);
         long projectCount = items.stream().filter(i -> "PROJECT".equals(i.getItemType())).count();
         long certCount = items.stream().filter(i -> "CERTIFICATION".equals(i.getItemType())).count();
@@ -69,7 +66,6 @@ public class PlacementReadinessService {
         BigDecimal certScore = BigDecimal.valueOf(Math.min(100, certCount * 25)).setScale(2, RoundingMode.HALF_UP);
         score.setCertificationsScore(certScore);
 
-        // Interview score (from feedback)
         List<InterviewFeedbackIntelligence> feedbacks = feedbackRepo.findByStudentIdOrderByCreatedAtDesc(studentId);
         BigDecimal interviewScore = BigDecimal.ZERO;
         if (!feedbacks.isEmpty()) {
@@ -78,11 +74,9 @@ public class PlacementReadinessService {
         }
         score.setInterviewScore(interviewScore);
 
-        // Assessments score (placeholder)
         BigDecimal assessmentsScore = skills.isEmpty() ? BigDecimal.ZERO : BigDecimal.valueOf(60).setScale(2, RoundingMode.HALF_UP);
         score.setAssessmentsScore(assessmentsScore);
 
-        // Overall: weighted average
         BigDecimal overall = skillsScore.multiply(new BigDecimal("0.25"))
             .add(practiceScore.multiply(new BigDecimal("0.15")))
             .add(projectsScore.multiply(new BigDecimal("0.20")))
@@ -92,7 +86,6 @@ public class PlacementReadinessService {
             .setScale(2, RoundingMode.HALF_UP);
         score.setOverallScore(overall);
 
-        // Recommendations
         List<Map<String, String>> recs = new ArrayList<>();
         if (skillsScore.doubleValue() < 60) recs.add(Map.of("area", "Skills", "action", "Practice more questions to strengthen your skill graph"));
         if (projectsScore.doubleValue() < 40) recs.add(Map.of("area", "Projects", "action", "Add projects to your portfolio"));
@@ -120,3 +113,4 @@ public class PlacementReadinessService {
         return readinessRepo.findByStudentId(studentId);
     }
 }
+

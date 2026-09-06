@@ -40,3 +40,4 @@ export interface ProfileCompletion {
   percentage: number;
   completed: boolean;
 }
+

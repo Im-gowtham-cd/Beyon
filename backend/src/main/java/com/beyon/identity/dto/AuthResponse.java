@@ -50,3 +50,4 @@ public class AuthResponse {
         public boolean isEmailVerified() { return emailVerified; }
     }
 }
+

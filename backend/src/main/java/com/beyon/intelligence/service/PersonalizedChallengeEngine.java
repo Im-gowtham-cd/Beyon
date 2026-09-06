@@ -57,13 +57,11 @@ public class PersonalizedChallengeEngine {
         List<StudentSkillGraph> graph = graphRepo.findByStudentIdOrderByProficiencyPctDesc(studentId);
         List<ChallengeSelectionLog> recentSelections = selectionLogRepo.findTop50ByStudentIdOrderBySelectedAtDesc(studentId);
 
-        // Find weakest skills for gap-based selection
         List<StudentSkillGraph> weakSkills = graph.stream()
             .sorted(Comparator.comparing(StudentSkillGraph::getProficiencyPct))
             .limit(5)
             .collect(Collectors.toList());
 
-        // Find recently practiced to avoid repetition
         Set<UUID> recentSkillIds = recentSelections.stream()
             .filter(l -> l.getSkillId() != null)
             .map(ChallengeSelectionLog::getSkillId)
@@ -71,7 +69,6 @@ public class PersonalizedChallengeEngine {
 
         List<Map<String, Object>> recommendations = new ArrayList<>();
 
-        // Priority 1: Gap-based recommendations (weight 0.4)
         for (StudentSkillGraph weak : weakSkills) {
             Map<String, Object> rec = new LinkedHashMap<>();
             Skill skill = skillRepo.findById(weak.getSkillId()).orElse(null);
@@ -85,7 +82,6 @@ public class PersonalizedChallengeEngine {
             recommendations.add(rec);
         }
 
-        // Priority 2: Career-path aligned recommendations
         if (config.getTargetCareerPathId() != null) {
             List<CareerPathSkill> careerSkills = pathSkillRepo.findByCareerPathIdOrderBySortOrder(config.getTargetCareerPathId());
             for (CareerPathSkill cs : careerSkills) {
@@ -107,7 +103,6 @@ public class PersonalizedChallengeEngine {
             }
         }
 
-        // Deduplicate
         List<Map<String, Object>> deduped = recommendations.stream()
             .collect(Collectors.toMap(
                 m -> m.get("skillId").toString(),
@@ -142,3 +137,4 @@ public class PersonalizedChallengeEngine {
         };
     }
 }
+

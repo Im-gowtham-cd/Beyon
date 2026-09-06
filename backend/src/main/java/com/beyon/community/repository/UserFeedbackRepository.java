@@ -10,3 +10,4 @@ public interface UserFeedbackRepository extends JpaRepository<UserFeedback, UUID
     List<UserFeedback> findByStatusOrderByCreatedAtDesc(String status);
     long countByStatus(String status);
 }
+

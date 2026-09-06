@@ -65,3 +65,4 @@ public class SocialGraphService {
         return followRepo.existsByFollowerIdAndFollowingId(followerId, followingId);
     }
 }
+

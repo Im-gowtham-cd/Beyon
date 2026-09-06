@@ -14,7 +14,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      {/* Welcome Hero Banner */}
+
       <View style={styles.heroCard}>
         <View style={styles.heroHeader}>
           <View style={styles.heroTag}>
@@ -30,7 +30,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
           {user?.headline || 'Continuous GPU, AI & Distributed Systems Competency Engineering'}
         </Text>
 
-        {/* Stats Grid */}
         <View style={styles.statsRow}>
           <View style={styles.statBox}>
             <Text style={styles.statNumber}>{user?.xpPoints ?? 1850}</Text>
@@ -47,7 +46,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
         </View>
       </View>
 
-      {/* Daily Challenge Callout */}
       <TouchableOpacity
         style={styles.challengeCard}
         onPress={() => onNavigate('practice')}
@@ -63,7 +61,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
         </View>
       </TouchableOpacity>
 
-      {/* Primary Nav Grid */}
       <Text style={styles.sectionTitle}>Learning &amp; Career Hub</Text>
       <View style={styles.navGrid}>
         <TouchableOpacity
@@ -119,7 +116,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
         </TouchableOpacity>
       </View>
 
-      {/* Community Section */}
       <TouchableOpacity
         style={styles.communityCard}
         onPress={() => onNavigate('community')}
@@ -344,3 +340,4 @@ const styles = StyleSheet.create({
     lineHeight: 16,
   },
 });
+

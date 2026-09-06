@@ -64,3 +64,4 @@ public class VerificationService {
         return entityVerRepo.findByEntityIdAndEntityTypeAndStatus(entityId, entityType, "VERIFIED").isPresent();
     }
 }
+

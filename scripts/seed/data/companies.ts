@@ -1,7 +1,3 @@
-// ============================================================
-// Beyon Seed — Static Company Data (30 fictional companies)
-// ============================================================
-
 export interface CompanySeed {
   key: string;
   name: string;
@@ -16,11 +12,11 @@ export interface CompanySeed {
   tier: "TIER_1" | "TIER_2" | "TIER_3" | "STARTUP";
   avgPackage: number;
   website: string;
-  hiringSkills: string[]; // skill keys
+  hiringSkills: string[];
 }
 
 export const COMPANIES: CompanySeed[] = [
-  // TIER_1 (8)
+
   { key: "COMP_0001", name: "Nexus Technologies", slug: "nexus-technologies", industry: "SaaS", companyType: "MNC", city: "Bangalore", state: "Karnataka", headquarters: "Bangalore, Karnataka", companySize: "10000+", foundedYear: 2001, tier: "TIER_1", avgPackage: 18.5, website: "https://nexustech.beyon.test", hiringSkills: ["SKILL_JAVA", "SKILL_SPRING", "SKILL_AWS", "SKILL_SQL", "SKILL_DSA"] },
   { key: "COMP_0002", name: "Apex Digital Solutions", slug: "apex-digital", industry: "FinTech", companyType: "Product Company", city: "Hyderabad", state: "Andhra Pradesh", headquarters: "Hyderabad, Andhra Pradesh", companySize: "5000-10000", foundedYear: 2005, tier: "TIER_1", avgPackage: 16.2, website: "https://apexdigital.beyon.test", hiringSkills: ["SKILL_PYTHON", "SKILL_REACT", "SKILL_POSTGRES", "SKILL_DSA"] },
   { key: "COMP_0003", name: "Pinnacle InfoSystems", slug: "pinnacle-infosystems", industry: "IT Services", companyType: "IT Services", city: "Chennai", state: "Tamil Nadu", headquarters: "Chennai, Tamil Nadu", companySize: "10000+", foundedYear: 1998, tier: "TIER_1", avgPackage: 14.0, website: "https://pinnacle.beyon.test", hiringSkills: ["SKILL_JAVA", "SKILL_SQL", "SKILL_TESTING"] },
@@ -29,7 +25,7 @@ export const COMPANIES: CompanySeed[] = [
   { key: "COMP_0006", name: "Quantum Software Inc", slug: "quantum-software", industry: "Enterprise Software", companyType: "MNC", city: "Mumbai", state: "Maharashtra", headquarters: "Mumbai, Maharashtra", companySize: "5000-10000", foundedYear: 2000, tier: "TIER_1", avgPackage: 15.8, website: "https://quantumsoftware.beyon.test", hiringSkills: ["SKILL_JAVA", "SKILL_SPRING", "SKILL_SYSDESIGN"] },
   { key: "COMP_0007", name: "Orion Cyber Solutions", slug: "orion-cyber", industry: "Cybersecurity", companyType: "Product Company", city: "Hyderabad", state: "Andhra Pradesh", headquarters: "Hyderabad, Andhra Pradesh", companySize: "500-1000", foundedYear: 2015, tier: "TIER_1", avgPackage: 19.0, website: "https://orioncyber.beyon.test", hiringSkills: ["SKILL_CYBER", "SKILL_PYTHON", "SKILL_LINUX"] },
   { key: "COMP_0008", name: "Nova Embedded Systems", slug: "nova-embedded", industry: "Embedded Systems", companyType: "Product Company", city: "Bangalore", state: "Karnataka", headquarters: "Bangalore, Karnataka", companySize: "1000-5000", foundedYear: 2008, tier: "TIER_1", avgPackage: 13.5, website: "https://novaembedded.beyon.test", hiringSkills: ["SKILL_C", "SKILL_CPP", "SKILL_OS"] },
-  // TIER_2 (12)
+
   { key: "COMP_0009", name: "Solaris Tech Partners", slug: "solaris-tech", industry: "IT Services", companyType: "IT Services", city: "Chennai", state: "Tamil Nadu", headquarters: "Chennai, Tamil Nadu", companySize: "1000-5000", foundedYear: 2003, tier: "TIER_2", avgPackage: 9.5, website: "https://solaristech.beyon.test", hiringSkills: ["SKILL_JAVA", "SKILL_SQL", "SKILL_SPRING"] },
   { key: "COMP_0010", name: "Meridian Solutions", slug: "meridian-solutions", industry: "EdTech", companyType: "Product Company", city: "Bangalore", state: "Karnataka", headquarters: "Bangalore, Karnataka", companySize: "200-500", foundedYear: 2016, tier: "TIER_2", avgPackage: 8.2, website: "https://meridian.beyon.test", hiringSkills: ["SKILL_REACT", "SKILL_NODE", "SKILL_MONGO"] },
   { key: "COMP_0011", name: "Catalyst IT Services", slug: "catalyst-it", industry: "IT Consulting", companyType: "IT Services", city: "Coimbatore", state: "Tamil Nadu", headquarters: "Coimbatore, Tamil Nadu", companySize: "500-1000", foundedYear: 2007, tier: "TIER_2", avgPackage: 7.8, website: "https://catalystit.beyon.test", hiringSkills: ["SKILL_JAVA", "SKILL_SQL", "SKILL_TESTING"] },
@@ -42,17 +38,18 @@ export const COMPANIES: CompanySeed[] = [
   { key: "COMP_0018", name: "Prismatic Cloud Corp", slug: "prismatic-cloud", industry: "Cloud Services", companyType: "IT Services", city: "Delhi", state: "Delhi", headquarters: "Delhi", companySize: "200-500", foundedYear: 2013, tier: "TIER_2", avgPackage: 11.0, website: "https://prismaticcloud.beyon.test", hiringSkills: ["SKILL_AWS", "SKILL_AZURE", "SKILL_DOCKER"] },
   { key: "COMP_0019", name: "Crest Financial Tech", slug: "crest-fintech", industry: "FinTech", companyType: "Startup", city: "Bangalore", state: "Karnataka", headquarters: "Bangalore, Karnataka", companySize: "50-100", foundedYear: 2019, tier: "TIER_2", avgPackage: 12.0, website: "https://crestfintech.beyon.test", hiringSkills: ["SKILL_JAVA", "SKILL_SPRING", "SKILL_POSTGRES", "SKILL_DSA"] },
   { key: "COMP_0020", name: "Lunar AI Labs", slug: "lunar-ai", industry: "AI / ML", companyType: "Product Company", city: "Hyderabad", state: "Andhra Pradesh", headquarters: "Hyderabad, Andhra Pradesh", companySize: "50-100", foundedYear: 2020, tier: "TIER_2", avgPackage: 14.5, website: "https://lunarai.beyon.test", hiringSkills: ["SKILL_PYTHON", "SKILL_ML", "SKILL_DL", "SKILL_NLP"] },
-  // TIER_3 (7)
+
   { key: "COMP_0021", name: "Blaze Software House", slug: "blaze-software", industry: "IT Services", companyType: "IT Services", city: "Coimbatore", state: "Tamil Nadu", headquarters: "Coimbatore, Tamil Nadu", companySize: "50-100", foundedYear: 2011, tier: "TIER_3", avgPackage: 4.5, website: "https://blazesoftware.beyon.test", hiringSkills: ["SKILL_JAVA", "SKILL_SQL"] },
   { key: "COMP_0022", name: "Neon Digital Agency", slug: "neon-digital", industry: "Digital Agency", companyType: "Agency", city: "Chennai", state: "Tamil Nadu", headquarters: "Chennai, Tamil Nadu", companySize: "20-50", foundedYear: 2016, tier: "TIER_3", avgPackage: 3.8, website: "https://neondigital.beyon.test", hiringSkills: ["SKILL_HTML", "SKILL_CSS", "SKILL_JS"] },
   { key: "COMP_0023", name: "Flash IT Solutions", slug: "flash-it", industry: "IT Services", companyType: "IT Services", city: "Trichy", state: "Tamil Nadu", headquarters: "Trichy, Tamil Nadu", companySize: "50-100", foundedYear: 2014, tier: "TIER_3", avgPackage: 4.2, website: "https://flashit.beyon.test", hiringSkills: ["SKILL_JAVA", "SKILL_SQL", "SKILL_TESTING"] },
   { key: "COMP_0024", name: "Pixel Works Studio", slug: "pixel-works", industry: "UI/UX Design", companyType: "Agency", city: "Bangalore", state: "Karnataka", headquarters: "Bangalore, Karnataka", companySize: "20-50", foundedYear: 2018, tier: "TIER_3", avgPackage: 5.0, website: "https://pixelworks.beyon.test", hiringSkills: ["SKILL_HTML", "SKILL_CSS", "SKILL_REACT"] },
   { key: "COMP_0025", name: "Gear Tech Pvt Ltd", slug: "gear-tech", industry: "IT Services", companyType: "IT Services", city: "Salem", state: "Tamil Nadu", headquarters: "Salem, Tamil Nadu", companySize: "20-50", foundedYear: 2013, tier: "TIER_3", avgPackage: 3.5, website: "https://geartech.beyon.test", hiringSkills: ["SKILL_JAVA", "SKILL_PYTHON"] },
-  // STARTUP (3)
+
   { key: "COMP_0026", name: "Volt Startup Labs", slug: "volt-startup", industry: "EdTech", companyType: "Startup", city: "Bangalore", state: "Karnataka", headquarters: "Bangalore, Karnataka", companySize: "10-20", foundedYear: 2022, tier: "STARTUP", avgPackage: 7.5, website: "https://voltstartup.beyon.test", hiringSkills: ["SKILL_REACT", "SKILL_NODE", "SKILL_TS"] },
   { key: "COMP_0027", name: "Spark AI Startup", slug: "spark-ai", industry: "AI SaaS", companyType: "Startup", city: "Hyderabad", state: "Andhra Pradesh", headquarters: "Hyderabad, Andhra Pradesh", companySize: "10-20", foundedYear: 2023, tier: "STARTUP", avgPackage: 9.0, website: "https://sparkai.beyon.test", hiringSkills: ["SKILL_PYTHON", "SKILL_ML", "SKILL_FASTAPI"] },
   { key: "COMP_0028", name: "Echo Fintech", slug: "echo-fintech", industry: "FinTech", companyType: "Startup", city: "Chennai", state: "Tamil Nadu", headquarters: "Chennai, Tamil Nadu", companySize: "10-20", foundedYear: 2023, tier: "STARTUP", avgPackage: 8.0, website: "https://echofintech.beyon.test", hiringSkills: ["SKILL_NODE", "SKILL_REACT", "SKILL_POSTGRES"] },
-  // Remaining TIER_3
+
   { key: "COMP_0029", name: "Iron Code Technologies", slug: "iron-code", industry: "IT Services", companyType: "IT Services", city: "Madurai", state: "Tamil Nadu", headquarters: "Madurai, Tamil Nadu", companySize: "50-100", foundedYear: 2010, tier: "TIER_3", avgPackage: 4.0, website: "https://ironcode.beyon.test", hiringSkills: ["SKILL_JAVA", "SKILL_SQL"] },
   { key: "COMP_0030", name: "Nimbus Tech Services", slug: "nimbus-tech", industry: "IT Services", companyType: "IT Services", city: "Erode", state: "Tamil Nadu", headquarters: "Erode, Tamil Nadu", companySize: "20-50", foundedYear: 2012, tier: "TIER_3", avgPackage: 3.6, website: "https://nimbustech.beyon.test", hiringSkills: ["SKILL_JAVA", "SKILL_TESTING"] },
 ];
+

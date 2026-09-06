@@ -11,3 +11,4 @@ public interface StudentCertificateRepository extends JpaRepository<StudentCerti
     Optional<StudentCertificate> findByCertificateId(String certificateId);
     Optional<StudentCertificate> findByStudentIdAndProgramId(UUID studentId, UUID programId);
 }
+

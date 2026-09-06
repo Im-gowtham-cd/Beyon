@@ -10,3 +10,4 @@ public interface EntityVerificationRepository extends JpaRepository<EntityVerifi
     Optional<EntityVerification> findByEntityIdAndEntityTypeAndStatus(UUID entityId, String entityType, String status);
     List<EntityVerification> findByEntityTypeAndStatus(String entityType, String status);
 }
+

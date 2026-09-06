@@ -9,4 +9,7 @@ import java.util.UUID;
 public interface UserRepository extends JpaRepository<User, UUID> {
     Optional<User> findByEmail(String email);
     boolean existsByEmail(String email);
+    java.util.List<User> findByRoleAndStatus(com.beyon.identity.enums.UserRole role, com.beyon.identity.enums.AccountStatus status);
+    java.util.List<User> findByRole(com.beyon.identity.enums.UserRole role);
 }
+

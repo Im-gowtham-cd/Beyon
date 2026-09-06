@@ -67,3 +67,4 @@ public class StudentAchievement {
     public Instant getCreatedAt() { return createdAt; }
     public Instant getUpdatedAt() { return updatedAt; }
 }
+

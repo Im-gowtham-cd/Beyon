@@ -10,3 +10,4 @@ public interface ProjectVerificationRepository extends JpaRepository<ProjectVeri
     List<ProjectVerification> findByStudentIdOrderByCreatedAtDesc(UUID studentId);
     List<ProjectVerification> findByStatus(String status);
 }
+

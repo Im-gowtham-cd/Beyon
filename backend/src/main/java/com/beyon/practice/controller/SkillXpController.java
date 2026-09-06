@@ -47,3 +47,4 @@ public class SkillXpController {
         throw new RuntimeException("Unauthorized");
     }
 }
+

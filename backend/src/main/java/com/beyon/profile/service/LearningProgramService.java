@@ -24,17 +24,20 @@ public class LearningProgramService {
     private final LearningProgramModuleRepository moduleRepo;
     private final LearningProgramModuleProgressRepository progressRepo;
     private final SkillXpService skillXpService;
+    private final com.beyon.practice.service.CoinService coinService;
 
     public LearningProgramService(LearningProgramRepository programRepo,
                                    LearningProgramEnrollmentRepository enrollmentRepo,
                                    LearningProgramModuleRepository moduleRepo,
                                    LearningProgramModuleProgressRepository progressRepo,
-                                   SkillXpService skillXpService) {
+                                   SkillXpService skillXpService,
+                                   com.beyon.practice.service.CoinService coinService) {
         this.programRepo = programRepo;
         this.enrollmentRepo = enrollmentRepo;
         this.moduleRepo = moduleRepo;
         this.progressRepo = progressRepo;
         this.skillXpService = skillXpService;
+        this.coinService = coinService;
     }
 
     public List<LearningProgram> getAvailablePrograms() {
@@ -54,14 +57,25 @@ public class LearningProgramService {
     @Transactional
     public LearningProgramEnrollment enroll(UUID studentId, UUID programId) {
         if (enrollmentRepo.findByStudentIdAndProgramId(studentId, programId).isPresent()) {
-            throw new RuntimeException("Already enrolled");
+            throw new RuntimeException("Already enrolled in this course");
         }
+        LearningProgram program = programRepo.findById(programId)
+                .orElseThrow(() -> new ResourceNotFoundException("Program not found"));
+
+        if (Boolean.FALSE.equals(program.getIsFree()) && program.getCost() != null && program.getCost().longValue() > 0) {
+            coinService.spendCoins(studentId, "COURSE_ENROLLMENT", program.getCost().longValue(), "LEARNING_PROGRAM", programId);
+        }
+
         LearningProgramEnrollment enrollment = new LearningProgramEnrollment();
         enrollment.setStudentId(studentId);
         enrollment.setProgramId(programId);
         enrollment.setStatus("ENROLLED");
         enrollment.setModulesCompleted(0);
         enrollment.setProgressPercent(0);
+
+        program.setEnrolledCount((program.getEnrolledCount() == null ? 0 : program.getEnrolledCount()) + 1);
+        programRepo.save(program);
+
         return enrollmentRepo.save(enrollment);
     }
 
@@ -123,3 +137,4 @@ public class LearningProgramService {
         return result;
     }
 }
+

@@ -32,3 +32,4 @@ public class SkillGap {
     public Integer getEstimatedEffortHours() { return estimatedEffortHours; } public void setEstimatedEffortHours(Integer v) { this.estimatedEffortHours = v; }
     public OffsetDateTime getCreatedAt() { return createdAt; } public void setCreatedAt(OffsetDateTime v) { this.createdAt = v; }
 }
+

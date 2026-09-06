@@ -8,3 +8,4 @@ import java.util.UUID;
 public interface StudentGrowthScoreRepository extends JpaRepository<StudentGrowthScore, UUID> {
     Optional<StudentGrowthScore> findByStudentId(UUID studentId);
 }
+

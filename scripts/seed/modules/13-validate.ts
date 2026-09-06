@@ -1,7 +1,3 @@
-// ============================================================
-// Module 13 — Integrity Validator & Reconciliation
-// ============================================================
-
 import { doltQuery } from "../engine/dolt.js";
 
 export interface ValidationResult {
@@ -14,7 +10,6 @@ export async function validateIntegrity(): Promise<ValidationResult[]> {
   console.log("\n🔍 Running integrity validation...");
   const results: ValidationResult[] = [];
 
-  // ─── Basic counts ───
   const counts = [
     { label: "Users", sql: "SELECT COUNT(*) as cnt FROM users" },
     { label: "Student Profiles", sql: "SELECT COUNT(*) as cnt FROM student_profiles" },
@@ -46,7 +41,6 @@ export async function validateIntegrity(): Promise<ValidationResult[]> {
     }
   }
 
-  // ─── Coin Reconciliation ───
   try {
     const reconcile = doltQuery(`
       SELECT
@@ -71,7 +65,6 @@ export async function validateIntegrity(): Promise<ValidationResult[]> {
     results.push({ check: "Coin Ledger Reconciliation", status: "FAIL", detail: err.message });
   }
 
-  // ─── Orphan check: applications with no student ───
   try {
     const orphans = doltQuery(`
       SELECT COUNT(*) as cnt FROM opportunity_applications a
@@ -88,7 +81,6 @@ export async function validateIntegrity(): Promise<ValidationResult[]> {
     results.push({ check: "Application Referential Integrity", status: "FAIL", detail: err.message });
   }
 
-  // ─── Print results ───
   console.log("\n  Validation Results:");
   console.log("  " + "─".repeat(70));
   for (const r of results) {
@@ -103,3 +95,4 @@ export async function validateIntegrity(): Promise<ValidationResult[]> {
 
   return results;
 }
+

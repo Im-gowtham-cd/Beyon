@@ -53,3 +53,4 @@ public class AnalyticsController {
         throw new RuntimeException("Unauthorized");
     }
 }
+

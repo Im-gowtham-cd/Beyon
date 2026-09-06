@@ -45,3 +45,4 @@ public class CompanyRepresentative {
     public void setPhone(String phone) { this.phone = phone; }
     public Instant getCreatedAt() { return createdAt; }
 }
+

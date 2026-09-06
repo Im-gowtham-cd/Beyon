@@ -20,3 +20,4 @@ public interface PlacementRecordRepository extends JpaRepository<PlacementRecord
     @Query("SELECT COALESCE(MAX(p.ctcAmount), 0) FROM RecruitmentPlacementRecord p WHERE p.institutionId = ?1 AND p.placementYear = ?2 AND p.status = 'PLACED' AND p.verified = true")
     BigDecimal highestPackageByInstitutionAndYear(UUID institutionId, Integer year);
 }
+

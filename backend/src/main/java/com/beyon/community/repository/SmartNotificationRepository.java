@@ -20,3 +20,4 @@ public interface SmartNotificationRepository extends JpaRepository<SmartNotifica
     @Query("UPDATE SmartNotification n SET n.isRead = true, n.readAt = CURRENT_TIMESTAMP WHERE n.id = :id")
     int markAsRead(UUID id);
 }
+

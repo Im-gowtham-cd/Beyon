@@ -27,3 +27,4 @@
 .progressCurrent .progressDot { background: #6366f1; box-shadow: 0 0 0 3px #e0e7ff; }
 .progressLabel { font-size: 0.6rem; color: #9ca3af; text-align: center; max-width: 70px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .progressActive .progressLabel { color: #374151; }
+

@@ -13,3 +13,4 @@ public interface OpportunityApplicationRepository extends JpaRepository<Opportun
     Optional<OpportunityApplication> findByOpportunityIdAndStudentId(UUID opportunityId, UUID studentId);
     boolean existsByOpportunityIdAndStudentId(UUID opportunityId, UUID studentId);
 }
+

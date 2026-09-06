@@ -10,3 +10,4 @@ public interface AssessmentSkillScoreRepository extends JpaRepository<Assessment
     List<AssessmentSkillScore> findByStudentIdAndSkillIdOrderByCreatedAtDesc(UUID studentId, UUID skillId);
     List<AssessmentSkillScore> findByStudentIdOrderByCreatedAtDesc(UUID studentId);
 }
+

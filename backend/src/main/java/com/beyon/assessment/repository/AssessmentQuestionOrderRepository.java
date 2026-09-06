@@ -7,5 +7,8 @@ import java.util.UUID;
 
 public interface AssessmentQuestionOrderRepository extends JpaRepository<AssessmentQuestionOrder, UUID> {
     List<AssessmentQuestionOrder> findBySessionIdOrderBySortOrder(UUID sessionId);
+    @org.springframework.data.jpa.repository.Modifying
+    @org.springframework.transaction.annotation.Transactional
     void deleteBySessionId(UUID sessionId);
 }
+

@@ -59,3 +59,4 @@ public class StudentCareerPreferences {
     public Instant getCreatedAt() { return createdAt; }
     public Instant getUpdatedAt() { return updatedAt; }
 }
+

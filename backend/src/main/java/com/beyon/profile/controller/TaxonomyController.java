@@ -73,3 +73,4 @@ public class TaxonomyController {
         return ResponseEntity.ok(ApiResponse.ok(taxonomyService.getRelatedSkills(skill.getId())));
     }
 }
+

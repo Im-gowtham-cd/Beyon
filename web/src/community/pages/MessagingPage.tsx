@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   MessageSquare,
   Search,
@@ -51,6 +52,10 @@ interface ContactUser {
 
 export function MessagingPage() {
   const { user } = useAuth();
+  const [searchParams] = useSearchParams();
+  const targetRecipientId = searchParams.get('recipientId') || searchParams.get('userId') || searchParams.get('studentId');
+  const targetName = searchParams.get('name') || searchParams.get('displayName');
+
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedConv, setSelectedConv] = useState<Conversation | null>(null);
   const [messages, setMessages] = useState<MessageItem[]>([]);
@@ -59,7 +64,6 @@ export function MessagingPage() {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
 
-  // New Chat Modal state
   const [modalOpen, setModalOpen] = useState(false);
   const [contactFilterRole, setContactFilterRole] = useState<'ALL' | 'STUDENT' | 'INSTITUTION' | 'COMPANY'>('ALL');
   const [contactSearch, setContactSearch] = useState('');
@@ -83,7 +87,7 @@ export function MessagingPage() {
         return list;
       }
     } catch {
-      /* fallback */
+
     } finally {
       setLoading(false);
     }
@@ -101,20 +105,63 @@ export function MessagingPage() {
         setMessages(json.data || []);
       }
     } catch {
-      /* fallback */
+
     }
   };
 
-  // Initial load
   useEffect(() => {
-    fetchConversations().then((list) => {
-      if (list.length > 0 && !selectedConv) {
+    let isMounted = true;
+
+    const initConversations = async () => {
+      const list = await fetchConversations();
+      if (!isMounted) return;
+
+      if (targetRecipientId) {
+
+        const existing = list.find((c: Conversation) =>
+          c.recipientId === targetRecipientId ||
+          (c as any).participantIds?.includes(targetRecipientId)
+        );
+
+        if (existing) {
+          selectConversation(existing);
+        } else {
+
+          try {
+            const token = localStorage.getItem('beyon_token') || localStorage.getItem('beyon_access_token');
+            const res = await fetch('/api/v1/messages/conversations', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                ...(token ? { Authorization: `Bearer ${token}` } : {}),
+              },
+              body: JSON.stringify({
+                recipientId: targetRecipientId,
+                title: `Chat with ${targetName ? decodeURIComponent(targetName) : 'Candidate'}`,
+              }),
+            });
+
+            if (res.ok && isMounted) {
+              const json = await res.json();
+              const updatedList = await fetchConversations();
+              const targetConv = updatedList.find((c: Conversation) => c.id === json.data?.id) || json.data;
+              if (targetConv && isMounted) {
+                selectConversation(targetConv);
+              }
+            }
+          } catch {
+
+          }
+        }
+      } else if (list.length > 0 && !selectedConv) {
         selectConversation(list[0]);
       }
-    });
-  }, []);
+    };
 
-  // Polling for new messages in active chat
+    initConversations();
+    return () => { isMounted = false; };
+  }, [targetRecipientId]);
+
   useEffect(() => {
     if (selectedConv) {
       if (pollTimerRef.current) clearInterval(pollTimerRef.current);
@@ -128,7 +175,6 @@ export function MessagingPage() {
     };
   }, [selectedConv]);
 
-  // Scroll to bottom when messages update
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
@@ -163,13 +209,12 @@ export function MessagingPage() {
         }
       }
     } catch {
-      /* ignore */
+
     } finally {
       setSending(false);
     }
   };
 
-  // Fetch contacts for modal
   const fetchContacts = async () => {
     setLoadingContacts(true);
     try {
@@ -183,7 +228,7 @@ export function MessagingPage() {
         setContacts(json.data || []);
       }
     } catch {
-      /* fallback */
+
     } finally {
       setLoadingContacts(false);
     }
@@ -222,7 +267,7 @@ export function MessagingPage() {
         }
       }
     } catch {
-      /* ignore */
+
     }
   };
 
@@ -280,9 +325,7 @@ export function MessagingPage() {
 
   return (
     <div className={styles.messagingContainer}>
-      {/* ===================================================================
-          1. LEFT SIDEBAR (Conversations & Contacts)
-          =================================================================== */}
+
       <aside className={styles.sidebar}>
         <div className={styles.sidebarHeader}>
           <div className={styles.headerTop}>
@@ -383,9 +426,6 @@ export function MessagingPage() {
         </div>
       </aside>
 
-      {/* ===================================================================
-          2. RIGHT PANEL (Active Chat Stream)
-          =================================================================== */}
       <main className={styles.chatWindow}>
         {selectedConv ? (
           <>
@@ -511,9 +551,6 @@ export function MessagingPage() {
         )}
       </main>
 
-      {/* ===================================================================
-          3. NEW CONVERSATION DIRECTORY MODAL
-          =================================================================== */}
       {modalOpen && (
         <div className={styles.modalBackdrop} onClick={() => setModalOpen(false)}>
           <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
@@ -596,3 +633,4 @@ export function MessagingPage() {
     </div>
   );
 }
+

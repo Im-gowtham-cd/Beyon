@@ -114,3 +114,4 @@ class CoinSecurityServiceTest {
             coinService.earnCoins(studentId, 50, "EARN", "test", refId));
     }
 }
+

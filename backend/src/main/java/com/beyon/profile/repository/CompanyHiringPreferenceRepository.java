@@ -9,3 +9,4 @@ public interface CompanyHiringPreferenceRepository extends JpaRepository<Company
     Optional<CompanyHiringPreference> findByUserId(UUID userId);
     void deleteByUserId(UUID userId);
 }
+

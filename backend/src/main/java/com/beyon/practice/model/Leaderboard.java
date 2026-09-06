@@ -52,3 +52,4 @@ public class Leaderboard {
     public void setPeriod(String period) { this.period = period; }
     public Instant getUpdatedAt() { return updatedAt; }
 }
+

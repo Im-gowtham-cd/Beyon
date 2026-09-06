@@ -6,21 +6,21 @@ import styles from './CompletionPage.module.css';
 
 const ROLE_MESSAGES: Record<string, { title: string; subtitle: string; cta: string; path: string }> = {
   STUDENT: {
-    title: 'You\'re ready for Beyon.',
-    subtitle: 'Start building your skills. Earn Beyon Coins. Unlock opportunities.',
-    cta: 'Go to Dashboard',
+    title: 'Student Profile Registered',
+    subtitle: 'Your profile has been submitted to your institution for placement verification. You can now take assessments and practice coding.',
+    cta: 'Go to Student Hub',
     path: '/student/home',
   },
   INSTITUTION: {
-    title: 'You\'re ready for Beyon.',
-    subtitle: 'Start building your institution\'s talent ecosystem.',
-    cta: 'Go to Dashboard',
+    title: 'Registration Submitted for Super Admin Verification',
+    subtitle: 'Your institutional credentials have been submitted to the Super Admin verification queue. Placement workflows will be activated upon approval.',
+    cta: 'View Institutional Dashboard',
     path: '/institution/home',
   },
   COMPANY: {
-    title: 'You\'re ready for Beyon.',
-    subtitle: 'Start connecting with skilled talent.',
-    cta: 'Go to Dashboard',
+    title: 'Corporate Account Submitted for Verification',
+    subtitle: 'Your corporate registration is undergoing Super Admin verification. You will be able to post drives and access candidate rosters once approved.',
+    cta: 'View Company Dashboard',
     path: '/company/home',
   },
 };
@@ -50,3 +50,4 @@ export function CompletionPage() {
     </OnboardingLayout>
   );
 }
+

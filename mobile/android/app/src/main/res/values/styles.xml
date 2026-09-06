@@ -6,5 +6,21 @@
         <item name="android:statusBarColor">@color/primary</item>
         <item name="android:windowLightStatusBar">false</item>
         <item name="android:windowBackground">@color/background</item>
+        <item name="fontFamily">@font/clash_display</item>
+        <item name="android:fontFamily">@font/clash_display</item>
+    </style>
+
+    <style name="TextAppearance.Beyon.Heading" parent="TextAppearance.MaterialComponents.Headline6">
+        <item name="fontFamily">@font/clash_display</item>
+        <item name="android:fontFamily">@font/clash_display</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">@color/primary</item>
+    </style>
+
+    <style name="TextAppearance.Beyon.Display" parent="TextAppearance.MaterialComponents.Headline5">
+        <item name="fontFamily">@font/clash_display</item>
+        <item name="android:fontFamily">@font/clash_display</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">@color/primary_dark</item>
     </style>
 </resources>

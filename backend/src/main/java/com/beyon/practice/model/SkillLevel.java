@@ -33,3 +33,4 @@ public class SkillLevel {
     public OffsetDateTime getCreatedAt() { return createdAt; }
     public OffsetDateTime getUpdatedAt() { return updatedAt; }
 }
+

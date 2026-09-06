@@ -69,3 +69,4 @@ public class PublicProfileController {
         public void setLinks(List<StudentLink> links) { this.links = links; }
     }
 }
+

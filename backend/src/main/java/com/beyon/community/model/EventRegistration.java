@@ -49,3 +49,4 @@ public class EventRegistration {
     public Instant getCompletedAt() { return completedAt; }
     public void setCompletedAt(Instant completedAt) { this.completedAt = completedAt; }
 }
+

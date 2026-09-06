@@ -9,3 +9,4 @@ public enum PlacementPreference {
     HIGHER_STUDIES,
     ENTREPRENEURSHIP
 }
+

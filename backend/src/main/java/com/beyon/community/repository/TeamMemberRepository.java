@@ -9,3 +9,4 @@ public interface TeamMemberRepository extends JpaRepository<TeamMember, UUID> {
     List<TeamMember> findByTeamId(UUID teamId);
     List<TeamMember> findByStudentId(UUID studentId);
 }
+

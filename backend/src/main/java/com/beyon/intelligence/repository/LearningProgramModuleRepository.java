@@ -8,3 +8,4 @@ import java.util.UUID;
 public interface LearningProgramModuleRepository extends JpaRepository<LearningProgramModule, UUID> {
     List<LearningProgramModule> findByProgramIdOrderBySortOrder(UUID programId);
 }
+

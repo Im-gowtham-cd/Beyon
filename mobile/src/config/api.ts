@@ -1,5 +1,3 @@
-// ─── Beyon Mobile API Configuration & Direct Host Gateway ───────────────────
-
 declare const process: any;
 
 export interface ApiConfigState {
@@ -8,11 +6,9 @@ export interface ApiConfigState {
   status: 'ONLINE' | 'OFFLINE' | 'UNTESTED';
 }
 
-// Default initial direct backend URL
-// In Android Emulator, 10.0.2.2 points directly to host machine's localhost:8085
-export const DEFAULT_API_URL = 
-  (typeof process !== 'undefined' && process?.env?.EXPO_PUBLIC_API_URL) 
-    ? process.env.EXPO_PUBLIC_API_URL 
+export const DEFAULT_API_URL =
+  (typeof process !== 'undefined' && process?.env?.EXPO_PUBLIC_API_URL)
+    ? process.env.EXPO_PUBLIC_API_URL
     : 'http://10.0.2.2:8085/api/v1';
 
 let currentBaseUrl = DEFAULT_API_URL;
@@ -64,7 +60,7 @@ export async function pingBackend(customUrl?: string): Promise<{ ok: boolean; la
 export async function apiFetch<T = any>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const base = getApiBaseUrl();
   const url = endpoint.startsWith('http') ? endpoint : `${base}${endpoint.startsWith('/') ? '' : '/'}${endpoint}`;
-  
+
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
@@ -95,3 +91,4 @@ export async function apiFetch<T = any>(endpoint: string, options: RequestInit =
     return {} as T;
   }
 }
+

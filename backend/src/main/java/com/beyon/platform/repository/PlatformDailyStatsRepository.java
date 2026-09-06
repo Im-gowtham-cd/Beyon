@@ -12,3 +12,4 @@ public interface PlatformDailyStatsRepository extends JpaRepository<PlatformDail
     List<PlatformDailyStats> findByStatDateBetweenOrderByStatDateDesc(LocalDate start, LocalDate end);
     List<PlatformDailyStats> findTop30ByOrderByStatDateDesc();
 }
+

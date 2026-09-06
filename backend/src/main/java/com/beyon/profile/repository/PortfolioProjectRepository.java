@@ -9,3 +9,4 @@ public interface PortfolioProjectRepository extends JpaRepository<PortfolioProje
     List<PortfolioProject> findByStudentIdOrderBySortOrder(UUID studentId);
     List<PortfolioProject> findByStudentIdAndIsFeaturedTrueOrderBySortOrder(UUID studentId);
 }
+

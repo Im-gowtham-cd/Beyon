@@ -42,3 +42,4 @@ public class SystemCheckResult {
     public OffsetDateTime getCheckedAt() { return checkedAt; }
     public void setCheckedAt(OffsetDateTime v) { this.checkedAt = v; }
 }
+

@@ -55,3 +55,4 @@ export async function seedNotifications(cfg: SeedConfig): Promise<void> {
   doltBatch(stmts, 200);
   console.log(`  ✅ ${count} notifications`);
 }
+

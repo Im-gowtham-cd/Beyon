@@ -28,3 +28,4 @@ public class SecurityAuditLog {
     public String getDetails() { return details; } public void setDetails(String v) { this.details = v; }
     public OffsetDateTime getCreatedAt() { return createdAt; } public void setCreatedAt(OffsetDateTime v) { this.createdAt = v; }
 }
+

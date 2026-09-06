@@ -2,6 +2,8 @@ package com.beyon.identity.enums;
 
 public enum AccountStatus {
     PENDING_VERIFICATION,
+    PENDING_SUPER_ADMIN_VERIFICATION,
+    APPROVED,
     ACTIVE,
     SUSPENDED,
     DEACTIVATED,
@@ -11,3 +13,4 @@ public enum AccountStatus {
     PENDING_COMPANY_VERIFICATION,
     REJECTED
 }
+

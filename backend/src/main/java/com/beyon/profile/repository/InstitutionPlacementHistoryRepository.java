@@ -9,3 +9,4 @@ public interface InstitutionPlacementHistoryRepository extends JpaRepository<Ins
     List<InstitutionPlacementHistory> findByUserId(UUID userId);
     void deleteByUserId(UUID userId);
 }
+

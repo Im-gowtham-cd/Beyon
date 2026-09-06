@@ -77,13 +77,24 @@ export interface InstitutionFormData {
   address: string;
   postalCode: string;
   affiliatedUniversity: string;
+  autonomousStatus: string;
   accreditations: string[];
   accreditationGrade: string;
+  nirfRank: string;
   establishedYear: string;
+  totalStudents: string;
+  principalName: string;
+  principalEmail: string;
+  principalPhone: string;
+  placementOfficerName: string;
+  placementOfficerEmail: string;
+  placementOfficerPhone: string;
+  placementCellEmail: string;
+  placementCellPhone: string;
+  departmentsOffered: string[];
   placementRate: string;
   averagePackage: string;
   highestPackage: string;
-  totalStudents: string;
   placementWillingCount: string;
   placementNotWillingCount: string;
   verificationDocUrl: string;
@@ -150,9 +161,12 @@ export const EMPTY_STUDENT_FORM: StudentFormData = {
 export const EMPTY_INSTITUTION_FORM: InstitutionFormData = {
   institutionName: '', institutionType: '', institutionCode: '', officialEmail: '',
   phone: '', website: '', country: '', state: '', city: '', address: '',
-  postalCode: '', affiliatedUniversity: '', accreditations: [], accreditationGrade: '',
-  establishedYear: '', placementRate: '', averagePackage: '', highestPackage: '',
-  totalStudents: '', placementWillingCount: '', placementNotWillingCount: '',
+  postalCode: '', affiliatedUniversity: '', autonomousStatus: 'Autonomous', accreditations: [], accreditationGrade: '',
+  nirfRank: '', establishedYear: '', totalStudents: '', principalName: '', principalEmail: '',
+  principalPhone: '', placementOfficerName: '', placementOfficerEmail: '', placementOfficerPhone: '',
+  placementCellEmail: '', placementCellPhone: '', departmentsOffered: ['Computer Science and Engineering', 'Information Technology', 'AI & Data Science'],
+  placementRate: '', averagePackage: '', highestPackage: '',
+  placementWillingCount: '', placementNotWillingCount: '',
   verificationDocUrl: '', logoUrl: '', placementHistory: [], representatives: [],
 };
 
@@ -163,3 +177,4 @@ export const EMPTY_COMPANY_FORM: CompanyFormData = {
   verificationDocUrl: '', hiringTypes: [], preferredLevels: [],
   recruitmentRegions: [], skills: [], representatives: [],
 };
+

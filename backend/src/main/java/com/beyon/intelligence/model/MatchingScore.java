@@ -33,3 +33,4 @@ public class MatchingScore {
     public OffsetDateTime getMatchedAt() { return matchedAt; } public void setMatchedAt(OffsetDateTime v) { this.matchedAt = v; }
     public OffsetDateTime getUpdatedAt() { return updatedAt; } public void setUpdatedAt(OffsetDateTime v) { this.updatedAt = v; }
 }
+

@@ -9,3 +9,4 @@ public interface SocialCommentRepository extends JpaRepository<SocialComment, UU
     List<SocialComment> findByPostIdOrderByCreatedAt(UUID postId);
     long countByPostId(UUID postId);
 }
+

@@ -51,3 +51,4 @@ export const communityApi = {
   getMyFeedback: async (): Promise<UserFeedback[]> => api.get('/feedback/my'),
   getOpenFeedback: async (): Promise<UserFeedback[]> => api.get('/feedback/open'),
 };
+

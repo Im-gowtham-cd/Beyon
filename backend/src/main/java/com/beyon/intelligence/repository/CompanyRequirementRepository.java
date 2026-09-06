@@ -10,3 +10,4 @@ public interface CompanyRequirementRepository extends JpaRepository<CompanyRequi
     List<CompanyRequirement> findByOpportunityId(UUID opportunityId);
     List<CompanyRequirement> findByStatus(String status);
 }
+

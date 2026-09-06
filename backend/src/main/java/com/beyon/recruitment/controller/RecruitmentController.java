@@ -40,8 +40,25 @@ public class RecruitmentController {
     }
 
     @GetMapping("/applications")
-    public ResponseEntity<ApiResponse<List<RecruitmentApplication>>> getAllApplications() {
-        return ResponseEntity.ok(ApiResponse.ok(recruitmentService.getAllApplications()));
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getAllApplications(Authentication auth) {
+        UUID userId = extractUserId(auth);
+        String role = extractRole(auth);
+        return ResponseEntity.ok(ApiResponse.ok(recruitmentService.getEnrichedApplications(userId, role)));
+    }
+
+    @GetMapping("/candidates")
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getCandidates() {
+        return ResponseEntity.ok(ApiResponse.ok(recruitmentService.getCandidateDiscoveryPool()));
+    }
+
+    @PostMapping("/shortlist")
+    public ResponseEntity<ApiResponse<RecruitmentApplication>> shortlistCandidate(
+            Authentication auth,
+            @RequestBody Map<String, String> body) {
+        UUID studentId = UUID.fromString(body.get("studentId"));
+        UUID opportunityId = UUID.fromString(body.get("opportunityId"));
+        UUID companyUserId = extractUserId(auth);
+        return ResponseEntity.ok(ApiResponse.ok(recruitmentService.shortlistCandidate(studentId, opportunityId, companyUserId)));
     }
 
     @PutMapping("/{applicationId}/status")
@@ -70,7 +87,17 @@ public class RecruitmentController {
     }
 
     private UUID extractUserId(Authentication auth) {
-        JwtUserDetails details = (JwtUserDetails) auth.getDetails();
-        return UUID.fromString(details.getUserId());
+        if (auth != null && auth.getDetails() instanceof JwtUserDetails details) {
+            return UUID.fromString(details.getUserId());
+        }
+        throw new RuntimeException("Unauthorized");
+    }
+
+    private String extractRole(Authentication auth) {
+        if (auth != null && auth.getDetails() instanceof JwtUserDetails details) {
+            return details.getRole();
+        }
+        return "UNKNOWN";
     }
 }
+

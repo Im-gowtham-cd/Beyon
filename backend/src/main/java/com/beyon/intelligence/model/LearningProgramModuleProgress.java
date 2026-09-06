@@ -24,3 +24,4 @@ public class LearningProgramModuleProgress {
     public String getStatus() { return status; } public void setStatus(String v) { this.status = v; }
     public OffsetDateTime getCompletedAt() { return completedAt; } public void setCompletedAt(OffsetDateTime v) { this.completedAt = v; }
 }
+

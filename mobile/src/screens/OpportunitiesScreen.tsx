@@ -51,7 +51,7 @@ export const OpportunitiesScreen: React.FC = () => {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      {/* Header */}
+
       <View style={styles.headerCard}>
         <Text style={styles.tag}>RECRUITMENT &amp; PLACEMENT</Text>
         <Text style={styles.title}>Career &amp; Internship Opportunities</Text>
@@ -60,7 +60,6 @@ export const OpportunitiesScreen: React.FC = () => {
         </Text>
       </View>
 
-      {/* Jobs list */}
       <View style={styles.jobsList}>
         {SAMPLE_JOBS.map(job => {
           const isApplied = appliedIds.includes(job.id);
@@ -87,7 +86,6 @@ export const OpportunitiesScreen: React.FC = () => {
                 <Text style={styles.metaItem}>🕒 {job.posted}</Text>
               </View>
 
-              {/* Tags */}
               <View style={styles.tagsRow}>
                 {job.tags.map(t => (
                   <View key={t} style={styles.tagPill}>
@@ -96,7 +94,6 @@ export const OpportunitiesScreen: React.FC = () => {
                 ))}
               </View>
 
-              {/* Action */}
               <TouchableOpacity
                 style={[styles.applyBtn, isApplied && styles.applyBtnDone]}
                 onPress={() => handleApply(job.id, job.role, job.company)}
@@ -260,3 +257,4 @@ const styles = StyleSheet.create({
     color: colors.success,
   },
 });
+

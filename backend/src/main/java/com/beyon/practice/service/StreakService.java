@@ -79,3 +79,4 @@ public class StreakService {
         return badgeRepository.findByStudentIdOrderByEarnedAtDesc(studentId);
     }
 }
+

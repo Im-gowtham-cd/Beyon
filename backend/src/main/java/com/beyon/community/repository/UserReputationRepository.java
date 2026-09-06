@@ -8,3 +8,4 @@ import java.util.UUID;
 public interface UserReputationRepository extends JpaRepository<UserReputation, UUID> {
     Optional<UserReputation> findByUserId(UUID userId);
 }
+

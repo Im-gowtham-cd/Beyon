@@ -51,3 +51,4 @@ public class StartupValidator implements CommandLineRunner {
         return false;
     }
 }
+

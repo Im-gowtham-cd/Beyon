@@ -9,3 +9,4 @@ public interface DriveInstitutionTargetRepository extends JpaRepository<DriveIns
     List<DriveInstitutionTarget> findByDriveId(UUID driveId);
     List<DriveInstitutionTarget> findByInstitutionId(UUID institutionId);
 }
+

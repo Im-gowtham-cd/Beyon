@@ -53,3 +53,4 @@ public class CertificateController {
         throw new RuntimeException("Unauthorized");
     }
 }
+

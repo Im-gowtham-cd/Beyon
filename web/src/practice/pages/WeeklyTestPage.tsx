@@ -21,7 +21,7 @@ export function WeeklyTestPage() {
         setTests(t);
         setAttempts(a);
         setLeaderboard(l);
-      } catch { /* */ }
+      } catch {  }
       setLoading(false);
     }
     load();
@@ -156,3 +156,4 @@ export function WeeklyTestPage() {
     </div>
   );
 }
+

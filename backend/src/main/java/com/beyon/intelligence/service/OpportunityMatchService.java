@@ -20,15 +20,18 @@ public class OpportunityMatchService {
     private final StudentSkillGraphRepository graphRepo;
     private final CompanyOpportunityRepository opportunityRepo;
     private final SkillRepository skillRepo;
+    private final com.beyon.practice.service.CompanyService companyService;
 
     public OpportunityMatchService(OpportunityMatchDetailRepository matchRepo,
                                     StudentSkillGraphRepository graphRepo,
                                     CompanyOpportunityRepository opportunityRepo,
-                                    SkillRepository skillRepo) {
+                                    SkillRepository skillRepo,
+                                    com.beyon.practice.service.CompanyService companyService) {
         this.matchRepo = matchRepo;
         this.graphRepo = graphRepo;
         this.opportunityRepo = opportunityRepo;
         this.skillRepo = skillRepo;
+        this.companyService = companyService;
     }
 
     public Map<String, Object> calculateMatch(UUID studentId, UUID opportunityId) {
@@ -41,19 +44,16 @@ public class OpportunityMatchService {
             .orElseThrow(() -> new RuntimeException("Opportunity not found"));
         List<StudentSkillGraph> studentSkills = graphRepo.findByStudentIdOrderByProficiencyPctDesc(studentId);
 
-        // Skill matching
         BigDecimal skillMatch = calculateSkillMatch(studentSkills, opportunity);
         boolean eligibilityMet = true;
         boolean experienceMet = true;
         boolean certificationMet = true;
         boolean coinRequirementMet = true;
 
-        // Build match factors
         List<Map<String, Object>> factors = new ArrayList<>();
         List<Map<String, Object>> strengths = new ArrayList<>();
         List<Map<String, Object>> gaps = new ArrayList<>();
 
-        // Check required skills
         String requiredSkillsStr = opportunity.getRequiredSkills();
         if (requiredSkillsStr != null && !requiredSkillsStr.isEmpty()) {
             String[] required = requiredSkillsStr.split(",");
@@ -75,7 +75,6 @@ public class OpportunityMatchService {
             }
         }
 
-        // Calculate overall match
         BigDecimal overall = skillMatch.multiply(new BigDecimal("0.5"))
             .add(BigDecimal.valueOf(eligibilityMet ? 80 : 0))
             .add(BigDecimal.valueOf(experienceMet ? 60 : 0))
@@ -104,7 +103,14 @@ public class OpportunityMatchService {
 
     public List<Map<String, Object>> getMyMatches(UUID studentId) {
         List<StudentSkillGraph> skills = graphRepo.findByStudentIdOrderByProficiencyPctDesc(studentId);
-        List<CompanyOpportunity> opportunities = opportunityRepo.findByStatusOrderByCreatedAtDesc("ACTIVE");
+        List<CompanyOpportunity> allOpportunities = opportunityRepo.findByStatusOrderByCreatedAtDesc("PUBLISHED");
+        if (allOpportunities.isEmpty()) {
+            allOpportunities = opportunityRepo.findByStatusOrderByCreatedAtDesc("ACTIVE");
+        }
+
+        List<CompanyOpportunity> opportunities = allOpportunities.stream()
+                .filter(opp -> companyService.isOpportunityVisibleAndApprovedForStudent(opp, studentId))
+                .toList();
 
         return opportunities.stream().map(opp -> {
             BigDecimal skillMatch = calculateSkillMatch(skills, opp);
@@ -147,3 +153,4 @@ public class OpportunityMatchService {
         return result;
     }
 }
+

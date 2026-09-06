@@ -9,3 +9,4 @@ public interface InstitutionRepresentativeRepository extends JpaRepository<Insti
     List<InstitutionRepresentative> findByUserId(UUID userId);
     void deleteByUserId(UUID userId);
 }
+

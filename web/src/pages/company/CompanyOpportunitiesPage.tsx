@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   PlusCircle,
@@ -19,23 +19,32 @@ export function CompanyOpportunitiesPage() {
   const [tab, setTab] = useState<'ALL' | 'CAMPUS_DRIVE' | 'FULL_TIME' | 'INTERNSHIP'>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
 
+  const [applicantCount, setApplicantCount] = useState<number>(0);
+
   useEffect(() => {
     async function loadOpportunities() {
       try {
         const token = localStorage.getItem('beyon_token') || localStorage.getItem('beyon_access_token');
         if (token) {
-          const res = await fetch('/api/v1/opportunities', {
-            headers: { Authorization: `Bearer ${token}` },
-          });
+          const [res, appRes] = await Promise.all([
+            fetch('/api/v1/opportunities', { headers: { Authorization: `Bearer ${token}` } }),
+            fetch('/api/v1/recruitment/applications', { headers: { Authorization: `Bearer ${token}` } }).catch(() => null),
+          ]);
           if (res.ok) {
             const data = await res.json();
             if (Array.isArray(data.data)) {
               setOpportunities(data.data);
             }
           }
+          if (appRes && appRes.ok) {
+            const appData = await appRes.json();
+            if (Array.isArray(appData.data)) {
+              setApplicantCount(appData.data.length);
+            }
+          }
         }
       } catch {
-        /* fallback */
+
       } finally {
         setLoading(false);
       }
@@ -51,12 +60,13 @@ export function CompanyOpportunitiesPage() {
 
     if (!matchesSearch) return false;
     if (tab === 'ALL') return true;
-    if (tab === 'CAMPUS_DRIVE') return opp.title.toLowerCase().includes('drive') || opp.opportunityType === 'CAMPUS_DRIVE';
+    if (tab === 'CAMPUS_DRIVE') return opp.opportunityType === 'CAMPUS_DRIVE' || opp.title.toLowerCase().includes('drive');
     return opp.opportunityType === tab;
   });
 
-  const totalDrives = opportunities.filter(o => o.title.toLowerCase().includes('drive')).length || 18;
-  const totalOpenings = opportunities.length || 32;
+  const totalDrives = opportunities.filter(o => o.opportunityType === 'CAMPUS_DRIVE' || o.title.toLowerCase().includes('drive')).length;
+  const totalOpenings = opportunities.length;
+  const totalApplicantsCount = Math.max(applicantCount, opportunities.reduce((sum, opp) => sum + (opp.applicationCount || 0), 0));
 
   return (
     <div className={styles.page}>
@@ -73,7 +83,6 @@ export function CompanyOpportunitiesPage() {
         </Link>
       </div>
 
-      {/* Stats Row */}
       <div className={styles.statsRow}>
         <div className={styles.statCard}>
           <span className={styles.statLabel}>Total Opportunities</span>
@@ -85,15 +94,14 @@ export function CompanyOpportunitiesPage() {
         </div>
         <div className={styles.statCard}>
           <span className={styles.statLabel}>Total Applicants</span>
-          <span className={styles.statValue} style={{ color: '#0284c7' }}>148</span>
+          <span className={styles.statValue} style={{ color: '#0284c7' }}>{totalApplicantsCount}</span>
         </div>
         <div className={styles.statCard}>
-          <span className={styles.statLabel}>Verified Candidate Pool</span>
-          <span className={styles.statValue} style={{ color: '#15803d' }}>100+ Scholars</span>
+          <span className={styles.statLabel}>Verified Candidates</span>
+          <span className={styles.statValue} style={{ color: '#15803d' }}>{totalApplicantsCount}</span>
         </div>
       </div>
 
-      {/* Filter Row */}
       <div className={styles.filterRow}>
         <div className={styles.filters}>
           {(['ALL', 'CAMPUS_DRIVE', 'FULL_TIME', 'INTERNSHIP'] as const).map((t) => (
@@ -120,7 +128,6 @@ export function CompanyOpportunitiesPage() {
         </div>
       </div>
 
-      {/* Grid */}
       {loading ? (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '16px' }}>
           {[1, 2, 3, 4].map((i) => (
@@ -187,7 +194,7 @@ export function CompanyOpportunitiesPage() {
               <div className={styles.cardFoot}>
                 <span className={styles.applicantsCount}>
                   <Users size={14} />
-                  <span>{opp.applicationCount || 24} Applicants</span>
+                  <span>{(opp.applicationCount !== undefined && opp.applicationCount !== null) ? opp.applicationCount : 0} Applicants</span>
                 </span>
                 <button
                   className={styles.actionBtn}
@@ -204,3 +211,4 @@ export function CompanyOpportunitiesPage() {
     </div>
   );
 }
+

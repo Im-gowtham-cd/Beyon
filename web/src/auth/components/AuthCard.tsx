@@ -18,3 +18,4 @@ export function AuthCard({ title, subtitle, footer, children }: AuthCardProps) {
     </div>
   );
 }
+

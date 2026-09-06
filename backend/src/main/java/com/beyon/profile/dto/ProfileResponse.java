@@ -109,3 +109,4 @@ public class ProfileResponse {
         public void setRepresentatives(List<CompanyRepresentative> representatives) { this.representatives = representatives; }
     }
 }
+

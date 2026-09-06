@@ -43,3 +43,4 @@ export const feedbackApi = {
 
   adminGetNotes: async (id: string): Promise<FeedbackInternalNote[]> => api.get(`/feedback/${id}/notes`),
 };
+

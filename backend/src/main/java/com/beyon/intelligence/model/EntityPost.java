@@ -32,3 +32,4 @@ public class EntityPost {
     public String getVisibility() { return visibility; } public void setVisibility(String v) { this.visibility = v; }
     public OffsetDateTime getCreatedAt() { return createdAt; } public void setCreatedAt(OffsetDateTime v) { this.createdAt = v; }
 }
+

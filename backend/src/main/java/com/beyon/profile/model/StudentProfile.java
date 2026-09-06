@@ -150,3 +150,4 @@ public class StudentProfile {
     public void setPreferredLocations(String preferredLocations) { this.preferredLocations = preferredLocations; }
     public Instant getUpdatedAt() { return updatedAt; }
 }
+

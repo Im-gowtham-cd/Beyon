@@ -76,3 +76,4 @@ public class SocialFeedService {
         return Map.of("liked", liked, "likeCount", count);
     }
 }
+

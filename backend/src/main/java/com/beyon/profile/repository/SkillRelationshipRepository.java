@@ -10,3 +10,4 @@ public interface SkillRelationshipRepository extends JpaRepository<SkillRelation
     List<SkillRelationship> findBySourceSkillId(UUID sourceSkillId);
     List<SkillRelationship> findByTargetSkillId(UUID targetSkillId);
 }
+

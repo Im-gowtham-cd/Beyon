@@ -77,3 +77,4 @@ public class PasswordResetToken {
         this.createdAt = createdAt;
     }
 }
+

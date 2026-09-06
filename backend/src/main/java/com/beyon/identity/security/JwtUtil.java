@@ -19,7 +19,7 @@ public class JwtUtil {
 
     public JwtUtil(
             @Value("${beyon.jwt.secret:beyon-dev-secret-key-change-in-production-minimum-32-chars}") String secret,
-            @Value("${beyon.jwt.access-token-expiration:900000}") long accessTokenExpirationMs) {
+            @Value("${beyon.jwt.access-token-expiration:86400000}") long accessTokenExpirationMs) {
         this.signingKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
         this.accessTokenExpirationMs = accessTokenExpirationMs;
     }
@@ -67,3 +67,4 @@ public class JwtUtil {
         return parseToken(token).get("role", String.class);
     }
 }
+

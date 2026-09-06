@@ -8,3 +8,4 @@ import java.util.UUID;
 public interface PersonalizedChallengeConfigRepository extends JpaRepository<PersonalizedChallengeConfig, UUID> {
     Optional<PersonalizedChallengeConfig> findByStudentId(UUID studentId);
 }
+

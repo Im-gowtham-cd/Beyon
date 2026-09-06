@@ -8,3 +8,4 @@ import java.util.UUID;
 public interface PortfolioAnalysisRepository extends JpaRepository<PortfolioAnalysis, UUID> {
     Optional<PortfolioAnalysis> findTopByStudentIdOrderByAnalyzedAtDesc(UUID studentId);
 }
+

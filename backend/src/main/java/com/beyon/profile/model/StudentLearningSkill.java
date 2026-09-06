@@ -44,3 +44,4 @@ public class StudentLearningSkill {
     public Instant getStartedAt() { return startedAt; }
     public Instant getCreatedAt() { return createdAt; }
 }
+

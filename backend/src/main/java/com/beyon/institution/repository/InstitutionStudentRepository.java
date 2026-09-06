@@ -12,7 +12,10 @@ public interface InstitutionStudentRepository extends JpaRepository<InstitutionS
     List<InstitutionStudent> findByInstitutionId(UUID institutionId);
     List<InstitutionStudent> findByInstitutionIdAndPlacementStatus(UUID institutionId, String status);
     Optional<InstitutionStudent> findByInstitutionIdAndStudentId(UUID institutionId, UUID studentId);
+    boolean existsByInstitutionIdAndStudentId(UUID institutionId, UUID studentId);
     long countByInstitutionId(UUID institutionId);
     long countByInstitutionIdAndPlacementStatus(UUID institutionId, String status);
     List<InstitutionStudent> findByInstitutionIdAndDepartment(UUID institutionId, String department);
+    List<InstitutionStudent> findByStudentId(UUID studentId);
 }
+

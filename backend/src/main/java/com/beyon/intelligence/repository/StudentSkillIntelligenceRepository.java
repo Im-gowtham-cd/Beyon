@@ -11,3 +11,4 @@ public interface StudentSkillIntelligenceRepository extends JpaRepository<Studen
     Optional<StudentSkillIntelligence> findByStudentIdAndSkillId(UUID studentId, UUID skillId);
     List<StudentSkillIntelligence> findByStudentIdAndProficiencyLevel(UUID studentId, String level);
 }
+

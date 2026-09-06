@@ -18,6 +18,7 @@ export const institutionApi = {
   getRating: () => api.get<InstitutionRating>('/institution/rating'),
   getDrives: () => api.get<PlacementDrive[]>('/institution/drives'),
   approveDrive: (driveId: string) => api.post<PlacementDrive>(`/institution/drives/${driveId}/approve`),
+  getDriveApplications: (driveId: string) => api.get<any[]>(`/institution/drives/${driveId}/applications`),
 };
 
 export const followApi = {
@@ -44,3 +45,4 @@ export const recruitmentApi = {
   withdraw: (applicationId: string) => api.post(`/recruitment/${applicationId}/withdraw`),
   getPipeline: (opportunityId: string) => api.get<Record<string, number>>(`/recruitment/opportunity/${opportunityId}/pipeline`),
 };
+

@@ -1,9 +1,3 @@
-// ============================================================
-// Module 12 — Comprehensive Community & Ecosystem Seeder
-// Populates discussions, social posts, events, challenges, projects,
-// mentorship, research proposals, and entity posts.
-// ============================================================
-
 import { doltBatch, esc, doltQuery, toUUID } from "../engine/dolt.js";
 import { studentUserIds } from "./04-users.js";
 import { companyUserIds } from "./03-companies.js";
@@ -43,7 +37,6 @@ export async function seedCommunity(cfg: SeedConfig): Promise<void> {
   const compUserIdList = Object.values(companyUserIds);
   const instUserIdList = Object.values(institutionUserIds);
 
-  // ─── 1. Follow Relationships ───
   const followStmts: string[] = [];
   let followCount = 0;
   const followUsed = new Set<string>();
@@ -67,7 +60,6 @@ export async function seedCommunity(cfg: SeedConfig): Promise<void> {
   doltBatch(followStmts, 200);
   console.log(`  ✅ ${followCount} follow relationships`);
 
-  // ─── 2. Discussion Categories, Threads & Replies ───
   const catRows = doltQuery("SELECT id, slug, name FROM discussion_categories");
   const catIds = catRows.map(r => r.id);
   const threadStmts: string[] = [];
@@ -125,7 +117,6 @@ export async function seedCommunity(cfg: SeedConfig): Promise<void> {
   doltBatch(replyStmts, 50);
   console.log(`  ✅ ${threadIdx} discussion threads & ${replyStmts.length} replies`);
 
-  // ─── 3. Events & Hackathons ───
   const eventStmts: string[] = [];
   const eventRegStmts: string[] = [];
   const REAL_EVENTS = [
@@ -149,7 +140,6 @@ export async function seedCommunity(cfg: SeedConfig): Promise<void> {
        ON DUPLICATE KEY UPDATE title=${esc(ev.title)}, description=${esc(ev.desc)}, registered_count=${ev.regCount}, status=${esc(status)};`
     );
 
-    // Register sample students
     const registeredStudents = rng.pickN(studentUserIds, Math.min(25, studentUserIds.length));
     for (const sid of registeredStudents) {
       const regId = toUUID(`beyon-ereg-${eventId}-${sid}`);
@@ -164,7 +154,6 @@ export async function seedCommunity(cfg: SeedConfig): Promise<void> {
   doltBatch(eventRegStmts, 100);
   console.log(`  ✅ ${eventIdx} events & ${eventRegStmts.length} registrations`);
 
-  // ─── 4. Industry Challenges ───
   const chalStmts: string[] = [];
   const chalPartStmts: string[] = [];
   const REAL_CHALLENGES = [
@@ -200,7 +189,6 @@ export async function seedCommunity(cfg: SeedConfig): Promise<void> {
   doltBatch(chalPartStmts, 100);
   console.log(`  ✅ ${chalIdx} industry challenges & ${chalPartStmts.length} participants`);
 
-  // ─── 5. Industry Projects & Teams ───
   const projStmts: string[] = [];
   const projTeamStmts: string[] = [];
   const REAL_PROJECTS = [
@@ -233,7 +221,6 @@ export async function seedCommunity(cfg: SeedConfig): Promise<void> {
   doltBatch(projTeamStmts, 50);
   console.log(`  ✅ ${projIdx} industry projects & teams`);
 
-  // ─── 6. Mentorship Network ───
   const mentorStmts: string[] = [];
   const mentorReqStmts: string[] = [];
   const REAL_MENTORS = [
@@ -268,7 +255,6 @@ export async function seedCommunity(cfg: SeedConfig): Promise<void> {
   doltBatch(mentorReqStmts, 50);
   console.log(`  ✅ ${mentorIdx} mentor profiles & ${mentorReqStmts.length} mentorship requests`);
 
-  // ─── 7. Research Proposals ───
   const researchStmts: string[] = [];
   const REAL_RESEARCH = [
     { title: "Zero-Knowledge Proofs for Verifiable AI Model Inference", domain: "Applied Cryptography & AI", outcome: "Publish peer-reviewed conference paper and open-source verification library for proving LLM inference correctness.", duration: 24, budget: 150000.00 },
@@ -291,7 +277,6 @@ export async function seedCommunity(cfg: SeedConfig): Promise<void> {
   doltBatch(researchStmts, 50);
   console.log(`  ✅ ${resIdx} research proposals`);
 
-  // ─── 8. Entity Posts (Feeds) ───
   const entityPostStmts: string[] = [];
   const REAL_ENTITY_POSTS = [
     { title: "2026 Campus Hiring Drive Announced for Software Engineers", content: "We are thrilled to launch our 2026 campus recruitment program across premier institutions on Beyon. Open roles: SDE-1, Cloud Engineer, and AI Specialist.", type: "COMPANY", entityId: compUserIdList[0], likes: 142, comments: 28 },
@@ -313,7 +298,6 @@ export async function seedCommunity(cfg: SeedConfig): Promise<void> {
   doltBatch(entityPostStmts, 50);
   console.log(`  ✅ ${epIdx} entity posts`);
 
-  // ─── 9. Content Resources & Learning Materials ───
   const resStmts: string[] = [];
   const REAL_RESOURCES = [
     { title: "The Ultimate System Design Cheatsheet for Freshers", desc: "Detailed diagrams covering Load Balancers, Distributed Caching, CAP Theorem, Sharding, and Rate Limiters.", type: "DOCUMENT", url: "https://docs.beyon.app/system-design-cheatsheet.pdf", diff: "MEDIUM", rating: 4.9, views: 3200, bookmarks: 890 },
@@ -336,3 +320,4 @@ export async function seedCommunity(cfg: SeedConfig): Promise<void> {
   doltBatch(resStmts, 50);
   console.log(`  ✅ ${crIdx} content resources`);
 }
+

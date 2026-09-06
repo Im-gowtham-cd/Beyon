@@ -77,3 +77,4 @@ public class RecruitmentApplication {
     public Instant getUpdatedAt() { return updatedAt; }
     public Instant getCreatedAt() { return createdAt; }
 }
+

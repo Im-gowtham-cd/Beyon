@@ -23,12 +23,12 @@ export function LearningWidget() {
                   return { ...t, topicName: found.name, skillSlug: skill.slug, topicSlug: found.slug };
                 }
               }
-            } catch { /* */ }
+            } catch {  }
             return t;
           })
         );
         setLearningTopics(enriched);
-      } catch { /* */ }
+      } catch {  }
       setLoading(false);
     }
     load();
@@ -73,3 +73,4 @@ export function LearningWidget() {
     </div>
   );
 }
+

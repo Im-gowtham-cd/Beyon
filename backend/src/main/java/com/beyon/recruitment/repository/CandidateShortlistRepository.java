@@ -11,3 +11,4 @@ public interface CandidateShortlistRepository extends JpaRepository<CandidateSho
     Optional<CandidateShortlist> findByDriveIdAndStudentId(UUID driveId, UUID studentId);
     long countByDriveId(UUID driveId);
 }
+

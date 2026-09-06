@@ -66,3 +66,4 @@ public class ResearchController {
         return ResponseEntity.ok(researchService.getProposalParticipants(proposalId));
     }
 }
+

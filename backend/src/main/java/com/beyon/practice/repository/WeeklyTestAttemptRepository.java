@@ -11,3 +11,4 @@ public interface WeeklyTestAttemptRepository extends JpaRepository<WeeklyTestAtt
     Optional<WeeklyTestAttempt> findByStudentIdAndWeeklyTestId(UUID studentId, UUID weeklyTestId);
     List<WeeklyTestAttempt> findByWeeklyTestIdOrderByScoreDesc(UUID weeklyTestId);
 }
+

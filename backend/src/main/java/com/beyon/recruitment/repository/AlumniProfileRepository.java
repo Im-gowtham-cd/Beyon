@@ -12,3 +12,4 @@ public interface AlumniProfileRepository extends JpaRepository<AlumniProfile, UU
     List<AlumniProfile> findByInstitutionIdAndGraduationYear(UUID institutionId, Integer year);
     List<AlumniProfile> findByIsMentoringTrue();
 }
+

@@ -10,3 +10,4 @@ public interface AdaptiveLearningPathRepository extends JpaRepository<AdaptiveLe
     List<AdaptiveLearningPath> findByStudentIdOrderByCreatedAtDesc(UUID studentId);
     Optional<AdaptiveLearningPath> findByStudentIdAndCareerPathIdAndStatus(UUID studentId, UUID careerPathId, String status);
 }
+

@@ -29,3 +29,4 @@ public class StudentCareerProgress {
     public OffsetDateTime getStartedAt() { return startedAt; } public void setStartedAt(OffsetDateTime v) { this.startedAt = v; }
     public OffsetDateTime getLastUpdatedAt() { return lastUpdatedAt; } public void setLastUpdatedAt(OffsetDateTime v) { this.lastUpdatedAt = v; }
 }
+

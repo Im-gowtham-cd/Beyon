@@ -12,7 +12,7 @@ export function CertificatePage() {
       try {
         const certs = await intelligenceApi.getMyCertificates();
         setCertificates(certs);
-      } catch { /* */ }
+      } catch {  }
       setLoading(false);
     }
     load();
@@ -79,3 +79,4 @@ export function CertificatePage() {
     </div>
   );
 }
+

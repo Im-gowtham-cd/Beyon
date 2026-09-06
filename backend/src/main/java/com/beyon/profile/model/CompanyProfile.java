@@ -116,3 +116,4 @@ public class CompanyProfile {
     public Instant getCreatedAt() { return createdAt; }
     public Instant getUpdatedAt() { return updatedAt; }
 }
+

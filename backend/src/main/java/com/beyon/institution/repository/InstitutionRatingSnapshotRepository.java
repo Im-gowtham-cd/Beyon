@@ -10,3 +10,4 @@ public interface InstitutionRatingSnapshotRepository extends JpaRepository<Insti
     List<InstitutionRatingSnapshot> findByInstitutionIdOrderBySnapshotDateDesc(UUID institutionId);
     InstitutionRatingSnapshot findTopByInstitutionIdOrderBySnapshotDateDesc(UUID institutionId);
 }
+

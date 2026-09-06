@@ -14,3 +14,4 @@ export const recruitmentApi = {
   getHistory: (applicationId: string) =>
     api.get<StatusHistory[]>(`/recruitment/${applicationId}/history`),
 };
+

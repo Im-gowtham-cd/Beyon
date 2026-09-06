@@ -10,6 +10,7 @@ import {
   Cpu,
   Mail,
   ShieldCheck,
+  Clock,
   UserCheck,
 } from 'lucide-react';
 import styles from './CompanyProfilePage.module.css';
@@ -32,7 +33,7 @@ export function CompanyProfilePage() {
           }
         }
       } catch {
-        /* fallback */
+
       }
     }
     loadProfile();
@@ -43,7 +44,7 @@ export function CompanyProfilePage() {
   const companySkills = profileData?.skills || [];
   const representatives = profileData?.representatives || [];
 
-  const companyName = profile?.companyName || user?.name || 'Enterprise Technologies Inc.';
+  const companyName = profile?.companyName || user?.name || 'Company Account';
   const initials = companyName
     .split(' ')
     .map((p: string) => p[0])
@@ -51,9 +52,12 @@ export function CompanyProfilePage() {
     .slice(0, 2)
     .toUpperCase() || 'CO';
 
+  const status = (user as any)?.status || (profile?.status) || 'ACTIVE';
+  const isPending = status === 'PENDING_SUPER_ADMIN_VERIFICATION';
+
   return (
     <div className={styles.page}>
-      {/* Profile Header */}
+
       <section className={styles.profileHeader}>
         <div className={styles.avatarBox}>
           <span>{initials}</span>
@@ -61,48 +65,51 @@ export function CompanyProfilePage() {
 
         <div className={styles.headerInfo}>
           <div className={styles.badgeRow}>
-            <span className={styles.tierBadge}>Tier 1 Corporate Partner</span>
-            <span className={styles.verifiedBadge}>
-              <ShieldCheck size={13} />
-              <span>Verified Enterprise</span>
-            </span>
+            {isPending ? (
+              <span style={{ fontSize: '0.74rem', fontWeight: 700, padding: '3px 8px', background: '#fef3c7', color: '#b45309', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                <Clock size={13} />
+                <span>Verification Pending</span>
+              </span>
+            ) : (
+              <span className={styles.verifiedBadge}>
+                <ShieldCheck size={13} />
+                <span>Verified Enterprise</span>
+              </span>
+            )}
           </div>
 
           <h1 className={styles.companyName}>{companyName}</h1>
 
           <div className={styles.companyMeta}>
             <span className={styles.metaItem}>
-              <Briefcase size={14} /> {profile?.industry || 'Technology & Software'}
+              <Briefcase size={14} /> {profile?.industry || 'Industry: Not provided'}
             </span>
             <span className={styles.metaItem}>
-              <MapPin size={14} /> {profile?.headquarters || 'Bangalore, India'}
+              <MapPin size={14} /> {profile?.headquarters || profile?.address || 'Location: Not provided'}
             </span>
             <span className={styles.metaItem}>
-              <Globe size={14} /> {profile?.website || 'https://company.beyon.io'}
+              <Globe size={14} /> {profile?.website ? <a href={profile.website} target="_blank" rel="noreferrer" style={{ color: 'inherit' }}>{profile.website}</a> : 'Website: Not provided'}
             </span>
             <span className={styles.metaItem}>
-              <Users size={14} /> {profile?.companySize || '5,000+ Employees'}
+              <Users size={14} /> {profile?.companySize ? `${profile.companySize} Employees` : 'Size: Not provided'}
             </span>
           </div>
         </div>
       </section>
 
-      {/* Content Grid */}
       <div className={styles.contentGrid}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-          {/* About Company */}
+
           <div className={styles.card}>
             <h3 className={styles.cardTitle}>
               <Info size={18} style={{ color: '#1c2d81' }} />
               <span>Company Overview</span>
             </h3>
             <p className={styles.cardText}>
-              {profile?.about ||
-                'Leading technology enterprise building scalable AI infrastructure, cloud platforms, and distributed systems. Partnered with top academic institutions for verified merit-based recruitment drives and industrial mentorship programs.'}
+              {profile?.about || profile?.description || 'No company overview provided yet.'}
             </p>
           </div>
 
-          {/* Hiring Preferences */}
           <div className={styles.card}>
             <h3 className={styles.cardTitle}>
               <Target size={18} style={{ color: '#1c2d81' }} />
@@ -111,24 +118,23 @@ export function CompanyProfilePage() {
             <div className={styles.infoGrid}>
               <div className={styles.infoItem}>
                 <span className={styles.infoLabel}>Preferred Degree Programs</span>
-                <span className={styles.infoValue}>B.E / B.Tech / M.Tech / MCA</span>
+                <span className={styles.infoValue}>{hiringPref?.preferredDegrees || profile?.preferredDegrees || 'Not provided'}</span>
               </div>
               <div className={styles.infoItem}>
                 <span className={styles.infoLabel}>Academic Cutoff Baseline</span>
-                <span className={styles.infoValue}>{hiringPref?.minCgpa ? `${hiringPref.minCgpa} CGPA` : '7.50 CGPA'}</span>
+                <span className={styles.infoValue}>{hiringPref?.minCgpa ? `${hiringPref.minCgpa} CGPA` : profile?.minCgpa ? `${profile.minCgpa} CGPA` : 'Not set'}</span>
               </div>
               <div className={styles.infoItem}>
                 <span className={styles.infoLabel}>Target Graduation Batches</span>
-                <span className={styles.infoValue}>Class of 2026, 2027</span>
+                <span className={styles.infoValue}>{hiringPref?.targetBatches || profile?.eligibleBatches || 'Not specified'}</span>
               </div>
               <div className={styles.infoItem}>
                 <span className={styles.infoLabel}>Assessment Requirement</span>
-                <span className={styles.infoValue}>Mandatory Proctored Benchmark</span>
+                <span className={styles.infoValue}>{profile?.assessmentRequirement || 'Standard Technical Assessment'}</span>
               </div>
             </div>
           </div>
 
-          {/* Required Technology Matrix */}
           <div className={styles.card}>
             <h3 className={styles.cardTitle}>
               <Cpu size={18} style={{ color: '#1c2d81' }} />
@@ -141,18 +147,19 @@ export function CompanyProfilePage() {
                     {s.skillName || s}
                   </span>
                 ))
-              ) : (
-                ['Java', 'Spring Boot', 'Python', 'CUDA / GPU Architecture', 'React', 'Node.js', 'PostgreSQL', 'Docker', 'Kubernetes', 'AWS', 'System Design'].map((s) => (
-                  <span key={s} className={styles.skillBadge}>
-                    {s}
+              ) : profile?.skills ? (
+                profile.skills.split(',').map((s: string) => (
+                  <span key={s.trim()} className={styles.skillBadge}>
+                    {s.trim()}
                   </span>
                 ))
+              ) : (
+                <span style={{ fontSize: '0.82rem', color: '#94a3b8' }}>No skill taxonomy configured yet.</span>
               )}
             </div>
           </div>
         </div>
 
-        {/* Right Aside: Contact & Representatives */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
           <div className={styles.card}>
             <h3 className={styles.cardTitle}>
@@ -162,15 +169,15 @@ export function CompanyProfilePage() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <div className={styles.infoItem}>
                 <span className={styles.infoLabel}>Corporate Email</span>
-                <span className={styles.infoValue}>{profile?.officialEmail || user?.email || 'careers@company.com'}</span>
+                <span className={styles.infoValue}>{profile?.officialEmail || user?.email || 'Not provided'}</span>
               </div>
               <div className={styles.infoItem}>
                 <span className={styles.infoLabel}>Official Phone</span>
-                <span className={styles.infoValue}>{profile?.phone || '+91 80 4928 1000'}</span>
+                <span className={styles.infoValue}>{profile?.phone || 'Not provided'}</span>
               </div>
               <div className={styles.infoItem}>
                 <span className={styles.infoLabel}>Headquarters</span>
-                <span className={styles.infoValue}>{profile?.headquarters || 'Electronic City, Bangalore, KA'}</span>
+                <span className={styles.infoValue}>{profile?.headquarters || profile?.address || 'Not provided'}</span>
               </div>
             </div>
           </div>
@@ -185,13 +192,13 @@ export function CompanyProfilePage() {
                 representatives.map((rep: any, idx: number) => (
                   <div key={idx} style={{ padding: '8px 12px', background: '#f8fafc', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '2px' }}>
                     <span style={{ fontSize: '0.84rem', fontWeight: 600, color: '#0f172a' }}>{rep.name}</span>
-                    <span style={{ fontSize: '0.74rem', color: '#64748b' }}>{rep.designation || 'Head of Campus Talent Acquisition'}</span>
+                    <span style={{ fontSize: '0.74rem', color: '#64748b' }}>{rep.designation || 'Recruitment Officer'}</span>
                   </div>
                 ))
               ) : (
                 <div style={{ padding: '8px 12px', background: '#f8fafc', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                  <span style={{ fontSize: '0.84rem', fontWeight: 600, color: '#0f172a' }}>{user?.name || 'Rajesh'}</span>
-                  <span style={{ fontSize: '0.74rem', color: '#64748b' }}>Senior Director of Campus Hiring</span>
+                  <span style={{ fontSize: '0.84rem', fontWeight: 600, color: '#0f172a' }}>{user?.name || 'Primary Recruiter'}</span>
+                  <span style={{ fontSize: '0.74rem', color: '#64748b' }}>Corporate Representative</span>
                 </div>
               )}
             </div>
@@ -201,3 +208,4 @@ export function CompanyProfilePage() {
     </div>
   );
 }
+

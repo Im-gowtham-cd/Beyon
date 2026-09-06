@@ -32,3 +32,4 @@ public class SkillXpTransaction {
     public String getDescription() { return description; } public void setDescription(String v) { this.description = v; }
     public OffsetDateTime getCreatedAt() { return createdAt; }
 }
+

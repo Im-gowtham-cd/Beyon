@@ -8,3 +8,4 @@ import java.util.UUID;
 public interface CompanyTierProfileRepository extends JpaRepository<CompanyTierProfile, UUID> {
     Optional<CompanyTierProfile> findByCompanyUserId(UUID companyUserId);
 }
+

@@ -35,3 +35,4 @@ public class CompanySkill {
     public void setCategory(String category) { this.category = category; }
     public Instant getCreatedAt() { return createdAt; }
 }
+

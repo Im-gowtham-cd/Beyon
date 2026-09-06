@@ -16,7 +16,7 @@ export function AdminModerationPage() {
         setThreads(data.data || []);
       }
     } catch {
-      /* fallback */
+
     } finally {
       setLoading(false);
     }

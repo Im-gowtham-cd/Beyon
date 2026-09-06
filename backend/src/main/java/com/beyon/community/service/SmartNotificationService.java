@@ -71,3 +71,4 @@ public class SmartNotificationService {
         return send(userId, "LEARNING", "LOW", title, body, "/skill-profile", null, null);
     }
 }
+

@@ -13,3 +13,4 @@ public interface SkillXpTransactionRepository extends JpaRepository<SkillXpTrans
     Long sumXpByStudentAndSkill(UUID studentId, UUID skillId);
     boolean existsByStudentIdAndSkillIdAndSourceAndSourceId(UUID studentId, UUID skillId, String source, UUID sourceId);
 }
+

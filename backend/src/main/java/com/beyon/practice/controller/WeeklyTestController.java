@@ -59,3 +59,4 @@ public class WeeklyTestController {
         throw new RuntimeException("Unauthorized");
     }
 }
+

@@ -30,7 +30,7 @@ public class RateLimitService {
             redisTemplate.opsForValue().increment(key);
             return false;
         } catch (Exception e) {
-            // Gracefully pass through when Redis is offline in dev
+
             return false;
         }
     }
@@ -42,3 +42,4 @@ public class RateLimitService {
         }
     }
 }
+

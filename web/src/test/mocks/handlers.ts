@@ -72,3 +72,4 @@ export const mockDashboard = {
   recentPosts: [{ id: 'post-1', content: 'Hello!', likeCount: 5, commentCount: 2 }],
   careerProgress: [{ careerPathId: 'cp-1', readinessScore: 0.78, skillsAcquired: 5, skillsTotal: 8 }],
 };
+

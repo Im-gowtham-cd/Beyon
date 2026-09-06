@@ -1,0 +1,94 @@
+@startuml Beyon_System_Design_Optimized
+!theme plain
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName "Segoe UI", Arial, sans-serif
+skinparam roundCorner 8
+skinparam shadowing false
+skinparam linetype ortho
+skinparam wrapWidth 180
+skinparam maxMessageSize 120
+skinparam packagePadding 12
+skinparam nodesep 25
+skinparam ranksep 35
+
+' Set strict canvas bounds so it never overflows
+scale max 1200 width
+
+title **BEYON — End-to-End System Design & Data Flow**\n<size:11><color:#555555>Clean Multi-Tier Architecture: Dolt DB, React, Electron, Spring Boot, FastAPI & WebRTC</color></size>
+
+' ==========================================================
+' TIER 1: CLIENT APPLICATIONS
+' ==========================================================
+package "1. Edge Client Layer" as T1 #F8FAFC {
+    rectangle "💻 Desktop App\n(Electron + React)\n• Lockdown Guard\n• Audio Analyzer\n• Front Cam 30fps" as Desktop #EBF8FF
+    rectangle "📱 Mobile Camera\n(PWA WebRTC)\n• QR Code Sync\n• Desk/Side View\n• Gyro Alignment" as Mobile #EBF8FF
+    rectangle "🌐 Web Portals\n(React 19 + Vite)\n• Recruiter Live Wall\n• Candidate Portal\n• College Placement" as Web #EBF8FF
+}
+
+' ==========================================================
+' TIER 2: GATEWAY & STREAMING
+' ==========================================================
+package "2. Gateway & Streaming Layer" as T2 #F8FAFC {
+    rectangle "⚡ WebRTC SFU Cluster\n(LiveKit / MediaSoup)\n<color:#2B6CB0>Sub-50ms Video Sync</color>" as SFU #FEFCBF
+    rectangle "🛡️ Edge Gateway\n(Cloudflare WAF + Nginx)\n<color:#2B6CB0>SSL, DDoS & Rate Limit</color>" as Gateway #FEFCBF
+}
+
+' ==========================================================
+' TIER 3: CORE APPLICATION BACKEND
+' ==========================================================
+package "3. Core Backend (Spring Boot 3.4 Microservices)" as T3 #F8FAFC {
+    rectangle "🔐 Auth & Session\nSecurity Controller\n(JWT / RBAC)" as AuthSvc #E6FFFA
+    rectangle "⚖️ Strike & Rule Engine\n• 0-Strike Phone Kill\n• 1-Strike 2nd Person\n• 3-Strike Sound" as RuleEngine #E6FFFA
+    rectangle "📝 Assessment & Scoring\n• Code Runner\n• Talent Graph Sync\n• Coin Rewards" as AssessSvc #E6FFFA
+    rectangle "📡 WebSocket & SSE Broker\n• Live Warning Push\n• Recruiter Live Stream" as WSSBroker #E6FFFA
+}
+
+' ==========================================================
+' TIER 4: AI VISION & SPEECH MICROSERVICES
+' ==========================================================
+package "4. AI Computer Vision & Audio (FastAPI :8000)" as T4 #F8FAFC {
+    rectangle "👁️ YOLO11 Detector\n(Phone, Book, Buds)\n<color:#C53030>conf=0.25</color>" as YOLO #FED7D7
+    rectangle "👤 Cheating Face CNN\n(Gaze & Head Pose)\n<color:#C53030>48x48 PyTorch</color>" as CNN #FED7D7
+    rectangle "🎙️ Audio Diarization\n(Deepgram / Whisper)\n<color:#C53030>Whisper Detection</color>" as AudioAI #FED7D7
+}
+
+' ==========================================================
+' TIER 5: PERSISTENCE, CACHE & DOLT
+' ==========================================================
+package "5. Persistence, Versioning & Storage Layer" as T5 #F8FAFC {
+    database "🐬 Dolt SQL Database\n(Git-for-Data on :3306)\n• Rubric Branching\n• Tamper-Proof Audit\n• Commit Hash Logs" as DoltDB #EDF2F7
+    database "⚡ Redis 7 Cluster\n• Atomic Strikes\n• Presence & Locks\n• Session Cache" as Redis #EDF2F7
+    database "📊 ClickHouse Cloud\n• High-Frequency\n  Telemetry Logs\n• Fast Audits (<15ms)" as ClickHouse #EDF2F7
+    storage "☁️ Cloudflare R2 / S3\n• Encrypted Incident\n  Snapshots (.webp)\n• Stream Archives" as S3 #EDF2F7
+}
+
+' ==========================================================
+' CONNECTIONS WITH ORTHOGONAL ROUTING
+' ==========================================================
+Desktop -down-> Gateway : API / Telemetry
+Mobile -down-> Gateway : Telemetry / QR
+Web -down-> Gateway : Recruiter Dash
+
+Desktop -down-> SFU : Front Video Stream
+Mobile -down-> SFU : Side Desk Stream
+SFU -down-> Web : Live Grid Wall
+
+Gateway -down-> AuthSvc
+Gateway -down-> RuleEngine
+Gateway -down-> AssessSvc
+
+RuleEngine -right-> WSSBroker : Trigger Alerts
+WSSBroker -up-> Desktop : Warning Overlay
+WSSBroker -up-> Web : Live Recruiter Event
+
+RuleEngine -down-> YOLO : Frame Check
+RuleEngine -down-> CNN : Gaze & Face
+Desktop -down-> AudioAI : Mic Stream
+
+RuleEngine -down-> Redis : Strike Count (INCR)
+RuleEngine -down-> DoltDB : Persist Incidents
+AssessSvc -down-> DoltDB : Commit Results
+RuleEngine -down-> ClickHouse : Telemetry
+RuleEngine -down-> S3 : Save Proofs
+
+@enduml

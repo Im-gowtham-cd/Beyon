@@ -53,3 +53,4 @@ public class StudentSkillProgress {
     public void setLearningStage(String learningStage) { this.learningStage = learningStage; }
     public Instant getUpdatedAt() { return updatedAt; }
 }
+

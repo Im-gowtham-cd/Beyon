@@ -32,3 +32,4 @@ public class LearningProgramEnrollment {
     public OffsetDateTime getEnrolledAt() { return enrolledAt; }
     public OffsetDateTime getCompletedAt() { return completedAt; } public void setCompletedAt(OffsetDateTime v) { this.completedAt = v; }
 }
+

@@ -13,3 +13,4 @@ public interface DailyChallengeRepository extends JpaRepository<DailyChallenge, 
     List<DailyChallenge> findByStudentIdOrderByChallengeDateDesc(UUID studentId);
     long countByStudentIdAndStatus(UUID studentId, String status);
 }
+

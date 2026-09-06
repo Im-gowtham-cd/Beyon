@@ -9,3 +9,4 @@ import java.util.UUID;
 public interface StudentAchievementRepository extends JpaRepository<StudentAchievement, UUID> {
     List<StudentAchievement> findByUserIdOrderByAchievementDateDesc(UUID userId);
 }
+

@@ -71,3 +71,4 @@ public class EventController {
         return ResponseEntity.ok(eventService.getMyRegistrations(extractUserId(auth)));
     }
 }
+

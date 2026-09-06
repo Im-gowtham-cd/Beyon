@@ -8,3 +8,4 @@ import java.util.UUID;
 public interface GeneratedResumeRepository extends JpaRepository<GeneratedResume, UUID> {
     List<GeneratedResume> findByStudentIdOrderByCreatedAtDesc(UUID studentId);
 }
+

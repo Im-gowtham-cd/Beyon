@@ -9,3 +9,4 @@ public interface CareerPathRepository extends JpaRepository<CareerPath, UUID> {
     Optional<CareerPath> findBySlug(String slug);
     java.util.List<CareerPath> findByActiveTrue();
 }
+

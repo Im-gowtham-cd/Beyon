@@ -45,3 +45,4 @@ public class RecruitmentStatusHistory {
     public void setNotes(String notes) { this.notes = notes; }
     public Instant getCreatedAt() { return createdAt; }
 }
+

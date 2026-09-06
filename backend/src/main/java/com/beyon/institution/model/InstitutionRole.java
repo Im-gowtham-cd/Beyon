@@ -40,3 +40,4 @@ public class InstitutionRole {
     public void setPermissions(String permissions) { this.permissions = permissions; }
     public Instant getCreatedAt() { return createdAt; }
 }
+

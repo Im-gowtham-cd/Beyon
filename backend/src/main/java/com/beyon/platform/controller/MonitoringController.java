@@ -62,3 +62,4 @@ public class MonitoringController {
         return ResponseEntity.ok(dashboard);
     }
 }
+

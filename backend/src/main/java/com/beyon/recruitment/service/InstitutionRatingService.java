@@ -33,11 +33,9 @@ public class InstitutionRatingService {
                 return r;
             });
 
-        // Placement stats
         Optional<InstitutionPlacementStats> stats = statsRepo.findByInstitutionIdAndAcademicYear(institutionId, year);
         InstitutionPlacementStats s = stats.orElse(new InstitutionPlacementStats());
 
-        // Placement score (0-10)
         BigDecimal placementScore = BigDecimal.ZERO;
         if (s.getEligible() > 0) {
             double rate = s.getPlaced() * 100.0 / s.getEligible();
@@ -45,27 +43,22 @@ public class InstitutionRatingService {
         }
         rating.setPlacementScore(placementScore);
 
-        // Salary score (0-10)
         BigDecimal avgPkg = s.getAveragePackage() != null ? s.getAveragePackage() : BigDecimal.ZERO;
         BigDecimal salaryScore = avgPkg.compareTo(BigDecimal.ZERO) > 0
             ? BigDecimal.valueOf(Math.min(10, avgPkg.doubleValue() / 2)).setScale(2, RoundingMode.HALF_UP)
             : BigDecimal.ZERO;
         rating.setSalaryScore(salaryScore);
 
-        // Industry score (companies visited)
         int companies = s.getCompaniesVisited() != null ? s.getCompaniesVisited() : 0;
         BigDecimal industryScore = BigDecimal.valueOf(Math.min(10, companies / 5.0)).setScale(2, RoundingMode.HALF_UP);
         rating.setIndustryScore(industryScore);
 
-        // Skill score (placeholder — would need skill graph data)
         BigDecimal skillScore = BigDecimal.valueOf(7.0).setScale(2, RoundingMode.HALF_UP);
         rating.setSkillScore(skillScore);
 
-        // Academic score (placeholder — would need academic data)
         BigDecimal academicScore = BigDecimal.valueOf(7.5).setScale(2, RoundingMode.HALF_UP);
         rating.setAcademicScore(academicScore);
 
-        // Overall: weighted average
         BigDecimal overall = placementScore.multiply(new BigDecimal("0.35"))
             .add(salaryScore.multiply(new BigDecimal("0.25")))
             .add(industryScore.multiply(new BigDecimal("0.20")))
@@ -101,3 +94,4 @@ public class InstitutionRatingService {
         return result;
     }
 }
+

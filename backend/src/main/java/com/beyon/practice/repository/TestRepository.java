@@ -13,3 +13,4 @@ public interface TestRepository extends JpaRepository<Test, UUID> {
     List<Test> findByStatusIn(List<String> statuses);
     List<Test> findAllByOrderByCreatedAtDesc();
 }
+

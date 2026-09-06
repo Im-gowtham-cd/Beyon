@@ -10,3 +10,4 @@ public interface AssessmentResultRepository extends JpaRepository<AssessmentResu
     Optional<AssessmentResult> findBySessionId(UUID sessionId);
     List<AssessmentResult> findByStudentIdOrderByCreatedAtDesc(UUID studentId);
 }
+

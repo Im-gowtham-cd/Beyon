@@ -43,3 +43,4 @@ public class AchievementController {
         throw new RuntimeException("Unauthorized");
     }
 }
+

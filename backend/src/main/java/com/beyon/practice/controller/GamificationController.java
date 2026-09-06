@@ -55,3 +55,4 @@ public class GamificationController {
         return UUID.fromString(details.getUserId());
     }
 }
+

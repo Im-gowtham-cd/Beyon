@@ -43,3 +43,4 @@ public class WeeklyTestAttempt {
     public OffsetDateTime getStartedAt() { return startedAt; }
     public OffsetDateTime getCompletedAt() { return completedAt; } public void setCompletedAt(OffsetDateTime v) { this.completedAt = v; }
 }
+

@@ -34,6 +34,7 @@ import { NotificationsPage } from '../notification/pages/NotificationsPage';
 import { MyApplicationsPage } from '../recruitment/pages/MyApplicationsPage';
 import { AssessmentPage } from '../assessment/pages/AssessmentPage';
 import { CompanyAssessmentsPage } from '../assessment/pages/CompanyAssessmentsPage';
+import { ProctoringReportPage } from '../assessment/pages/ProctoringReportPage';
 import { SkillProfilePage } from '../intelligence/pages/SkillProfilePage';
 import { CareerPathsPage } from '../intelligence/pages/CareerPathsPage';
 import { CollaborationHubPage } from '../intelligence/pages/CollaborationHubPage';
@@ -85,6 +86,7 @@ import { InstitutionLayout } from '../layouts/InstitutionLayout';
 import { InstitutionStudentsPage } from '../pages/institution/InstitutionStudentsPage';
 import { InstitutionDrivesPage } from '../pages/institution/InstitutionDrivesPage';
 import { InstitutionPlacementsPage } from '../pages/institution/InstitutionPlacementsPage';
+import { InstitutionCurriculumPage } from '../pages/institution/InstitutionCurriculumPage';
 import { InstitutionProfilePage } from '../pages/institution/InstitutionProfilePage';
 import { CompanyHome } from '../pages/company/CompanyHome';
 import { CompanyLayout } from '../layouts/CompanyLayout';
@@ -103,36 +105,38 @@ import { StudentOnboarding } from '../onboarding/pages/student/StudentOnboarding
 import { InstitutionOnboarding } from '../onboarding/pages/institution/InstitutionOnboarding';
 import { CompanyOnboarding } from '../onboarding/pages/company/CompanyOnboarding';
 import { CompletionPage } from '../onboarding/pages/shared/CompletionPage';
+import { AccountRejectedPage } from '../auth/pages/AccountRejectedPage';
+import { MobileProctorApp } from '../proctor/MobileProctorApp';
 
 export function App() {
   return (
     <Routes>
-      {/* Public & Auth Routes */}
+
+      <Route path="/proctor" element={<MobileProctorApp />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/verify-email" element={<VerifyEmailPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
+      <Route path="/account-rejected" element={<AccountRejectedPage />} />
       <Route path="/unauthorized" element={<UnauthorizedPage />} />
       <Route path="/403" element={<UnauthorizedPage />} />
 
-      {/* Authenticated Routes */}
       <Route element={<ProtectedRoute />}>
-        {/* Role Onboarding Pages */}
+
         <Route path="/onboarding/student" element={<StudentOnboarding />} />
         <Route path="/onboarding/institution" element={<InstitutionOnboarding />} />
         <Route path="/onboarding/company" element={<CompanyOnboarding />} />
         <Route path="/onboarding/complete" element={<CompletionPage />} />
 
-        {/* Global Settings & Status */}
         <Route path="/verification-pending" element={<VerificationPendingPage />} />
         <Route path="/account-suspended" element={<AccountSuspendedPage />} />
+        <Route path="/account-rejected" element={<AccountRejectedPage />} />
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="/settings/privacy" element={<PrivacySettingsPage />} />
         <Route path="/settings/sessions" element={<SessionSettingsPage />} />
         <Route path="/realtime-notifications" element={<RealtimeNotificationsPage />} />
 
-        {/* Enterprise Company & Recruiter Portal */}
         <Route element={<RoleGuard allowedRoles={['COMPANY', 'ADMIN']} />}>
           <Route element={<CompanyLayout />}>
             <Route path="/company/home" element={<CompanyHome />} />
@@ -147,6 +151,7 @@ export function App() {
             <Route path="/company/recruitment/pipeline" element={<PipelinePage />} />
             <Route path="/company/candidate-intelligence" element={<CandidateIntelligencePage />} />
             <Route path="/company/assessments" element={<CompanyAssessmentsPage />} />
+            <Route path="/company/assessments/:sessionId/proctoring" element={<ProctoringReportPage />} />
             <Route path="/company/assessment-builder" element={<AssessmentBuilderPage />} />
             <Route path="/company/interview-management" element={<InterviewManagementPage />} />
             <Route path="/company/analytics" element={<CompanyAnalyticsPage />} />
@@ -157,7 +162,6 @@ export function App() {
           </Route>
         </Route>
 
-        {/* Higher-Ed Institution Portal */}
         <Route element={<RoleGuard allowedRoles={['INSTITUTION', 'ADMIN']} />}>
           <Route element={<InstitutionLayout />}>
             <Route path="/institution/home" element={<InstitutionHome />} />
@@ -167,7 +171,7 @@ export function App() {
             <Route path="/institution/drives" element={<InstitutionDrivesPage />} />
             <Route path="/institution/students" element={<InstitutionStudentsPage />} />
             <Route path="/institution/placements" element={<InstitutionPlacementsPage />} />
-            <Route path="/institution/curriculum" element={<SkillTaxonomyPage />} />
+            <Route path="/institution/curriculum" element={<InstitutionCurriculumPage />} />
             <Route path="/institution/profile" element={<InstitutionProfilePage />} />
             <Route path="/institution/profile/edit" element={<InstitutionProfilePage />} />
             <Route path="/institution/messages" element={<MessagingPage />} />
@@ -175,7 +179,6 @@ export function App() {
           </Route>
         </Route>
 
-        {/* Student & Candidate Portal */}
         <Route element={<RoleGuard allowedRoles={['STUDENT']} />}>
           <Route element={<StudentLayout />}>
             <Route path="/student/home" element={<StudentHome />} />
@@ -185,7 +188,6 @@ export function App() {
             <Route path="/student/skills/:skillSlug" element={<SkillDetail />} />
             <Route path="/student/skills/:skillSlug/:topicSlug" element={<TopicDetail />} />
             <Route path="/practice" element={<PracticePage />} />
-            <Route path="/practice/create" element={<CreateQuestionPage />} />
             <Route path="/practice/:id" element={<QuestionDetailPage />} />
             <Route path="/daily-challenge" element={<DailyChallengePage />} />
             <Route path="/stats" element={<StatsPage />} />
@@ -233,7 +235,6 @@ export function App() {
           </Route>
         </Route>
 
-        {/* Platform Administrator Portal */}
         <Route element={<RoleGuard allowedRoles={['ADMIN']} />}>
           <Route element={<AdminLayout />}>
             <Route path="/admin/home" element={<AdminHome />} />
@@ -243,6 +244,8 @@ export function App() {
             <Route path="/admin/institutions" element={<AdminInstitutionsPage />} />
             <Route path="/admin/companies" element={<AdminCompaniesPage />} />
             <Route path="/admin/questions" element={<AdminQuestionsPage />} />
+            <Route path="/admin/questions/create" element={<CreateQuestionPage />} />
+            <Route path="/practice/create" element={<CreateQuestionPage />} />
             <Route path="/admin/economy" element={<AdminEconomyPage />} />
             <Route path="/admin/moderation" element={<AdminModerationPage />} />
             <Route path="/admin/feedback" element={<AdminFeedbackPage />} />
@@ -251,12 +254,10 @@ export function App() {
         </Route>
       </Route>
 
-      {/* Public Credential Verification & Profiles */}
       <Route path="/verify/:certificateNumber" element={<CredentialVerificationPage />} />
       <Route path="/verify" element={<CredentialVerificationPage />} />
       <Route path="/student/u/:username" element={<PublicProfilePage />} />
 
-      {/* Landing and Catch-all */}
       <Route element={<MainLayout />}>
         <Route path="/" element={<HomePage />} />
         <Route path="*" element={<NotFoundPage />} />
@@ -264,3 +265,4 @@ export function App() {
     </Routes>
   );
 }
+

@@ -62,7 +62,7 @@ export function Footer() {
   return (
     <footer className={styles.appFooter}>
       <div className={styles.footerTop}>
-        {/* Brand */}
+
         <div className={styles.footerBrand}>
           <h2>{brand.heading}</h2>
           <p>{brand.description}</p>
@@ -81,7 +81,6 @@ export function Footer() {
           </div>
         </div>
 
-        {/* Quick Links */}
         <div className={styles.footerCol}>
           <h3>Platform</h3>
           <ul>
@@ -96,7 +95,6 @@ export function Footer() {
           </ul>
         </div>
 
-        {/* Portals */}
         <div className={styles.footerCol}>
           <h3>Portals</h3>
           <ul>
@@ -111,7 +109,6 @@ export function Footer() {
           </ul>
         </div>
 
-        {/* Resources */}
         <div className={styles.footerCol}>
           <h3>Resources</h3>
           <ul>
@@ -140,3 +137,4 @@ export function Footer() {
     </footer>
   );
 }
+

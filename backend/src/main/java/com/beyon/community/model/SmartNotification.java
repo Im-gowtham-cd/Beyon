@@ -38,3 +38,4 @@ public class SmartNotification {
     public OffsetDateTime getReadAt() { return readAt; } public void setReadAt(OffsetDateTime v) { this.readAt = v; }
     public OffsetDateTime getCreatedAt() { return createdAt; } public void setCreatedAt(OffsetDateTime v) { this.createdAt = v; }
 }
+

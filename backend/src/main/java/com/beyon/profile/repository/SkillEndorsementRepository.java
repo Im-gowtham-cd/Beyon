@@ -10,3 +10,4 @@ public interface SkillEndorsementRepository extends JpaRepository<SkillEndorseme
     List<SkillEndorsement> findByStudentIdAndSkillIdAndStatus(UUID studentId, UUID skillId, String status);
     long countByStudentIdAndSkillIdAndStatus(UUID studentId, UUID skillId, String status);
 }
+

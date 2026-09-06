@@ -45,7 +45,6 @@ export async function seedOpportunities(cfg: SeedConfig): Promise<void> {
 
   const compKeys = Object.keys(companyUserIds);
 
-  // ─── Company Opportunities ───
   for (let i = 0; i < cfg.counts.jobs; i++) {
     const compKey = compKeys[i % compKeys.length];
     const compUserId = companyUserIds[compKey];
@@ -87,7 +86,6 @@ export async function seedOpportunities(cfg: SeedConfig): Promise<void> {
     );
   }
 
-  // ─── Placement Drives ───
   for (let i = 0; i < 25; i++) {
     const compKey = compKeys[i % compKeys.length];
     const compUserId = companyUserIds[compKey];
@@ -124,3 +122,4 @@ export async function seedOpportunities(cfg: SeedConfig): Promise<void> {
   console.log(`  ✅ ${optyStmts.length} job/internship opportunities`);
   console.log(`  ✅ ${driveStmts.length} placement drives`);
 }
+

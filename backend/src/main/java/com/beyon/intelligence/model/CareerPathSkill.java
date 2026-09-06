@@ -23,3 +23,4 @@ public class CareerPathSkill {
     public Integer getSortOrder() { return sortOrder; } public void setSortOrder(Integer v) { this.sortOrder = v; }
     public UUID[] getPrerequisites() { return prerequisites; } public void setPrerequisites(UUID[] v) { this.prerequisites = v; }
 }
+

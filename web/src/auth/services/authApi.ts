@@ -29,3 +29,4 @@ export const authApi = {
   resetPassword: (token: string, password: string, confirmPassword: string) =>
     api.post<void>('/auth/reset-password', { token, password, confirmPassword }),
 };
+

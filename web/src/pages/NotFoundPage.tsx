@@ -16,3 +16,4 @@ export function NotFoundPage() {
     </OnboardingLayout>
   );
 }
+

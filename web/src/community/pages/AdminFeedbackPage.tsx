@@ -232,3 +232,4 @@ function AdminDetailView({ report, onBack, onUpdate }: { report: FeedbackReport;
     </div>
   );
 }
+

@@ -9,8 +9,8 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import java.util.concurrent.TimeUnit
 
 object BackendTunnel {
-    var baseUrl: String = "http://10.0.2.2:8085/api/v1"
-    var authToken: String? = "mock-token-student-01"
+    var baseUrl: String = "http://10.1.36.24:8085/api/v1"
+    var authToken: String? = null
 
     private val client = OkHttpClient.Builder()
         .connectTimeout(5, TimeUnit.SECONDS)

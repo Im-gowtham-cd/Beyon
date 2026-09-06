@@ -64,3 +64,4 @@ public class NotificationController {
         throw new RuntimeException("Unauthorized");
     }
 }
+

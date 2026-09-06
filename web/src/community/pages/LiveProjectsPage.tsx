@@ -25,7 +25,7 @@ export function LiveProjectsPage() {
       try {
         const p = await api.get<Project[]>('/projects');
         setProjects(p);
-      } catch { /* */ }
+      } catch {  }
       setLoading(false);
     }
     load();
@@ -34,7 +34,7 @@ export function LiveProjectsPage() {
   async function handleApply(projectId: string) {
     try {
       await api.post(`/projects/${projectId}/apply`, { coverLetter: 'I am interested in this project.' });
-    } catch { /* */ }
+    } catch {  }
   }
 
   const diffColors: Record<string, string> = {
@@ -104,3 +104,4 @@ export function LiveProjectsPage() {
     </div>
   );
 }
+

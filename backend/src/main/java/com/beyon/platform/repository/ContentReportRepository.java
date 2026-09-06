@@ -10,3 +10,4 @@ public interface ContentReportRepository extends JpaRepository<ContentReport, UU
     List<ContentReport> findByTargetTypeAndTargetId(String targetType, UUID targetId);
     List<ContentReport> findByReporterId(UUID reporterId);
 }
+

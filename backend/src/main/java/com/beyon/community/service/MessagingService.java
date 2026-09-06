@@ -54,7 +54,7 @@ public class MessagingService {
     }
 
     public Map<String, Object> startConversation(UUID senderId, UUID recipientId, String title, String firstMessage) {
-        // Check if a direct conversation already exists between these 2 users
+
         String findExistingSql =
             "SELECT p1.conversation_id FROM message_participants p1 " +
             "JOIN message_participants p2 ON p1.conversation_id = p2.conversation_id " +
@@ -82,7 +82,6 @@ public class MessagingService {
                 (firstMessage != null && !firstMessage.trim().isEmpty()) ? (firstMessage.length() > 95 ? firstMessage.substring(0, 95) + "..." : firstMessage) : "Conversation created"
             );
 
-            // Add both participants
             jdbcTemplate.update(
                 "INSERT INTO message_participants (id, conversation_id, user_id, unread_count, joined_at) " +
                 "VALUES (UUID(), ?, ?, 0, NOW()), (UUID(), ?, ?, ?, NOW())",
@@ -142,7 +141,7 @@ public class MessagingService {
     }
 
     public List<Map<String, Object>> getMessages(UUID conversationId, UUID userId, int page, int size) {
-        // Mark as read
+
         jdbcTemplate.update(
             "UPDATE message_participants SET unread_count = 0, last_read_at = NOW() WHERE conversation_id = ? AND user_id = ?",
             conversationId.toString(),
@@ -165,7 +164,6 @@ public class MessagingService {
         String msgId = UUID.randomUUID().toString();
         String preview = content.length() > 95 ? content.substring(0, 95) + "..." : content;
 
-        // Insert message
         jdbcTemplate.update(
             "INSERT INTO messages (id, conversation_id, sender_id, content, message_type, is_edited, is_deleted, created_at) " +
             "VALUES (?, ?, ?, ?, 'TEXT', 0, 0, NOW())",
@@ -175,21 +173,18 @@ public class MessagingService {
             content
         );
 
-        // Update conversation
         jdbcTemplate.update(
             "UPDATE message_conversations SET last_message_at = NOW(), last_message_preview = ?, updated_at = NOW() WHERE id = ?",
             preview,
             conversationId.toString()
         );
 
-        // Increment unread count for other participants
         jdbcTemplate.update(
             "UPDATE message_participants SET unread_count = unread_count + 1 WHERE conversation_id = ? AND user_id != ?",
             conversationId.toString(),
             senderId.toString()
         );
 
-        // Return message details
         String querySql =
             "SELECT m.id, m.conversation_id AS conversationId, m.sender_id AS senderId, " +
             "m.content, m.message_type AS messageType, m.created_at AS createdAt, " +
@@ -202,3 +197,4 @@ public class MessagingService {
         return res.isEmpty() ? Collections.emptyMap() : res.get(0);
     }
 }
+

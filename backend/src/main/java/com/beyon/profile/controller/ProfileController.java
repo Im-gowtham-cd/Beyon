@@ -32,3 +32,4 @@ public class ProfileController {
         return UUID.fromString(details.getUserId());
     }
 }
+

@@ -12,7 +12,7 @@ export function PersonalizedFeedPage() {
       try {
         const feed = await intelligenceApi.getPersonalizedFeed();
         setItems(feed.sort((a: PersonalizedFeedItem, b: PersonalizedFeedItem) => a.priority - b.priority));
-      } catch { /* */ }
+      } catch {  }
       setLoading(false);
     }
     load();
@@ -22,7 +22,7 @@ export function PersonalizedFeedPage() {
     setItems(prev => prev.filter((i: PersonalizedFeedItem) => i.id !== itemId));
     try {
       await intelligenceApi.dismissFeedItem(itemId);
-    } catch { /* */ }
+    } catch {  }
   }
 
   function getFeedTypeIcon(type: string) {
@@ -112,3 +112,4 @@ export function PersonalizedFeedPage() {
     </div>
   );
 }
+

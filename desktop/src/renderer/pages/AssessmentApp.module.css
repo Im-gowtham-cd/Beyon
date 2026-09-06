@@ -33,6 +33,23 @@
   flex-shrink: 0;
 }
 
+.brandLogoImg {
+  height: 36px;
+  max-width: 140px;
+  width: auto;
+  object-fit: contain;
+  display: block;
+}
+
+.brandSubWrapper {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  border-left: 2px solid var(--color-border-light);
+  padding-left: 10px;
+  margin-left: 2px;
+}
+
 .brandName {
   font-family: var(--font-heading);
   font-size: 1.25rem;
@@ -107,7 +124,9 @@
   background: #eff6ff;
   color: #1e40af;
   border: 1px solid #bfdbfe;
-  padding: 4px 10px;
+  height: 34px;
+  box-sizing: border-box;
+  padding: 0 10px;
   font-size: 0.72rem;
   font-weight: 800;
   letter-spacing: 0.05em;
@@ -124,11 +143,14 @@
 .finishBtn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 7px;
   background: #15803d;
   color: #ffffff;
-  border: none;
-  padding: 8px 16px;
+  border: 1px solid #166534;
+  height: 34px;
+  box-sizing: border-box;
+  padding: 0 16px;
   border-radius: 0px;
   font-family: var(--font-display, 'ClashDisplay', sans-serif);
   font-size: 0.82rem;
@@ -145,11 +167,14 @@
 .headerSettingsBtn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
   background: #f8fafc;
   color: var(--text-primary);
   border: 1px solid var(--color-border);
-  padding: 7px 14px;
+  height: 34px;
+  box-sizing: border-box;
+  padding: 0 14px;
   border-radius: 0px;
   font-family: var(--font-display, 'ClashDisplay', sans-serif);
   font-size: 0.8rem;
@@ -166,11 +191,14 @@
 .headerExitBtn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
   background: #fef2f2;
   color: #b91c1c;
   border: 1px solid #fecaca;
-  padding: 7px 14px;
+  height: 34px;
+  box-sizing: border-box;
+  padding: 0 14px;
   border-radius: 0px;
   font-family: var(--font-display, 'ClashDisplay', sans-serif);
   font-size: 0.8rem;
@@ -188,11 +216,14 @@
 .headerExitBtnDisabled {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
   background: #f1f5f9;
   color: #94a3b8;
   border: 1px solid #e2e8f0;
-  padding: 7px 14px;
+  height: 34px;
+  box-sizing: border-box;
+  padding: 0 14px;
   border-radius: 0px;
   font-family: var(--font-display, 'ClashDisplay', sans-serif);
   font-size: 0.8rem;
@@ -200,7 +231,6 @@
   cursor: not-allowed;
   opacity: 0.7;
 }
-
 
 .main {
   flex: 1;
@@ -239,6 +269,25 @@
   height: 40px;
   background: var(--color-accent);
   margin-bottom: 20px;
+  display: block;
+}
+
+.authAsideLogoWrapper {
+  background: #ffffff;
+  padding: 10px 16px;
+  border-radius: var(--radius-sm);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+  width: fit-content;
+}
+
+.authAsideLogo {
+  height: 40px;
+  width: auto;
+  object-fit: contain;
   display: block;
 }
 
@@ -340,7 +389,10 @@
 }
 
 .btnPrimary {
-  padding: 12px 28px;
+  height: 44px;
+  min-height: 44px;
+  padding: 0 24px;
+  box-sizing: border-box;
   background: var(--color-primary);
   color: var(--color-surface);
   border: 1.5px solid var(--color-primary);
@@ -351,11 +403,11 @@
   letter-spacing: 0.02em;
   cursor: pointer;
   transition: var(--transition);
-  margin-top: 8px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
+  white-space: nowrap;
 }
 
 .btnPrimary:hover {
@@ -366,7 +418,10 @@
 }
 
 .btnOutline {
-  padding: 10px 22px;
+  height: 44px;
+  min-height: 44px;
+  padding: 0 22px;
+  box-sizing: border-box;
   background: transparent;
   color: var(--color-primary);
   border: 1.5px solid var(--color-primary);
@@ -381,11 +436,178 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
+  white-space: nowrap;
 }
 
 .btnOutline:hover {
   background: var(--color-primary);
   color: #fff;
+}
+
+.btnSecondary {
+  height: 44px;
+  min-height: 44px;
+  padding: 0 22px;
+  box-sizing: border-box;
+  background: #ffffff;
+  color: #334155;
+  border: 1.5px solid #cbd5e1;
+  border-radius: var(--radius-xs, 0px);
+  font-family: var(--font-display, sans-serif);
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.btnSecondary:hover {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+  color: #0f172a;
+}
+
+.dualViewCard {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+  padding: 36px 40px;
+  max-width: 600px;
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.dualViewIconBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 50%;
+  color: #2563eb;
+  font-size: 1.75rem;
+  margin-bottom: 1rem;
+}
+
+.dualViewTitle {
+  font-family: var(--font-heading, sans-serif);
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0 0 6px 0;
+  letter-spacing: -0.01em;
+}
+
+.dualViewSubtitle {
+  font-size: 0.92rem;
+  color: #475569;
+  margin: 0 0 24px 0;
+  line-height: 1.5;
+  max-width: 480px;
+}
+
+.dualViewSetupBox {
+  width: 100%;
+  box-sizing: border-box;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 24px 20px;
+  margin-bottom: 24px;
+}
+
+.dualViewInstruction {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #334155;
+  margin-bottom: 14px;
+}
+
+.dualViewQrContainer {
+  background: #ffffff;
+  padding: 14px;
+  display: inline-block;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  margin-bottom: 16px;
+}
+
+.dualViewUrlLabel {
+  font-size: 0.8rem;
+  color: #64748b;
+  font-weight: 500;
+  margin-bottom: 6px;
+}
+
+.dualViewUrlCode {
+  display: inline-block;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.82rem;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  color: #1d4ed8;
+  font-weight: 600;
+  padding: 8px 14px;
+  border-radius: 6px;
+  word-break: break-all;
+  max-width: 100%;
+  user-select: all;
+}
+
+.dualViewStatus {
+  margin-top: 18px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.dualViewStatusWaiting {
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fde68a;
+}
+
+.dualViewStatusConnected {
+  background: #dcfce7;
+  color: #15803d;
+  border: 1px solid #86efac;
+}
+
+.dualViewStatusCalibrating {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+}
+
+.dualViewStatusDot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.dualViewBtnRow {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+  justify-content: center;
 }
 
 .contentCard {
@@ -516,7 +738,6 @@
   width: 100%;
 }
 
-/* Exam Screen */
 .body {
   flex: 1;
   display: flex;
@@ -526,7 +747,6 @@
   height: calc(100vh - 65px);
 }
 
-/* Alert Banner */
 .alertBanner {
   position: fixed;
   top: 60px;
@@ -565,7 +785,6 @@
   overflow-y: auto;
 }
 
-/* Camera panel inside sidebar */
 .examCameraPanel {
   border-bottom: 1px solid var(--color-border);
   display: flex;
@@ -642,7 +861,6 @@
   gap: 5px;
 }
 
-/* Palette section */
 .paletteSection {
   padding: 12px;
   display: flex;
@@ -873,18 +1091,23 @@
 }
 
 .navBtn {
+  height: 40px;
+  min-height: 40px;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
-  padding: 10px 22px;
+  padding: 0 22px;
+  box-sizing: border-box;
   border: 1.5px solid var(--color-border);
   border-radius: var(--radius-xs);
   background: var(--color-surface);
   color: var(--text-primary);
   font-family: var(--font-display);
   font-size: 0.85rem;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
+  white-space: nowrap;
   transition: var(--transition);
 }
 
@@ -1000,7 +1223,6 @@
   color: var(--color-primary);
 }
 
-/* ── Bottom Utility Bar ────────────────────────────────────────────── */
 .bottomBar {
   display: flex;
   align-items: center;
@@ -1107,7 +1329,6 @@
   opacity: 0.7;
 }
 
-/* ── Modal Overlay & Card ──────────────────────────────────────────── */
 .modalOverlay {
   position: fixed;
   inset: 0;
@@ -1211,7 +1432,6 @@
   border-top: 1px solid var(--color-border-light);
 }
 
-/* ── Diagnostics Grid ──────────────────────────────────────────────── */
 .diagSection {
   display: flex;
   flex-direction: column;
@@ -1257,7 +1477,6 @@
   color: #0f172a;
 }
 
-/* ── Button Helpers ────────────────────────────────────────────────── */
 .btnDanger {
   display: inline-flex;
   align-items: center;
@@ -1300,3 +1519,737 @@
   background: #e2e8f0;
   color: #0f172a;
 }
+
+.dashboardStatusPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(34, 197, 94, 0.12);
+  border: 1px solid rgba(34, 197, 94, 0.35);
+  color: #15803d;
+  font-family: var(--font-heading);
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 4px 10px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.headerCoinBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #fef9c3;
+  border: 1px solid #fde047;
+  color: #854d0e;
+  font-family: var(--font-heading);
+  font-size: 0.8rem;
+  font-weight: 800;
+  padding: 5px 12px;
+}
+
+.headerCoinBadge i {
+  color: #ca8a04;
+  font-size: 1rem;
+}
+
+.headerStreakBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  color: #c2410c;
+  height: 34px;
+  box-sizing: border-box;
+  font-size: 0.8rem;
+  font-weight: 800;
+  padding: 0 12px;
+}
+
+.headerStreakBadge i {
+  color: #ea580c;
+  font-size: 1rem;
+}
+
+.headerProfilePill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  height: 34px;
+  box-sizing: border-box;
+  padding: 0 12px 0 6px;
+}
+
+.headerProfileAvatar {
+  width: 24px;
+  height: 24px;
+  background: #1c2d81;
+  color: #fed601;
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.headerProfileName {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.headerSignOutBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  color: #475569;
+  font-family: var(--font-display, 'ClashDisplay', sans-serif);
+  font-size: 0.8rem;
+  font-weight: 700;
+  height: 34px;
+  box-sizing: border-box;
+  padding: 0 14px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.headerSignOutBtn:hover {
+  background: #fee2e2;
+  border-color: #fca5a5;
+  color: #b91c1c;
+}
+
+.dashboardMain {
+  flex: 1;
+  padding: 24px 32px 48px;
+  overflow-y: auto;
+  max-width: 1440px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.dashHero {
+  background: linear-gradient(135deg, #1c2d81 0%, #253cac 60%, #1e3a8a 100%);
+  color: #ffffff;
+  padding: 28px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  border-bottom: 4px solid #fed601;
+  box-shadow: 0 10px 25px -5px rgba(28, 45, 129, 0.2);
+}
+
+.dashHeroContent {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+}
+
+.dashBadgeRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.portalBadge {
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: #fed601;
+  padding: 4px 10px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.verifiedBadge {
+  background: rgba(34, 197, 94, 0.2);
+  border: 1px solid rgba(34, 197, 94, 0.45);
+  color: #86efac;
+  padding: 4px 10px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.roleBadge {
+  background: rgba(59, 130, 246, 0.2);
+  border: 1px solid rgba(59, 130, 246, 0.45);
+  color: #93c5fd;
+  padding: 4px 10px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.dashHeroTitle {
+  font-size: 1.85rem;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.highlightName {
+  color: #fed601;
+}
+
+.dashHeroSub {
+  font-size: 0.92rem;
+  color: rgba(255, 255, 255, 0.85);
+  max-width: 680px;
+  line-height: 1.5;
+}
+
+.dashMetricsRow {
+  display: flex;
+  align-items: center;
+  background: rgba(15, 23, 42, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  padding: 14px 20px;
+  gap: 20px;
+  flex-shrink: 0;
+}
+
+.dashMetricItem {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.dashMetricLabel {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.dashMetricValue {
+  font-size: 1.25rem;
+  font-weight: 800;
+  font-family: var(--font-heading);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dashMetricValueGold {
+  font-size: 1.25rem;
+  font-weight: 800;
+  font-family: var(--font-heading);
+  color: #fed601;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dashMetricValueFlame {
+  font-size: 1.25rem;
+  font-weight: 800;
+  font-family: var(--font-heading);
+  color: #fb923c;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dashMetricDivider {
+  width: 1px;
+  height: 36px;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.assessmentHeroCard {
+  margin-top: 24px;
+  background: #ffffff;
+  border: 2px solid #1c2d81;
+  border-left: 6px solid #fed601;
+  padding: 24px 28px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+}
+
+.assessmentHeroBadgeRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.liveAssessmentTag {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #15803d;
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 4px 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.examDurationTag {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  color: #1d4ed8;
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 4px 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.assessmentHeroBody {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 28px;
+}
+
+.assessmentHeroInfo {
+  flex: 1;
+}
+
+.assessmentHeroInfo h2 {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin-bottom: 6px;
+}
+
+.assessmentHeroInfo p {
+  font-size: 0.88rem;
+  color: #475569;
+  line-height: 1.5;
+  margin-bottom: 14px;
+}
+
+.assessmentSecurityHighlights {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #334155;
+}
+
+.assessmentSecurityHighlights span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.assessmentHeroActionBox {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.btnTakeTest {
+  background: linear-gradient(135deg, #1c2d81 0%, #253cac 100%);
+  color: #fed601;
+  border: 2px solid #1c2d81;
+  padding: 14px 28px;
+  font-family: var(--font-heading);
+  font-size: 0.95rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 4px 14px rgba(37, 60, 172, 0.3);
+  transition: all 0.2s ease;
+}
+
+.btnTakeTest:hover {
+  background: #1c2d81;
+  color: #ffffff;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(37, 60, 172, 0.45);
+}
+
+.btnTakeTest:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.assessmentFootnote {
+  font-size: 0.72rem;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.dashSectionBlock {
+  margin-top: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.dashSectionHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border-bottom: 2px solid #e2e8f0;
+  padding-bottom: 12px;
+}
+
+.dashSectionTitleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.dashSectionTitle {
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: #0f172a;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.dashSectionTitle i {
+  color: #1c2d81;
+  font-size: 1.4rem;
+}
+
+.dashSectionCountBadge {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  color: #1d4ed8;
+  padding: 3px 10px;
+  font-size: 0.74rem;
+  font-weight: 800;
+  border-radius: 9999px;
+}
+
+.dashSectionSub {
+  font-size: 0.85rem;
+  color: #64748b;
+  line-height: 1.4;
+}
+
+.pendingAssessmentsList {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.assessmentCard {
+  background: #ffffff;
+  border: 1.5px solid #cbd5e1;
+  border-left: 6px solid #1c2d81;
+  padding: 24px 28px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  transition: all 0.2s ease;
+}
+
+.assessmentCard:hover {
+  border-color: #1c2d81;
+  border-left-color: #fed601;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(28, 45, 129, 0.09);
+}
+
+.assessmentCardInfo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.assessmentCardBadgeRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.badgeDriveType {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  color: #1e40af;
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 3px 9px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.badgeProctorRequired {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #b91c1c;
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 3px 9px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.badgeDualCamRequired {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #15803d;
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 3px 9px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.assessmentCardTitle {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0;
+}
+
+.assessmentCardMetaRow {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+  font-size: 0.8rem;
+  color: #475569;
+}
+
+.assessmentCardMetaItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+}
+
+.assessmentCardMetaItem i {
+  color: #1c2d81;
+  font-size: 1rem;
+}
+
+.assessmentCardAction {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.assessmentDurationChip {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #1e40af;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  padding: 4px 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.weeklyGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 20px;
+}
+
+.weeklyCard {
+  background: #ffffff;
+  border: 1.5px solid #e2e8f0;
+  border-top: 4px solid #1c2d81;
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+}
+
+.weeklyCard:hover {
+  border-color: #1c2d81;
+  border-top-color: #fed601;
+  transform: translateY(-3px);
+  box-shadow: 0 10px 24px rgba(28, 45, 129, 0.08);
+}
+
+.weeklyCardTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.weeklyStatusTag {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #166534;
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 2px 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.weeklyBenchTag {
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  color: #475569;
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 2px 8px;
+}
+
+.weeklyCardTitle {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1.35;
+  margin: 0;
+}
+
+.weeklyCardDesc {
+  font-size: 0.82rem;
+  color: #64748b;
+  line-height: 1.5;
+  flex: 1;
+  margin: 0;
+}
+
+.weeklyMetaChips {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px 0;
+  border-top: 1px solid #f1f5f9;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.weeklyChip {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  color: #334155;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.weeklyChip i {
+  color: #1c2d81;
+  font-size: 0.88rem;
+}
+
+.weeklyChipGold {
+  background: #fef9c3;
+  border: 1px solid #fde047;
+  color: #854d0e;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.btnWeeklyStart {
+  background: #1c2d81;
+  color: #ffffff;
+  border: none;
+  padding: 10px 18px;
+  font-family: var(--font-heading);
+  font-size: 0.86rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.15s ease;
+  width: 100%;
+}
+
+.btnWeeklyStart:hover {
+  background: #253cac;
+  color: #fed601;
+}
+
+.emptyStateCard {
+  background: #f8fafc;
+  border: 1px dashed #cbd5e1;
+  padding: 32px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: #64748b;
+  text-align: center;
+}
+
+.emptyStateCard i {
+  font-size: 2.2rem;
+  color: #94a3b8;
+}
+
+.emptyStateCard p {
+  font-size: 0.88rem;
+  font-weight: 600;
+  margin: 0;
+}
+

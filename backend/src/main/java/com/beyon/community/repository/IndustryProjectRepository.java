@@ -9,3 +9,4 @@ public interface IndustryProjectRepository extends JpaRepository<IndustryProject
     List<IndustryProject> findByCompanyIdOrderByCreatedAtDesc(UUID companyId);
     List<IndustryProject> findByStatus(String status);
 }
+

@@ -11,3 +11,4 @@ public interface PlacementVerificationRepository extends JpaRepository<Placement
     List<PlacementVerification> findByStudentIdOrderByCreatedAtDesc(UUID studentId);
     List<PlacementVerification> findByVerificationStatus(String status);
 }
+

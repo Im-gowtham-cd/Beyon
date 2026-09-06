@@ -12,3 +12,4 @@ public interface StudentSkillProgressRepository extends JpaRepository<StudentSki
     Optional<StudentSkillProgress> findByStudentIdAndSkillIdAndTopicId(UUID studentId, UUID skillId, UUID topicId);
     List<StudentSkillProgress> findByStudentId(UUID studentId);
 }
+

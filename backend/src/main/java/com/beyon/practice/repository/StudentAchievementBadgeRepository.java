@@ -12,3 +12,4 @@ public interface StudentAchievementBadgeRepository extends JpaRepository<Student
     Optional<StudentAchievementBadge> findByStudentIdAndAchievementKey(UUID studentId, String achievementKey);
     boolean existsByStudentIdAndAchievementKey(UUID studentId, String achievementKey);
 }
+

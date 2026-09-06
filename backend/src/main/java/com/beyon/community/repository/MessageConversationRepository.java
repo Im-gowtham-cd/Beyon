@@ -10,3 +10,4 @@ public interface MessageConversationRepository extends JpaRepository<MessageConv
     @Query("SELECT DISTINCT mc FROM MessageConversation mc WHERE mc.id IN (SELECT m.conversationId FROM Message m WHERE m.senderId = :userId) ORDER BY mc.lastMessageAt DESC")
     List<MessageConversation> findByParticipantUserId(UUID userId);
 }
+

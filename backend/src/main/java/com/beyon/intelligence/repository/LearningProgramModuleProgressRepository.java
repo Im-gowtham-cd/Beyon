@@ -9,3 +9,4 @@ public interface LearningProgramModuleProgressRepository extends JpaRepository<L
     Optional<LearningProgramModuleProgress> findByEnrollmentIdAndModuleId(UUID enrollmentId, UUID moduleId);
     long countByEnrollmentIdAndStatus(UUID enrollmentId, String status);
 }
+

@@ -77,3 +77,4 @@ public class AssessmentAnswer {
     public OffsetDateTime getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(OffsetDateTime v) { this.updatedAt = v; }
 }
+

@@ -5,8 +5,7 @@ import jakarta.validation.constraints.NotBlank;
 
 public class LoginRequest {
 
-    @NotBlank(message = "Email is required")
-    @Email(message = "Invalid email format")
+    @NotBlank(message = "Email or Roll Number is required")
     private String email;
 
     @NotBlank(message = "Password is required")
@@ -28,3 +27,4 @@ public class LoginRequest {
         this.password = password;
     }
 }
+

@@ -58,3 +58,4 @@ public class PrivacyController {
         throw new RuntimeException("Unauthorized");
     }
 }
+

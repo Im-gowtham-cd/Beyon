@@ -12,3 +12,4 @@ public interface CollaborationRegistrationRepository extends JpaRepository<Colla
     Optional<CollaborationRegistration> findByProgramIdAndUserId(UUID programId, UUID userId);
     long countByProgramId(UUID programId);
 }
+

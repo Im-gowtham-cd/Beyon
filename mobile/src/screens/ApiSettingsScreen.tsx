@@ -51,7 +51,6 @@ export const ApiSettingsScreen: React.FC<ApiSettingsScreenProps> = ({ onClose })
         </TouchableOpacity>
       </View>
 
-      {/* Status Card */}
       <View style={styles.statusCard}>
         <View style={styles.statusRow}>
           <Text style={styles.statusLabel}>Active Endpoint:</Text>
@@ -64,7 +63,6 @@ export const ApiSettingsScreen: React.FC<ApiSettingsScreenProps> = ({ onClose })
         <Text style={styles.urlDisplay}>{getApiBaseUrl()}</Text>
       </View>
 
-      {/* Input section */}
       <View style={styles.inputSection}>
         <Text style={styles.fieldLabel}>Custom Backend URL:</Text>
         <TextInput
@@ -81,7 +79,6 @@ export const ApiSettingsScreen: React.FC<ApiSettingsScreenProps> = ({ onClose })
         </Text>
       </View>
 
-      {/* Quick Presets */}
       <View style={styles.presetSection}>
         <Text style={styles.presetTitle}>Quick Presets:</Text>
         <View style={styles.presetGrid}>
@@ -106,7 +103,6 @@ export const ApiSettingsScreen: React.FC<ApiSettingsScreenProps> = ({ onClose })
         </View>
       </View>
 
-      {/* Actions */}
       <View style={styles.actionRow}>
         <TouchableOpacity
           style={styles.testBtn}
@@ -127,7 +123,6 @@ export const ApiSettingsScreen: React.FC<ApiSettingsScreenProps> = ({ onClose })
         </TouchableOpacity>
       </View>
 
-      {/* Test Feedback */}
       {testResult && (
         <View style={[styles.testFeedback, { borderColor: testResult.ok ? colors.successBorder : colors.dangerBorder, backgroundColor: testResult.ok ? colors.successBg : colors.dangerBg }]}>
           <Text style={[styles.testFeedbackTitle, { color: testResult.ok ? colors.success : colors.danger }]}>
@@ -312,3 +307,4 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
   },
 });
+

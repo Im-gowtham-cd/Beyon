@@ -23,3 +23,4 @@ public class PlatformMetric {
     public String getTags() { return tags; } public void setTags(String v) { this.tags = v; }
     public OffsetDateTime getRecordedAt() { return recordedAt; } public void setRecordedAt(OffsetDateTime v) { this.recordedAt = v; }
 }
+

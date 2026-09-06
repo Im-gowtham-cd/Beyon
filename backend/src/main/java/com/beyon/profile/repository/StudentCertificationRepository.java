@@ -9,3 +9,4 @@ public interface StudentCertificationRepository extends JpaRepository<StudentCer
     List<StudentCertification> findByUserId(UUID userId);
     void deleteByUserId(UUID userId);
 }
+

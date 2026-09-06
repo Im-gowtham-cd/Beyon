@@ -12,3 +12,4 @@ public interface ChallengeParticipationRepository extends JpaRepository<Challeng
     Optional<ChallengeParticipation> findByChallengeIdAndStudentId(UUID challengeId, UUID studentId);
     boolean existsByChallengeIdAndStudentId(UUID challengeId, UUID studentId);
 }
+

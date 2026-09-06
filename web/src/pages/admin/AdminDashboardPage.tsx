@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Users, Building2, Briefcase, Server, Database, RefreshCw, Award } from 'lucide-react';
 import styles from './AdminHome.module.css';
 
@@ -27,7 +27,7 @@ export function AdminDashboardPage() {
         setHealth(hd.data);
       }
     } catch {
-      /* fallback */
+
     } finally {
       setLoading(false);
     }
@@ -37,10 +37,10 @@ export function AdminDashboardPage() {
     fetchTelemetry();
   }, []);
 
-  const totalUsers = overview?.totalUsers || 190;
-  const activeInstitutions = overview?.activeInstitutions || 29;
-  const activeCompanies = overview?.activeCompanies || 34;
-  const totalPlacements = overview?.totalPlacements || 61;
+  const totalUsers = overview?.totalUsers ?? 0;
+  const activeInstitutions = overview?.activeInstitutions ?? 0;
+  const activeCompanies = overview?.activeCompanies ?? 0;
+  const totalPlacements = overview?.totalPlacements ?? 0;
 
   return (
     <div className={styles.page}>
@@ -110,7 +110,6 @@ export function AdminDashboardPage() {
         </div>
       </div>
 
-      {/* Health & Engine Cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '16px', marginTop: '20px' }}>
         <div className={styles.powerCard}>
           <h3 className={styles.powerTitle}>

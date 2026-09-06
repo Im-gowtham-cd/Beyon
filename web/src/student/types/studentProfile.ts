@@ -163,3 +163,4 @@ export const INDUSTRIES = [
   'Manufacturing', 'Telecommunications', 'Automotive', 'Media',
   'Consulting', 'Government', 'Non-profit'
 ] as const;
+

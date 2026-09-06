@@ -67,7 +67,6 @@
   color: var(--color-text-secondary);
 }
 
-/* Skill Level Card */
 .skillLevelCard {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
@@ -148,7 +147,6 @@
   color: var(--color-text-muted);
 }
 
-/* XP Transaction List */
 .transactionList {
   display: flex;
   flex-direction: column;
@@ -188,7 +186,6 @@
   color: var(--color-secondary);
 }
 
-/* Achievement Badge */
 .badgeGrid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
@@ -271,7 +268,6 @@
   color: var(--color-text-muted);
 }
 
-/* Weekly Test */
 .testCard {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
@@ -325,7 +321,6 @@
   color: var(--color-text-muted);
 }
 
-/* Learning Program */
 .programCard {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
@@ -392,7 +387,6 @@
   border-radius: var(--radius-full);
 }
 
-/* Certificate */
 .certCard {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
@@ -450,7 +444,6 @@
   text-decoration: underline;
 }
 
-/* Growth Score */
 .growthOverall {
   display: flex;
   align-items: center;
@@ -554,7 +547,6 @@
   color: var(--color-primary);
 }
 
-/* Growth Insights */
 .insightCards {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -599,7 +591,6 @@
   color: var(--color-warning);
 }
 
-/* Personalized Feed */
 .feedItem {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
@@ -691,7 +682,6 @@
   border-color: var(--color-text-muted);
 }
 
-/* Section Header */
 .sectionHeader {
   display: flex;
   align-items: center;
@@ -713,14 +703,12 @@
   margin: 0;
 }
 
-/* List container */
 .cardList {
   display: flex;
   flex-direction: column;
   gap: var(--space-md);
 }
 
-/* Empty State */
 .emptyState {
   display: flex;
   flex-direction: column;
@@ -750,7 +738,6 @@
   max-width: 400px;
 }
 
-/* Loading */
 .loadingContainer {
   display: flex;
   flex-direction: column;
@@ -770,7 +757,6 @@
   100% { background-position: -200% 0; }
 }
 
-/* Streak Banner */
 .streakBanner {
   display: flex;
   align-items: center;
@@ -810,7 +796,6 @@
   color: var(--color-text-muted);
 }
 
-/* Tabs */
 .tabs {
   display: flex;
   gap: var(--space-xs);
@@ -855,3 +840,4 @@
     flex-direction: column;
   }
 }
+

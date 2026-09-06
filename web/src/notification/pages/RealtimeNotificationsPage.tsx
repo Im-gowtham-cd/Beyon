@@ -20,7 +20,7 @@ export function RealtimeNotificationsPage() {
       const res = await api.get<{ events: RealtimeEvent[]; count: number }>('/realtime/unread');
       setEvents(res.events);
       setUnreadCount(res.count);
-    } catch { /* */ }
+    } catch {  }
     setLoading(false);
   }, []);
 
@@ -31,7 +31,7 @@ export function RealtimeNotificationsPage() {
       await api.post(`/realtime/read/${eventId}`);
       setEvents(prev => prev.map(e => e.id === eventId ? { ...e, read: true } : e));
       setUnreadCount(prev => Math.max(0, prev - 1));
-    } catch { /* */ }
+    } catch {  }
   }
 
   async function handleMarkAllRead() {
@@ -39,7 +39,7 @@ export function RealtimeNotificationsPage() {
       await api.post('/realtime/read-all');
       setEvents(prev => prev.map(e => ({ ...e, read: true })));
       setUnreadCount(0);
-    } catch { /* */ }
+    } catch {  }
   }
 
   function getEventIcon(type: string) {
@@ -98,3 +98,4 @@ export function RealtimeNotificationsPage() {
     </div>
   );
 }
+

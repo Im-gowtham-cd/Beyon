@@ -18,7 +18,7 @@ export function SkillXpDashboard() {
         ]);
         setLevels(l);
         setTransactions(t);
-      } catch { /* */ }
+      } catch {  }
       setLoading(false);
     }
     load();
@@ -133,3 +133,4 @@ export function SkillXpDashboard() {
     </div>
   );
 }
+

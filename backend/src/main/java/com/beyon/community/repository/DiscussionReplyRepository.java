@@ -9,3 +9,4 @@ public interface DiscussionReplyRepository extends JpaRepository<DiscussionReply
     List<DiscussionReply> findByThreadIdOrderByCreatedAt(UUID threadId);
     long countByThreadId(UUID threadId);
 }
+

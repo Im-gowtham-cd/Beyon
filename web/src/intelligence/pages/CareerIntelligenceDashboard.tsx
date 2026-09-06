@@ -49,7 +49,7 @@ export function CareerIntelligenceDashboard() {
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.5rem' }}>
-        {/* Strengths */}
+
         <div className={styles.sectionCard}>
           <div className={styles.sectionTitle}>💪 Top Strengths</div>
           {strengths.length > 0 ? strengths.slice(0, 5).map((s: any, i: number) => (
@@ -60,7 +60,6 @@ export function CareerIntelligenceDashboard() {
           )) : <div style={{ color: '#6b7280', fontSize: '0.9rem' }}>Start practicing to build strengths.</div>}
         </div>
 
-        {/* Weak Skills */}
         <div className={styles.sectionCard}>
           <div className={styles.sectionTitle}>⚠ Areas to Improve</div>
           {weakSkills.length > 0 ? weakSkills.map((w: any, i: number) => (
@@ -71,7 +70,6 @@ export function CareerIntelligenceDashboard() {
           )) : <div style={{ color: '#6b7280', fontSize: '0.9rem' }}>No weak skills identified.</div>}
         </div>
 
-        {/* Portfolio Analysis */}
         <div className={styles.sectionCard}>
           <div className={styles.sectionTitle}>📋 Portfolio Analysis</div>
           {portfolio ? (
@@ -96,7 +94,6 @@ export function CareerIntelligenceDashboard() {
         </div>
       </div>
 
-      {/* Quick Actions */}
       <div className={styles.sectionCard} style={{ marginTop: '1.5rem' }}>
         <div className={styles.sectionTitle}>🚀 Quick Actions</div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '0.75rem' }}>
@@ -111,3 +108,4 @@ export function CareerIntelligenceDashboard() {
     </div>
   );
 }
+

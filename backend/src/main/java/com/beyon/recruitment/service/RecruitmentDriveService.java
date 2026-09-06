@@ -111,7 +111,6 @@ public class RecruitmentDriveService {
         drive.setUpdatedAt(OffsetDateTime.now());
         driveRepo.save(drive);
 
-        // Notify eligible students if targeting institutions
         if ("INSTITUTION".equals(drive.getTargetingMode())) {
             List<DriveInstitutionTarget> targets = targetRepo.findByDriveId(driveId);
             for (DriveInstitutionTarget target : targets) {
@@ -142,3 +141,4 @@ public class RecruitmentDriveService {
             .orElseThrow(() -> new RuntimeException("Drive not found"));
     }
 }
+

@@ -12,3 +12,4 @@ public interface TestAttemptRepository extends JpaRepository<TestAttempt, UUID> 
     List<TestAttempt> findByTestIdOrderByScoreDesc(UUID testId);
     Optional<TestAttempt> findByStudentIdAndTestId(UUID studentId, UUID testId);
 }
+

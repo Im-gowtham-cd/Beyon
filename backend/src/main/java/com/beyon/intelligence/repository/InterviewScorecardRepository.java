@@ -10,3 +10,4 @@ public interface InterviewScorecardRepository extends JpaRepository<InterviewSco
     List<InterviewScorecard> findByScheduleId(UUID scheduleId);
     Optional<InterviewScorecard> findByScheduleIdAndInterviewerId(UUID scheduleId, UUID interviewerId);
 }
+

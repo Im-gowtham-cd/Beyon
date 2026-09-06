@@ -11,3 +11,4 @@ public interface QuestionTestCaseRepository extends JpaRepository<QuestionTestCa
     List<QuestionTestCase> findByQuestionIdAndSampleTrue(UUID questionId);
     List<QuestionTestCase> findByQuestionIdAndHiddenFalse(UUID questionId);
 }
+
