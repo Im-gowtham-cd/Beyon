@@ -80,3 +80,4 @@ public class ChallengeController {
         return ResponseEntity.ok(challengeService.getMyParticipations(extractUserId(auth)));
     }
 }
+

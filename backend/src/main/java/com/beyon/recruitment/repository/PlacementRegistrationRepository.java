@@ -11,3 +11,4 @@ public interface PlacementRegistrationRepository extends JpaRepository<Placement
     List<PlacementRegistration> findByInstitutionIdAndPlacementPreference(UUID institutionId, String preference);
     long countByInstitutionIdAndPlacementPreference(UUID institutionId, String preference);
 }
+

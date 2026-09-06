@@ -7,7 +7,6 @@
   font-family: var(--font-sans, system-ui, -apple-system, sans-serif);
 }
 
-/* ── Top Header ── */
 .topHeader {
   height: 64px;
   background: #ffffff;
@@ -92,7 +91,6 @@
   font-weight: 800;
 }
 
-/* ── Hero Welcome Banner ── */
 .heroWrapper {
   background: #1c2d81;
   color: #ffffff;
@@ -172,7 +170,6 @@
   transition: width 0.3s ease;
 }
 
-/* ── Main Layout ── */
 .mainLayout {
   max-width: 960px;
   width: 100%;
@@ -184,7 +181,6 @@
   gap: 20px;
 }
 
-/* Step Navigation Tabs Bar */
 .stepNavContainer {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -271,7 +267,6 @@
   overflow: hidden;
 }
 
-/* Error Banner */
 .errorBanner {
   background: #fef2f2;
   border: 1px solid #fecaca;
@@ -284,7 +279,6 @@
   gap: 10px;
 }
 
-/* ── Step Card ── */
 .stepCard {
   background: #ffffff;
   border: 1px solid #cbd5e1;
@@ -329,7 +323,6 @@
   margin: 4px 0 0;
 }
 
-/* Form Layout Grids */
 .formGrid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -397,7 +390,6 @@
   box-shadow: 0 0 0 1px #1c2d81;
 }
 
-/* ── Navigation Actions Row ── */
 .navActionsRow {
   display: flex;
   align-items: center;
@@ -451,3 +443,4 @@
   background: #f8fafc;
   border-color: #94a3b8;
 }
+

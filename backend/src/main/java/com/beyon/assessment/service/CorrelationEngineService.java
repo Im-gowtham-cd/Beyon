@@ -8,39 +8,20 @@ import java.time.OffsetDateTime;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * Cross-camera event correlation engine.
- *
- * Collects short-lived signal observations per session and runs correlation
- * scenarios every 5 seconds to detect multi-signal suspicious patterns.
- *
- * KEY PRINCIPLE: No single signal creates an incident.
- * Incidents require at least 2 correlated signals.
- *
- * Scenarios implemented:
- *  1. EXTERNAL_ASSISTANCE: second_person + (phone_detected | phone_toward_laptop) + gaze_toward_helper
- *  2. QUESTION_CAPTURE:    phone_detected + phone_toward_laptop + (question context active)
- *  3. CONVERSATION:        second_voice + second_person
- *  4. CAMERA_TAMPERING:    camera_covered | camera_repositioned (single source = incident, high confidence)
- *  5. SUSTAINED_ABSENCE:   face_missing sustained beyond threshold
- */
 @Service
 public class CorrelationEngineService {
 
     private static final Logger log = LoggerFactory.getLogger(CorrelationEngineService.class);
 
-    // Signal observation window: signals older than this are discarded
-    private static final long SIGNAL_WINDOW_MS = 30_000; // 30s
+    private static final long SIGNAL_WINDOW_MS = 30_000;
 
-    // Per session: Map<eventType, List<SignalObservation>>
     private final ConcurrentHashMap<String, Map<String, List<SignalObservation>>> sessionSignals
             = new ConcurrentHashMap<>();
 
-    // Track recently created incident types per session to prevent duplicate incidents
     private final ConcurrentHashMap<String, Map<String, Long>> recentIncidents
             = new ConcurrentHashMap<>();
 
-    private static final long INCIDENT_COOLDOWN_MS = 60_000; // 60s cooldown per incident type
+    private static final long INCIDENT_COOLDOWN_MS = 60_000;
 
     private final IncidentService incidentService;
     private final DualViewProctoringService dvService;
@@ -50,10 +31,6 @@ public class CorrelationEngineService {
         this.dvService = dvService;
     }
 
-    /**
-     * Record a raw signal observation from any source.
-     * Called by DualViewProctoringController when laptop or mobile events arrive.
-     */
     public void recordSignal(String procSessionId, String eventType, String source,
                               double confidence, String questionId) {
         sessionSignals.computeIfAbsent(procSessionId, k -> new ConcurrentHashMap<>())
@@ -61,9 +38,6 @@ public class CorrelationEngineService {
                 .add(new SignalObservation(eventType, source, confidence, questionId, System.currentTimeMillis()));
     }
 
-    /**
-     * Run all correlation scenarios for all active sessions every 5 seconds.
-     */
     @Scheduled(fixedDelay = 5000)
     public void runCorrelation() {
         sessionSignals.forEach((procSessionId, signals) -> {
@@ -90,8 +64,6 @@ public class CorrelationEngineService {
         boolean hasCameraCovered = hasSignal(signals, "CAMERA_COVERED");
         boolean hasCameraRepos   = hasSignal(signals, "CAMERA_REPOSITIONED");
 
-        // Scenario 1: POSSIBLE_EXTERNAL_ASSISTANCE
-        // Requires: second_person AND (phone_detected OR phone_toward) AND gaze_toward_helper
         if (hasSecondPerson && (hasPhone || hasPhoneToward) && hasGazeToHelper) {
             int signalCount = countSignals(hasSecondPerson, hasPhone || hasPhoneToward, hasGazeToHelper);
             double confidence = computeConfidence(signals, "SECOND_PERSON", "PHONE_DETECTED", "CANDIDATE_GAZE_TOWARD_HELPER");
@@ -101,8 +73,7 @@ public class CorrelationEngineService {
                 buildSources(signals, "SECOND_PERSON", "PHONE_DETECTED", "CANDIDATE_GAZE_TOWARD_HELPER"),
                 signalCount);
         }
-        // Scenario 2: POSSIBLE_QUESTION_CAPTURE
-        // Requires: phone_detected AND phone_toward AND question context active
+
         else if (hasPhone && hasPhoneToward) {
             String questionId = getMostRecentQuestion(signals);
             if (questionId != null) {
@@ -115,8 +86,6 @@ public class CorrelationEngineService {
             }
         }
 
-        // Scenario 3: AUDIO_CONVERSATION
-        // Requires: second_voice AND (second_person OR conversation_suspected)
         if (hasSecondVoice && (hasSecondPerson || hasConversation)) {
             int signalCount = countSignals(hasSecondVoice, hasSecondPerson || hasConversation);
             double confidence = computeConfidence(signals, "SECOND_VOICE", "SECOND_PERSON");
@@ -127,7 +96,6 @@ public class CorrelationEngineService {
                 signalCount);
         }
 
-        // Scenario 4: CAMERA_TAMPERING (single strong signal — allowed)
         if (hasCameraCovered) {
             createIncidentIfNotCooldown(id, "CAMERA_TAMPERING", "CRITICAL",
                 0.95, 30, null, List.of("LAPTOP_CAMERA"), 1);
@@ -137,10 +105,9 @@ public class CorrelationEngineService {
                 0.90, 20, null, List.of("MOBILE_CAMERA", "LAPTOP_CAMERA"), 1);
         }
 
-        // Scenario 5: SUSTAINED_ABSENCE — face missing sustained
         if (hasFaceMissing) {
             long absenceDurationMs = getSignalDuration(signals, "FACE_MISSING");
-            if (absenceDurationMs > 8000) { // more than 8s continuous
+            if (absenceDurationMs > 8000) {
                 createIncidentIfNotCooldown(id, "SUSTAINED_ABSENCE", "HIGH",
                     0.85, 20, getMostRecentQuestion(signals), List.of("LAPTOP_CAMERA"), 1);
             }
@@ -207,7 +174,7 @@ public class CorrelationEngineService {
                 .get(incidentType);
 
         if (lastCreated != null && System.currentTimeMillis() - lastCreated < INCIDENT_COOLDOWN_MS) {
-            return; // In cooldown — don't spam incidents
+            return;
         }
 
         try {
@@ -230,13 +197,11 @@ public class CorrelationEngineService {
             list.removeIf(obs -> obs.timestamp < cutoff));
     }
 
-    /** Clean up session state when session ends */
     public void clearSession(String procSessionId) {
         sessionSignals.remove(procSessionId);
         recentIncidents.remove(procSessionId);
     }
 
-    /** Simple signal observation record */
     private static class SignalObservation {
         final String eventType;
         final String source;
@@ -254,3 +219,4 @@ public class CorrelationEngineService {
         }
     }
 }
+

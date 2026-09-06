@@ -40,7 +40,6 @@ public class SuperAdminInitializer implements CommandLineRunner {
                     return u;
                 });
 
-        // Ensure credentials and active status are always up to date
         if (superAdmin.getPasswordHash() == null || superAdmin.getPasswordHash().isBlank()) {
             superAdmin.setPasswordHash(passwordEncoder.encode(defaultPassword));
         }
@@ -54,3 +53,4 @@ public class SuperAdminInitializer implements CommandLineRunner {
         log.info("Super Admin account verified & initialized: {}", superAdminEmail);
     }
 }
+

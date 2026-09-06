@@ -39,7 +39,6 @@ export const CalibrationPage: React.FC<Props> = ({ stream, audioLevel, onStartEx
         <CalibrationOverlay />
       </CameraPreview>
 
-      {/* Microphone Activity Meter */}
       <div className={styles.audioMeterWrap}>
         <div className={styles.audioMeterHeader}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: '#94a3b8' }}>
@@ -65,7 +64,6 @@ export const CalibrationPage: React.FC<Props> = ({ stream, audioLevel, onStartEx
         </div>
       </div>
 
-      {/* Interactive Alignment Checklist */}
       <div className={styles.guidelineList}>
         <div
           className={styles.guidelineItem}

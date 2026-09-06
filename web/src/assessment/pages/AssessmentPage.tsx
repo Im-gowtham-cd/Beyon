@@ -116,7 +116,7 @@ export function AssessmentPage() {
         } catch {}
       }, 2000);
     } catch {
-      // Fallback
+
     }
   };
 
@@ -132,7 +132,7 @@ export function AssessmentPage() {
 
   return (
     <div className={styles.container}>
-      {/* Top Header */}
+
       <div className={styles.header}>
         <div className={styles.title}>Proctored Assessment &amp; Benchmark Center</div>
         <div className={styles.subtitle}>
@@ -140,7 +140,6 @@ export function AssessmentPage() {
         </div>
       </div>
 
-      {/* Primary Lockdown Notice Banner */}
       <div
         style={{
           background: '#1c2d81',
@@ -176,7 +175,7 @@ export function AssessmentPage() {
             High-Stakes Proctored Assessment Environment
           </h3>
           <p style={{ margin: 0, fontSize: '0.86rem', color: '#cbd5e1', lineHeight: 1.6 }}>
-            To guarantee 100% academic and recruitment integrity, all Beyon assessments are conducted exclusively inside the 
+            To guarantee 100% academic and recruitment integrity, all Beyon assessments are conducted exclusively inside the
             <strong> Beyon Secure Desktop Client</strong> with full-screen kiosk lockdown, AI facial tracking, and unauthorized device detection.
           </p>
         </div>
@@ -205,7 +204,6 @@ export function AssessmentPage() {
         </div>
       </div>
 
-      {/* KPI Stats Row */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '14px' }}>
         <div style={{ background: '#ffffff', padding: '18px 20px', borderRadius: '0px', border: '1px solid #e2e8f0', borderTop: '3px solid #1c2d81' }}>
           <span style={{ fontSize: '0.72rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.04em' }}>Available Benchmarks</span>
@@ -231,7 +229,6 @@ export function AssessmentPage() {
         </div>
       </div>
 
-      {/* Tabs */}
       <div style={{ display: 'flex', gap: '8px', borderBottom: '2px solid #e2e8f0', paddingBottom: '2px' }}>
         <button
           onClick={() => setActiveTab('available')}
@@ -271,7 +268,6 @@ export function AssessmentPage() {
         </button>
       </div>
 
-      {/* Tab 1: Available Tests */}
       {activeTab === 'available' && (
         availableTests.length === 0 ? (
           <div style={{ padding: '48px 24px', textAlign: 'center', background: '#ffffff', border: '1px solid #e2e8f0', color: '#64748b' }}>
@@ -332,7 +328,6 @@ export function AssessmentPage() {
                     </p>
                   </div>
 
-                  {/* Lock / Unlock Progress Status Banner */}
                   {isUnlocked ? (
                     <div
                       style={{
@@ -497,7 +492,6 @@ export function AssessmentPage() {
         )
       )}
 
-      {/* Tab 2: Completed History */}
       {activeTab === 'completed' && (
         <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '0px' }}>
           <div style={{ padding: '20px 24px', borderBottom: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -567,7 +561,6 @@ export function AssessmentPage() {
         </div>
       )}
 
-      {/* Desktop App Launch Modal */}
       {selectedTestForLaunch && (
         <div
           style={{
@@ -617,7 +610,6 @@ export function AssessmentPage() {
                 </div>
               </div>
 
-              {/* Proctoring Rules Notice */}
               <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderLeft: '4px solid #ef4444', padding: '12px 16px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 800, color: '#991b1b', fontSize: '0.84rem' }}>
                   <AlertTriangle size={16} /> Automated Proctoring Security Active
@@ -629,7 +621,6 @@ export function AssessmentPage() {
                 </ul>
               </div>
 
-              {/* Launch Step 1 */}
               <div>
                 <div style={{ fontWeight: 800, fontSize: '0.84rem', color: '#020617', marginBottom: '8px' }}>
                   Option A: One-Click Desktop Launch
@@ -656,7 +647,6 @@ export function AssessmentPage() {
                 </button>
               </div>
 
-              {/* Launch Step 2: Token */}
               <div>
                 <div style={{ fontWeight: 800, fontSize: '0.84rem', color: '#020617', marginBottom: '8px' }}>
                   Option B: Manual Assessment Token
@@ -703,7 +693,6 @@ export function AssessmentPage() {
                 </p>
               </div>
 
-              {/* Launch Step 3: Web Kiosk Mode */}
               <div>
                 <div style={{ fontWeight: 800, fontSize: '0.84rem', color: '#020617', marginBottom: '8px' }}>
                   Option C: Instant Web Proctored Mode
@@ -776,3 +765,4 @@ export function AssessmentPage() {
 }
 
 export default AssessmentPage;
+

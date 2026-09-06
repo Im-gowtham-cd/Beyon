@@ -9,3 +9,4 @@ public interface IdentityVerificationRepository extends JpaRepository<IdentityVe
     Optional<IdentityVerification> findBySessionId(UUID sessionId);
     Optional<IdentityVerification> findBySessionIdAndStatus(UUID sessionId, String status);
 }
+

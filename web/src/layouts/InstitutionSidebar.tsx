@@ -46,7 +46,7 @@ export function InstitutionSidebar({
         setEnrolledCount(sList.length);
         setActiveDrivesCount(dList.length);
       } catch {
-        /* fallback */
+
       }
     }
     loadStats();
@@ -105,7 +105,7 @@ export function InstitutionSidebar({
         mobileOpen ? styles.sidebarMobileOpen : ''
       }`}
     >
-      {/* Sidebar Header */}
+
       <div className={styles.header}>
         {!collapsed ? (
           <Link to="/institution/home" className={styles.brand}>
@@ -133,7 +133,6 @@ export function InstitutionSidebar({
         </button>
       </div>
 
-      {/* Institution Info Badge */}
       {!collapsed && (
         <div className={styles.institutionInfo}>
           <div className={styles.avatarBox}>{initials}</div>
@@ -147,7 +146,6 @@ export function InstitutionSidebar({
         </div>
       )}
 
-      {/* Navigation Sections */}
       <div className={styles.navContainer}>
         {navSections.map((sec, sIdx) => (
           <div key={sIdx} className={styles.navSection}>
@@ -185,7 +183,6 @@ export function InstitutionSidebar({
         ))}
       </div>
 
-      {/* Footer */}
       {!collapsed && (
         <div className={styles.footer}>
           <div className={styles.accreditationPill}>
@@ -202,3 +199,4 @@ export function InstitutionSidebar({
     </aside>
   );
 }
+

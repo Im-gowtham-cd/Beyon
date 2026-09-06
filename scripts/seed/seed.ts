@@ -1,24 +1,4 @@
 #!/usr/bin/env bun
-// ============================================================
-// Beyon Seed System — Main CLI Entry Point
-//
-// Usage:
-//   bun run seed.ts [mode] [options]
-//
-// Modes:
-//   base          Fixed accounts + taxonomy + institutions + companies
-//   assessment    Questions + assessments
-//   recruitment   Opportunities + drives + applications
-//   community     Follows + notifications
-//   full          Everything (default)
-//   validate      Integrity checks only
-//   reset         Wipe seeded test data (dev/staging only)
-//
-// Options:
-//   --force-production   Override env guard (dangerous)
-//   --students=N         Override student count
-//   --questions=N        Override question count
-// ============================================================
 
 import { assertNotProduction, loadConfig } from "./config.js";
 import { seedSkills } from "./modules/01-skills.js";
@@ -40,12 +20,10 @@ import * as fs from "fs";
 import * as path from "path";
 import { DOCS_DIR } from "./config.js";
 
-// ─── Parse CLI args ───────────────────────────────────────────
 const args = process.argv.slice(2);
 const mode = args.find(a => !a.startsWith("--")) ?? "full";
 const forceProduction = args.includes("--force-production");
 
-// Parse --key=value overrides
 function getArg(name: string): string | undefined {
   const arg = args.find(a => a.startsWith(`--${name}=`));
   return arg ? arg.split("=")[1] : undefined;
@@ -57,13 +35,11 @@ for (const key of ["students", "questions", "jobs", "applications", "notificatio
   if (val) overrides[key] = parseInt(val);
 }
 
-// ─── Environment Guard ────────────────────────────────────────
 assertNotProduction(forceProduction);
 
 const cfg = loadConfig(overrides);
 const startTime = Date.now();
 
-// ─── Banner ───────────────────────────────────────────────────
 console.log(`
 ╔══════════════════════════════════════════════════════════════╗
 ║         BEYON TEST DATA SEED SYSTEM                         ║
@@ -76,7 +52,6 @@ console.log(`
 ╚══════════════════════════════════════════════════════════════╝
 `);
 
-// ─── Reset Mode ───────────────────────────────────────────────
 if (mode === "reset") {
   console.log("⚠️  RESET MODE — This will delete all seeded test data.");
   console.log("   Only beyon@example.beyon.test domain records will be removed.\n");
@@ -110,13 +85,11 @@ if (mode === "reset") {
   process.exit(0);
 }
 
-// ─── Validate Mode ────────────────────────────────────────────
 if (mode === "validate") {
   await validateIntegrity();
   process.exit(0);
 }
 
-// ─── Seed Execution ───────────────────────────────────────────
 async function runBase() {
   await seedSkills();
   await seedInstitutions();
@@ -165,7 +138,6 @@ try {
       break;
   }
 
-  // ─── Auto-validate after full/base ───
   if (["full", "base"].includes(mode)) {
     const results = await validateIntegrity();
     await generateSeedReport(results, cfg, startTime);
@@ -182,14 +154,12 @@ try {
   process.exit(1);
 }
 
-// ─── Report & Doc Generation ─────────────────────────────────
 async function generateSeedReport(results: any[], cfg: any, startTime: number) {
   const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
   const passes = results.filter(r => r.status === "PASS").length;
   const fails = results.filter(r => r.status === "FAIL").length;
   const overallStatus = fails === 0 ? "PASS" : "FAIL";
 
-  // Query final counts
   const getCnt = (sql: string) => {
     try { return doltQuery(sql)[0]?.cnt ?? "0"; } catch { return "ERR"; }
   };
@@ -246,7 +216,6 @@ KNOWN NOTES
 async function generateDocs() {
   fs.mkdirSync(DOCS_DIR, { recursive: true });
 
-  // TEST_ACCOUNTS.md
   const accounts = `# Beyon — Test Accounts
 
 > [!CAUTION]
@@ -306,7 +275,6 @@ async function generateDocs() {
 
   fs.writeFileSync(path.join(DOCS_DIR, "TEST_ACCOUNTS.md"), accounts, "utf8");
 
-  // TEST_SCENARIOS.md
   const scenarios = `# Beyon — Test Scenarios
 
 ## Account → Scenario Matrix
@@ -400,3 +368,4 @@ bun run seed.ts full --students=100 --questions=1000
   console.log("📄 docs/TEST_ACCOUNTS.md written");
   console.log("📄 docs/TEST_SCENARIOS.md written");
 }
+

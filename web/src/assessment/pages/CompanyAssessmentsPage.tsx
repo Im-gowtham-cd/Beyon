@@ -79,7 +79,7 @@ export function CompanyAssessmentsPage() {
       setResults(r);
       setReport(p);
     } catch {
-      /* fallback */
+
     }
   };
 
@@ -102,7 +102,6 @@ export function CompanyAssessmentsPage() {
         </div>
       </div>
 
-      {/* 4 Stats */}
       <div className={styles.statsRow}>
         <div className={styles.statCard}>
           <span className={styles.statLabel}>Total Evaluated Sessions</span>
@@ -128,7 +127,6 @@ export function CompanyAssessmentsPage() {
         </div>
       </div>
 
-      {/* Pending Reattempts Banner */}
       {pendingReattemptsCount > 0 && activeTab !== 'reattempts' && (
         <div
           style={{
@@ -172,7 +170,6 @@ export function CompanyAssessmentsPage() {
         </div>
       )}
 
-      {/* Navigation Tabs */}
       <div style={{ display: 'flex', gap: '8px', borderBottom: '1px solid #e2e8f0', marginBottom: '16px' }}>
         <button
           onClick={() => setActiveTab('sessions')}
@@ -221,7 +218,7 @@ export function CompanyAssessmentsPage() {
           ))}
         </div>
       ) : activeTab === 'reattempts' ? (
-        /* Reattempt Requests Section */
+
         reattempts.length === 0 ? (
           <div className={styles.emptyState}>
             <p className={styles.emptyText}>No reattempt requests submitted by candidates yet.</p>
@@ -504,3 +501,4 @@ export function CompanyAssessmentsPage() {
 }
 
 export default CompanyAssessmentsPage;
+

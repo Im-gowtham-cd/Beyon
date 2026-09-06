@@ -11,3 +11,4 @@ public interface SkillSubtopicRepository extends JpaRepository<SkillSubtopic, UU
     List<SkillSubtopic> findByTopicIdAndActiveTrueOrderByDisplayOrder(UUID topicId);
     Optional<SkillSubtopic> findByTopicIdAndSlug(UUID topicId, String slug);
 }
+

@@ -8,3 +8,4 @@ import java.util.UUID;
 public interface RecommendationSignalRepository extends JpaRepository<RecommendationSignal, UUID> {
     List<RecommendationSignal> findByUserIdAndRecommendationType(UUID userId, String recType);
 }
+

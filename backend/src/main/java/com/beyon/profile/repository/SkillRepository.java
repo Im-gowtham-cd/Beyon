@@ -27,3 +27,4 @@ public interface SkillRepository extends JpaRepository<Skill, UUID> {
 
     List<Skill> findByCategoryIdAndActiveTrue(UUID categoryId);
 }
+

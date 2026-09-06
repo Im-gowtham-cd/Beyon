@@ -11,3 +11,4 @@ public interface MatchingScoreRepository extends JpaRepository<MatchingScore, UU
     List<MatchingScore> findByOpportunityIdOrderByTotalScoreDesc(UUID opportunityId);
     List<MatchingScore> findByStudentIdOrderByTotalScoreDesc(UUID studentId);
 }
+

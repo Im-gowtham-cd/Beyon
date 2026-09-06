@@ -9,3 +9,4 @@ public interface ProjectTeamRepository extends JpaRepository<ProjectTeam, UUID> 
     List<ProjectTeam> findByProjectIdOrderByCreatedAtDesc(UUID projectId);
     List<ProjectTeam> findByStatusOrderByCreatedAtDesc(String status);
 }
+

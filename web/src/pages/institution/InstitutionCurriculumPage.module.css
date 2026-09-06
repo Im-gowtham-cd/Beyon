@@ -102,7 +102,6 @@
   border-color: #94a3b8;
 }
 
-/* 4 Stats Cards */
 .statsRow {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -160,7 +159,6 @@
   font-weight: 500;
 }
 
-/* Domain Tabs */
 .domainBar {
   display: flex;
   align-items: center;
@@ -200,7 +198,6 @@
   background: #16246e;
 }
 
-/* Main Layout Grid */
 .layoutGrid {
   display: grid;
   grid-template-columns: 1fr 340px;
@@ -214,7 +211,6 @@
   }
 }
 
-/* Skills Tree / List Card */
 .skillsCard {
   background: #ffffff;
   border: 1px solid #cbd5e1;
@@ -265,7 +261,6 @@
   box-shadow: 0 0 0 1px #1c2d81;
 }
 
-/* Skills Grid */
 .skillNodesList {
   display: flex;
   flex-direction: column;
@@ -373,7 +368,6 @@
   padding: 2px 8px;
 }
 
-/* Sidebar Gap Analysis Card */
 .sidebarCard {
   background: #ffffff;
   border: 1px solid #cbd5e1;
@@ -436,7 +430,6 @@
   background: #1c2d81;
 }
 
-/* Modal */
 .modalOverlay {
   position: fixed;
   top: 0;
@@ -507,3 +500,4 @@
   border-top: 1px solid #e2e8f0;
   background: #f8fafc;
 }
+

@@ -91,7 +91,6 @@ public class CompanyService {
             String instName = (String) map.get("name");
             Set<String> depts = new LinkedHashSet<>();
 
-            // Find departments from registered students in this institution
             for (com.beyon.profile.model.StudentProfile sp : allStudentProfiles) {
                 if (sp.getDepartment() != null && !sp.getDepartment().isBlank()) {
                     if (instName != null && sp.getInstitution() != null &&
@@ -101,7 +100,6 @@ public class CompanyService {
                 }
             }
 
-            // Always provide the standard academic engineering departments
             depts.add("Computer Science and Engineering");
             depts.add("Information Technology");
             depts.add("Artificial Intelligence & Data Science");
@@ -123,8 +121,7 @@ public class CompanyService {
 
     public Set<UUID> resolveStudentInstitutionIds(UUID studentId) {
         Set<UUID> instIds = new LinkedHashSet<>();
-        
-        // 1. From student profile institution name / code
+
         studentProfileRepository.findByUserId(studentId).ifPresent(profile -> {
             if (profile.getInstitution() != null && !profile.getInstitution().isBlank()) {
                 String instName = profile.getInstitution().trim();
@@ -149,7 +146,6 @@ public class CompanyService {
             }
         });
 
-        // 2. From institution students mapping table
         try {
             institutionStudentRepository.findByStudentId(studentId).forEach(is -> {
                 if (is.getInstitutionId() != null) {
@@ -162,13 +158,12 @@ public class CompanyService {
     }
 
     public boolean isOpportunityVisibleAndApprovedForStudent(CompanyOpportunity opp, UUID studentId) {
-        // Direct / open postings (FULL_TIME, INTERNSHIP) without campus targeting are open to all students
+
         if (!"CAMPUS_DRIVE".equalsIgnoreCase(opp.getOpportunityType()) &&
             (opp.getTargetInstitutionIds() == null || opp.getTargetInstitutionIds().isBlank())) {
             return true;
         }
 
-        // Campus placement drive requires student to belong to target institution AND institution must have approved the drive
         Set<UUID> studentInstIds = resolveStudentInstitutionIds(studentId);
         if (studentInstIds.isEmpty()) {
             return false;
@@ -176,7 +171,7 @@ public class CompanyService {
 
         String targetIdsStr = opp.getTargetInstitutionIds();
         if (targetIdsStr == null || targetIdsStr.isBlank()) {
-            // Check if ANY approved placement drive exists for student's institution
+
             for (UUID sInstId : studentInstIds) {
                 var driveOpt = placementDriveRepository.findByOpportunityIdAndInstitutionId(opp.getId(), sInstId);
                 if (driveOpt.isPresent() && "APPROVED".equalsIgnoreCase(driveOpt.get().getStatus())) {
@@ -227,7 +222,7 @@ public class CompanyService {
         if ("CAMPUS_DRIVE".equalsIgnoreCase(saved.getOpportunityType()) &&
             saved.getTargetInstitutionIds() != null &&
             !saved.getTargetInstitutionIds().isBlank()) {
-            
+
             String[] instIds = saved.getTargetInstitutionIds().split(",");
             for (String idStr : instIds) {
                 String clean = idStr.trim();
@@ -285,10 +280,9 @@ public class CompanyService {
         opp.setTargetInstitutionNames((String) payload.get("targetInstitutionNames"));
         opp.setStatus(payload.get("status") != null ? (String) payload.get("status") : "PUBLISHED");
 
-        // 1. Create and link AssessmentConfiguration for this drive
         int durationMins = payload.get("durationMinutes") != null ? ((Number) payload.get("durationMinutes")).intValue() : 60;
         int passingScore = payload.get("passingScore") != null ? ((Number) payload.get("passingScore")).intValue() : 65;
-        
+
         List<Map<String, Object>> questionsData = (List<Map<String, Object>>) payload.get("questions");
         int totalQuestions = (questionsData != null && !questionsData.isEmpty()) ? questionsData.size() : (payload.get("totalQuestions") != null ? ((Number) payload.get("totalQuestions")).intValue() : 20);
 
@@ -306,7 +300,6 @@ public class CompanyService {
 
         CompanyOpportunity savedOpp = opportunityRepository.save(opp);
 
-        // 2. Save custom questions and options created by company
         if (questionsData != null && !questionsData.isEmpty()) {
             for (int i = 0; i < questionsData.size(); i++) {
                 Map<String, Object> qMap = questionsData.get(i);
@@ -338,11 +331,10 @@ public class CompanyService {
             }
         }
 
-        // 3. Register placement drives for target institutions
         if ("CAMPUS_DRIVE".equalsIgnoreCase(savedOpp.getOpportunityType()) &&
             savedOpp.getTargetInstitutionIds() != null &&
             !savedOpp.getTargetInstitutionIds().isBlank()) {
-            
+
             String[] instIds = savedOpp.getTargetInstitutionIds().split(",");
             for (String idStr : instIds) {
                 String clean = idStr.trim();
@@ -371,7 +363,7 @@ public class CompanyService {
     public List<Map<String, Object>> getOpportunityQuestions(UUID opportunityId) {
         String tag = "opportunity:" + opportunityId;
         List<com.beyon.practice.model.Question> questions = questionRepository.findByTagsContainingOrderByCreatedAtAsc(tag);
-        
+
         if (questions.isEmpty()) {
             questions = questionRepository.findByStatusOrderByCreatedAtDesc("PUBLISHED", org.springframework.data.domain.PageRequest.of(0, 20));
         }
@@ -456,7 +448,6 @@ public class CompanyService {
                 reasons.add("Placement preference is set to Not Seeking");
             }
 
-            // Campus Placement Drive institution targeting & approval check
             if ("CAMPUS_DRIVE".equalsIgnoreCase(opp.getOpportunityType()) ||
                 (opp.getTargetInstitutionIds() != null && !opp.getTargetInstitutionIds().isBlank())) {
                 Set<UUID> studentInstIds = resolveStudentInstitutionIds(studentId);
@@ -583,7 +574,7 @@ public class CompanyService {
                 map.put("eligibleDepartments", opp.getEligibleDepartments());
                 map.put("requiredSkills", opp.getRequiredSkills());
                 map.put("minCgpa", opp.getMinCgpa());
-                
+
                 int duration = 60;
                 int totalQ = 20;
                 if (opp.getAssessmentId() != null) {
@@ -613,3 +604,4 @@ public class CompanyService {
         return applicationRepository.findByOpportunityId(opportunityId);
     }
 }
+

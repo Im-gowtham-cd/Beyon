@@ -41,3 +41,4 @@ public interface QuestionRepository extends JpaRepository<Question, UUID> {
     List<Question> findByTagsContainingOrderByCreatedAtAsc(String tag);
     List<Question> findByCreatedByOrderByCreatedAtDesc(UUID createdBy);
 }
+

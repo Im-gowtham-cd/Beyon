@@ -145,7 +145,7 @@ export function InstitutionDrivesPage() {
 
   return (
     <div className={styles.page}>
-      {/* Header */}
+
       <div className={styles.pageHeader}>
         <div className={styles.headerLeft}>
           <span className={styles.sectionTag}>
@@ -166,7 +166,6 @@ export function InstitutionDrivesPage() {
         </div>
       </div>
 
-      {/* Success Alert Banner */}
       {actionSuccess && (
         <div
           style={{
@@ -186,7 +185,6 @@ export function InstitutionDrivesPage() {
         </div>
       )}
 
-      {/* 4 Stats Cards */}
       <div className={styles.statsRow}>
         <div className={styles.statCard}>
           <div className={styles.statCardTop}>
@@ -243,7 +241,6 @@ export function InstitutionDrivesPage() {
         </div>
       </div>
 
-      {/* Filter / Search Bar */}
       <div className={styles.filterBar}>
         <div className={styles.filterTabs}>
           {(
@@ -276,7 +273,6 @@ export function InstitutionDrivesPage() {
         </div>
       </div>
 
-      {/* Drives Grid */}
       {filteredDrives.length === 0 ? (
         <div className={styles.emptyState}>
           <Building2 size={44} style={{ color: '#94a3b8' }} />
@@ -295,7 +291,7 @@ export function InstitutionDrivesPage() {
             return (
               <div key={d.id} className={styles.driveCard}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                  {/* Card Top */}
+
                   <div className={styles.cardHeader}>
                     <div className={styles.companyRow}>
                       <div className={styles.companyLogo}>{d.companyName.charAt(0)}</div>
@@ -321,7 +317,6 @@ export function InstitutionDrivesPage() {
                     </span>
                   </div>
 
-                  {/* CTC & Type Banner */}
                   <div className={styles.packageBanner}>
                     <div>
                       <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#166534', textTransform: 'uppercase', display: 'block' }}>
@@ -334,7 +329,6 @@ export function InstitutionDrivesPage() {
                     </span>
                   </div>
 
-                  {/* Metadata Grid */}
                   <div className={styles.metaGrid}>
                     <div className={styles.metaItem}>
                       <span className={styles.metaLabel}>Eligible Batch</span>
@@ -352,7 +346,6 @@ export function InstitutionDrivesPage() {
                     </div>
                   </div>
 
-                  {/* Applicant Progress */}
                   <div className={styles.applicantSection}>
                     <div className={styles.applicantHeader}>
                       <span>
@@ -367,14 +360,12 @@ export function InstitutionDrivesPage() {
                     )}
                   </div>
 
-                  {/* Date & Location */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.76rem', color: '#64748b' }}>
                     <Calendar size={13} style={{ color: '#1c2d81' }} />
                     <span>Slot Date: <strong style={{ color: '#334155' }}>{d.interviewDate}</strong></span>
                   </div>
                 </div>
 
-                {/* Footer Buttons */}
                 <div className={styles.cardFooter}>
                   {isPending ? (
                     <button className={styles.btnAuthorize} onClick={(e) => approveDrive(d.id, e)}>
@@ -399,7 +390,6 @@ export function InstitutionDrivesPage() {
         </div>
       )}
 
-      {/* Drive Details Modal */}
       {selectedDrive && (
         <div className={styles.modalOverlay} onClick={() => setSelectedDrive(null)}>
           <div className={styles.modalBox} onClick={(e) => e.stopPropagation()}>
@@ -474,7 +464,6 @@ export function InstitutionDrivesPage() {
         </div>
       )}
 
-      {/* Registered Students Roster Modal */}
       {rosterModalDrive && (
         <div className={styles.modalOverlay} onClick={() => setRosterModalDrive(null)}>
           <div className={styles.modalBox} style={{ maxWidth: 860 }} onClick={(e) => e.stopPropagation()}>
@@ -635,3 +624,4 @@ export function InstitutionDrivesPage() {
     </div>
   );
 }
+

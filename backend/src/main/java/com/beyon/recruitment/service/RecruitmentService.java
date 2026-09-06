@@ -162,7 +162,6 @@ public class RecruitmentService {
                     "APPLICATION_STATUS", "RECRUITMENT_APPLICATION", applicationId);
         }
 
-        // Cross-module sync: if candidate is SELECTED or PLACED, update institution placement status & record
         if ("SELECTED".equalsIgnoreCase(newStatus) || "PLACED".equalsIgnoreCase(newStatus)) {
             List<com.beyon.institution.model.InstitutionStudent> instStudents = institutionStudentRepository.findByStudentId(app.getStudentId());
             for (var is : instStudents) {
@@ -288,3 +287,4 @@ public class RecruitmentService {
         }
     }
 }
+

@@ -62,7 +62,7 @@ export function SkillExplorer() {
       setAllSkills(allTax || []);
       setSkills(allTax || []);
     } catch {
-      /* fallback */
+
     } finally {
       setLoading(false);
     }
@@ -72,7 +72,6 @@ export function SkillExplorer() {
     loadData();
   }, [loadData]);
 
-  // Fetch or filter skills when activeCategory changes
   useEffect(() => {
     let isCancelled = false;
     async function filterSkillsByCategory() {
@@ -91,7 +90,7 @@ export function SkillExplorer() {
           }
         }
       } catch {
-        /* fallback */
+
       }
     }
 
@@ -109,11 +108,9 @@ export function SkillExplorer() {
     setSearchParams(params);
   }
 
-  // Section 1: "My Skills" (Deduplicated active learning skills + profile skills)
   const mySkills: MySkillItem[] = useMemo(() => {
     const map = new Map<string, MySkillItem>();
 
-    // 1. Add active learning skills
     learningSkills.forEach(ls => {
       const taxSkill = allSkills.find(s => s.id === ls.skillId || s.name.toLowerCase() === ls.skillName?.toLowerCase());
       const slug = taxSkill?.slug || ls.skillName.toLowerCase().replace(/[^a-z0-9]/g, '');
@@ -129,7 +126,6 @@ export function SkillExplorer() {
       });
     });
 
-    // 2. Add skills from learning topics
     learningTopics.forEach(lt => {
       const skillName = (lt as any).skillName || (lt as any).topicName;
       if (skillName) {
@@ -149,7 +145,6 @@ export function SkillExplorer() {
       }
     });
 
-    // 3. Add profile skills (the student's claimed/top skills)
     profileSkills.forEach(ps => {
       const taxSkill = allSkills.find(s => s.name.toLowerCase() === ps.skillName.toLowerCase());
       const slug = taxSkill?.slug || ps.skillName.toLowerCase().replace(/[^a-z0-9]/g, '');
@@ -177,7 +172,6 @@ export function SkillExplorer() {
     return Array.from(map.values());
   }, [learningSkills, learningTopics, profileSkills, allSkills]);
 
-  // Set of all normalized names, slugs, and IDs in "My Skills"
   const mySkillIdentifiers = useMemo(() => {
     const names = new Set<string>();
     const slugs = new Set<string>();
@@ -194,19 +188,15 @@ export function SkillExplorer() {
     return { names, slugs, ids };
   }, [mySkills]);
 
-  // ALL AVAILABLE SKILLS: strictly exclude anything already in "My Skills"!
-  // If chosen, it disappears from All Available Skills. If unenrolled, it reappears here!
   const availableSkills = useMemo(() => {
     const pool = skills.length > 0 ? skills : allSkills;
     return pool.filter(skill => {
-      // 1. Check ID match
+
       if (mySkillIdentifiers.ids.has(skill.id)) return false;
 
-      // 2. Check normalized name match
       const normName = skill.name.toLowerCase().replace(/[^a-z0-9]/g, '');
       if (mySkillIdentifiers.names.has(normName)) return false;
 
-      // 3. Check normalized slug match
       const normSlug = skill.slug ? skill.slug.toLowerCase().replace(/[^a-z0-9]/g, '') : '';
       if (normSlug && (mySkillIdentifiers.slugs.has(normSlug) || mySkillIdentifiers.names.has(normSlug))) {
         return false;
@@ -216,7 +206,6 @@ export function SkillExplorer() {
     });
   }, [skills, allSkills, mySkillIdentifiers]);
 
-  // Client-side search filtering on availableSkills
   const displayedSkills = useMemo(() => {
     if (!search.trim()) return availableSkills;
     const term = search.toLowerCase().trim();
@@ -228,7 +217,6 @@ export function SkillExplorer() {
     );
   }, [availableSkills, search]);
 
-  // Section 2: Recommended Skills (Computed based on Top Skills, strictly excluding My Skills)
   const recommendationData = useMemo(() => {
     return computeSkillRecommendations(
       profileSkills,
@@ -240,25 +228,22 @@ export function SkillExplorer() {
     );
   }, [profileSkills, learningSkills, allSkills, mySkillIdentifiers]);
 
-  // Unenroll a skill from My Skills
   async function handleUnenroll(e: React.MouseEvent, skill: MySkillItem) {
     e.preventDefault();
     e.stopPropagation();
     setUnenrollLoading(skill.slug);
 
     try {
-      // 1. Remove from learning skills backend if enrolled
+
       if (skill.learningSkillId || skill.id) {
         const idToRemove = skill.learningSkillId || skill.id;
         await studentLearningApi.removeSkill(idToRemove).catch(() => {});
       }
 
-      // 2. Remove from profile skills backend if present
       if (skill.profileSkillId) {
         await studentProfileApi.removeSkill(skill.profileSkillId).catch(() => {});
       }
 
-      // 3. Update local state immediately so UI updates in real-time
       setLearningSkills(prev => prev.filter(ls => {
         const matchName = ls.skillName?.toLowerCase() === skill.name.toLowerCase();
         const matchId = ls.skillId === skill.id || ls.id === skill.learningSkillId || ls.id === skill.id;
@@ -283,7 +268,6 @@ export function SkillExplorer() {
     }
   }
 
-  // Enroll a skill into My Skills
   async function handleEnroll(e: React.MouseEvent, skill: TaxonomySkill) {
     e.preventDefault();
     e.stopPropagation();
@@ -310,7 +294,7 @@ export function SkillExplorer() {
 
   return (
     <div className={styles.page}>
-      {/* Page Header */}
+
       <div className={styles.pageHeader}>
         <div>
           <h1 className={styles.title}>Skill Taxonomy &amp; Engineering Matrix</h1>
@@ -329,7 +313,6 @@ export function SkillExplorer() {
         </div>
       </div>
 
-      {/* SECTION 1: MY SKILLS (Listed First) */}
       {!search && !activeCategory && (
         <section className={styles.sectionBlock}>
           <div className={styles.sectionHeader}>
@@ -431,7 +414,6 @@ export function SkillExplorer() {
         </section>
       )}
 
-      {/* SECTION 2: RECOMMENDED SKILLS (Listed Second) */}
       {!search && !activeCategory && (
         <section className={styles.sectionBlock}>
           <div className={styles.sectionHeader}>
@@ -456,7 +438,6 @@ export function SkillExplorer() {
             </div>
           </div>
 
-          {/* Top Skills Display Bar */}
           <div className={styles.topSkillsPanel}>
             <div className={styles.topSkillsHeader}>
               <div className={styles.topSkillsTitle}>
@@ -493,7 +474,6 @@ export function SkillExplorer() {
             )}
           </div>
 
-          {/* Recommended Skills Grid */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px' }}>
             {recommendationData.recommendedSkills.map(item => {
               const { skill, reason, synergyTag } = item;
@@ -563,7 +543,6 @@ export function SkillExplorer() {
         </section>
       )}
 
-      {/* SECTION 3: ALL AVAILABLE SKILLS (Strictly excludes My Skills) */}
       <section className={styles.sectionBlock}>
         <div className={styles.sectionHeader}>
           <div className={styles.sectionTitleGroup}>
@@ -584,7 +563,6 @@ export function SkillExplorer() {
           </div>
         </div>
 
-        {/* Category Filters */}
         <div className={styles.categories}>
           <button
             className={`${styles.categoryChip} ${!activeCategory ? styles.categoryChipActive : ''}`}
@@ -603,7 +581,6 @@ export function SkillExplorer() {
           ))}
         </div>
 
-        {/* Skills Catalog Grid */}
         {loading ? (
           <div className={styles.loadingContainer}>
             {[1, 2, 3, 4, 5, 6].map(i => (
@@ -663,3 +640,4 @@ export function SkillExplorer() {
     </div>
   );
 }
+

@@ -58,3 +58,4 @@ public class FeedbackReport {
     public OffsetDateTime getUpdatedAt() { return updatedAt; } public void setUpdatedAt(OffsetDateTime v) { this.updatedAt = v; }
     public OffsetDateTime getResolvedAt() { return resolvedAt; } public void setResolvedAt(OffsetDateTime v) { this.resolvedAt = v; }
 }
+

@@ -11,3 +11,4 @@ public interface UserSessionRepository extends JpaRepository<UserSession, UUID> 
     Optional<UserSession> findByTokenHashAndIsActiveTrue(String tokenHash);
     long countByUserIdAndIsActiveTrue(UUID userId);
 }
+

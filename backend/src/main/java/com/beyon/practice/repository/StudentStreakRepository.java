@@ -9,3 +9,4 @@ import java.util.UUID;
 public interface StudentStreakRepository extends JpaRepository<StudentStreak, UUID> {
     Optional<StudentStreak> findByStudentId(UUID studentId);
 }
+

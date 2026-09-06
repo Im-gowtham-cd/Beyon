@@ -9,7 +9,6 @@
   min-height: 100vh;
 }
 
-/* Header Banner */
 .pageHeader {
   background: #ffffff;
   border: 1px solid #e2e8f0;
@@ -95,7 +94,6 @@
   gap: 10px;
 }
 
-/* Stats Row */
 .statsRow {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -140,7 +138,6 @@
   margin-top: 2px;
 }
 
-/* Filter & Controls Row */
 .controlsRow {
   display: flex;
   align-items: center;
@@ -236,7 +233,6 @@
   color: #ffffff;
 }
 
-/* Stage filter pills */
 .stageFilterRow {
   display: flex;
   align-items: center;
@@ -271,7 +267,6 @@
   color: #ffffff !important;
 }
 
-/* Kanban Board Layout */
 .kanbanBoard {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -345,7 +340,6 @@
   font-style: italic;
 }
 
-/* Candidate Card */
 .candidateCard {
   background: #ffffff;
   border: 1px solid #e2e8f0;
@@ -537,7 +531,6 @@
   background: #fee2e2;
 }
 
-/* Table View */
 .tableCard {
   background: #ffffff;
   border: 1px solid #e2e8f0;
@@ -574,7 +567,6 @@
   background: #f8fafc;
 }
 
-/* Empty Global State */
 .emptyGlobal {
   background: #ffffff;
   border: 1px solid #e2e8f0;
@@ -601,3 +593,4 @@
   max-width: 440px;
   margin: 0;
 }
+

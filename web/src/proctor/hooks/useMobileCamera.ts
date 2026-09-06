@@ -32,7 +32,7 @@ export function useMobileCamera() {
       return mediaStream;
     } catch (err: any) {
       console.error('Camera access error:', err);
-      // Fallback without audio if mic failed
+
       try {
         const videoOnlyStream = await navigator.mediaDevices.getUserMedia({
           video: { facingMode: { ideal: facingMode } },

@@ -1,8 +1,4 @@
-﻿// ============================================================
-// Module 15 — Recruitment Pipelines, Intelligence & Career Seeder
-// Seeds recruitment pipelines, candidate interview stages, hiring
-// preferences, learning tracks, roadmaps, academic records & feedback.
-// ============================================================
+﻿
 
 import { doltBatch, esc, doltQuery, toUUID } from "../engine/dolt.js";
 import { studentUserIds } from "./04-users.js";
@@ -43,7 +39,6 @@ export async function seedRecruitmentAndIntelligence(cfg: SeedConfig): Promise<v
   const compIdList = Object.values(companyUserIds);
   const instIdList = Object.values(institutionUserIds);
 
-  // ─── 1. Company Hiring Preferences & Representatives ───
   const compPrefStmts: string[] = [];
   const compRepStmts: string[] = [];
 
@@ -68,7 +63,6 @@ export async function seedRecruitmentAndIntelligence(cfg: SeedConfig): Promise<v
   doltBatch(compRepStmts, 50);
   console.log(`  ✅ ${cpIdx} company hiring preferences & HR representatives`);
 
-  // ─── 2. Recruitment Pipelines, Applications, Interviews & Requirements ───
   const oppRows = doltQuery("SELECT id, company_user_id, title FROM company_opportunities LIMIT 20");
   const driveRows = doltQuery("SELECT id, institution_id, company_user_id FROM placement_drives LIMIT 20");
   const pipeStmts: string[] = [];
@@ -126,7 +120,6 @@ export async function seedRecruitmentAndIntelligence(cfg: SeedConfig): Promise<v
   doltBatch(recIntStmts, 50);
   console.log(`  ✅ ${pipeIdx} recruitment pipelines & ${recAppStmts.length} candidate stage records`);
 
-  // ─── 3. Career Roadmaps & Milestone Items ───
   const pathRows = doltQuery("SELECT id, name FROM career_paths");
   const roadStmts: string[] = [];
   let roadIdx = 0;
@@ -155,7 +148,6 @@ export async function seedRecruitmentAndIntelligence(cfg: SeedConfig): Promise<v
   doltBatch(roadStmts, 100);
   console.log(`  ✅ ${roadIdx} student career roadmap milestone items`);
 
-  // ─── 4. Specialized Learning Programs & Modules ───
   const progStmts: string[] = [];
   const modStmts: string[] = [];
   const enrollStmts: string[] = [];
@@ -199,7 +191,6 @@ export async function seedRecruitmentAndIntelligence(cfg: SeedConfig): Promise<v
   doltBatch(enrollStmts, 50);
   console.log(`  ✅ ${progIdx} learning programs, ${modStmts.length} modules, and ${enrollStmts.length} student enrollments`);
 
-  // ─── 5. Student Academic Records ───
   const acadStmts: string[] = [];
   let acIdx = 0;
   for (const sid of studentUserIds) {
@@ -217,7 +208,6 @@ export async function seedRecruitmentAndIntelligence(cfg: SeedConfig): Promise<v
   doltBatch(acadStmts, 100);
   console.log(`  ✅ ${acIdx} student verified academic records`);
 
-  // ─── 6. User Feedback & Support Tickets ───
   const fbStmts: string[] = [];
   const FEEDBACK_ITEMS = [
     { cat: "ASSESSMENT", sub: "Proctoring camera permission flow feedback", msg: "The hardware lock check and camera framing worked smoothly during the mock test. Would love audio calibration feedback as well.", stat: "RESOLVED", rat: 5, resp: "Thank you for the feedback! Audio volume threshold indicators are now included in the pre-flight checks." },
@@ -239,3 +229,4 @@ export async function seedRecruitmentAndIntelligence(cfg: SeedConfig): Promise<v
   doltBatch(fbStmts, 50);
   console.log(`  ✅ ${fbIdx} user feedback and support intelligence records`);
 }
+

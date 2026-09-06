@@ -20,3 +20,4 @@ public class SocialLike {
     public UUID getTargetId() { return targetId; } public void setTargetId(UUID v) { this.targetId = v; }
     public OffsetDateTime getCreatedAt() { return createdAt; } public void setCreatedAt(OffsetDateTime v) { this.createdAt = v; }
 }
+

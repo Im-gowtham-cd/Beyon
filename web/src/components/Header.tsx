@@ -110,7 +110,7 @@ export function Header() {
 
   return (
     <header className={styles.appNavbar}>
-      {/* Utility Bar */}
+
       <div className={styles.utilityBar}>
         <span className={styles.utilityInstitution}>
           <i className="bx bx-brain" /> Beyon — AI-Powered Skill Matrix &amp; Intelligent Career Architecture
@@ -126,7 +126,6 @@ export function Header() {
         </span>
       </div>
 
-      {/* Main Bar */}
       <div className={styles.mainBar}>
         <Link to="/" className={styles.navTitle} onClick={closeMobile}>
           <img src="/logo-transparent.png" alt="Beyon" className={styles.brandLogoImg} />
@@ -243,3 +242,4 @@ export function Header() {
     </header>
   );
 }
+

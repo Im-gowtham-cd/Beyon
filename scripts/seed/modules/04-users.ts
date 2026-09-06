@@ -1,8 +1,3 @@
-// ============================================================
-// Module 04 — User Seeder
-// Creates all fixed test accounts + bulk generated student users
-// ============================================================
-
 import { doltBatch, doltExec, esc, doltQuery, toUUID } from "../engine/dolt.js";
 import bcrypt from "bcryptjs";
 import { FIXED_ACCOUNTS, INSTITUTION_ROLES, COMPANY_ROLES } from "../data/personas.js";
@@ -11,14 +6,12 @@ import { getCompanyUserId } from "./03-companies.js";
 import { SeededRandom, makeName, makeLocation, makePhone, makeEmailSlug } from "../utils/faker.js";
 import type { SeedConfig } from "../config.js";
 
-// Exported user id registry
-export const userIds: Record<string, string> = {}; // email -> dolt user id
-export const studentUserIds: string[] = [];         // all student user ids
+export const userIds: Record<string, string> = {};
+export const studentUserIds: string[] = [];
 
 export async function seedUsers(cfg: SeedConfig): Promise<void> {
   console.log("\n👤 Seeding users...");
 
-  // ─── Fixed Accounts ───
   let fixed = 0;
   for (const acc of FIXED_ACCOUNTS) {
     const uid = toUUID(acc.id);
@@ -29,7 +22,6 @@ export async function seedUsers(cfg: SeedConfig): Promise<void> {
   }
   console.log(`  ✅ ${fixed} fixed test accounts`);
 
-  // ─── Generated Student Accounts ───
   const rng = new SeededRandom(cfg.seed);
   const genStmts: string[] = [];
   let genCount = 0;
@@ -69,7 +61,7 @@ async function seedOneUser(
   emailVerified: boolean,
   cfg: SeedConfig
 ): Promise<void> {
-  // Dolt
+
   const passwordHash = password === "SEEDED_NO_AUTH" ? "SEEDED_NO_AUTH" : bcrypt.hashSync(password, 10);
   doltExec(
     `INSERT INTO users (id, email, password_hash, display_name, role, status, email_verified, profile_status, created_at, updated_at)
@@ -79,3 +71,4 @@ async function seedOneUser(
      ON DUPLICATE KEY UPDATE password_hash = ${esc(passwordHash)}, status = ${esc(status)}, email_verified = ${emailVerified ? 1 : 0};`
   );
 }
+

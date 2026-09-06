@@ -10,3 +10,4 @@ public interface SkillRecommendationRepository extends JpaRepository<SkillRecomm
     List<SkillRecommendation> findByStudentIdAndStatusOrderByScoreDesc(UUID studentId, String status);
     long countByStudentIdAndStatus(UUID studentId, String status);
 }
+

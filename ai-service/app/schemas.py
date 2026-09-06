@@ -7,9 +7,9 @@ class LaptopFrameRequest(BaseModel):
     timestamp: Optional[int] = None
 
 class DetectionEvent(BaseModel):
-    eventType: str  # "PHONE_DETECTED", "MULTIPLE_PEOPLE", "CANDIDATE_ABSENT", "LOOKING_AWAY", "SUSPICIOUS_SPEECH", "CAMERA_OBSTRUCTION"
+    eventType: str
     confidence: float
-    cameraSource: Optional[str] = "LAPTOP_FRONT"  # "LAPTOP_FRONT", "MOBILE_SIDE", "MICROPHONE"
+    cameraSource: Optional[str] = "LAPTOP_FRONT"
     durationSeconds: Optional[float] = 0.0
     timestampMs: Optional[int] = None
     metadata: Optional[Dict[str, Any]] = None
@@ -17,8 +17,8 @@ class DetectionEvent(BaseModel):
 class LaptopFrameResponse(BaseModel):
     facePresent: bool
     faceCount: int
-    headPose: str  # "CENTER", "LEFT", "RIGHT", "UP", "DOWN"
-    gazeDirection: str  # "CENTER", "LEFT", "RIGHT", "UP", "DOWN"
+    headPose: str
+    gazeDirection: str
     confidence: float
     events: List[DetectionEvent]
 
@@ -28,9 +28,9 @@ class MobileFrameRequest(BaseModel):
     timestamp: Optional[int] = None
 
 class DetectedObject(BaseModel):
-    label: str  # "phone", "person", "laptop", "tablet", "book"
+    label: str
     confidence: float
-    bbox: Optional[List[int]] = None  # [x, y, w, h]
+    bbox: Optional[List[int]] = None
 
 class MobileFrameResponse(BaseModel):
     personCount: int
@@ -42,7 +42,7 @@ class MobileFrameResponse(BaseModel):
     candidateAbsent: Optional[bool] = False
 
 class AudioChunkRequest(BaseModel):
-    audioData: Optional[str] = None  # Base64 encoded audio or WAV
+    audioData: Optional[str] = None
     rmsLevel: Optional[float] = None
     frequencyData: Optional[List[float]] = None
     timestamp: Optional[int] = None

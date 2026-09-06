@@ -32,7 +32,6 @@ export function AdminQuestionsPage() {
   const [difficulty, setDifficulty] = useState('ALL');
   const [msg, setMsg] = useState<string | null>(null);
 
-  // Selected question for modal inspection
   const [selectedQuestion, setSelectedQuestion] = useState<QuestionItem | null>(null);
   const [options, setOptions] = useState<QuestionOption[]>([]);
   const [loadingOptions, setLoadingOptions] = useState(false);
@@ -232,7 +231,6 @@ export function AdminQuestionsPage() {
         </table>
       </div>
 
-      {/* Question Details & Options Modal */}
       {selectedQuestion && (
         <div
           style={{
@@ -259,7 +257,7 @@ export function AdminQuestionsPage() {
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Modal Header */}
+
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid #e2e8f0', paddingBottom: '14px', marginBottom: '16px' }}>
               <div>
                 <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '6px' }}>
@@ -285,7 +283,6 @@ export function AdminQuestionsPage() {
               </button>
             </div>
 
-            {/* Question Description / Scenario */}
             {selectedQuestion.description && (
               <div style={{ marginBottom: '18px', background: '#f8fafc', border: '1px solid #e2e8f0', padding: '14px', fontSize: '0.86rem', color: '#334155', lineHeight: 1.5 }}>
                 <strong style={{ display: 'block', color: '#0f172a', marginBottom: '4px' }}>Scenario &amp; Problem Statement:</strong>
@@ -293,7 +290,6 @@ export function AdminQuestionsPage() {
               </div>
             )}
 
-            {/* Code Template / Expected Output (if Coding question) */}
             {selectedQuestion.codeTemplate && (
               <div style={{ marginBottom: '16px' }}>
                 <strong style={{ fontSize: '0.82rem', color: '#475569', display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '4px' }}>
@@ -305,7 +301,6 @@ export function AdminQuestionsPage() {
               </div>
             )}
 
-            {/* Options List */}
             <div style={{ marginBottom: '18px' }}>
               <h3 style={{ fontSize: '0.9rem', fontWeight: 800, color: '#0f172a', marginBottom: '10px' }}>
                 Answer Options &amp; Correct Key
@@ -372,7 +367,6 @@ export function AdminQuestionsPage() {
               )}
             </div>
 
-            {/* Explanation */}
             {selectedQuestion.explanation && (
               <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', padding: '12px 16px', marginBottom: '18px' }}>
                 <strong style={{ display: 'block', fontSize: '0.82rem', color: '#1c2d81', marginBottom: '4px' }}>
@@ -384,7 +378,6 @@ export function AdminQuestionsPage() {
               </div>
             )}
 
-            {/* Modal Actions */}
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', borderTop: '1px solid #e2e8f0', paddingTop: '14px' }}>
               <button
                 onClick={() => {
@@ -428,5 +421,4 @@ export function AdminQuestionsPage() {
     </div>
   );
 }
-
 

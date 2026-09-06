@@ -39,3 +39,4 @@ public class StudentGrowthScore {
     public String getCareerReadiness() { return careerReadiness; } public void setCareerReadiness(String v) { this.careerReadiness = v; }
     public OffsetDateTime getComputedAt() { return computedAt; } public void setComputedAt(OffsetDateTime v) { this.computedAt = v; }
 }
+

@@ -12,3 +12,4 @@ public interface InstitutionPlacementRecordRepository extends JpaRepository<Plac
     long countByInstitutionId(UUID institutionId);
     long countByInstitutionIdAndCompanyTier(UUID institutionId, String tier);
 }
+

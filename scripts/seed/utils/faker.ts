@@ -1,8 +1,3 @@
-// ============================================================
-// Beyon Seed — Deterministic Pseudo-Random Number Generator
-// Uses a seeded LCG so results are reproducible given same seed
-// ============================================================
-
 export class SeededRandom {
   private state: number;
 
@@ -10,29 +5,24 @@ export class SeededRandom {
     this.state = seed >>> 0;
   }
 
-  /** Returns float in [0, 1) */
   next(): number {
-    // LCG parameters (Numerical Recipes)
+
     this.state = (Math.imul(1664525, this.state) + 1013904223) >>> 0;
     return this.state / 0x100000000;
   }
 
-  /** Returns integer in [min, max] inclusive */
   int(min: number, max: number): number {
     return Math.floor(this.next() * (max - min + 1)) + min;
   }
 
-  /** Returns float in [min, max) */
   float(min: number, max: number): number {
     return this.next() * (max - min) + min;
   }
 
-  /** Pick random element from array */
   pick<T>(arr: T[]): T {
     return arr[this.int(0, arr.length - 1)];
   }
 
-  /** Pick N unique elements from array */
   pickN<T>(arr: T[], n: number): T[] {
     const copy = [...arr];
     const result: T[] = [];
@@ -45,7 +35,6 @@ export class SeededRandom {
     return result;
   }
 
-  /** Shuffle array in-place */
   shuffle<T>(arr: T[]): T[] {
     for (let i = arr.length - 1; i > 0; i--) {
       const j = this.int(0, i);
@@ -54,13 +43,10 @@ export class SeededRandom {
     return arr;
   }
 
-  /** Boolean with given probability (0-1) */
   bool(probability = 0.5): boolean {
     return this.next() < probability;
   }
 }
-
-// ─── Fake Data Helpers ────────────────────────────────────────
 
 const FIRST_NAMES = [
   "Aarav", "Arjun", "Vikram", "Rahul", "Karthik", "Siddharth", "Rohan", "Aditya",
@@ -152,3 +138,4 @@ export function makeCoins(rng: SeededRandom, personaType: string): number {
 }
 
 export { DEPARTMENTS, WORK_TYPES, GENDERS };
+

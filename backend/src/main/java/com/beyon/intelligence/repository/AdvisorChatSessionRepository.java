@@ -8,3 +8,4 @@ import java.util.UUID;
 public interface AdvisorChatSessionRepository extends JpaRepository<AdvisorChatSession, UUID> {
     List<AdvisorChatSession> findByStudentIdOrderByUpdatedAtDesc(UUID studentId);
 }
+

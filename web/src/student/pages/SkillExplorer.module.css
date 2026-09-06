@@ -204,7 +204,6 @@
   100% { background-position: -200% 0; }
 }
 
-/* Section Blocks */
 .sectionBlock {
   display: flex;
   flex-direction: column;
@@ -262,7 +261,6 @@
   margin: 0;
 }
 
-/* Top Skills Panel */
 .topSkillsPanel {
   background: #ffffff;
   border: 1px solid #e2e8f0;
@@ -354,7 +352,6 @@
   border: 1px solid #e9d5ff;
 }
 
-/* Recommended Cards */
 .recCard {
   background: #ffffff;
   border: 1px solid #e2e8f0;
@@ -469,3 +466,4 @@
     grid-template-columns: 1fr;
   }
 }
+

@@ -10,3 +10,4 @@ public interface VerifiedAchievementRepository extends JpaRepository<VerifiedAch
     List<VerifiedAchievement> findByVerificationStatusOrderByCreatedAtDesc(String status);
     long countByStudentIdAndVerificationStatus(UUID studentId, String status);
 }
+

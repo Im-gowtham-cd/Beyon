@@ -16,10 +16,10 @@ public class ProctoringEvidence {
     private UUID incidentId;
 
     @Column(name = "evidence_type", nullable = false, length = 30)
-    private String evidenceType; // FRAME_CAPTURE | AUDIO_CLIP | EVENT_LOG
+    private String evidenceType;
 
     @Column(name = "device_source", nullable = false, length = 20)
-    private String deviceSource; // LAPTOP | MOBILE
+    private String deviceSource;
 
     @Column(name = "storage_path", length = 500)
     private String storagePath;
@@ -72,3 +72,4 @@ public class ProctoringEvidence {
     public OffsetDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(OffsetDateTime v) { this.createdAt = v; }
 }
+

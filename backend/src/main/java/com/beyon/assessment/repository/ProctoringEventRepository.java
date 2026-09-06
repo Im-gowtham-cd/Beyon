@@ -15,3 +15,4 @@ public interface ProctoringEventRepository extends JpaRepository<ProctoringEvent
     @Query("SELECT p.eventType, COUNT(p) FROM ProctoringEvent p WHERE p.sessionId = :sessionId GROUP BY p.eventType ORDER BY COUNT(p) DESC")
     List<Object[]> countByEventTypeForSession(UUID sessionId);
 }
+

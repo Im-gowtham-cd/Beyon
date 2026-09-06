@@ -189,3 +189,4 @@ public class StudentProfileController {
         return UUID.fromString(details.getUserId());
     }
 }
+

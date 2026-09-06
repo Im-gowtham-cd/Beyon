@@ -12,3 +12,4 @@ public interface RecruitmentPipelineRepository extends JpaRepository<Recruitment
     List<RecruitmentPipeline> findByCurrentStage(String stage);
     long countByOpportunityIdAndCurrentStage(UUID opportunityId, String stage);
 }
+

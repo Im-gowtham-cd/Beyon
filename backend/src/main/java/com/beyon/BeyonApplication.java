@@ -25,3 +25,4 @@ public class BeyonApplication {
         SpringApplication.run(BeyonApplication.class, args);
     }
 }
+

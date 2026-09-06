@@ -9,3 +9,4 @@ public interface ProjectEvaluationRepository extends JpaRepository<ProjectEvalua
     List<ProjectEvaluation> findByProjectIdOrderByCreatedAtDesc(UUID projectId);
     List<ProjectEvaluation> findByTeamIdOrderByCreatedAtDesc(UUID teamId);
 }
+

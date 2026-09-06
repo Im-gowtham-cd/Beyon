@@ -10,3 +10,4 @@ public interface CompanyOpportunityRepository extends JpaRepository<CompanyOppor
     List<CompanyOpportunity> findByCompanyUserIdOrderByCreatedAtDesc(UUID companyUserId);
     List<CompanyOpportunity> findByStatusOrderByCreatedAtDesc(String status);
 }
+

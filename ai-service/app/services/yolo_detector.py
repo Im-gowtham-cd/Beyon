@@ -5,7 +5,6 @@ from typing import List, Dict, Any, Tuple
 
 logger = logging.getLogger(__name__)
 
-# Singleton YOLO Model instance
 _yolo_model = None
 _yolo_available = None
 
@@ -15,7 +14,7 @@ def get_yolo_model():
         return None
     if _yolo_model is not None:
         return _yolo_model
-    
+
     try:
         from ultralytics import YOLO
         try:
@@ -30,7 +29,6 @@ def get_yolo_model():
         logger.warning(f"Ultralytics YOLO not yet loaded: {e}. Using robust CV detector fallback.")
         _yolo_available = False
         return None
-
 
 def detect_objects_yolo(image_bgr: np.ndarray) -> Tuple[int, bool, List[Dict[str, Any]]]:
     """
@@ -48,7 +46,6 @@ def detect_objects_yolo(image_bgr: np.ndarray) -> Tuple[int, bool, List[Dict[str
     cell_phone_detected = False
     detected_objects = []
 
-    # 1. YOLO Neural Network Inference (Sensitivity: conf=0.25)
     model = get_yolo_model()
     if model is not None:
         try:
@@ -64,7 +61,6 @@ def detect_objects_yolo(image_bgr: np.ndarray) -> Tuple[int, bool, List[Dict[str
                     bh = by2 - by
                     box_area = bw * bh
 
-                    # Human Person Detection
                     if label == "person" and conf >= 0.45:
                         if box_area > 0.015 * total_area:
                             person_count += 1
@@ -74,9 +70,7 @@ def detect_objects_yolo(image_bgr: np.ndarray) -> Tuple[int, bool, List[Dict[str
                                 "bbox": [int(bx), int(by), int(bw), int(bh)]
                             })
 
-                    # Cell Phone / Mobile Device Detection
                     elif (label in ["cell phone", "phone", "mobile phone", "smartphone"] and conf >= 0.28) or                          (label in ["remote", "gadget"] and conf >= 0.35):
-                        # Filter reasonable bounding box sizes for handheld/desk phone (0.3% to 45% of frame)
                         if 0.003 * total_area < box_area < 0.45 * total_area:
                             cell_phone_detected = True
                             detected_objects.append({
@@ -86,7 +80,6 @@ def detect_objects_yolo(image_bgr: np.ndarray) -> Tuple[int, bool, List[Dict[str
                                 "model_class": label
                             })
 
-                    # Secondary Monitors / Laptops / Tablets
                     elif label in ["laptop", "tv", "tablet"] and conf >= 0.50:
                         detected_objects.append({
                             "label": label,
@@ -97,36 +90,31 @@ def detect_objects_yolo(image_bgr: np.ndarray) -> Tuple[int, bool, List[Dict[str
         except Exception as e:
             logger.error(f"Error during YOLO inference: {e}")
 
-    # 2. Computer Vision Geometric Smartphone & Screen Contour Detector (corroborates side-view desk)
     if not cell_phone_detected:
         try:
             gray = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2GRAY)
             blurred = cv2.GaussianBlur(gray, (5, 5), 0)
             edges = cv2.Canny(blurred, 50, 150)
-            
+
             kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
             dilated = cv2.dilate(edges, kernel, iterations=1)
             contours, _ = cv2.findContours(dilated, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-            
+
             for c in contours:
                 area = cv2.contourArea(c)
-                # Phone size: between 0.5% and 15% of frame area
                 if 0.005 * total_area < area < 0.15 * total_area:
                     peri = cv2.arcLength(c, True)
                     approx = cv2.approxPolyDP(c, 0.04 * peri, True)
-                    
-                    # 4-corner quadrilateral (phone screen / body)
+
                     if len(approx) == 4:
                         x, y, cw, ch = cv2.boundingRect(approx)
                         aspect = float(max(cw, ch)) / max(float(min(cw, ch)), 1.0)
-                        
-                        # Smartphone aspect ratio is typically between 1.6 and 2.4
+
                         if 1.6 <= aspect <= 2.4:
                             roi = gray[y:y+ch, x:x+cw]
                             roi_std = float(np.std(roi))
                             roi_mean = float(np.mean(roi))
-                            
-                            # Phone screen on desk has uniform glass surface or illuminated display
+
                             if roi_std > 20.0 and (roi_mean < 80.0 or roi_mean > 160.0):
                                 cell_phone_detected = True
                                 detected_objects.append({

@@ -14,3 +14,4 @@ public interface SkillCategoryRepository extends JpaRepository<SkillCategory, UU
     @Query("SELECT c FROM SkillCategory c WHERE c.active = true ORDER BY c.displayOrder, c.name")
     List<SkillCategory> findAllActive();
 }
+

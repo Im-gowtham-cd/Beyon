@@ -19,7 +19,7 @@ export function AdminEconomyPage() {
         setEconomy(data.data || null);
       }
     } catch {
-      /* fallback */
+
     } finally {
       setLoading(false);
     }
@@ -28,7 +28,6 @@ export function AdminEconomyPage() {
   useEffect(() => {
     fetchEconomy();
   }, []);
-
 
   const handleAudit = () => {
     fetchEconomy();
@@ -79,7 +78,6 @@ export function AdminEconomyPage() {
         </div>
       )}
 
-      {/* KPI Cards */}
       <div className={styles.kpiGrid} style={{ marginBottom: '24px' }}>
         <div className={styles.kpiCard} style={{ borderTopColor: '#d97706' }}>
           <div className={styles.kpiHeader}>
@@ -122,7 +120,7 @@ export function AdminEconomyPage() {
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(420px, 1fr))', gap: '20px' }}>
-        {/* Top Holders */}
+
         <div className={styles.tableCard}>
           <div style={{ padding: '14px 18px', borderBottom: '1px solid #e2e8f0', fontWeight: 800, color: '#1c2d81', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span>Top Token Holders</span>
@@ -159,7 +157,6 @@ export function AdminEconomyPage() {
           </table>
         </div>
 
-        {/* Recent Transactions */}
         <div className={styles.tableCard}>
           <div style={{ padding: '14px 18px', borderBottom: '1px solid #e2e8f0', fontWeight: 800, color: '#1c2d81', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span>Recent Ledger Transactions</span>

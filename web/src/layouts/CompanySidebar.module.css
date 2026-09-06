@@ -21,7 +21,6 @@
   min-width: 76px;
 }
 
-/* Brand Header */
 .brandHeader {
   height: 64px;
   min-height: 64px;
@@ -97,7 +96,6 @@
   border-radius: 0px;
 }
 
-/* User / Company Card in Sidebar */
 .userCard {
   background: linear-gradient(135deg, #1c2d81 0%, #253cac 100%);
   color: #ffffff;
@@ -182,7 +180,6 @@
   font-weight: 600;
 }
 
-/* Nav Sections */
 .navSection {
   display: flex;
   flex-direction: column;
@@ -279,7 +276,6 @@
   color: #854d0e;
 }
 
-/* Footer Section */
 .footerSection {
   padding: 12px 14px;
   border-top: 1px solid #e2e8f0;
@@ -340,3 +336,4 @@
     transform: translateX(0);
   }
 }
+

@@ -8,3 +8,4 @@ import java.util.UUID;
 public interface UserPrivacySettingsRepository extends JpaRepository<UserPrivacySettings, UUID> {
     Optional<UserPrivacySettings> findByUserId(UUID userId);
 }
+

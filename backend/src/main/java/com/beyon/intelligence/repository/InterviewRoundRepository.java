@@ -8,3 +8,4 @@ import java.util.UUID;
 public interface InterviewRoundRepository extends JpaRepository<InterviewRound, UUID> {
     List<InterviewRound> findByOpportunityIdOrderBySortOrder(UUID opportunityId);
 }
+

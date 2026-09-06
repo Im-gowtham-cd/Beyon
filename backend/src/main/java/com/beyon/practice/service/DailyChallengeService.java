@@ -51,7 +51,6 @@ public class DailyChallengeService {
     public List<Map<String, Object>> getRecommendedDailySet(UUID studentId, int count) {
         int targetCount = count > 0 ? Math.min(count, 20) : 15;
 
-        // 1. Gather student's wished skills and enrolled learning topics
         List<String> studentSkills = new ArrayList<>();
         try {
             List<String> wished = jdbcTemplate.queryForList(
@@ -78,7 +77,6 @@ public class DailyChallengeService {
         List<Map<String, Object>> selectedQuestions = new ArrayList<>();
         Set<String> addedIds = new HashSet<>();
 
-        // 2. Query questions matching wished skills & ongoing courses
         if (!studentSkills.isEmpty()) {
             try {
                 String inSql = String.join("','", studentSkills);
@@ -99,7 +97,6 @@ public class DailyChallengeService {
             } catch (Exception ignored) {}
         }
 
-        // 3. If fewer than targetCount, supplement with other published active questions
         if (selectedQuestions.size() < targetCount) {
             int remaining = targetCount - selectedQuestions.size();
             try {
@@ -119,14 +116,12 @@ public class DailyChallengeService {
             } catch (Exception ignored) {}
         }
 
-        // 4. Attach options and metadata to each question
         return buildQuestionSetResponse(selectedQuestions, "DAILY_SPRINT");
     }
 
     public List<Map<String, Object>> getReviseRecallSet(UUID studentId, int count) {
         int targetCount = count > 0 ? Math.min(count, 15) : 10;
 
-        // 1. Gather student's COMPLETED topics & mastered skills
         List<String> completedSkills = new ArrayList<>();
         try {
             List<String> completed = jdbcTemplate.queryForList(
@@ -168,7 +163,6 @@ public class DailyChallengeService {
             } catch (Exception ignored) {}
         }
 
-        // If not enough completed, pull foundational computer science questions for active recall
         if (selectedQuestions.size() < targetCount) {
             int remaining = targetCount - selectedQuestions.size();
             try {
@@ -428,3 +422,4 @@ public class DailyChallengeService {
         return challengeRepository.findByStudentIdOrderByChallengeDateDesc(studentId);
     }
 }
+

@@ -55,3 +55,4 @@ export const skillsApi = {
   getByCategory: (category: string) =>
     api.get<SkillReference[]>(`/skills/category/${category}`),
 };
+

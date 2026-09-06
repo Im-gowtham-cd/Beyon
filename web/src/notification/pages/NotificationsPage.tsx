@@ -93,7 +93,7 @@ export function NotificationsPage() {
 
   return (
     <div className={styles.page}>
-      {/* Header Banner */}
+
       <div className={styles.header}>
         <div>
           <h1 className={styles.title}>Corporate Notifications &amp; Alerts</h1>
@@ -110,7 +110,6 @@ export function NotificationsPage() {
         )}
       </div>
 
-      {/* Filter Tabs */}
       <div className={styles.filters}>
         {[
           { key: 'ALL', label: `All Notifications (${notifications.length})` },
@@ -230,3 +229,4 @@ export function NotificationsPage() {
 }
 
 export default NotificationsPage;
+

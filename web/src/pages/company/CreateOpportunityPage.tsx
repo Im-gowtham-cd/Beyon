@@ -254,7 +254,7 @@ export function CreateOpportunityPage() {
           }
         }
       } catch {
-        /* fallback */
+
       } finally {
         setLoadingInstitutions(false);
       }
@@ -262,7 +262,6 @@ export function CreateOpportunityPage() {
     loadActiveInstitutions();
   }, []);
 
-  // Dynamically derive departments available from the selected partner institutions
   const availableDepartments = useMemo(() => {
     const targetInstitutions =
       form.opportunityType === 'CAMPUS_DRIVE' && selectedInstIds.length > 0
@@ -517,7 +516,6 @@ export function CreateOpportunityPage() {
       return;
     }
 
-    // Validate questions
     for (let i = 0; i < questions.length; i++) {
       const q = questions[i];
       if (!q.title.trim()) {
@@ -667,7 +665,7 @@ export function CreateOpportunityPage() {
       )}
 
       <form onSubmit={handleSubmit} className={styles.formLayout}>
-        {/* Core Opportunity Details */}
+
         <div className={styles.card}>
           <h3 className={styles.cardTitle}>1. Role &amp; Drive Overview</h3>
           <p className={styles.cardSubtitle}>Specify the job role, posting type, and work arrangement</p>
@@ -735,7 +733,6 @@ export function CreateOpportunityPage() {
           </div>
         </div>
 
-        {/* Campus Drive: Target Verified Partner Institutions */}
         {form.opportunityType === 'CAMPUS_DRIVE' && (
           <div className={styles.card} style={{ borderLeft: '4px solid #1c2d81' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
@@ -822,7 +819,6 @@ export function CreateOpportunityPage() {
           </div>
         )}
 
-        {/* Candidate Eligibility Criteria */}
         <div className={styles.card}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
             <div>
@@ -868,7 +864,6 @@ export function CreateOpportunityPage() {
             </div>
           </div>
 
-          {/* Department Selection based on Target Institutions */}
           <div style={{ marginTop: '24px', paddingTop: '20px', borderTop: '1px solid #e2e8f0' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px', marginBottom: '10px' }}>
               <div>
@@ -894,7 +889,6 @@ export function CreateOpportunityPage() {
                 </p>
               </div>
 
-              {/* Quick Filter Buttons */}
               <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
                 <button
                   type="button"
@@ -944,7 +938,6 @@ export function CreateOpportunityPage() {
               </div>
             </div>
 
-            {/* Department Checkbox / Pill Grid */}
             <div
               style={{
                 display: 'grid',
@@ -989,7 +982,6 @@ export function CreateOpportunityPage() {
               })}
             </div>
 
-            {/* Custom Department Adder & Selected Summary */}
             <div
               style={{
                 display: 'flex',
@@ -1055,7 +1047,6 @@ export function CreateOpportunityPage() {
           </div>
         </div>
 
-        {/* Skill Matrix */}
         <div className={styles.card}>
           <h3 className={styles.cardTitle}>3. Required Technical Skills</h3>
           <p className={styles.cardSubtitle}>Specify skills verified against platform benchmark assessments</p>
@@ -1085,7 +1076,6 @@ export function CreateOpportunityPage() {
           </div>
         </div>
 
-        {/* 4. Proctored Drive Assessment & Custom Question Authoring */}
         <div className={styles.card} style={{ borderLeft: '4px solid #fed601' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px', marginBottom: '14px' }}>
             <div>
@@ -1097,7 +1087,6 @@ export function CreateOpportunityPage() {
               </p>
             </div>
 
-            {/* Top Quick Actions */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
               <button
                 type="button"
@@ -1174,7 +1163,6 @@ export function CreateOpportunityPage() {
             </div>
           </div>
 
-          {/* Assessment Global Parameters */}
           <div className={styles.formGrid} style={{ background: '#f8fafc', padding: '16px', border: '1px solid #e2e8f0', marginBottom: '20px' }}>
             <div className={styles.fieldGroup}>
               <label className={styles.label}>Assessment Duration (Minutes)</label>
@@ -1220,7 +1208,6 @@ export function CreateOpportunityPage() {
             </div>
           </div>
 
-          {/* Interactive List of Questions */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
             {questions.map((q, qIdx) => {
               const isMulti = q.questionType === 'MCQ_MULTIPLE';
@@ -1238,14 +1225,13 @@ export function CreateOpportunityPage() {
                     position: 'relative',
                   }}
                 >
-                  {/* Question Card Top Bar */}
+
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #f1f5f9', paddingBottom: '10px', flexWrap: 'wrap', gap: '10px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
                       <span style={{ background: '#1c2d81', color: '#fed601', padding: '3px 10px', fontSize: '0.8rem', fontWeight: 800 }}>
                         Question #{qIdx + 1}
                       </span>
 
-                      {/* Question Type Selector */}
                       <select
                         value={q.questionType}
                         onChange={(e) => handleQuestionTypeChange(qIdx, e.target.value)}
@@ -1263,7 +1249,6 @@ export function CreateOpportunityPage() {
                         <option value="MCQ_MULTIPLE">Multiple Choice (Multiple Correct Answers)</option>
                       </select>
 
-                      {/* Difficulty Level */}
                       <select
                         value={q.difficulty}
                         onChange={(e) => handleQuestionChange(qIdx, 'difficulty', e.target.value)}
@@ -1282,7 +1267,6 @@ export function CreateOpportunityPage() {
                       </select>
                     </div>
 
-                    {/* Question Action Controls */}
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <button
                         type="button"
@@ -1328,7 +1312,6 @@ export function CreateOpportunityPage() {
                     </div>
                   </div>
 
-                  {/* Question Statement */}
                   <div>
                     <label className={styles.label} style={{ marginBottom: '4px', display: 'block' }}>
                       Question Statement / Problem Prompt *
@@ -1344,7 +1327,6 @@ export function CreateOpportunityPage() {
                     />
                   </div>
 
-                  {/* Options Management */}
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
                       <label className={styles.label} style={{ display: 'flex', alignItems: 'center', gap: '6px', margin: 0 }}>
@@ -1458,7 +1440,6 @@ export function CreateOpportunityPage() {
                     </div>
                   </div>
 
-                  {/* Explanation */}
                   <div>
                     <label className={styles.label} style={{ marginBottom: '4px', display: 'block' }}>
                       Explanation / Solution Rationale (Optional)
@@ -1476,7 +1457,6 @@ export function CreateOpportunityPage() {
             })}
           </div>
 
-          {/* Bottom Add Question Button */}
           <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'center', gap: '12px' }}>
             <button
               type="button"
@@ -1514,7 +1494,6 @@ export function CreateOpportunityPage() {
           </div>
         </div>
 
-        {/* Submit Actions */}
         <div className={styles.formFooter}>
           <button type="submit" className={styles.btnPrimary} disabled={submitting}>
             <Send size={15} />
@@ -1528,3 +1507,4 @@ export function CreateOpportunityPage() {
     </div>
   );
 }
+

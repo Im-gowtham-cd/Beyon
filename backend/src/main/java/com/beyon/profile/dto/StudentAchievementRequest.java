@@ -26,3 +26,4 @@ public class StudentAchievementRequest {
     public String getProofUrl() { return proofUrl; }
     public void setProofUrl(String proofUrl) { this.proofUrl = proofUrl; }
 }
+

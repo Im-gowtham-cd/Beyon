@@ -177,3 +177,4 @@ export const EMPTY_COMPANY_FORM: CompanyFormData = {
   verificationDocUrl: '', hiringTypes: [], preferredLevels: [],
   recruitmentRegions: [], skills: [], representatives: [],
 };
+

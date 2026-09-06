@@ -206,3 +206,4 @@ export interface StreakInfo {
   lastActivityDate?: string;
   streakFreezesAvailable: number;
 }
+

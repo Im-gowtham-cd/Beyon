@@ -26,7 +26,7 @@ export function ChallengesPage() {
       try {
         const c = await api.get<Challenge[]>('/challenges');
         setChallenges(c);
-      } catch { /* */ }
+      } catch {  }
       setLoading(false);
     }
     load();
@@ -35,7 +35,7 @@ export function ChallengesPage() {
   async function handleParticipate(challengeId: string) {
     try {
       await api.post(`/challenges/${challengeId}/participate`, {});
-    } catch { /* */ }
+    } catch {  }
   }
 
   const diffColors: Record<string, string> = {
@@ -106,3 +106,4 @@ export function ChallengesPage() {
     </div>
   );
 }
+

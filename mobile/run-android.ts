@@ -5,7 +5,6 @@ import fs from 'fs';
 const rootDir = path.resolve(__dirname, '..');
 const androidDir = path.resolve(__dirname, 'android');
 
-// Find Android SDK paths
 const localAppData = process.env.LOCALAPPDATA || 'C:\\Users\\gowth\\AppData\\Local';
 const androidHome = process.env.ANDROID_HOME || path.join(localAppData, 'Android', 'Sdk');
 
@@ -40,14 +39,13 @@ async function main() {
     process.exit(1);
   }
 
-  // 1. Check running devices
   const devicesOutput = getOutput(adbPath, ['devices']);
   const lines = devicesOutput.split('\n').filter(l => l.trim() && !l.includes('List of devices'));
   const activeDevices = lines.filter(l => l.includes('device') && !l.includes('offline'));
 
   if (activeDevices.length === 0) {
     console.log('⚡ No active Android emulator detected. Starting Android Studio emulator...');
-    
+
     let avdName = 'Pixel_7';
     if (fs.existsSync(emulatorPath)) {
       const avds = getOutput(emulatorPath, ['-list-avds']).trim().split('\n').map(a => a.trim()).filter(Boolean);
@@ -57,7 +55,7 @@ async function main() {
     }
 
     console.log(`🚀 Booting Android AVD: ${avdName}...`);
-    // Spawn emulator detached in background
+
     spawn(emulatorPath, ['-avd', avdName], {
       detached: true,
       stdio: 'ignore',
@@ -83,7 +81,6 @@ async function main() {
     console.log(`✓ Active Android device/emulator detected: ${activeDevices[0].split('\t')[0]}`);
   }
 
-  // 2. Build Debug APK using Gradle
   console.log('\n🔨 Compiling Native Android APK with Gradle...');
   try {
     runCmd(gradlewPath, ['assembleDebug']);
@@ -92,7 +89,6 @@ async function main() {
     process.exit(1);
   }
 
-  // 3. Install APK
   console.log('\n📦 Installing Beyon Mobile APK onto Android emulator...');
   try {
     runCmd(adbPath, ['install', '-r', `"${apkPath}"`]);
@@ -101,7 +97,6 @@ async function main() {
     process.exit(1);
   }
 
-  // 4. Launch Application
   console.log('\n🚀 Launching Beyon Mobile on Android Studio Phone Emulator...');
   runCmd(adbPath, ['shell', 'am', 'start', '-n', 'com.beyon.app/.MainActivity']);
 
@@ -117,3 +112,4 @@ main().catch(err => {
   console.error('Launcher error:', err);
   process.exit(1);
 });
+

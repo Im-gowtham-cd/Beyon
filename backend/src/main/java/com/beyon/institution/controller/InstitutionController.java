@@ -117,3 +117,4 @@ public class InstitutionController {
         return UUID.fromString(details.getUserId());
     }
 }
+

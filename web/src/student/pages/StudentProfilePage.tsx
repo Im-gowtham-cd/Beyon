@@ -326,7 +326,7 @@ function SkillsSection({ skills, learningSkills, onReload }: {
       setSearch('');
       setSelectedSkills([]);
       onReload();
-    } catch { /* */ }
+    } catch {  }
     setSaving(false);
   }
 
@@ -334,8 +334,6 @@ function SkillsSection({ skills, learningSkills, onReload }: {
     await studentProfileApi.removeSkill(id);
     onReload();
   }
-
-
 
   return (
     <div className={styles.section}>
@@ -448,7 +446,7 @@ function ProjectsSection({ projects, onReload }: { projects: StudentProject[]; o
       }
       resetForm();
       onReload();
-    } catch { /* */ }
+    } catch {  }
     setSaving(false);
   }
 
@@ -863,3 +861,4 @@ function LinksSection({ links, onReload }: { links: StudentLink[]; onReload: () 
     </div>
   );
 }
+

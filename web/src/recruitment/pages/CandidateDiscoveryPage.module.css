@@ -9,7 +9,6 @@
   min-height: 100vh;
 }
 
-/* Header Banner */
 .pageHeader {
   background: #ffffff;
   border: 1px solid #e2e8f0;
@@ -89,7 +88,6 @@
   font-weight: 400;
 }
 
-/* Stats Row */
 .statsRow {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -134,7 +132,6 @@
   margin-top: 2px;
 }
 
-/* Filter & Controls Row */
 .controlsRow {
   background: #ffffff;
   border: 1px solid #e2e8f0;
@@ -212,7 +209,6 @@
   color: #475569;
 }
 
-/* Candidate Grid */
 .candidateGrid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
@@ -300,7 +296,6 @@
   justify-content: space-between;
 }
 
-/* Metric Triple Block */
 .metricRow {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -331,7 +326,6 @@
   color: #0f172a;
 }
 
-/* Skills */
 .skillsContainer {
   display: flex;
   flex-direction: column;
@@ -360,7 +354,6 @@
   padding: 3px 8px;
 }
 
-/* Action Area */
 .cardActions {
   margin-top: auto;
   display: flex;
@@ -427,7 +420,6 @@
   border-color: #1c2d81;
 }
 
-/* Empty State */
 .emptyState {
   grid-column: 1 / -1;
   background: #ffffff;
@@ -455,3 +447,4 @@
   max-width: 440px;
   margin: 0;
 }
+

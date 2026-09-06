@@ -91,3 +91,4 @@ public class DailyChallengeController {
         return UUID.fromString(details.getUserId());
     }
 }
+

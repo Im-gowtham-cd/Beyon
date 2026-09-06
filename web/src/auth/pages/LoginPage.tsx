@@ -118,7 +118,7 @@ export function LoginPage() {
     <div className={styles.loginPage}>
       <main className={styles.loginMain}>
         <div className={styles.loginCard}>
-          {/* Left Aside */}
+
           <aside className={styles.loginAside}>
             <div className={styles.asideBrand}>
               <span className={styles.asideMark} aria-hidden="true" />
@@ -149,7 +149,6 @@ export function LoginPage() {
             </div>
           </aside>
 
-          {/* Right Panel */}
           <section className={styles.loginPanel}>
             <span className="section-label">Beyon Portal</span>
             <h1>Sign In</h1>
@@ -268,3 +267,4 @@ export function LoginPage() {
     </div>
   );
 }
+

@@ -10,3 +10,4 @@ public interface IndustryChallengeRepository extends JpaRepository<IndustryChall
     List<IndustryChallenge> findByStatus(String status);
     List<IndustryChallenge> findByOrganizerTypeAndStatus(String organizerType, String status);
 }
+

@@ -91,7 +91,6 @@ export function RecommendationsPage() {
         </button>
       </div>
 
-      {/* Filter Tabs */}
       <div style={{ display: 'flex', gap: '8px', margin: '20px 0', flexWrap: 'wrap' }}>
         {[
           { key: 'ALL', label: 'All Recommendations' },

@@ -14,3 +14,4 @@ public interface QuestionBankItemRepository extends JpaRepository<QuestionBankIt
     long countByCreatorIdAndIsActiveTrue(UUID creatorId);
     long countByIsActiveTrue();
 }
+

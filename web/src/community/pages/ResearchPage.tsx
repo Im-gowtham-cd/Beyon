@@ -24,7 +24,7 @@ export function ResearchPage() {
       try {
         const p = await api.get<ResearchProposal[]>('/research');
         setProposals(p);
-      } catch { /* */ }
+      } catch {  }
       setLoading(false);
     }
     load();
@@ -33,7 +33,7 @@ export function ResearchPage() {
   async function handleJoin(proposalId: string) {
     try {
       await api.post(`/research/${proposalId}/join`, { role: 'RESEARCHER' });
-    } catch { /* */ }
+    } catch {  }
   }
 
   if (loading) {
@@ -95,3 +95,4 @@ export function ResearchPage() {
     </div>
   );
 }
+

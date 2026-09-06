@@ -11,3 +11,4 @@ public interface RecruitmentInterviewRepository extends JpaRepository<Recruitmen
     List<RecruitmentInterview> findByPipelineIdOrderByRoundNumber(UUID pipelineId);
     List<RecruitmentInterview> findByInterviewerIdAndStatus(UUID interviewerId, String status);
 }
+

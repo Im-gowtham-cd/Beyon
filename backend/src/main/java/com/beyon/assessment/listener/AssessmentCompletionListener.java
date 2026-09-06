@@ -70,17 +70,13 @@ public class AssessmentCompletionListener {
         UUID oppId = event.opportunityId();
         BigDecimal score = event.score() != null ? event.score() : BigDecimal.ZERO;
 
-        // 1. Award Coins to Student
         coinService.earnCoins(studentId, "ASSESSMENT_COMPLETED", "ASSESSMENT", event.sessionId());
 
-        // 2. Record Streak Activity
         streakService.recordActivity(studentId);
 
-        // 3. Award XP
         UUID skillId = UUID.nameUUIDFromBytes("TECHNICAL_ASSESSMENT".getBytes());
         skillXpService.earnXp(studentId, skillId, 100, "ASSESSMENT", event.sessionId(), "Completed assessment with score " + score + "%");
 
-        // 4. Update Recruitment Application & History
         RecruitmentApplication app = null;
         if (event.applicationId() != null) {
             app = recruitmentAppRepo.findById(event.applicationId()).orElse(null);
@@ -110,7 +106,6 @@ public class AssessmentCompletionListener {
             statusHistoryRepo.save(history);
         }
 
-        // Also synchronize OpportunityApplication if present
         if (oppId != null) {
             Optional<OpportunityApplication> oppAppOpt = oppAppRepo.findByOpportunityIdAndStudentId(oppId, studentId);
             if (oppAppOpt.isPresent()) {
@@ -121,10 +116,9 @@ public class AssessmentCompletionListener {
             }
         }
 
-        // 5. Advance Recruitment Pipeline stage
         if (oppId != null) {
             var pipelines = pipelineRepo.findByCompanyIdOrderByCreatedAtDesc(oppId);
-            // Search pipeline by student
+
             for (RecruitmentPipeline p : pipelineRepo.findAll()) {
                 if (studentId.equals(p.getStudentId()) && oppId.equals(p.getOpportunityId())) {
                     p.setCurrentStage(nextStatus);
@@ -135,7 +129,6 @@ public class AssessmentCompletionListener {
             }
         }
 
-        // 6. Notify Student
         CompanyOpportunity opp = oppId != null ? oppRepo.findById(oppId).orElse(null) : null;
         String oppTitle = opp != null ? opp.getTitle() : "Technical Assessment";
         notificationService.send(studentId,
@@ -143,7 +136,6 @@ public class AssessmentCompletionListener {
                 "Your assessment for " + oppTitle + " has been evaluated. Score: " + score + "%. You earned 50 Beyon Coins!",
                 "ASSESSMENT", "ASSESSMENT_SESSION", event.sessionId());
 
-        // 7. Notify Company Recruiter
         if (opp != null && opp.getCompanyUserId() != null) {
             notificationService.send(opp.getCompanyUserId(),
                     "Candidate Assessment Completed",
@@ -151,7 +143,6 @@ public class AssessmentCompletionListener {
                     "RECRUITMENT", "ASSESSMENT_SESSION", event.sessionId());
         }
 
-        // 8. Push Realtime SSE
         try {
             realtimeService.sendEvent(studentId, "ASSESSMENT_EVALUATED", Map.of(
                     "sessionId", event.sessionId(),
@@ -162,3 +153,4 @@ public class AssessmentCompletionListener {
         } catch (Exception ignored) {}
     }
 }
+

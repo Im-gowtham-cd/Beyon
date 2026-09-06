@@ -11,3 +11,4 @@ public interface AlumniConnectionRepository extends JpaRepository<AlumniConnecti
     List<AlumniConnection> findByStudentId(UUID studentId);
     Optional<AlumniConnection> findByAlumniIdAndStudentIdAndConnectionType(UUID alumniId, UUID studentId, String type);
 }
+

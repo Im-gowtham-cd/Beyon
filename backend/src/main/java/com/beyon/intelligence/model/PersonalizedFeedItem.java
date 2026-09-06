@@ -37,3 +37,4 @@ public class PersonalizedFeedItem {
     public Boolean getDismissed() { return dismissed; } public void setDismissed(Boolean v) { this.dismissed = v; }
     public OffsetDateTime getCreatedAt() { return createdAt; }
 }
+

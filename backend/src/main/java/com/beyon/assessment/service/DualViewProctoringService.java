@@ -249,3 +249,4 @@ public class DualViewProctoringService {
         } catch (Exception ignored) {}
     }
 }
+

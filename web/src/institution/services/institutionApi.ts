@@ -45,3 +45,4 @@ export const recruitmentApi = {
   withdraw: (applicationId: string) => api.post(`/recruitment/${applicationId}/withdraw`),
   getPipeline: (opportunityId: string) => api.get<Record<string, number>>(`/recruitment/opportunity/${opportunityId}/pipeline`),
 };
+

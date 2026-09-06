@@ -47,3 +47,4 @@ contextBridge.exposeInMainWorld('beyon', {
     },
   },
 });
+

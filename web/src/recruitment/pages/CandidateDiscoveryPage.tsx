@@ -60,7 +60,6 @@ export function CandidateDiscoveryPage() {
 
         let fetchedCandidates: CandidateProfile[] = [];
 
-        // 1. Try candidates discovery pool first
         if (candRes && candRes.ok) {
           const cData = await candRes.json();
           if (Array.isArray(cData.data) && cData.data.length > 0) {
@@ -83,7 +82,6 @@ export function CandidateDiscoveryPage() {
           }
         }
 
-        // 2. Fallback to recruitment applications if candidates pool is empty
         if (fetchedCandidates.length === 0 && appsRes && appsRes.ok) {
           const appData = await appsRes.json();
           if (Array.isArray(appData.data) && appData.data.length > 0) {
@@ -108,7 +106,6 @@ export function CandidateDiscoveryPage() {
 
         setCandidates(fetchedCandidates);
 
-        // Pre-populate shortlisted set based on applicationStatus
         const initialShortlisted = new Set<string>();
         fetchedCandidates.forEach((c) => {
           if (c.applicationStatus === 'SHORTLISTED') {
@@ -154,7 +151,7 @@ export function CandidateDiscoveryPage() {
         });
       }
     } catch {
-      /* handled */
+
     }
   };
 
@@ -191,7 +188,7 @@ export function CandidateDiscoveryPage() {
 
   return (
     <div className={styles.page}>
-      {/* Header Banner */}
+
       <div className={styles.pageHeader}>
         <div className={styles.headerInfo}>
           <div className={styles.badgeRow}>
@@ -208,7 +205,6 @@ export function CandidateDiscoveryPage() {
         </div>
       </div>
 
-      {/* 4 Real Stats */}
       <div className={styles.statsRow}>
         <div className={styles.statCard}>
           <span className={styles.statLabel}>Verified Candidate Pool</span>
@@ -238,7 +234,6 @@ export function CandidateDiscoveryPage() {
         </div>
       </div>
 
-      {/* Filters & Controls */}
       <div className={styles.controlsRow}>
         <div className={styles.filterGroup}>
           <div className={styles.searchWrap}>
@@ -283,7 +278,6 @@ export function CandidateDiscoveryPage() {
         </span>
       </div>
 
-      {/* Candidate Grid */}
       {loading ? (
         <div className={styles.emptyState}>
           <Clock size={32} style={{ color: '#1c2d81', animation: 'spin 2s linear infinite' }} />
@@ -306,7 +300,7 @@ export function CandidateDiscoveryPage() {
                 key={c.id}
                 className={`${styles.candidateCard} ${isShortlisted ? styles.candidateCardShortlisted : ''}`}
               >
-                {/* Header */}
+
                 <div className={styles.cardHeader}>
                   <div className={styles.avatar}>
                     {c.name.slice(0, 2).toUpperCase()}
@@ -320,13 +314,11 @@ export function CandidateDiscoveryPage() {
                   </div>
                 </div>
 
-                {/* Degree & Batch info */}
                 <div className={styles.deptInfo}>
                   <span>{c.degree} · {c.department}</span>
                   {c.batch && <span>Batch {c.batch}</span>}
                 </div>
 
-                {/* Key Metrics */}
                 <div className={styles.metricRow}>
                   <div className={styles.metricBlock}>
                     <span className={styles.metricLabel}>Academic CGPA</span>
@@ -356,7 +348,6 @@ export function CandidateDiscoveryPage() {
                   </div>
                 </div>
 
-                {/* Real Verified Skills */}
                 <div className={styles.skillsContainer}>
                   <span className={styles.skillsLabel}>Verified Technical Skills</span>
                   <div className={styles.skillsList}>
@@ -374,7 +365,6 @@ export function CandidateDiscoveryPage() {
                   </div>
                 </div>
 
-                {/* Card Actions */}
                 <div className={styles.cardActions}>
                   <button
                     className={`${styles.btnShortlist} ${isShortlisted ? styles.btnShortlistedActive : ''}`}

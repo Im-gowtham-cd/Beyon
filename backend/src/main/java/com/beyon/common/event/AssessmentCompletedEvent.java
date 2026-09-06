@@ -13,3 +13,4 @@ public record AssessmentCompletedEvent(
     int timeTakenSeconds,
     String integrityStatus
 ) {}
+

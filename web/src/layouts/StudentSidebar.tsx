@@ -59,7 +59,7 @@ export function StudentSidebar({
           setStreak(streakData.data?.currentStreak ?? 0);
         }
       } catch {
-        /* fallback */
+
       }
     }
     fetchStats();
@@ -117,7 +117,7 @@ export function StudentSidebar({
       <aside
         className={`${styles.sidebar} ${collapsed ? styles.sidebarCollapsed : ''} ${mobileOpen ? styles.sidebarOpenMobile : ''}`}
       >
-        {/* Brand Header */}
+
         <div className={styles.brandHeader}>
           <Link to="/student/home" className={styles.brandLink}>
             <div className={styles.brandLogo} style={{ background: 'transparent', boxShadow: 'none' }}>
@@ -132,9 +132,8 @@ export function StudentSidebar({
           </Link>
         </div>
 
-        {/* Sidebar Scrollable Body */}
         <div className={styles.sidebarScroll}>
-          {/* User Card */}
+
           <div className={`${styles.userCard} ${collapsed ? styles.userCardCollapsed : ''}`}>
             <div className={styles.userInfo}>
               <div className={styles.avatar}>
@@ -163,7 +162,6 @@ export function StudentSidebar({
             )}
           </div>
 
-          {/* Navigation Sections */}
           {navSections.map((section) => (
             <div key={section.title} className={styles.navSection}>
               {!collapsed && <span className={styles.sectionTitle}>{section.title}</span>}
@@ -199,7 +197,6 @@ export function StudentSidebar({
           ))}
         </div>
 
-        {/* Footer Utility Actions */}
         <div className={styles.footerSection}>
           {onToggleCollapse && (
             <button
@@ -217,3 +214,4 @@ export function StudentSidebar({
     </>
   );
 }
+

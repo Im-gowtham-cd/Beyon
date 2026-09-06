@@ -35,7 +35,6 @@ export function TopicDetail() {
   const [allLearningTopics, setAllLearningTopics] = useState<any[]>([]);
   const [topicQuestions, setTopicQuestions] = useState<any[]>([]);
 
-  // Knowledge Verification Quiz State
   const [showQuizModal, setShowQuizModal] = useState(false);
   const [selectedAnswers, setSelectedAnswers] = useState<Record<string | number, number>>({});
   const [quizSubmitted, setQuizSubmitted] = useState(false);
@@ -67,9 +66,9 @@ export function TopicDetail() {
           if (qRes?.data && Array.isArray(qRes.data) && qRes.data.length > 0) {
             setTopicQuestions(qRes.data);
           }
-        } catch { /* ignore */ }
+        } catch {  }
       }
-    } catch { /* */ }
+    } catch {  }
     setLoading(false);
   }, [skillSlug, topicSlug]);
 
@@ -80,7 +79,7 @@ export function TopicDetail() {
     try {
       const entry = await studentLearningApi.addTopic(topic.id);
       setLearningEntry(entry);
-    } catch { /* */ }
+    } catch {  }
   }
 
   async function handleStopLearning() {
@@ -88,7 +87,7 @@ export function TopicDetail() {
     try {
       await studentLearningApi.removeTopic(learningEntry.id);
       setLearningEntry(null);
-    } catch { /* */ }
+    } catch {  }
   }
 
   function handleOpenQuiz() {
@@ -111,7 +110,7 @@ export function TopicDetail() {
         const updated = await studentLearningApi.updateStatus(learningEntry.id, 'COMPLETED');
         setLearningEntry(updated);
       }
-    } catch { /* */ }
+    } catch {  }
   }
 
   function handleAnswerSelect(qId: string | number, optionIdx: number) {
@@ -144,7 +143,7 @@ export function TopicDetail() {
     try {
       const updated = await studentLearningApi.updateStatus(learningEntry.id, status);
       setLearningEntry(updated);
-    } catch { /* */ }
+    } catch {  }
   }
 
   if (loading) {
@@ -186,7 +185,6 @@ export function TopicDetail() {
         <span style={{ color: '#1c2d81', fontWeight: 700 }}>{topic.name}</span>
       </nav>
 
-      {/* Lesson Header Card */}
       <div style={{ background: '#ffffff', border: isCompleted ? '1.5px solid #16a34a' : '1px solid #e2e8f0', borderRadius: '8px', padding: '24px', marginBottom: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px' }}>
           <div>
@@ -250,7 +248,6 @@ export function TopicDetail() {
           </div>
         </div>
 
-        {/* Study Status Controls */}
         <div style={{ marginTop: '20px', paddingTop: '16px', borderTop: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#334155' }}>Learning Status:</span>
@@ -299,14 +296,13 @@ export function TopicDetail() {
         </div>
       </div>
 
-      {/* Lesson Documentation & Technical Context */}
       {(() => {
         const elaborateData = topicSlug ? TOPIC_CONTENT_REGISTRY[topicSlug] : null;
 
         if (elaborateData) {
           return (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginBottom: '28px' }}>
-              {/* Main Architectural Header & Overview Card */}
+
               <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '4px', padding: '24px', boxShadow: '0 1px 3px rgba(15, 23, 42, 0.03)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px', marginBottom: '16px', paddingBottom: '14px', borderBottom: '1px solid #f1f5f9' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -328,7 +324,6 @@ export function TopicDetail() {
                   {elaborateData.overview}
                 </div>
 
-                {/* SDE Questions: Full Uncompressed Questions & Answers */}
                 {elaborateData.sdeQuestions && elaborateData.sdeQuestions.length > 0 && (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginTop: '24px' }}>
                     {elaborateData.sdeQuestions.map((q) => (
@@ -342,7 +337,6 @@ export function TopicDetail() {
                           </h3>
                         </div>
 
-                        {/* Official Definition */}
                         {q.officialDefinition && (
                           <div style={{ background: '#f8fafc', borderLeft: '3px solid #1c2d81', padding: '12px 16px', borderRadius: '2px', margin: '0 0 14px', fontSize: '0.89rem', color: '#334155', lineHeight: 1.65 }}>
                             <div style={{ fontWeight: 700, color: '#1c2d81', fontSize: '0.74rem', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '4px' }}>
@@ -352,7 +346,6 @@ export function TopicDetail() {
                           </div>
                         )}
 
-                        {/* Why do we need it / Problem / Solution */}
                         {q.whyNeeded && (
                           <div style={{ margin: '0 0 14px', color: '#334155', fontSize: '0.9rem', lineHeight: 1.7, whiteSpace: 'pre-line' }}>
                             <div style={{ fontWeight: 700, color: '#0f172a', marginBottom: '4px' }}>Why do we need it?</div>
@@ -381,14 +374,12 @@ export function TopicDetail() {
                           </div>
                         )}
 
-                        {/* Visual ASCII Diagram */}
                         {q.diagram && (
                           <div style={{ background: '#0f172a', color: '#38bdf8', padding: '14px 16px', borderRadius: '4px', fontFamily: 'monospace', fontSize: '0.835rem', margin: '14px 0', overflowX: 'auto', lineHeight: 1.5, whiteSpace: 'pre', border: '1px solid #1e293b' }}>
                             {q.diagram}
                           </div>
                         )}
 
-                        {/* Where is it used */}
                         {q.whereUsed && q.whereUsed.length > 0 && (
                           <div style={{ margin: '14px 0', background: '#f8fafc', border: '1px solid #e2e8f0', padding: '12px 16px', borderRadius: '4px' }}>
                             <div style={{ fontWeight: 700, fontSize: '0.78rem', color: '#1c2d81', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
@@ -404,14 +395,12 @@ export function TopicDetail() {
                           </div>
                         )}
 
-                        {/* Explanation */}
                         {q.explanation && (
                           <p style={{ color: '#334155', fontSize: '0.9rem', lineHeight: 1.7, margin: '10px 0', whiteSpace: 'pre-line' }}>
                             {q.explanation}
                           </p>
                         )}
 
-                        {/* Key Points */}
                         {q.keyPoints && q.keyPoints.length > 0 && (
                           <ul style={{ paddingLeft: '18px', margin: '10px 0 14px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
                             {q.keyPoints.map((kp, kpIdx) => (
@@ -422,7 +411,6 @@ export function TopicDetail() {
                           </ul>
                         )}
 
-                        {/* Code snippet */}
                         {q.code && (
                           <div style={{ marginTop: '12px', borderRadius: '4px', overflow: 'hidden', border: '1px solid #e2e8f0' }}>
                             <div style={{ background: '#1e293b', color: '#cbd5e1', padding: '7px 14px', fontSize: '0.76rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -440,7 +428,6 @@ export function TopicDetail() {
                           </div>
                         )}
 
-                        {/* Table */}
                         {q.table && (
                           <div style={{ marginTop: '14px', overflowX: 'auto', border: '1px solid #e2e8f0', borderRadius: '4px' }}>
                             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.84rem' }}>
@@ -468,7 +455,6 @@ export function TopicDetail() {
                           </div>
                         )}
 
-                        {/* Interview Answer (2 minutes) Callout */}
                         {q.interviewAnswer && (
                           <div style={{ marginTop: '14px', background: '#f0fdf4', border: '1px solid #bbf7d0', borderLeft: '3px solid #16a34a', borderRadius: '4px', padding: '14px 18px' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#15803d', fontWeight: 700, fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '6px' }}>
@@ -484,7 +470,6 @@ export function TopicDetail() {
                   </div>
                 )}
 
-                {/* Comprehensive Demo (Applying All Concepts) */}
                 {elaborateData.comprehensiveDemo && (
                   <div style={{ marginTop: '28px', border: '1px solid #cbd5e1', borderRadius: '4px', overflow: 'hidden' }}>
                     <div style={{ background: '#1c2d81', color: '#ffffff', padding: '12px 18px', fontWeight: 700, fontSize: '0.92rem', fontFamily: 'var(--font-heading, Montserrat)', display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -507,7 +492,6 @@ export function TopicDetail() {
                   </div>
                 )}
 
-                {/* Interview Traps */}
                 {elaborateData.sdeTraps && elaborateData.sdeTraps.length > 0 && (
                   <div style={{ marginTop: '28px' }}>
                     <h3 style={{ fontFamily: 'var(--font-heading, Montserrat)', fontSize: '1.05rem', fontWeight: 700, color: '#0f172a', margin: '0 0 14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -545,7 +529,6 @@ export function TopicDetail() {
                   </div>
                 )}
 
-                {/* Mental Model & Key Takeaways */}
                 {elaborateData.mentalModel && (
                   <div style={{ marginTop: '28px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '4px', padding: '20px' }}>
                     <h3 style={{ fontFamily: 'var(--font-heading, Montserrat)', fontSize: '1.05rem', fontWeight: 700, color: '#0f172a', margin: '0 0 12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -569,7 +552,6 @@ export function TopicDetail() {
                   </div>
                 )}
 
-                {/* Legacy / Extra Core Concept Modules (if any) */}
                 {elaborateData.coreConcepts && elaborateData.coreConcepts.length > 0 && (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '18px', marginTop: '24px' }}>
                     {elaborateData.coreConcepts.map((concept, idx) => (
@@ -610,7 +592,6 @@ export function TopicDetail() {
                   </div>
                 )}
 
-                {/* Legacy Comparison Table (if any) */}
                 {elaborateData.comparisons && (
                   <div style={{ marginTop: '24px' }}>
                     <h3 style={{ fontFamily: 'var(--font-heading, Montserrat)', fontSize: '1rem', fontWeight: 700, color: '#0f172a', margin: '0 0 12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -644,7 +625,6 @@ export function TopicDetail() {
                 )}
               </div>
 
-              {/* Granular Subtopics with Technical Explanations & Interview Q&As (if available) */}
               {elaborateData.subtopicBreakdowns && Object.keys(elaborateData.subtopicBreakdowns).length > 0 && (
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', margin: '0 0 14px', flexWrap: 'wrap', gap: '8px' }}>
@@ -712,7 +692,7 @@ export function TopicDetail() {
 
         return (
           <>
-            {/* Standard Lesson Documentation & Technical Context */}
+
             <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '28px', marginBottom: '24px' }}>
               <h2 style={{ fontSize: '1.2rem', fontWeight: 700, color: '#0f172a', margin: '0 0 16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <BookOpen size={18} color="#1c2d81" /> Architecture &amp; Core Concept Breakdown
@@ -736,7 +716,6 @@ export function TopicDetail() {
               </div>
             </div>
 
-            {/* Subtopics & Granular Topics */}
             <h2 style={{ fontSize: '1.15rem', fontWeight: 700, color: '#0f172a', margin: '0 0 16px' }}>
               Granular Subtopics ({subtopics.length})
             </h2>
@@ -759,7 +738,6 @@ export function TopicDetail() {
         );
       })()}
 
-      {/* Proctored Certification Callout */}
       {(() => {
         const completedSkillTopicsCount = allSkillTopics.filter(st =>
           allLearningTopics.some(lt => lt.topicId === st.id && (lt.status === 'COMPLETED' || (topic && lt.topicId === topic.id && isCompleted)))
@@ -850,7 +828,6 @@ export function TopicDetail() {
         );
       })()}
 
-      {/* Knowledge Verification Quiz Modal */}
       {showQuizModal && (() => {
         const activeQuizQuestions = (topicQuestions && topicQuestions.length > 0)
           ? topicQuestions.map((q: any) => {
@@ -1036,7 +1013,7 @@ export function TopicDetail() {
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                         {q.options.map((opt: string, optIndex: number) => {
                           const isSelected = selected === optIndex;
-                          const optionLetter = String.fromCharCode(65 + optIndex); // A, B, C, D
+                          const optionLetter = String.fromCharCode(65 + optIndex);
                           return (
                             <label
                               key={optIndex}

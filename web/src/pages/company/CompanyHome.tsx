@@ -56,7 +56,7 @@ export function CompanyHome() {
           }
         }
       } catch {
-        /* fallback */
+
       }
     }
     loadData();
@@ -115,7 +115,6 @@ export function CompanyHome() {
         </div>
       )}
 
-      {/* Executive Welcome Hero */}
       <section className={styles.welcomeHero}>
         <div className={styles.welcomeInfo}>
           <div className={styles.badgeRow}>
@@ -158,7 +157,6 @@ export function CompanyHome() {
         </div>
       </section>
 
-      {/* 4 KPI Metrics */}
       <div className={styles.kpiGrid}>
         <div className={styles.kpiCard}>
           <div className={styles.kpiHeader}>
@@ -213,7 +211,6 @@ export function CompanyHome() {
         </div>
       </div>
 
-      {/* Fast Action Banner */}
       <div className={styles.actionBanner}>
         <div className={styles.actionBannerLeft}>
           <div className={styles.actionBannerIcon}>
@@ -240,10 +237,9 @@ export function CompanyHome() {
         </div>
       </div>
 
-      {/* Main Grid: Applications Table + Right Sidebar */}
       <div className={styles.dashboardGrid}>
         <div className={styles.mainColumn}>
-          {/* Applications Table Header */}
+
           <div className={styles.sectionHeader}>
             <h2 className={styles.sectionTitle}>
               <ListChecks size={18} style={{ color: '#1c2d81' }} /> Live Candidate Application Stream
@@ -332,9 +328,8 @@ export function CompanyHome() {
           </div>
         </div>
 
-        {/* Right Aside */}
         <div className={styles.sideColumn}>
-          {/* Active Campus Drives Card */}
+
           <div className={styles.sideCard}>
             <div className={styles.sideCardHeader}>
               <Briefcase size={18} style={{ color: '#1c2d81' }} />
@@ -366,7 +361,6 @@ export function CompanyHome() {
             </Link>
           </div>
 
-          {/* AI Recommended Talent Card */}
           <div className={styles.sideCard}>
             <div className={styles.sideCardHeader}>
               <Brain size={18} style={{ color: '#1c2d81' }} />
@@ -388,3 +382,4 @@ export function CompanyHome() {
     </div>
   );
 }
+

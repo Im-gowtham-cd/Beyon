@@ -8,3 +8,4 @@ import java.util.UUID;
 public interface AdaptiveLearningStepRepository extends JpaRepository<AdaptiveLearningStep, UUID> {
     List<AdaptiveLearningStep> findByPathIdOrderByStepOrder(UUID pathId);
 }
+

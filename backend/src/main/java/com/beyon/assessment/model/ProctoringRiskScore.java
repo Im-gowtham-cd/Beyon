@@ -47,3 +47,4 @@ public class ProctoringRiskScore {
     public OffsetDateTime getRecordedAt() { return recordedAt; }
     public void setRecordedAt(OffsetDateTime v) { this.recordedAt = v; }
 }
+

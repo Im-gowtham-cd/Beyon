@@ -25,7 +25,7 @@ public class AssessmentReattemptRequest {
     private UUID companyId;
 
     @Column(nullable = false, length = 30)
-    private String status = "PENDING"; // PENDING, APPROVED, REJECTED, CONSUMED
+    private String status = "PENDING";
 
     @Column(name = "termination_reason", columnDefinition = "text")
     private String terminationReason;
@@ -72,3 +72,4 @@ public class AssessmentReattemptRequest {
     public OffsetDateTime getReviewedAt() { return reviewedAt; }
     public void setReviewedAt(OffsetDateTime reviewedAt) { this.reviewedAt = reviewedAt; }
 }
+

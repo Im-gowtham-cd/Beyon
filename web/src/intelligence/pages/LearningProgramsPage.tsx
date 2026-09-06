@@ -19,7 +19,6 @@ export function LearningProgramsPage() {
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<'recommended' | 'browse' | 'enrolled'>('recommended');
 
-  // Interactive Course Documentation Modal / Reader
   const [selectedProgram, setSelectedProgram] = useState<any | null>(null);
   const [programModules, setProgramModules] = useState<any[]>([]);
   const [activeModuleIndex, setActiveModuleIndex] = useState<number>(0);
@@ -38,7 +37,7 @@ export function LearningProgramsPage() {
         setEnrollments(Array.isArray(e) ? e : []);
         const pData = (profRes as any)?.data || profRes;
         setStudentProfile(pData);
-      } catch { /* */ }
+      } catch {  }
       setLoading(false);
     }
     load();
@@ -48,7 +47,7 @@ export function LearningProgramsPage() {
     try {
       const enrollment = await intelligenceApi.enrollProgram(programId);
       setEnrollments(prev => [...prev, enrollment]);
-    } catch { /* */ }
+    } catch {  }
   }
 
   async function openProgramDocs(prog: LearningProgram) {
@@ -73,7 +72,6 @@ export function LearningProgramsPage() {
 
   const enrolledIds = new Set(enrollments.map(e => e.programId));
 
-  // Determine profile relevance
   const preferredRoles = studentProfile?.preferredJobRoles || 'Full Stack Developer';
   const filteredRecommended = programs.filter(p => {
     const title = p.title.toLowerCase();
@@ -288,12 +286,10 @@ export function LearningProgramsPage() {
         )
       )}
 
-      {/* Interactive Course & Documentation Modal Reader */}
       {selectedProgram && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
           <div style={{ background: '#ffffff', width: '100%', maxWidth: '1080px', height: '85vh', borderRadius: '12px', display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: '0 20px 40px rgba(0,0,0,0.2)' }}>
-            
-            {/* Modal Header */}
+
             <div style={{ padding: '16px 24px', borderBottom: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#f8fafc' }}>
               <div>
                 <div style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>
@@ -311,10 +307,8 @@ export function LearningProgramsPage() {
               </button>
             </div>
 
-            {/* Split Content: Modules Sidebar + Lesson Reader */}
             <div style={{ display: 'grid', gridTemplateColumns: '320px 1fr', flex: 1, overflow: 'hidden' }}>
-              
-              {/* Modules Sidebar */}
+
               <div style={{ borderRight: '1px solid #e2e8f0', background: '#fafafa', overflowY: 'auto', padding: '16px' }}>
                 <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#475569', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                   Course Syllabus ({programModules.length} Modules)
@@ -361,7 +355,6 @@ export function LearningProgramsPage() {
                 )}
               </div>
 
-              {/* Lesson Documentation Reader */}
               <div style={{ overflowY: 'auto', padding: '32px 40px', background: '#ffffff' }}>
                 {programModules.length > 0 && programModules[activeModuleIndex] ? (
                   <div>
@@ -401,7 +394,6 @@ export function LearningProgramsPage() {
                       </button>
                     </div>
 
-                    {/* Lesson Body Content */}
                     <div style={{ color: '#334155', fontSize: '0.95rem', lineHeight: 1.7 }}>
                       <div
                         style={{ whiteSpace: 'pre-wrap', fontFamily: 'inherit' }}

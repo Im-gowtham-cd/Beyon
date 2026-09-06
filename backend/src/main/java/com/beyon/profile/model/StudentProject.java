@@ -81,3 +81,4 @@ public class StudentProject {
     public void setFeatured(boolean featured) { this.featured = featured; }
     public Instant getUpdatedAt() { return updatedAt; }
 }
+

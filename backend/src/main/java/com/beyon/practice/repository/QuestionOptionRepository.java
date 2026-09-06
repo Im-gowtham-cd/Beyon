@@ -11,3 +11,4 @@ public interface QuestionOptionRepository extends JpaRepository<QuestionOption, 
     List<QuestionOption> findByQuestionIdOrderByDisplayOrder(UUID questionId);
     List<QuestionOption> findByQuestionIdIn(List<UUID> questionIds);
 }
+

@@ -10,3 +10,4 @@ public interface SecurityAuditLogRepository extends JpaRepository<SecurityAuditL
     List<SecurityAuditLog> findByActionOrderByCreatedAtDesc(String action);
     long countByUserIdAndActionAndCreatedAtAfter(UUID userId, String action, java.time.OffsetDateTime since);
 }
+

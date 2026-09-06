@@ -39,3 +39,4 @@ public class ResetPasswordRequest {
         this.confirmPassword = confirmPassword;
     }
 }
+

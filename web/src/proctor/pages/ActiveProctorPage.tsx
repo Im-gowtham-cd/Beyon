@@ -23,7 +23,6 @@ export const ActiveProctorPage: React.FC<Props> = ({
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const wakeLockRef = useRef<any>(null);
 
-  // Timer
   useEffect(() => {
     const timer = setInterval(() => {
       setElapsedSeconds((prev) => prev + 1);
@@ -31,7 +30,6 @@ export const ActiveProctorPage: React.FC<Props> = ({
     return () => clearInterval(timer);
   }, []);
 
-  // Screen Wake Lock API (prevents phone display from sleeping)
   useEffect(() => {
     const requestWakeLock = async () => {
       try {
@@ -52,7 +50,6 @@ export const ActiveProctorPage: React.FC<Props> = ({
     };
   }, []);
 
-  // Battery status API
   useEffect(() => {
     if ('getBattery' in navigator) {
       (navigator as any).getBattery().then((battery: any) => {
@@ -72,7 +69,7 @@ export const ActiveProctorPage: React.FC<Props> = ({
 
   return (
     <div className={styles.card} style={{ opacity: isDimmed ? 0.4 : 1, transition: 'opacity 0.3s ease' }}>
-      {/* Top Status & Controls */}
+
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
           <h2 className={styles.title} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -84,10 +81,8 @@ export const ActiveProctorPage: React.FC<Props> = ({
         <ConnectionStatus state="connected" />
       </div>
 
-      {/* Camera Preview */}
       <CameraPreview stream={stream} mirrored={false} />
 
-      {/* Device Info Pills */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div className={styles.devicePillGroup}>
           <div className={styles.devicePill}>
@@ -108,7 +103,6 @@ export const ActiveProctorPage: React.FC<Props> = ({
           </div>
         </div>
 
-        {/* Dim Screen Power Saver Button */}
         <button
           className={styles.btnSecondary}
           style={{ padding: '0.35rem 0.65rem', fontSize: '0.75rem' }}
@@ -120,7 +114,6 @@ export const ActiveProctorPage: React.FC<Props> = ({
         </button>
       </div>
 
-      {/* Diagnostic telemetry stats */}
       <div className={styles.statGrid}>
         <div className={styles.statCard}>
           <span className={styles.statLabel}>Heartbeat Sync</span>
@@ -142,7 +135,6 @@ export const ActiveProctorPage: React.FC<Props> = ({
         </div>
       </div>
 
-      {/* Guidance */}
       <div className={styles.guidelineList}>
         <div className={styles.guidelineItem}>
           <span className={styles.guidelineSuccessIcon}>✓</span>
@@ -154,7 +146,6 @@ export const ActiveProctorPage: React.FC<Props> = ({
         </div>
       </div>
 
-      {/* Disconnect button & confirmation */}
       {showConfirmModal ? (
         <div style={{
           padding: '1rem',

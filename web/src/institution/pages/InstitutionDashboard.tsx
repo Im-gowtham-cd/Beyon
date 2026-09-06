@@ -19,7 +19,7 @@ export function InstitutionDashboard() {
         setStudents(s);
         setRating(r);
 
-      } catch { /* */ }
+      } catch {  }
       setLoading(false);
     }
     load();
@@ -85,3 +85,4 @@ export function InstitutionDashboard() {
     </div>
   );
 }
+

@@ -15,3 +15,4 @@ public interface NotificationRepository extends JpaRepository<Notification, UUID
     @Query("SELECT n FROM Notification n WHERE n.userId = :userId AND n.notificationType = :type ORDER BY n.createdAt DESC")
     List<Notification> findByUserIdAndType(UUID userId, String type);
 }
+

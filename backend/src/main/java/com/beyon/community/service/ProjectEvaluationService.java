@@ -19,7 +19,7 @@ public class ProjectEvaluationService {
     }
 
     public ProjectEvaluation submitEvaluation(ProjectEvaluation eval) {
-        // Calculate overall score
+
         int total = eval.getTechnicalQuality() + eval.getInnovation() + eval.getCodeQuality()
             + eval.getDocumentation() + eval.getPresentation() + eval.getProblemSolving() + eval.getTeamwork();
         eval.setOverallScore(BigDecimal.valueOf(total / 7.0).setScale(2, RoundingMode.HALF_UP));
@@ -50,3 +50,4 @@ public class ProjectEvaluationService {
         return result;
     }
 }
+

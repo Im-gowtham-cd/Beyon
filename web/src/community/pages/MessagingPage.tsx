@@ -64,7 +64,6 @@ export function MessagingPage() {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
 
-  // New Chat Modal state
   const [modalOpen, setModalOpen] = useState(false);
   const [contactFilterRole, setContactFilterRole] = useState<'ALL' | 'STUDENT' | 'INSTITUTION' | 'COMPANY'>('ALL');
   const [contactSearch, setContactSearch] = useState('');
@@ -88,7 +87,7 @@ export function MessagingPage() {
         return list;
       }
     } catch {
-      /* fallback */
+
     } finally {
       setLoading(false);
     }
@@ -106,11 +105,10 @@ export function MessagingPage() {
         setMessages(json.data || []);
       }
     } catch {
-      /* fallback */
+
     }
   };
 
-  // Initial load and Target recipient auto-selection
   useEffect(() => {
     let isMounted = true;
 
@@ -119,16 +117,16 @@ export function MessagingPage() {
       if (!isMounted) return;
 
       if (targetRecipientId) {
-        // Find existing conversation with target recipient
-        const existing = list.find((c: Conversation) => 
-          c.recipientId === targetRecipientId || 
+
+        const existing = list.find((c: Conversation) =>
+          c.recipientId === targetRecipientId ||
           (c as any).participantIds?.includes(targetRecipientId)
         );
 
         if (existing) {
           selectConversation(existing);
         } else {
-          // Create or retrieve direct conversation for target recipient
+
           try {
             const token = localStorage.getItem('beyon_token') || localStorage.getItem('beyon_access_token');
             const res = await fetch('/api/v1/messages/conversations', {
@@ -152,7 +150,7 @@ export function MessagingPage() {
               }
             }
           } catch {
-            /* ignore */
+
           }
         }
       } else if (list.length > 0 && !selectedConv) {
@@ -164,7 +162,6 @@ export function MessagingPage() {
     return () => { isMounted = false; };
   }, [targetRecipientId]);
 
-  // Polling for new messages in active chat
   useEffect(() => {
     if (selectedConv) {
       if (pollTimerRef.current) clearInterval(pollTimerRef.current);
@@ -178,7 +175,6 @@ export function MessagingPage() {
     };
   }, [selectedConv]);
 
-  // Scroll to bottom when messages update
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
@@ -213,13 +209,12 @@ export function MessagingPage() {
         }
       }
     } catch {
-      /* ignore */
+
     } finally {
       setSending(false);
     }
   };
 
-  // Fetch contacts for modal
   const fetchContacts = async () => {
     setLoadingContacts(true);
     try {
@@ -233,7 +228,7 @@ export function MessagingPage() {
         setContacts(json.data || []);
       }
     } catch {
-      /* fallback */
+
     } finally {
       setLoadingContacts(false);
     }
@@ -272,7 +267,7 @@ export function MessagingPage() {
         }
       }
     } catch {
-      /* ignore */
+
     }
   };
 
@@ -330,9 +325,7 @@ export function MessagingPage() {
 
   return (
     <div className={styles.messagingContainer}>
-      {/* ===================================================================
-          1. LEFT SIDEBAR (Conversations & Contacts)
-          =================================================================== */}
+
       <aside className={styles.sidebar}>
         <div className={styles.sidebarHeader}>
           <div className={styles.headerTop}>
@@ -433,9 +426,6 @@ export function MessagingPage() {
         </div>
       </aside>
 
-      {/* ===================================================================
-          2. RIGHT PANEL (Active Chat Stream)
-          =================================================================== */}
       <main className={styles.chatWindow}>
         {selectedConv ? (
           <>
@@ -561,9 +551,6 @@ export function MessagingPage() {
         )}
       </main>
 
-      {/* ===================================================================
-          3. NEW CONVERSATION DIRECTORY MODAL
-          =================================================================== */}
       {modalOpen && (
         <div className={styles.modalBackdrop} onClick={() => setModalOpen(false)}>
           <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
@@ -646,3 +633,4 @@ export function MessagingPage() {
     </div>
   );
 }
+

@@ -10,3 +10,4 @@ public interface SocialPostRepository extends JpaRepository<SocialPost, UUID> {
     List<SocialPost> findByVisibilityOrderByCreatedAtDesc(String visibility);
     List<SocialPost> findByPostTypeOrderByCreatedAtDesc(String postType);
 }
+

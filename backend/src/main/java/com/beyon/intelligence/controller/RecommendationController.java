@@ -41,3 +41,4 @@ public class RecommendationController {
         throw new RuntimeException("Unauthorized");
     }
 }
+

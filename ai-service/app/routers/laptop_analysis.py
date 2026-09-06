@@ -29,7 +29,6 @@ async def analyze_laptop_frame(req: LaptopFrameRequest):
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         mean_brightness = float(np.mean(gray))
 
-        # Camera cover / obstruction check
         if mean_brightness < 12.0:
             events.append(DetectionEvent(
                 eventType="CAMERA_OBSTRUCTION",
@@ -42,20 +41,17 @@ async def analyze_laptop_frame(req: LaptopFrameRequest):
                 gazeDirection="CENTER", confidence=0.95, events=events
             )
 
-        # 1. Skin tone detection in YCrCb color space
         ycrcb = cv2.cvtColor(img, cv2.COLOR_BGR2YCrCb)
         lower_skin = np.array([0, 133, 77], dtype=np.uint8)
         upper_skin = np.array([255, 173, 127], dtype=np.uint8)
         skin_mask = cv2.inRange(ycrcb, lower_skin, upper_skin)
 
-        # Morphology to remove small noise
         kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (7, 7))
         skin_mask = cv2.morphologyEx(skin_mask, cv2.MORPH_OPEN, kernel, iterations=2)
         skin_mask = cv2.morphologyEx(skin_mask, cv2.MORPH_DILATE, kernel, iterations=2)
 
         contours, _ = cv2.findContours(skin_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
-        # Filter contours by size and aspect ratio
         face_contours = []
         min_area = 0.03 * (w * h)
         for c in contours:
@@ -123,7 +119,6 @@ async def analyze_laptop_frame(req: LaptopFrameRequest):
                     metadata={"offset": float(y_offset), "direction": "DOWN"}
                 ))
 
-        # 2. Handheld glowing phone / screen detection in front view (YOLO Object Detector)
         from app.services.yolo_detector import detect_objects_yolo
         _, yolo_phone, yolo_objs = detect_objects_yolo(img)
         if yolo_phone:
@@ -135,7 +130,6 @@ async def analyze_laptop_frame(req: LaptopFrameRequest):
                 metadata={"bbox": phone_bbox, "source": "yolo_model"}
             ))
 
-        # 3. Deep Learning Cheating CNN & Posture Telemetry
         from app.services.cheat_cnn_detector import detect_cheating_cnn
         is_cheating, cheat_prob, cnn_meta = detect_cheating_cnn(img)
         if is_cheating or cheat_prob >= 0.70:

@@ -68,7 +68,6 @@ export function CompanyAnalyticsPage() {
     { label: '5. Offers Released & Selected', count: hired, pct: total > 0 ? `${((hired / total) * 100).toFixed(1)}%` : '0%', color: '#7c3aed' },
   ];
 
-  // Group by partner institution
   const collegeMap: Record<string, { count: number; hired: number; totalCgpa: number; scoredCount: number }> = {};
   for (const app of applications) {
     const instName = app.institutionName || app.college || 'Partner Institution';
@@ -110,7 +109,6 @@ export function CompanyAnalyticsPage() {
         </button>
       </div>
 
-      {/* 4 Stats */}
       <div className={styles.statsRow}>
         <div className={styles.statCard}>
           <span className={styles.statLabel}>Total Funnel Volume</span>
@@ -130,7 +128,6 @@ export function CompanyAnalyticsPage() {
         </div>
       </div>
 
-      {/* Funnel Section */}
       <div className={styles.formCard} style={{ marginTop: '16px' }}>
         <h2 className={styles.sectionHeading} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <TrendingUp size={18} style={{ color: '#1c2d81' }} />
@@ -167,7 +164,6 @@ export function CompanyAnalyticsPage() {
         )}
       </div>
 
-      {/* Institution Source Table */}
       <div className={styles.formCard} style={{ marginTop: '16px' }}>
         <h2 className={styles.sectionHeading} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <Building2 size={18} style={{ color: '#1c2d81' }} />
@@ -214,3 +210,4 @@ export function CompanyAnalyticsPage() {
     </div>
   );
 }
+

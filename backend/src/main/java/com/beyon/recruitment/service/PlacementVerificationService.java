@@ -67,13 +67,11 @@ public class PlacementVerificationService {
             .orElseThrow(() -> new RuntimeException("Verification not found"));
         if (!verify.getStudentId().equals(studentId)) throw new RuntimeException("Forbidden");
 
-        // If already company or institution verified, mark as fully verified
         if ("COMPANY_VERIFIED".equals(verify.getVerificationStatus()) ||
             "INSTITUTION_VERIFIED".equals(verify.getVerificationStatus())) {
             verify.setVerificationStatus("VERIFIED");
             verify.setVerifiedAt(OffsetDateTime.now());
 
-            // Update the placement record
             PlacementRecord record = recordRepo.findById(verify.getPlacementRecordId()).orElse(null);
             if (record != null) {
                 record.setVerified(true);
@@ -112,3 +110,4 @@ public class PlacementVerificationService {
         return verifyRepo.findByVerificationStatus("PENDING");
     }
 }
+

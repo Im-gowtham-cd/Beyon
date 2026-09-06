@@ -45,3 +45,4 @@ public class SkillCategory {
     public void setActive(boolean active) { this.active = active; }
     public Instant getCreatedAt() { return createdAt; }
 }
+

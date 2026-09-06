@@ -11,3 +11,4 @@ public interface InterviewFeedbackIntelligenceRepository extends JpaRepository<I
     Optional<InterviewFeedbackIntelligence> findByInterviewId(UUID interviewId);
     List<InterviewFeedbackIntelligence> findByStudentIdAndIsCandidateVisibleTrue(UUID studentId);
 }
+

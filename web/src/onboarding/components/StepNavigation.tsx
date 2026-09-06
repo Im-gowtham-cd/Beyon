@@ -25,3 +25,4 @@ export function StepNavigation({ onBack, onNext, nextLabel = 'Continue', nextDis
     </div>
   );
 }
+

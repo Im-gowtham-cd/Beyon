@@ -37,7 +37,6 @@ public class PlacementIntelligenceController {
         this.referralService = referralService;
     }
 
-    // Phase 171: Placement Verification
     @PostMapping("/verification/request/{placementRecordId}")
     public ResponseEntity<ApiResponse<PlacementVerification>> requestVerification(
             @PathVariable UUID placementRecordId, @RequestBody Map<String, String> body, Authentication auth) {
@@ -74,7 +73,6 @@ public class PlacementIntelligenceController {
         return ResponseEntity.ok(ApiResponse.ok(verifyService.getPendingVerifications()));
     }
 
-    // Phase 172: Institution Rating
     @GetMapping("/rating/institution/{institutionId}")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getInstitutionRating(@PathVariable UUID institutionId) {
         return ResponseEntity.ok(ApiResponse.ok(ratingService.getRating(institutionId)));
@@ -86,7 +84,6 @@ public class PlacementIntelligenceController {
         return ResponseEntity.ok(ApiResponse.ok(ratingService.calculateAndSave(institutionId, year)));
     }
 
-    // Phase 173: Company Tier
     @GetMapping("/tier/company/{companyId}")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getCompanyTier(@PathVariable UUID companyId) {
         return ResponseEntity.ok(ApiResponse.ok(tierService.calculateAndSave(companyId)));
@@ -97,7 +94,6 @@ public class PlacementIntelligenceController {
         return ResponseEntity.ok(ApiResponse.ok(tierService.calculateAndSave(extractUserId(auth))));
     }
 
-    // Phase 175: Placement Readiness
     @GetMapping("/readiness/my")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getMyReadiness(Authentication auth) {
         return ResponseEntity.ok(ApiResponse.ok(readinessService.calculateAndSave(extractUserId(auth))));
@@ -108,7 +104,6 @@ public class PlacementIntelligenceController {
         return ResponseEntity.ok(ApiResponse.ok(readinessService.calculateAndSave(studentId)));
     }
 
-    // Phase 177: Career Outcomes
     @PostMapping("/outcomes")
     public ResponseEntity<ApiResponse<CareerOutcome>> createOutcome(@RequestBody CareerOutcome outcome, Authentication auth) {
         return ResponseEntity.ok(ApiResponse.ok(outcomeService.createOutcome(extractUserId(auth), outcome)));
@@ -124,7 +119,6 @@ public class PlacementIntelligenceController {
         return ResponseEntity.ok(ApiResponse.ok(outcomeService.getOutcomeTimeline(studentId)));
     }
 
-    // Phase 178: Alumni Network
     @PostMapping("/alumni/profile")
     public ResponseEntity<ApiResponse<AlumniProfile>> createAlumniProfile(@RequestBody AlumniProfile profile, Authentication auth) {
         return ResponseEntity.ok(ApiResponse.ok(alumniService.createOrUpdateProfile(extractUserId(auth), profile)));
@@ -162,7 +156,6 @@ public class PlacementIntelligenceController {
         return ResponseEntity.ok(ApiResponse.ok(alumniService.getMyConnections(extractUserId(auth))));
     }
 
-    // Phase 179: Referrals
     @PostMapping("/referrals")
     public ResponseEntity<ApiResponse<OpportunityReferral>> createReferral(@RequestBody OpportunityReferral referral, Authentication auth) {
         return ResponseEntity.ok(ApiResponse.ok(referralService.createReferral(extractUserId(auth), referral)));
@@ -193,3 +186,4 @@ public class PlacementIntelligenceController {
         return UUID.fromString(details.getUserId());
     }
 }
+

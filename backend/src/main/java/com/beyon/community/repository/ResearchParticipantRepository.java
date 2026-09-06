@@ -8,3 +8,4 @@ import java.util.UUID;
 public interface ResearchParticipantRepository extends JpaRepository<ResearchParticipant, UUID> {
     List<ResearchParticipant> findByProposalId(UUID proposalId);
 }
+

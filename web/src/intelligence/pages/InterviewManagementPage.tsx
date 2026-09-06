@@ -120,7 +120,7 @@ export function InterviewManagementPage() {
         }),
       });
     } catch {
-      /* handled */
+
     }
   };
 
@@ -145,7 +145,6 @@ export function InterviewManagementPage() {
         </button>
       </div>
 
-      {/* 4 Stats */}
       <div className={styles.statsRow}>
         <div className={styles.statCard}>
           <span className={styles.statLabel}>Scheduled Interviews</span>
@@ -171,7 +170,6 @@ export function InterviewManagementPage() {
         </div>
       </div>
 
-      {/* Modal */}
       {showScheduleModal && (
         <form onSubmit={handleSchedule} className={styles.formCard} style={{ marginBottom: '20px' }}>
           <h2 className={styles.sectionHeading}>Schedule Candidate Technical Round</h2>
@@ -263,7 +261,6 @@ export function InterviewManagementPage() {
         </form>
       )}
 
-      {/* Interviews List */}
       {loading ? (
         <div style={{ padding: '32px', textAlign: 'center', color: '#64748b' }}>
           Loading scheduled interviews...
@@ -378,3 +375,4 @@ export function InterviewManagementPage() {
     </div>
   );
 }
+

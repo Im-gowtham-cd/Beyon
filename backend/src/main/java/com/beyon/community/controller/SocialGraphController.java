@@ -54,3 +54,4 @@ public class SocialGraphController {
         return ResponseEntity.ok(Map.of("following", following));
     }
 }
+

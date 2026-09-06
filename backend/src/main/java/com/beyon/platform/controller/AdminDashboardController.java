@@ -55,3 +55,4 @@ public class AdminDashboardController {
         return ResponseEntity.ok(ApiResponse.ok(adminService.recordDailyStats(stats)));
     }
 }
+

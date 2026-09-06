@@ -33,7 +33,7 @@ export function CompanyProfilePage() {
           }
         }
       } catch {
-        /* fallback */
+
       }
     }
     loadProfile();
@@ -57,7 +57,7 @@ export function CompanyProfilePage() {
 
   return (
     <div className={styles.page}>
-      {/* Profile Header */}
+
       <section className={styles.profileHeader}>
         <div className={styles.avatarBox}>
           <span>{initials}</span>
@@ -97,10 +97,9 @@ export function CompanyProfilePage() {
         </div>
       </section>
 
-      {/* Content Grid */}
       <div className={styles.contentGrid}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-          {/* About Company */}
+
           <div className={styles.card}>
             <h3 className={styles.cardTitle}>
               <Info size={18} style={{ color: '#1c2d81' }} />
@@ -111,7 +110,6 @@ export function CompanyProfilePage() {
             </p>
           </div>
 
-          {/* Hiring Preferences */}
           <div className={styles.card}>
             <h3 className={styles.cardTitle}>
               <Target size={18} style={{ color: '#1c2d81' }} />
@@ -137,7 +135,6 @@ export function CompanyProfilePage() {
             </div>
           </div>
 
-          {/* Required Technology Matrix */}
           <div className={styles.card}>
             <h3 className={styles.cardTitle}>
               <Cpu size={18} style={{ color: '#1c2d81' }} />
@@ -163,7 +160,6 @@ export function CompanyProfilePage() {
           </div>
         </div>
 
-        {/* Right Aside: Contact & Representatives */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
           <div className={styles.card}>
             <h3 className={styles.cardTitle}>
@@ -212,3 +208,4 @@ export function CompanyProfilePage() {
     </div>
   );
 }
+

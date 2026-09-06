@@ -34,7 +34,6 @@ export const MobileProctorApp: React.FC = () => {
   const { stream, error: cameraError, loading: cameraLoading, startCamera, stopCamera } = useMobileCamera();
   const { audioLevel, speaking } = useMobileAudio(stream);
 
-  // Keep reporting camera active as soon as mobile camera stream starts
   useEffect(() => {
     if (procSessionId && stream && stream.getVideoTracks().length > 0) {
       sendHeartbeat(procSessionId, true, true);
@@ -65,7 +64,6 @@ export const MobileProctorApp: React.FC = () => {
     setStatus('completed');
   };
 
-  // Stepper calculations
   const steps = [
     { key: 'pairing', label: 'Pair' },
     { key: 'setup', label: 'Sensors' },
@@ -88,7 +86,7 @@ export const MobileProctorApp: React.FC = () => {
 
   return (
     <div className={styles.container}>
-      {/* Header (Matching Desktop Assessment Header) */}
+
       <header className={styles.header}>
         <div className={styles.brand}>
           <div className={styles.brandMark} />
@@ -104,7 +102,6 @@ export const MobileProctorApp: React.FC = () => {
         </div>
       </header>
 
-      {/* Stepper (only visible while setting up / active) */}
       {status !== 'completed' && (
         <div className={styles.stepper}>
           {steps.map((step, idx) => {
@@ -130,7 +127,6 @@ export const MobileProctorApp: React.FC = () => {
         </div>
       )}
 
-      {/* Content Body */}
       <main className={styles.content}>
         {status === 'pairing' && (
           <PairingPage
@@ -172,3 +168,4 @@ export const MobileProctorApp: React.FC = () => {
     </div>
   );
 };
+

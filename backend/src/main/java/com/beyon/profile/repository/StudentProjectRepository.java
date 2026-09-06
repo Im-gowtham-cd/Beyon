@@ -9,3 +9,4 @@ public interface StudentProjectRepository extends JpaRepository<StudentProject, 
     List<StudentProject> findByUserId(UUID userId);
     void deleteByUserId(UUID userId);
 }
+

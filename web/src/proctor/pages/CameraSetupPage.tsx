@@ -45,7 +45,6 @@ export const CameraSetupPage: React.FC<Props> = ({
         </div>
       )}
 
-      {/* Sensor checklist badges */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.625rem' }}>
         <div style={{
           display: 'flex',

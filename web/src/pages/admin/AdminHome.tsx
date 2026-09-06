@@ -53,7 +53,7 @@ export function AdminHome() {
         setHealth(h.data || null);
       }
     } catch {
-      /* fallback */
+
     } finally {
       setLoading(false);
     }
@@ -90,7 +90,7 @@ export function AdminHome() {
 
   return (
     <div className={styles.page}>
-      {/* Top Welcome Command Banner */}
+
       <section className={styles.welcomeHero}>
         <div className={styles.welcomeInfo}>
           <div className={styles.badgeRow}>
@@ -129,7 +129,6 @@ export function AdminHome() {
         </div>
       </section>
 
-      {/* KPI Grid */}
       <div className={styles.kpiGrid}>
         <div className={styles.kpiCard}>
           <div className={styles.kpiHeader}>
@@ -204,7 +203,6 @@ export function AdminHome() {
         </div>
       )}
 
-      {/* Tabs */}
       <div className={styles.tabBar}>
         <button
           onClick={() => setActiveTab('users')}
@@ -239,7 +237,6 @@ export function AdminHome() {
         </button>
       </div>
 
-      {/* Tab 1: Users */}
       {activeTab === 'users' && (
         <div>
           <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center', marginBottom: '16px' }}>
@@ -365,7 +362,6 @@ export function AdminHome() {
         </div>
       )}
 
-      {/* Tab 2: Health */}
       {activeTab === 'health' && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '16px' }}>
           <div className={styles.powerCard}>
@@ -460,7 +456,6 @@ export function AdminHome() {
         </div>
       )}
 
-      {/* Tab 3: Actions */}
       {activeTab === 'actions' && (
         <div className={styles.powerActionGrid}>
           <div className={styles.powerCard}>
@@ -529,7 +524,6 @@ export function AdminHome() {
         </div>
       )}
 
-      {/* Tab 4: Activity */}
       {activeTab === 'activity' && (
         <div className={styles.tableCard}>
           <div style={{ padding: '16px 20px', borderBottom: '1px solid #e2e8f0', fontWeight: 700, color: '#0f172a' }}>
@@ -597,3 +591,4 @@ export function AdminHome() {
     </div>
   );
 }
+

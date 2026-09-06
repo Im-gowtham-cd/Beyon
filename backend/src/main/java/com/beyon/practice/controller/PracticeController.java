@@ -67,3 +67,4 @@ public class PracticeController {
         return UUID.fromString(details.getUserId());
     }
 }
+

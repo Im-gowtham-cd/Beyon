@@ -57,3 +57,4 @@ public class StudentLearningTopic {
     public UUID getSkillId() { return skillId; }
     public void setSkillId(UUID skillId) { this.skillId = skillId; }
 }
+

@@ -55,3 +55,4 @@ public class Skill {
     public int getTopicCount() { return topicCount; }
     public void setTopicCount(int topicCount) { this.topicCount = topicCount; }
 }
+

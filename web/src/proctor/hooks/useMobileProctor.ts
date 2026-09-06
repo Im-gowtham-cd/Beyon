@@ -19,7 +19,6 @@ export function useMobileProctor(_initialToken?: string | null) {
   const heartbeatIntervalRef = useRef<any>(null);
   const frameUploadIntervalRef = useRef<any>(null);
 
-  // Pair with backend
   const pairWithToken = useCallback(async (token: string) => {
     setError(null);
     try {
@@ -48,7 +47,6 @@ export function useMobileProctor(_initialToken?: string | null) {
     }
   }, []);
 
-  // Send heartbeat
   const sendHeartbeat = useCallback(async (sessionId: string, cameraActive: boolean, micActive: boolean) => {
     try {
       await fetch(`${API_BASE}/proctoring/dualview/${sessionId}/heartbeat`, {
@@ -66,7 +64,6 @@ export function useMobileProctor(_initialToken?: string | null) {
     }
   }, []);
 
-  // Frame capture and upload with enhanced 640x480 resolution for sharp object & phone recognition
   const captureAndSendFrame = useCallback(async (sessionId: string, videoElement: HTMLVideoElement) => {
     if (!videoElement || videoElement.videoWidth === 0) return;
     try {
@@ -87,24 +84,20 @@ export function useMobileProctor(_initialToken?: string | null) {
         }),
       });
     } catch (e) {
-      // Best-effort frame upload
+
     }
   }, []);
 
-  // Lifecycle loop for active proctoring
   const startMonitoring = useCallback((sessionId: string, videoElement: HTMLVideoElement | null) => {
     setStatus('active');
 
-    // Heartbeat every 5 seconds
     if (heartbeatIntervalRef.current) clearInterval(heartbeatIntervalRef.current);
     heartbeatIntervalRef.current = setInterval(() => {
       sendHeartbeat(sessionId, true, true);
     }, 5000);
 
-    // Initial heartbeat
     sendHeartbeat(sessionId, true, true);
 
-    // Frame sample upload every 1.5 seconds for rapid detection
     if (frameUploadIntervalRef.current) clearInterval(frameUploadIntervalRef.current);
     if (videoElement) {
       frameUploadIntervalRef.current = setInterval(() => {
@@ -141,3 +134,4 @@ export function useMobileProctor(_initialToken?: string | null) {
     stopMonitoring,
   };
 }
+

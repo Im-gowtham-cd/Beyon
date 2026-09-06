@@ -18,3 +18,4 @@ public interface InstitutionStudentRepository extends JpaRepository<InstitutionS
     List<InstitutionStudent> findByInstitutionIdAndDepartment(UUID institutionId, String department);
     List<InstitutionStudent> findByStudentId(UUID studentId);
 }
+

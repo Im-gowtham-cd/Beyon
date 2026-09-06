@@ -11,3 +11,4 @@ public interface StudentSkillGraphRepository extends JpaRepository<StudentSkillG
     Optional<StudentSkillGraph> findByStudentIdAndSkillId(UUID studentId, UUID skillId);
     long countByStudentId(UUID studentId);
 }
+

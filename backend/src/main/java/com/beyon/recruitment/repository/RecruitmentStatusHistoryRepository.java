@@ -9,3 +9,4 @@ import java.util.UUID;
 public interface RecruitmentStatusHistoryRepository extends JpaRepository<RecruitmentStatusHistory, UUID> {
     List<RecruitmentStatusHistory> findByApplicationIdOrderByCreatedAtDesc(UUID applicationId);
 }
+

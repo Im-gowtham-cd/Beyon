@@ -20,7 +20,6 @@ export function ProtectedRoute() {
 
   const path = location.pathname;
 
-  // Rejection takes absolute priority
   if (profileStatus === 'REJECTED' || user?.status === 'REJECTED') {
     if (path !== '/account-rejected') {
       return <Navigate to="/account-rejected" replace />;
@@ -28,7 +27,6 @@ export function ProtectedRoute() {
     return <Outlet />;
   }
 
-  // Account Suspension
   if (profileStatus === 'SUSPENDED' || user?.status === 'SUSPENDED') {
     if (path !== '/account-suspended') {
       return <Navigate to="/account-suspended" replace />;
@@ -36,12 +34,10 @@ export function ProtectedRoute() {
     return <Outlet />;
   }
 
-  // Onboarding routes MUST always be accessible for profile setup
   if (path.startsWith('/onboarding/')) {
     return <Outlet />;
   }
 
-  // Account Incomplete onboarding
   if (profileStatus === 'INCOMPLETE') {
     const role = user?.role?.toLowerCase();
     if (role) {
@@ -50,7 +46,6 @@ export function ProtectedRoute() {
     return <Navigate to="/login" replace />;
   }
 
-  // Pending Verification (Super Admin or College Placement)
   if (
     profileStatus === 'PENDING_SUPER_ADMIN_VERIFICATION' ||
     profileStatus === 'PENDING_INSTITUTION_VERIFICATION' ||
@@ -65,3 +60,4 @@ export function ProtectedRoute() {
 
   return <Outlet />;
 }
+

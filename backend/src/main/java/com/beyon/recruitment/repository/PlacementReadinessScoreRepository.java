@@ -8,3 +8,4 @@ import java.util.UUID;
 public interface PlacementReadinessScoreRepository extends JpaRepository<PlacementReadinessScore, UUID> {
     Optional<PlacementReadinessScore> findByStudentId(UUID studentId);
 }
+

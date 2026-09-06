@@ -34,3 +34,4 @@ export function RoleGuard({ allowedRoles, requireProfile = false }: Props) {
 
   return <Outlet />;
 }
+

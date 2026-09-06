@@ -9,3 +9,4 @@ public interface CompanyRepresentativeRepository extends JpaRepository<CompanyRe
     List<CompanyRepresentative> findByUserId(UUID userId);
     void deleteByUserId(UUID userId);
 }
+

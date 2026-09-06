@@ -14,3 +14,4 @@ public interface SearchIndexRepository extends JpaRepository<SearchIndex, UUID> 
 
     List<SearchIndex> findTop20ByOrderByPopularityScoreDesc();
 }
+

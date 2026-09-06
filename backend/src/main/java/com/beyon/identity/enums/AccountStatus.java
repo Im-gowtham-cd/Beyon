@@ -13,3 +13,4 @@ public enum AccountStatus {
     PENDING_COMPANY_VERIFICATION,
     REJECTED
 }
+

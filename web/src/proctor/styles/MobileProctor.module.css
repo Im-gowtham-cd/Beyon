@@ -1,8 +1,3 @@
-/* ==========================================================================
-   Beyon DualView™ - Mobile Application Design System
-   Matches Desktop Application Design Tokens & Layout 1:1
-   ========================================================================== */
-
 :root {
   --color-primary: #253cac;
   --color-primary-rgb: 37, 60, 172;
@@ -43,7 +38,6 @@
   -webkit-font-smoothing: antialiased;
 }
 
-/* Header (Matching Desktop Assessment Header) */
 .header {
   padding: 10px 16px;
   background: var(--color-surface);
@@ -112,7 +106,6 @@
   box-shadow: 0 0 6px #22c55e;
 }
 
-/* Stepper Progress Bar (Desktop Stepper) */
 .stepper {
   display: flex;
   align-items: center;
@@ -191,7 +184,6 @@
   background: var(--color-primary);
 }
 
-/* Main Content Area */
 .content {
   flex: 1;
   display: flex;
@@ -203,7 +195,6 @@
   gap: 1rem;
 }
 
-/* Desktop Card Style */
 .card {
   background: var(--color-surface);
   border: 1px solid #e2e8f0;
@@ -244,7 +235,6 @@
   margin-top: 0.25rem;
 }
 
-/* Buttons (100% Desktop App Matching) */
 .btnPrimary {
   background: var(--color-primary);
   color: #ffffff;
@@ -334,7 +324,6 @@
   gap: 0.5rem;
 }
 
-/* Inputs */
 .inputGroup {
   display: flex;
   flex-direction: column;
@@ -371,7 +360,6 @@
   box-shadow: 0 0 0 3px rgba(37, 60, 172, 0.12);
 }
 
-/* Camera Viewfinder (Industrial High Contrast) */
 .videoWrapper {
   position: relative;
   width: 100%;
@@ -444,7 +432,6 @@
   font-family: monospace;
 }
 
-/* Calibration Reticle */
 .calibrationGrid {
   position: absolute;
   inset: 0;
@@ -483,7 +470,6 @@
 .cornerBL { bottom: 6px; left: 6px; border-width: 0 0 2px 2px; }
 .cornerBR { bottom: 6px; right: 6px; border-width: 0 2px 2px 0; }
 
-/* Desktop Status Indicators */
 .dualViewStatus {
   display: inline-flex;
   align-items: center;
@@ -528,7 +514,6 @@
   50% { opacity: 0.3; transform: scale(0.85); }
 }
 
-/* Guideline Checklist (Matching Desktop Assessment Guidelines) */
 .guidelineList {
   display: flex;
   flex-direction: column;
@@ -560,7 +545,6 @@
   margin-top: 0.1rem;
 }
 
-/* Audio Visualizer */
 .audioMeterWrap {
   display: flex;
   flex-direction: column;
@@ -592,7 +576,6 @@
   transition: width 0.08s ease-out;
 }
 
-/* Diagnostic Stats Grid */
 .statGrid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -626,7 +609,6 @@
   gap: 0.35rem;
 }
 
-/* Alerts */
 .alertBox {
   padding: 0.75rem 0.875rem;
   border-radius: 6px;
@@ -640,7 +622,6 @@
   line-height: 1.4;
 }
 
-/* Handshake Graphic */
 .placementGraphic {
   background: #f8fafc;
   border: 1.5px dashed #cbd5e1;
@@ -667,7 +648,6 @@
   border: 1px solid #bfdbfe;
 }
 
-/* Device Indicators */
 .devicePillGroup {
   display: flex;
   align-items: center;

@@ -50,7 +50,6 @@ export function InstitutionCurriculumPage() {
     fetchSkills();
   }, []);
 
-  // Compute distinct categories from real DB rows
   const categories = Array.from(
     new Set(skills.map((s) => s.category).filter((c): c is string => Boolean(c && c.trim())))
   );
@@ -77,7 +76,7 @@ export function InstitutionCurriculumPage() {
 
   return (
     <div className={styles.page}>
-      {/* Header */}
+
       <div className={styles.pageHeader}>
         <div className={styles.headerLeft}>
           <span className={styles.sectionTag}>
@@ -102,7 +101,6 @@ export function InstitutionCurriculumPage() {
         </div>
       </div>
 
-      {/* Alert Banner */}
       {toastMsg && (
         <div
           style={{
@@ -122,7 +120,6 @@ export function InstitutionCurriculumPage() {
         </div>
       )}
 
-      {/* 4 Stats Cards */}
       <div className={styles.statsRow}>
         <div className={styles.statCard}>
           <div className={styles.statCardTop}>
@@ -177,7 +174,6 @@ export function InstitutionCurriculumPage() {
         </div>
       </div>
 
-      {/* Dynamic Category Bar */}
       <div className={styles.domainBar}>
         <button
           className={`${styles.domainChip} ${selectedCategory === 'ALL' ? styles.domainActive : ''}`}
@@ -198,9 +194,8 @@ export function InstitutionCurriculumPage() {
         ))}
       </div>
 
-      {/* Main Grid */}
       <div className={styles.layoutGrid}>
-        {/* Left Column: Skills Nodes */}
+
         <div className={styles.skillsCard}>
           <div className={styles.searchHeader}>
             <div className={styles.searchWrapper}>
@@ -250,7 +245,6 @@ export function InstitutionCurriculumPage() {
           )}
         </div>
 
-        {/* Right Sidebar */}
         <div className={styles.sidebarCard}>
           <h3 className={styles.sidebarTitle}>
             <Award size={18} style={{ color: '#1c2d81' }} />
@@ -280,7 +274,6 @@ export function InstitutionCurriculumPage() {
         </div>
       </div>
 
-      {/* Skill Detail Modal */}
       {selectedSkill && (
         <div className={styles.modalOverlay} onClick={() => setSelectedSkill(null)}>
           <div className={styles.modalBox} onClick={(e) => e.stopPropagation()}>
@@ -333,3 +326,4 @@ export function InstitutionCurriculumPage() {
     </div>
   );
 }
+

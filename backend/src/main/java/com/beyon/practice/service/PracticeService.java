@@ -142,7 +142,6 @@ public class PracticeService {
         if (answer == null || answer.isBlank()) return false;
         String trimmed = answer.trim();
 
-        // Check options for MCQ questions
         List<QuestionOption> options = optionRepository.findByQuestionIdOrderByDisplayOrder(question.getId());
         if (!options.isEmpty()) {
             for (int i = 0; i < options.size(); i++) {
@@ -222,3 +221,4 @@ public class PracticeService {
         return attemptRepository.findByStudentAndQuestion(studentId, questionId);
     }
 }
+

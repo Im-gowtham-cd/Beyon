@@ -133,7 +133,7 @@ export function PipelinePage() {
         body: JSON.stringify({ status: newStage, notes: `Status updated to ${newStage}` }),
       });
     } catch {
-      /* handled */
+
     }
   };
 
@@ -175,7 +175,7 @@ export function PipelinePage() {
 
   return (
     <div className={styles.page}>
-      {/* Header Banner */}
+
       <div className={styles.pageHeader}>
         <div className={styles.headerInfo}>
           <div className={styles.badgeRow}>
@@ -211,7 +211,6 @@ export function PipelinePage() {
         </div>
       </div>
 
-      {/* 4 Real Metric Cards */}
       <div className={styles.statsRow}>
         <div className={styles.statCard}>
           <span className={styles.statLabel}>Total In Pipeline</span>
@@ -241,7 +240,6 @@ export function PipelinePage() {
         </div>
       </div>
 
-      {/* Controls & Search */}
       <div className={styles.controlsRow}>
         <div className={styles.filterGroup}>
           <div className={styles.searchWrap}>
@@ -270,7 +268,6 @@ export function PipelinePage() {
         </div>
       </div>
 
-      {/* Stage Filter Chips */}
       <div className={styles.stageFilterRow}>
         <button
           className={`${styles.stageFilterChip} ${activeStageFilter === 'ALL' ? styles.stageFilterActive : ''}`}
@@ -302,7 +299,6 @@ export function PipelinePage() {
         })}
       </div>
 
-      {/* Content Area */}
       {loading ? (
         <div className={styles.emptyGlobal}>
           <Clock size={32} style={{ color: '#1c2d81', animation: 'spin 2s linear infinite' }} />
@@ -317,7 +313,7 @@ export function PipelinePage() {
           </p>
         </div>
       ) : viewMode === 'KANBAN' ? (
-        /* Kanban Board View */
+
         <div className={styles.kanbanBoard}>
           {STAGES.map((stg) => {
             const stageCandidates = filteredCandidates.filter((c) => c.stage === stg.key);
@@ -351,7 +347,6 @@ export function PipelinePage() {
                           </div>
                         </div>
 
-                        {/* CGPA & Score Metrics */}
                         <div className={styles.metricsBar}>
                           {c.cgpa > 0 && (
                             <div className={styles.metricItem}>
@@ -367,7 +362,6 @@ export function PipelinePage() {
                           )}
                         </div>
 
-                        {/* Real Skills */}
                         {c.skills.length > 0 && (
                           <div className={styles.skillsRow}>
                             {c.skills.slice(0, 4).map((sk, idx) => (
@@ -381,7 +375,6 @@ export function PipelinePage() {
                           </div>
                         )}
 
-                        {/* Actions */}
                         <div className={styles.cardFooter}>
                           <select
                             className={styles.stageSelect}
@@ -425,7 +418,7 @@ export function PipelinePage() {
           })}
         </div>
       ) : (
-        /* List Table View */
+
         <div className={styles.tableCard}>
           <table className={styles.table}>
             <thead>

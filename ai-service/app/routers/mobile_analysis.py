@@ -37,14 +37,9 @@ async def analyze_mobile_frame(req: MobileFrameRequest):
         g_mean = float(np.mean(img[:, :, 1]))
         r_mean = float(np.mean(img[:, :, 2]))
 
-        # --- CAMERA OBSTRUCTION / COVERED LENS DETECTION ---
-        # 1. Darkness: camera covered by opaque surface/object/dark cloth
         is_dark = mean_brightness < 20.0
-        # 2. Extreme defocus + low contrast (finger or object flush against lens)
         is_blurred_flat = (laplacian_var < 18.0) and (gray_std < 24.0 or mean_brightness < 40.0)
-        # 3. Finger covering lens (flesh blood-flow red dominance with near-zero spatial edge variance)
         is_finger_on_lens = (r_mean > 1.4 * max(b_mean, 1.0)) and (r_mean > 1.2 * max(g_mean, 1.0)) and (laplacian_var < 30.0) and (gray_std < 32.0)
-        # 4. Overexposed uniform blowout
         is_blowout = (mean_brightness > 248.0) and (gray_std < 10.0)
 
         camera_obstructed = is_dark or is_blurred_flat or is_finger_on_lens or is_blowout
@@ -69,7 +64,6 @@ async def analyze_mobile_frame(req: MobileFrameRequest):
                 events=events
             )
 
-        # --- CANDIDATE & PERSON DETECTION ---
         ycrcb = cv2.cvtColor(img, cv2.COLOR_BGR2YCrCb)
         lower_skin = np.array([0, 133, 77], dtype=np.uint8)
         upper_skin = np.array([255, 173, 127], dtype=np.uint8)
@@ -80,7 +74,6 @@ async def analyze_mobile_frame(req: MobileFrameRequest):
         skin_mask = cv2.morphologyEx(skin_mask, cv2.MORPH_DILATE, kernel, iterations=2)
         contours, _ = cv2.findContours(skin_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
-        # Candidate heads: upper 60% of frame (arms/hands on desk are in lower frame)
         head_candidates = []
         min_head_area = 0.02 * (w * h)
         for c in contours:
@@ -98,7 +91,6 @@ async def analyze_mobile_frame(req: MobileFrameRequest):
                             "area": area
                         })
 
-        # --- YOLO OBJECT & PHONE DETECTION ---
         from app.services.yolo_detector import detect_objects_yolo
         yolo_persons, yolo_phone, yolo_objs = detect_objects_yolo(img)
 
@@ -120,7 +112,6 @@ async def analyze_mobile_frame(req: MobileFrameRequest):
                     metadata={"count": person_count}
                 ))
         else:
-            # Fallback to skin & head contour analysis if YOLO not loaded
             person_count = 0
             if len(head_candidates) == 1:
                 person_count = 1
@@ -155,7 +146,6 @@ async def analyze_mobile_frame(req: MobileFrameRequest):
                     person_count = 1
                     detected_objects.append(DetectedObject(label="person", confidence=0.88))
 
-        # Check candidate absence: no person detected in viewport
         candidate_absent = (person_count == 0)
         if candidate_absent:
             events.append(DetectionEvent(
@@ -165,7 +155,6 @@ async def analyze_mobile_frame(req: MobileFrameRequest):
                 metadata={"reason": "candidate_left_workspace"}
             ))
 
-        # Secondary phone detection: ONLY when verified by object model
         secondary_device = yolo_phone
         if secondary_device:
             events.append(DetectionEvent(
@@ -175,7 +164,6 @@ async def analyze_mobile_frame(req: MobileFrameRequest):
                 metadata={"source": "yolo_model"}
             ))
 
-        # Deep Learning Cheating CNN & Workspace Activity Detection
         from app.services.cheat_cnn_detector import detect_cheating_cnn
         is_cheating, cheat_prob, cnn_meta = detect_cheating_cnn(img)
         if is_cheating or cheat_prob >= 0.70:
@@ -202,4 +190,4 @@ async def analyze_mobile_frame(req: MobileFrameRequest):
             detectedObjects=[], confidence=0.0,
             cameraObstructed=False, candidateAbsent=False,
             events=[DetectionEvent(eventType="ANALYSIS_ERROR", confidence=1.0, metadata={"error": str(e)})]
-        )
+        )

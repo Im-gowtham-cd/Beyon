@@ -9,3 +9,4 @@ public interface PlatformReportRepository extends JpaRepository<PlatformReport, 
     List<PlatformReport> findByUserIdOrderByCreatedAtDesc(UUID userId);
     List<PlatformReport> findByGenerationStatusOrderByCreatedAtDesc(String status);
 }
+

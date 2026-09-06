@@ -35,3 +35,4 @@ public class Follow {
     public void setFollowType(String followType) { this.followType = followType; }
     public Instant getCreatedAt() { return createdAt; }
 }
+

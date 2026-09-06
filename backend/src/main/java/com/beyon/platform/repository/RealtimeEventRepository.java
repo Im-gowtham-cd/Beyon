@@ -10,3 +10,4 @@ public interface RealtimeEventRepository extends JpaRepository<RealtimeEvent, UU
     List<RealtimeEvent> findByUserIdOrderByCreatedAtDesc(UUID userId);
     long countByUserIdAndReadFalse(UUID userId);
 }
+

@@ -31,7 +31,7 @@ export const PairingPage: React.FC<Props> = ({ initialToken, onPaired, error }) 
 
   return (
     <div className={styles.card}>
-      {/* Handshake Graphic */}
+
       <div className={styles.placementGraphic}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
           <div style={{ padding: '0.75rem', borderRadius: '0.75rem', background: 'rgba(59,130,246,0.15)', color: '#60a5fa' }}>

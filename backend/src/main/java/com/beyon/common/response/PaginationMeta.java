@@ -23,3 +23,4 @@ public class PaginationMeta {
     public int getTotalPages() { return totalPages; }
     public void setTotalPages(int v) { this.totalPages = v; }
 }
+

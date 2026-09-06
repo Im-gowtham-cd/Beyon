@@ -145,22 +145,19 @@ function createWindow() {
   mainWindow.setFullScreen(true);
   mainWindow.setMenuBarVisibility(false);
 
-  // ── Grant camera, microphone, and display permissions ──────────────────────
-  // Electron blocks getUserMedia by default; we must explicitly allow it.
   mainWindow.webContents.session.setPermissionRequestHandler(
     (_webContents, permission, callback) => {
       const allowedPermissions = [
-        'media',           // camera + microphone via getUserMedia
-        'camera',          // explicit camera
-        'microphone',      // explicit microphone
-        'display-capture', // screen capture (proctoring)
-        'notifications',   // assessment notifications
+        'media',
+        'camera',
+        'microphone',
+        'display-capture',
+        'notifications',
       ];
       callback(allowedPermissions.includes(permission));
     }
   );
 
-  // Also allow permission checks (for permissionState / checkPermission calls)
   mainWindow.webContents.session.setPermissionCheckHandler(
     (_webContents, permission) => {
       const allowedPermissions = [
@@ -207,7 +204,6 @@ function createWindow() {
     mainWindow?.webContents.send('proctoring:focus-change', false);
   });
 
-  // ── Minimize prevention: notify renderer + immediately restore to fullscreen ──
   mainWindow.on('minimize', () => {
     mainWindow?.webContents.send('proctoring:minimize');
     setTimeout(() => {
@@ -225,9 +221,7 @@ function createWindow() {
 }
 
 app.whenReady().then(() => {
-  // ── App-level default session permission handler ───────────────────────────
-  // Grants camera / microphone / display-capture before the window is created
-  // so that any early permission checks (Permissions API, getUserMedia) resolve.
+
   session.defaultSession.setPermissionRequestHandler(
     (_webContents, permission, callback) => {
       const allowed = ['media', 'camera', 'microphone', 'display-capture', 'notifications'];
@@ -251,3 +245,4 @@ app.on('window-all-closed', () => {
 app.on('activate', () => {
   if (BrowserWindow.getAllWindows().length === 0) createWindow();
 });
+

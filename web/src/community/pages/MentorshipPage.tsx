@@ -38,7 +38,7 @@ export function MentorshipPage() {
         ]);
         setMentors(m);
         setMyRequests(r);
-      } catch { /* */ }
+      } catch {  }
       setLoading(false);
     }
     load();
@@ -49,7 +49,7 @@ export function MentorshipPage() {
       await api.post('/mentorship/request/' + mentorUserId, { message: 'I would like to be mentored.' });
       const r = await api.get<MentorshipRequest[]>('/mentorship/my-requests');
       setMyRequests(r);
-    } catch { /* */ }
+    } catch {  }
   }
 
   if (loading) {
@@ -127,3 +127,4 @@ export function MentorshipPage() {
     </div>
   );
 }
+

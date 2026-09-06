@@ -21,3 +21,4 @@ public interface AssessmentReattemptRequestRepository extends JpaRepository<Asse
 
     List<AssessmentReattemptRequest> findByCompanyIdOrderByCreatedAtDesc(UUID companyId);
 }
+

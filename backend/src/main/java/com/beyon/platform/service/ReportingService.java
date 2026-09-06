@@ -48,3 +48,4 @@ public class ReportingService {
         return reportRepo.findByGenerationStatusOrderByCreatedAtDesc("PENDING");
     }
 }
+

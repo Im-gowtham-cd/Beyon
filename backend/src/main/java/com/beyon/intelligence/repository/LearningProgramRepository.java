@@ -8,3 +8,4 @@ import java.util.UUID;
 public interface LearningProgramRepository extends JpaRepository<LearningProgram, UUID> {
     List<LearningProgram> findByIsActiveTrueOrderByCreatedAtDesc();
 }
+

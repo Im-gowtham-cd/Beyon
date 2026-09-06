@@ -196,7 +196,6 @@
 .skillBarTrack { flex: 1; height: 6px; background: #f3f4f6; border-radius: 3px; overflow: hidden; }
 .skillBarFill { height: 100%; background: #6366f1; border-radius: 3px; transition: width 0.3s; }
 
-/* Unified Intelligence & Analytics Button Primitives */
 .btnPrimary {
   height: 38px;
   min-height: 38px;
@@ -301,3 +300,4 @@
 .btnDanger:hover {
   background: #b91c1c;
 }
+

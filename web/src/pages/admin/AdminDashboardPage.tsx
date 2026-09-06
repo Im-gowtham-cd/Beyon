@@ -27,7 +27,7 @@ export function AdminDashboardPage() {
         setHealth(hd.data);
       }
     } catch {
-      /* fallback */
+
     } finally {
       setLoading(false);
     }
@@ -110,7 +110,6 @@ export function AdminDashboardPage() {
         </div>
       </div>
 
-      {/* Health & Engine Cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '16px', marginTop: '20px' }}>
         <div className={styles.powerCard}>
           <h3 className={styles.powerTitle}>

@@ -167,7 +167,6 @@ export function HomePage() {
     ],
   });
 
-  // Fetch Live Real Data from Dolt DB Backend API on Mount
   useEffect(() => {
     fetch('/api/v1/public/landing-data')
       .then((res) => res.json())
@@ -271,9 +270,7 @@ export function HomePage() {
 
   return (
     <div className={styles.homePage}>
-      {/* ──────────────────────────────────────────────────────────
-          1. SIGNATURE FOAM BOARD (ARCHITECTURAL MANIFESTO)
-          ────────────────────────────────────────────────────────── */}
+
       <div className={styles.foamBoard}>
         <span />
         <span />
@@ -295,11 +292,8 @@ export function HomePage() {
         </ul>
       </div>
 
-      {/* ──────────────────────────────────────────────────────────
-          2. THE SLIDER (SLIDES OVER THE FOAM BOARD ON SCROLL)
-          ────────────────────────────────────────────────────────── */}
       <div className={styles.slider}>
-        {/* Vision & Mission */}
+
         <div className={styles.hero}>
           <span>
             <p className={styles.heroTitle}>Vision &amp; Mission</p>
@@ -310,7 +304,6 @@ export function HomePage() {
           </span>
         </div>
 
-        {/* 5 Core Capability Cards */}
         <div className={styles.versionDownload}>
           {missionCards.map((card) => (
             <div key={card.title} className={styles.versionDownloadContent}>
@@ -323,9 +316,6 @@ export function HomePage() {
           ))}
         </div>
 
-        {/* ──────────────────────────────────────────────────────────
-            3. REAL CERTIFIED ASSESSMENTS IN DATABASE
-            ────────────────────────────────────────────────────────── */}
         <div className={styles.section}>
           <h2 className={styles.sectionHeaderTitle}>Real Proctored Certification Exams</h2>
           <div className={styles.testsGrid}>
@@ -366,9 +356,6 @@ export function HomePage() {
           </div>
         </div>
 
-        {/* ──────────────────────────────────────────────────────────
-            4. VERIFIED PLACEMENTS HIGHLIGHT (FROM REAL DOLT DB)
-            ────────────────────────────────────────────────────────── */}
         {data.placements && data.placements.length > 0 && (
           <div className={styles.placementSection}>
             <h2 className={styles.sectionHeaderTitle}>Verified Campus Placement Records</h2>
@@ -396,9 +383,6 @@ export function HomePage() {
           </div>
         )}
 
-        {/* ──────────────────────────────────────────────────────────
-            5. PLATFORM CAPABILITIES
-            ────────────────────────────────────────────────────────── */}
         <div className={styles.section}>
           <h2 className={styles.sectionHeaderTitle}>Platform Capabilities</h2>
           <div className={styles.featuresGrid}>
@@ -412,9 +396,6 @@ export function HomePage() {
           </div>
         </div>
 
-        {/* ──────────────────────────────────────────────────────────
-            6. STRATEGIC OBJECTIVES
-            ────────────────────────────────────────────────────────── */}
         <h2 className={styles.versionTitle}>Strategic Objectives</h2>
         <div className={styles.instruction}>
           {objectives.map((obj) => (
@@ -427,9 +408,6 @@ export function HomePage() {
           ))}
         </div>
 
-        {/* ──────────────────────────────────────────────────────────
-            7. LIVE REAL DATABASE STATS GRID
-            ────────────────────────────────────────────────────────── */}
         <div className={styles.statsSection}>
           <div className={styles.statsGrid}>
             <div className={styles.statCard}>
@@ -455,9 +433,6 @@ export function HomePage() {
           </div>
         </div>
 
-        {/* ──────────────────────────────────────────────────────────
-            8. CALL TO ACTION BANNER
-            ────────────────────────────────────────────────────────── */}
         <div className={styles.ctaBanner}>
           <h2>Ready to Unlock Your Career Potential?</h2>
           <p>

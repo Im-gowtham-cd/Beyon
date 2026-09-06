@@ -68,3 +68,4 @@ public class DashboardController {
         throw new RuntimeException("Unauthorized");
     }
 }
+

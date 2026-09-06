@@ -44,19 +44,16 @@ public class OpportunityMatchService {
             .orElseThrow(() -> new RuntimeException("Opportunity not found"));
         List<StudentSkillGraph> studentSkills = graphRepo.findByStudentIdOrderByProficiencyPctDesc(studentId);
 
-        // Skill matching
         BigDecimal skillMatch = calculateSkillMatch(studentSkills, opportunity);
         boolean eligibilityMet = true;
         boolean experienceMet = true;
         boolean certificationMet = true;
         boolean coinRequirementMet = true;
 
-        // Build match factors
         List<Map<String, Object>> factors = new ArrayList<>();
         List<Map<String, Object>> strengths = new ArrayList<>();
         List<Map<String, Object>> gaps = new ArrayList<>();
 
-        // Check required skills
         String requiredSkillsStr = opportunity.getRequiredSkills();
         if (requiredSkillsStr != null && !requiredSkillsStr.isEmpty()) {
             String[] required = requiredSkillsStr.split(",");
@@ -78,7 +75,6 @@ public class OpportunityMatchService {
             }
         }
 
-        // Calculate overall match
         BigDecimal overall = skillMatch.multiply(new BigDecimal("0.5"))
             .add(BigDecimal.valueOf(eligibilityMet ? 80 : 0))
             .add(BigDecimal.valueOf(experienceMet ? 60 : 0))
@@ -112,7 +108,6 @@ public class OpportunityMatchService {
             allOpportunities = opportunityRepo.findByStatusOrderByCreatedAtDesc("ACTIVE");
         }
 
-        // Only recommend opportunities that are open or verified & approved by student's institution
         List<CompanyOpportunity> opportunities = allOpportunities.stream()
                 .filter(opp -> companyService.isOpportunityVisibleAndApprovedForStudent(opp, studentId))
                 .toList();
@@ -158,3 +153,4 @@ public class OpportunityMatchService {
         return result;
     }
 }
+

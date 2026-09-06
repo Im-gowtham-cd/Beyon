@@ -90,3 +90,4 @@ public class SearchService {
         cacheService.evictPattern("search:*");
     }
 }
+

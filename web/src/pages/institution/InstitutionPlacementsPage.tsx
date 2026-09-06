@@ -118,7 +118,7 @@ export function InstitutionPlacementsPage() {
 
   return (
     <div className={styles.page}>
-      {/* Header */}
+
       <div className={styles.pageHeader}>
         <div className={styles.headerLeft}>
           <span className={styles.sectionTag}>
@@ -147,7 +147,6 @@ export function InstitutionPlacementsPage() {
         </div>
       </div>
 
-      {/* Toast Alert */}
       {toastMsg && (
         <div
           style={{
@@ -167,7 +166,6 @@ export function InstitutionPlacementsPage() {
         </div>
       )}
 
-      {/* 4 Stats Cards */}
       <div className={styles.statsRow}>
         <div className={styles.statCard}>
           <div className={styles.statCardTop}>
@@ -222,7 +220,6 @@ export function InstitutionPlacementsPage() {
         </div>
       </div>
 
-      {/* Filter & Search Bar */}
       <div className={styles.filterBar}>
         <div className={styles.filterGroup}>
           <select
@@ -271,7 +268,6 @@ export function InstitutionPlacementsPage() {
         </div>
       </div>
 
-      {/* Placement Ledger Table */}
       <div className={styles.tableCard}>
         <div className={styles.tableHeaderBar}>
           <h3 className={styles.tableTitle}>
@@ -381,7 +377,6 @@ export function InstitutionPlacementsPage() {
         </div>
       </div>
 
-      {/* Offer Audit Modal */}
       {selectedRecord && (
         <div className={styles.modalOverlay} onClick={() => setSelectedRecord(null)}>
           <div className={styles.modalBox} onClick={(e) => e.stopPropagation()}>
@@ -466,3 +461,4 @@ export function InstitutionPlacementsPage() {
     </div>
   );
 }
+

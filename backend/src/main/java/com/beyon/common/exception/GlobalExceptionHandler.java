@@ -82,3 +82,4 @@ public class GlobalExceptionHandler {
             .body(ApiResponse.error(msg));
     }
 }
+

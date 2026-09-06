@@ -62,7 +62,6 @@ public class LearningProgramService {
         LearningProgram program = programRepo.findById(programId)
                 .orElseThrow(() -> new ResourceNotFoundException("Program not found"));
 
-        // If author set a coin cost for this course, deduct coins from student's wallet
         if (Boolean.FALSE.equals(program.getIsFree()) && program.getCost() != null && program.getCost().longValue() > 0) {
             coinService.spendCoins(studentId, "COURSE_ENROLLMENT", program.getCost().longValue(), "LEARNING_PROGRAM", programId);
         }
@@ -138,3 +137,4 @@ public class LearningProgramService {
         return result;
     }
 }
+

@@ -9,11 +9,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.OffsetDateTime;
 import java.util.*;
 
-/**
- * Manages configurable risk scoring for DualView proctoring sessions.
- * Risk weights and level thresholds are loaded per-opportunity from proctoring_policy_config.
- * Score has decay support: transient signals (gaze, audio) auto-decay after window expires.
- */
 @Service
 @Transactional
 public class RiskScoringService {
@@ -37,7 +32,6 @@ public class RiskScoringService {
         DEFAULT_WEIGHTS.put("CAMERA_UNAVAILABLE", 15);
     }
 
-    /** Transient events that decay after their window (not permanently scored) */
     private static final Set<String> TRANSIENT_EVENTS = Set.of(
         "FACE_MISSING", "CANDIDATE_GAZE_TOWARD_HELPER", "SECOND_VOICE"
     );
@@ -61,10 +55,6 @@ public class RiskScoringService {
         this.objectMapper = objectMapper;
     }
 
-    /**
-     * Apply an event to the risk score.
-     * @return the new risk score
-     */
     public int applyEvent(UUID procSessionId, String eventType) {
         DualViewSession session = sessionRepository.findById(procSessionId)
                 .orElseThrow(() -> new RuntimeException("Proctoring session not found: " + procSessionId));
@@ -81,14 +71,12 @@ public class RiskScoringService {
         session.setRiskLevel(newLevel);
         session.setUpdatedAt(OffsetDateTime.now());
 
-        // Mark review required if SUSPICIOUS or above
         if (!session.getReviewRequired() && newScore >= getThresholdSuspicious(session)) {
             session.setReviewRequired(true);
         }
 
         sessionRepository.save(session);
 
-        // Append to risk score history
         ProctoringRiskScore entry = new ProctoringRiskScore();
         entry.setProctoringSessionId(procSessionId);
         entry.setScore(newScore);
@@ -97,7 +85,6 @@ public class RiskScoringService {
         entry.setContributingEvent(eventType);
         riskScoreRepository.save(entry);
 
-        // Push SSE if level changed
         if (!newLevel.equals(session.getRiskLevel()) || newScore != oldScore) {
             sseStreamService.pushRiskLevelChanged(procSessionId.toString(), newScore, newLevel);
         }
@@ -105,14 +92,10 @@ public class RiskScoringService {
         return newScore;
     }
 
-    /**
-     * Apply decay to transient risk events. Called periodically.
-     */
     public void applyDecay(UUID procSessionId) {
         DualViewSession session = sessionRepository.findById(procSessionId).orElse(null);
         if (session == null) return;
 
-        // Simple decay: reduce by 5 per decay cycle, floor at 0
         int current = session.getRiskScore();
         if (current <= 0) return;
 
@@ -181,3 +164,4 @@ public class RiskScoringService {
                 .map(ProctoringPolicyConfig::getThresholdCritical).orElse(86);
     }
 }
+

@@ -9,3 +9,4 @@ public record OpportunityAppliedEvent(
     UUID companyId,
     int coinsSpent
 ) {}
+

@@ -25,7 +25,7 @@ export function PracticePage() {
       const [q, s] = await Promise.all([
         practiceApi.getQuestions({
           difficulty: difficulty || undefined,
-          size: 500, // Load all questions so client has full catalog access
+          size: 500,
         }),
         questionApi.getStats().catch(() => ({ total: 412, easy: 174, medium: 177, hard: 61 })),
       ]);
@@ -37,7 +37,7 @@ export function PracticePage() {
         hard: s.hard || 61,
       });
     } catch {
-      /* fallback */
+
     }
     setLoading(false);
   }, [difficulty]);
@@ -46,12 +46,10 @@ export function PracticePage() {
     load();
   }, [load]);
 
-  // Reset page when difficulty, category, or search changes
   useEffect(() => {
     setCurrentPage(1);
   }, [difficulty, selectedCategory, search, pageSize]);
 
-  // Categorize skill from title or metadata
   function detectSkillCategory(q: Question): string {
     const t = q.title.toLowerCase();
     if (t.includes('java:') || t.includes('jvm') || t.includes('spring') || t.includes('concurrent') || t.includes('virtual thread') || t.includes('jmm')) return 'Java';
@@ -64,10 +62,9 @@ export function PracticePage() {
     return 'General';
   }
 
-  // Filter questions
   const filteredQuestions = useMemo(() => {
     return questions.filter(q => {
-      // Category filter
+
       if (selectedCategory !== 'ALL') {
         const cat = detectSkillCategory(q);
         if (selectedCategory === 'Java' && cat !== 'Java') return false;
@@ -80,7 +77,6 @@ export function PracticePage() {
         if (selectedCategory === 'General' && cat !== 'General') return false;
       }
 
-      // Search filter
       if (search.trim()) {
         const term = search.toLowerCase().trim();
         const matchesTitle = q.title.toLowerCase().includes(term);
@@ -93,7 +89,6 @@ export function PracticePage() {
     });
   }, [questions, selectedCategory, search]);
 
-  // Pagination calculation
   const totalFiltered = filteredQuestions.length;
   const isAllPages = pageSize >= 500;
   const totalPages = isAllPages ? 1 : Math.max(1, Math.ceil(totalFiltered / pageSize));
@@ -125,7 +120,7 @@ export function PracticePage() {
 
   return (
     <div className={styles.page}>
-      {/* Page Header */}
+
       <div className={styles.pageHeader}>
         <div>
           <h1 className={styles.title} style={{ margin: 0 }}>Practice Arena</h1>
@@ -156,7 +151,6 @@ export function PracticePage() {
         )}
       </div>
 
-      {/* Stats Cards */}
       <div className={styles.statsRow}>
         <div
           className={styles.statCard}
@@ -192,7 +186,6 @@ export function PracticePage() {
         </div>
       </div>
 
-      {/* Toolbar & Instant Search */}
       <div className={styles.toolbar}>
         <div className={styles.searchBox}>
           <Search size={15} className={styles.searchIcon} />
@@ -204,7 +197,6 @@ export function PracticePage() {
           />
         </div>
 
-        {/* Difficulty Chips */}
         <div className={styles.filters}>
           {['', 'EASY', 'MEDIUM', 'HARD'].map(d => (
             <button
@@ -218,7 +210,6 @@ export function PracticePage() {
         </div>
       </div>
 
-      {/* Skill / Domain Filter Tabs */}
       <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', paddingBottom: '4px' }}>
         {categories.map(cat => (
           <button
@@ -243,7 +234,6 @@ export function PracticePage() {
         ))}
       </div>
 
-      {/* Pagination Top Indicator */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
         <div style={{ fontSize: '0.84rem', color: '#475569', fontWeight: 500 }}>
           Showing <strong>{totalFiltered === 0 ? 0 : (safePage - 1) * pageSize + 1}–{Math.min(safePage * pageSize, totalFiltered)}</strong> of <strong>{totalFiltered}</strong> questions
@@ -266,7 +256,6 @@ export function PracticePage() {
         </div>
       </div>
 
-      {/* Question List */}
       {loading ? (
         <div className={styles.loadingContainer}>
           {[1, 2, 3, 4, 5, 6].map(i => (
@@ -328,7 +317,6 @@ export function PracticePage() {
         </div>
       )}
 
-      {/* Pagination Controls Bottom */}
       {!loading && totalPages > 1 && (
         <div className={styles.paginationBar}>
           <div className={styles.pageInfo}>
@@ -376,3 +364,4 @@ export function PracticePage() {
     </div>
   );
 }
+

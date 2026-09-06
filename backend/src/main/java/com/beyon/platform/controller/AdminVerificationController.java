@@ -165,7 +165,7 @@ public class AdminVerificationController {
                             }
                         }
                     } catch (Exception ignored) {}
-                    // Clean up orphan if user definitely deleted
+
                     try {
                         jdbcTemplate.update("DELETE FROM institution_profiles WHERE id = ? OR user_id = ?", userId.toString(), userId.toString());
                     } catch (Exception ignored) {}
@@ -189,7 +189,7 @@ public class AdminVerificationController {
                             }
                         }
                     } catch (Exception ignored) {}
-                    // Clean up orphan if user definitely deleted
+
                     try {
                         jdbcTemplate.update("DELETE FROM company_profiles WHERE id = ? OR user_id = ?", userId.toString(), userId.toString());
                     } catch (Exception ignored) {}
@@ -197,3 +197,4 @@ public class AdminVerificationController {
                 });
     }
 }
+

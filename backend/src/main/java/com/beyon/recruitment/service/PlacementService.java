@@ -53,7 +53,6 @@ public class PlacementService {
         this.studentProfileRepository = studentProfileRepository;
     }
 
-    // Phase 163: Placement Registration
     public PlacementRegistration registerOrUpdate(UUID studentId, PlacementRegistration updates) {
         PlacementRegistration reg = regRepo.findByStudentId(studentId)
             .orElseGet(() -> {
@@ -120,7 +119,6 @@ public class PlacementService {
             result.put("registrationNumber", sp.getRegistrationNumber());
         });
 
-        // Backwards-compatible registration sub-object for legacy frontend code
         String pref = reg.isPresent() ? reg.get().getPlacementPreference() : "WILLING";
         String regAt = (reg.isPresent() && reg.get().getRegisteredAt() != null)
                 ? reg.get().getRegisteredAt().toString()
@@ -139,7 +137,6 @@ public class PlacementService {
         return regRepo.countByInstitutionIdAndPlacementPreference(institutionId, "WILLING");
     }
 
-    // Phase 170: Placement Records
     public PlacementRecord createRecord(PlacementRecord record) {
         return recordRepo.save(record);
     }
@@ -312,7 +309,6 @@ public class PlacementService {
         return recordRepo.findByInstitutionIdAndPlacementYear(institutionId, year);
     }
 
-    // Phase 170: Institution Placement Analytics
     public Map<String, Object> getInstitutionPlacementStats(UUID institutionId, Integer year) {
         Optional<InstitutionPlacementStats> existing = statsRepo.findByInstitutionIdAndAcademicYear(institutionId, year);
         if (existing.isPresent()) {
@@ -347,7 +343,6 @@ public class PlacementService {
         stats.setAveragePackage(avgPkg);
         stats.setHighestPackage(maxPkg);
 
-        // Unique companies
         long companies = records.stream()
             .map(PlacementRecord::getCompanyUserId)
             .distinct().count();
@@ -398,3 +393,4 @@ public class PlacementService {
         return result;
     }
 }
+

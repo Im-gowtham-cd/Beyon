@@ -44,3 +44,4 @@ public class CoinRule {
     public void setDailyLimit(Integer dailyLimit) { this.dailyLimit = dailyLimit; }
     public Instant getCreatedAt() { return createdAt; }
 }
+

@@ -51,7 +51,6 @@ export const intelligenceApi = {
   getPersonalizedFeed: async (): Promise<PersonalizedFeedItem[]> => api.get('/feed/personalized'),
   dismissFeedItem: async (itemId: string): Promise<void> => api.post(`/feed/${itemId}/dismiss`),
 
-  // Phase 151-160: Career Intelligence
   getTaxonomyRoots: async (): Promise<any[]> => api.get('/career-intel/taxonomy/roots'),
   getTaxonomyChildren: async (nodeId: string): Promise<any[]> => api.get(`/career-intel/taxonomy/${nodeId}/children`),
   getTaxonomyBySlug: async (slug: string): Promise<any> => api.get(`/career-intel/taxonomy/slug/${slug}`),
@@ -85,3 +84,4 @@ export const intelligenceApi = {
 
   getCareerDashboard: async (): Promise<any> => api.get('/career-intel/dashboard'),
 };
+

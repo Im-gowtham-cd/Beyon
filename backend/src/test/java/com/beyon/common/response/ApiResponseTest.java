@@ -50,3 +50,4 @@ class ApiResponseTest {
         assertEquals(6, response.getPagination().getTotalPages());
     }
 }
+

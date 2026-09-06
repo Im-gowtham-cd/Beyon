@@ -40,7 +40,7 @@ export function AccountRejectedPage() {
           margin: '0 auto',
         }}
       >
-        {/* Rejection Icon Badge */}
+
         <div
           style={{
             width: 84,
@@ -59,7 +59,6 @@ export function AccountRejectedPage() {
           <AlertOctagon size={44} />
         </div>
 
-        {/* Status Pill */}
         <div
           style={{
             display: 'inline-flex',
@@ -104,7 +103,6 @@ export function AccountRejectedPage() {
           {stateMessage || 'Your account registration was reviewed and rejected by the Super Administrator.'}
         </p>
 
-        {/* Detailed Explanation Card */}
         <div
           style={{
             background: '#ffffff',
@@ -140,7 +138,6 @@ export function AccountRejectedPage() {
           )}
         </div>
 
-        {/* Support & Appeal Info */}
         <div
           style={{
             background: '#f8fafc',
@@ -168,7 +165,6 @@ export function AccountRejectedPage() {
           </div>
         </div>
 
-        {/* Action Buttons */}
         <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', justifyContent: 'center' }}>
           {authenticated ? (
             <button
@@ -238,3 +234,4 @@ export function AccountRejectedPage() {
     </OnboardingLayout>
   );
 }
+

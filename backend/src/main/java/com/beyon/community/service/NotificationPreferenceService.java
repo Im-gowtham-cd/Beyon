@@ -30,3 +30,4 @@ public class NotificationPreferenceService {
         return prefRepo.save(pref);
     }
 }
+

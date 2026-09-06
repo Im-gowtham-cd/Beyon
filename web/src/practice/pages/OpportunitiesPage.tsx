@@ -41,7 +41,7 @@ export function OpportunitiesPage() {
         setOpportunities(opps || []);
         setMyApplications(apps || []);
       } catch {
-        /* fallback */
+
       } finally {
         setLoading(false);
       }
@@ -59,7 +59,7 @@ export function OpportunitiesPage() {
       const res = await opportunityApi.checkEligibility(opp.id);
       setEligibility(res);
     } catch {
-      /* fallback */
+
     } finally {
       setCheckingEligibility(false);
     }
@@ -115,7 +115,6 @@ export function OpportunitiesPage() {
         </div>
       </div>
 
-      {/* Stats Row */}
       <div className={styles.statsRow}>
         <div className={styles.statCard}>
           <span className={styles.statLabel}>Active Postings</span>
@@ -135,7 +134,6 @@ export function OpportunitiesPage() {
         </div>
       </div>
 
-      {/* Filter Row */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
         <div className={styles.filters}>
           {(['ALL', 'DRIVES', 'INTERNSHIPS', 'FULL_TIME', 'MY_APPS'] as const).map(t => (
@@ -227,7 +225,6 @@ export function OpportunitiesPage() {
                     )}
                   </div>
 
-                  {/* Metadata Pills */}
                   <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center', margin: '10px 0' }}>
                     <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#15803d', background: '#f0fdf4', border: '1px solid #bbf7d0', padding: '3px 8px', borderRadius: '0px', whiteSpace: 'nowrap', flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                       <Briefcase size={13} style={{ color: '#16a34a' }} /> ₹{opp.packageLpa || 12} LPA
@@ -258,7 +255,6 @@ export function OpportunitiesPage() {
                     )}
                   </div>
 
-                  {/* Required Skills */}
                   {opp.requiredSkills && (
                     <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginTop: '8px' }}>
                       {opp.requiredSkills.split(',').map((s, idx) => (
@@ -270,7 +266,6 @@ export function OpportunitiesPage() {
                   )}
                 </div>
 
-                {/* Footer Action */}
                 <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid #f1f5f9', display: 'flex', justifyContent: 'flex-end' }}>
                   <button
                     style={{
@@ -308,7 +303,6 @@ export function OpportunitiesPage() {
         </div>
       )}
 
-      {/* Opportunity Details & Eligibility Modal */}
       {selectedOpp && (
         <div style={{
           position: 'fixed',
@@ -381,7 +375,6 @@ export function OpportunitiesPage() {
               </div>
             </div>
 
-            {/* Eligibility Live Check */}
             {checkingEligibility ? (
               <div style={{ fontSize: '0.84rem', color: '#64748b', textAlign: 'center', padding: '12px' }}>
                 Verifying academic &amp; coin eligibility...
@@ -491,3 +484,4 @@ export function OpportunitiesPage() {
     </div>
   );
 }
+

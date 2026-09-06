@@ -45,7 +45,7 @@ export function CreateQuestionPage() {
           if (list.length > 0) setSkillId(list[0].id);
         }
       } catch {
-        /* fallback */
+
       }
     }
     loadSkills();
@@ -203,10 +203,9 @@ export function CreateQuestionPage() {
             </div>
           )}
 
-          {/* Core Metadata */}
           <div className={styles.card}>
             <h3 className={styles.cardTitle}>1. Question Metadata</h3>
-            
+
             <div className={styles.formGrid}>
               <div className={styles.fieldGroup}>
                 <label className={styles.label}>Skill / Domain</label>
@@ -276,7 +275,6 @@ export function CreateQuestionPage() {
             </div>
           </div>
 
-          {/* Options Section for MCQ */}
           {questionType === 'MCQ' && (
             <div className={styles.card}>
               <div className={styles.cardHeaderWithAction}>
@@ -339,7 +337,6 @@ export function CreateQuestionPage() {
             </div>
           )}
 
-          {/* SQL / Coding specific fields */}
           {questionType === 'SQL' && (
             <div className={styles.card}>
               <h3 className={styles.cardTitle}>2. Expected SQL Query</h3>
@@ -372,7 +369,6 @@ export function CreateQuestionPage() {
             </div>
           )}
 
-          {/* Solution & Explanation */}
           <div className={styles.card}>
             <h3 className={styles.cardTitle}>3. Explanation &amp; Solution Rationale</h3>
             <p className={styles.cardSubtitle}>
@@ -389,7 +385,6 @@ export function CreateQuestionPage() {
             </div>
           </div>
 
-          {/* Submit Actions */}
           <div className={styles.formFooter}>
             <button
               type="submit"
@@ -412,3 +407,4 @@ export function CreateQuestionPage() {
     </div>
   );
 }
+

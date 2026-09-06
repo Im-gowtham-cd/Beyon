@@ -40,3 +40,4 @@ public class CompanyHiringPreference {
     public void setRecruitmentRegions(String recruitmentRegions) { this.recruitmentRegions = recruitmentRegions; }
     public Instant getCreatedAt() { return createdAt; }
 }
+

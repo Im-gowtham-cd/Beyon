@@ -1,11 +1,6 @@
-// ============================================================
-// Module 01 — Skill Taxonomy Seeder
-// ============================================================
-
 import { doltBatch, doltExec, esc, doltQuery, toUUID } from "../engine/dolt.js";
 import { SKILL_CATEGORIES, SKILLS, SKILL_TOPICS } from "../data/skills.js";
 
-// id map: key -> dolt UUID
 export const skillCategoryIds: Record<string, string> = {};
 export const skillIds: Record<string, string> = {};
 export const skillTopicIds: Record<string, string> = {};
@@ -13,7 +8,6 @@ export const skillTopicIds: Record<string, string> = {};
 export async function seedSkills(): Promise<void> {
   console.log("\n📚 Seeding skill taxonomy...");
 
-  // ─── Categories ───
   const catStmts: string[] = [];
   for (let i = 0; i < SKILL_CATEGORIES.length; i++) {
     const cat = SKILL_CATEGORIES[i];
@@ -28,7 +22,6 @@ export async function seedSkills(): Promise<void> {
   doltBatch(catStmts);
   console.log(`  ✅ ${catStmts.length} categories`);
 
-  // ─── Skills ───
   const skillStmts: string[] = [];
   for (const sk of SKILLS) {
     const id = toUUID(`beyon-skill-${sk.key.toLowerCase()}`);
@@ -41,7 +34,6 @@ export async function seedSkills(): Promise<void> {
   doltBatch(skillStmts);
   console.log(`  ✅ ${skillStmts.length} skills`);
 
-  // ─── Topics ───
   const topicStmts: string[] = [];
   for (let i = 0; i < SKILL_TOPICS.length; i++) {
     const topic = SKILL_TOPICS[i];
@@ -59,3 +51,4 @@ export async function seedSkills(): Promise<void> {
 
   console.log("  ✅ Skill taxonomy seeded");
 }
+

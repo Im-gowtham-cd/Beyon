@@ -44,7 +44,7 @@ export function InstitutionProfilePage() {
           }
         }
       } catch {
-        /* fallback */
+
       }
     }
     loadProfile();
@@ -52,8 +52,7 @@ export function InstitutionProfilePage() {
   }, []);
 
   const rawProfile = profileData?.profile || (profileData?.institutionName ? profileData : {});
-  
-  // Combine registered profile with context defaults
+
   const instName = rawProfile.institutionName || user?.name || 'Beyon Engineering College';
   const initials =
     instName
@@ -66,10 +65,10 @@ export function InstitutionProfilePage() {
 
   const institutionType = rawProfile.institutionType || 'UGC Autonomous Engineering Institute';
   const institutionCode = rawProfile.institutionCode || 'C-68012';
-  
+
   const locationParts = [rawProfile.city, rawProfile.state, rawProfile.country].filter(Boolean);
   const location = locationParts.length > 0 ? locationParts.join(', ') : 'Erode, Tamil Nadu, India';
-  
+
   const website = rawProfile.website || 'https://repofy-application.vercel.app/';
   const studentNum = rawProfile.totalStudents || 5000;
   const enrolledCount = `${studentNum.toLocaleString()} Enrolled Scholars`;
@@ -92,7 +91,7 @@ export function InstitutionProfilePage() {
 
   const officeEmail = rawProfile.officialEmail || user?.email || 'beyonengineeringcollege@beyon.init';
   const phone = rawProfile.phone || '226555';
-  
+
   const campusAddress = rawProfile.address
     ? `${rawProfile.address}${rawProfile.postalCode ? `, PIN: ${rawProfile.postalCode.trim()}` : ''}`
     : 'Perundurai, Erode, Tamil Nadu, PIN: 638060';
@@ -101,7 +100,7 @@ export function InstitutionProfilePage() {
 
   return (
     <div className={styles.page}>
-      {/* Header */}
+
       <section className={styles.profileHeader}>
         <div className={styles.avatarBox}>
           <span>{initials}</span>
@@ -151,10 +150,9 @@ export function InstitutionProfilePage() {
         </div>
       </section>
 
-      {/* Grid */}
       <div className={styles.contentGrid}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-          {/* Institutional Overview */}
+
           <div className={styles.card}>
             <h3 className={styles.cardTitle}>
               <Info size={18} style={{ color: '#1c2d81' }} />
@@ -163,7 +161,6 @@ export function InstitutionProfilePage() {
             <p className={styles.cardText}>{overview}</p>
           </div>
 
-          {/* Academic Accreditations & Key Ratings */}
           <div className={styles.card}>
             <h3 className={styles.cardTitle}>
               <Award size={18} style={{ color: '#1c2d81' }} />
@@ -202,7 +199,6 @@ export function InstitutionProfilePage() {
           </div>
         </div>
 
-        {/* Right Aside */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
           <div className={styles.card}>
             <h3 className={styles.cardTitle}>
@@ -293,3 +289,4 @@ export function InstitutionProfilePage() {
     </div>
   );
 }
+

@@ -111,7 +111,7 @@ import { MobileProctorApp } from '../proctor/MobileProctorApp';
 export function App() {
   return (
     <Routes>
-      {/* Public & Auth Routes */}
+
       <Route path="/proctor" element={<MobileProctorApp />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
@@ -122,15 +122,13 @@ export function App() {
       <Route path="/unauthorized" element={<UnauthorizedPage />} />
       <Route path="/403" element={<UnauthorizedPage />} />
 
-      {/* Authenticated Routes */}
       <Route element={<ProtectedRoute />}>
-        {/* Role Onboarding Pages */}
+
         <Route path="/onboarding/student" element={<StudentOnboarding />} />
         <Route path="/onboarding/institution" element={<InstitutionOnboarding />} />
         <Route path="/onboarding/company" element={<CompanyOnboarding />} />
         <Route path="/onboarding/complete" element={<CompletionPage />} />
 
-        {/* Global Settings & Status */}
         <Route path="/verification-pending" element={<VerificationPendingPage />} />
         <Route path="/account-suspended" element={<AccountSuspendedPage />} />
         <Route path="/account-rejected" element={<AccountRejectedPage />} />
@@ -139,7 +137,6 @@ export function App() {
         <Route path="/settings/sessions" element={<SessionSettingsPage />} />
         <Route path="/realtime-notifications" element={<RealtimeNotificationsPage />} />
 
-        {/* Enterprise Company & Recruiter Portal */}
         <Route element={<RoleGuard allowedRoles={['COMPANY', 'ADMIN']} />}>
           <Route element={<CompanyLayout />}>
             <Route path="/company/home" element={<CompanyHome />} />
@@ -165,7 +162,6 @@ export function App() {
           </Route>
         </Route>
 
-        {/* Higher-Ed Institution Portal */}
         <Route element={<RoleGuard allowedRoles={['INSTITUTION', 'ADMIN']} />}>
           <Route element={<InstitutionLayout />}>
             <Route path="/institution/home" element={<InstitutionHome />} />
@@ -183,7 +179,6 @@ export function App() {
           </Route>
         </Route>
 
-        {/* Student & Candidate Portal */}
         <Route element={<RoleGuard allowedRoles={['STUDENT']} />}>
           <Route element={<StudentLayout />}>
             <Route path="/student/home" element={<StudentHome />} />
@@ -240,7 +235,6 @@ export function App() {
           </Route>
         </Route>
 
-        {/* Platform Administrator Portal */}
         <Route element={<RoleGuard allowedRoles={['ADMIN']} />}>
           <Route element={<AdminLayout />}>
             <Route path="/admin/home" element={<AdminHome />} />
@@ -260,12 +254,10 @@ export function App() {
         </Route>
       </Route>
 
-      {/* Public Credential Verification & Profiles */}
       <Route path="/verify/:certificateNumber" element={<CredentialVerificationPage />} />
       <Route path="/verify" element={<CredentialVerificationPage />} />
       <Route path="/student/u/:username" element={<PublicProfilePage />} />
 
-      {/* Landing and Catch-all */}
       <Route element={<MainLayout />}>
         <Route path="/" element={<HomePage />} />
         <Route path="*" element={<NotFoundPage />} />
@@ -273,3 +265,4 @@ export function App() {
     </Routes>
   );
 }
+

@@ -102,7 +102,6 @@
   border-color: #94a3b8;
 }
 
-/* Stats Row */
 .statsRow {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -160,7 +159,6 @@
   font-weight: 500;
 }
 
-/* Filter Controls Bar */
 .filterBar {
   display: flex;
   align-items: center;
@@ -235,7 +233,6 @@
   box-shadow: 0 0 0 1px #1c2d81;
 }
 
-/* Drives Grid */
 .drivesGrid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
@@ -502,7 +499,6 @@
   line-height: 1.5;
 }
 
-/* Modal Styling */
 .modalOverlay {
   position: fixed;
   top: 0;
@@ -723,3 +719,4 @@
   cursor: pointer;
   outline: none;
 }
+

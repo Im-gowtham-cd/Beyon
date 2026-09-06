@@ -71,7 +71,7 @@ export function DailyChallengePage() {
       setSprintQuestions(sprintRes || []);
       setRecallQuestions(recallRes || []);
     } catch {
-      /* fallback */
+
     } finally {
       setLoading(false);
     }
@@ -106,7 +106,7 @@ export function DailyChallengePage() {
       const correctOptionId = res?.correctOptionId || correctOptObj?.id;
       const correctOptionText = res?.correctOptionText || correctOptObj?.optionText;
       const explanation = res?.explanation || correctOptObj?.explanation || 'Review the core architectural principles in the study modules.';
-      
+
       setQuestionResults(prev => ({
         ...prev,
         [currentQuestion.id]: {
@@ -205,7 +205,7 @@ export function DailyChallengePage() {
 
   return (
     <div className={styles.page}>
-      {/* Page Header */}
+
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px', flexWrap: 'wrap', gap: '16px' }}>
         <div>
           <h1 className={styles.title} style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -217,7 +217,6 @@ export function DailyChallengePage() {
           </p>
         </div>
 
-        {/* Live Rewards Bar */}
         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe', padding: '6px 14px', borderRadius: '4px', fontWeight: 700, fontSize: '0.82rem' }}>
             <Zap size={14} /> +{sessionXP} XP Earned
@@ -231,7 +230,6 @@ export function DailyChallengePage() {
         </div>
       </div>
 
-      {/* Mode Navigation Tabs */}
       <div style={{ display: 'flex', gap: '10px', borderBottom: '2px solid #e2e8f0', marginBottom: '20px' }}>
         <button
           onClick={() => handleTabChange('sprint')}
@@ -274,7 +272,6 @@ export function DailyChallengePage() {
         </button>
       </div>
 
-      {/* 100 Coins Reward & 100% Score Threshold Banner */}
       <div style={{
         background: eligibleForBonus ? '#fefce8' : '#f8fafc',
         border: eligibleForBonus ? '1.5px solid #facc15' : '1px solid #e2e8f0',
@@ -360,7 +357,6 @@ export function DailyChallengePage() {
         </div>
       )}
 
-      {/* Info Context Banner */}
       {activeTab === 'sprint' ? (
         <div style={{ background: '#f8fafc', border: '1px solid #cbd5e1', borderLeft: '4px solid #1c2d81', padding: '14px 18px', borderRadius: '4px', marginBottom: '20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
           <div>
@@ -393,7 +389,6 @@ export function DailyChallengePage() {
         </div>
       )}
 
-      {/* Empty State */}
       {activeSet.length === 0 ? (
         <div className={styles.emptyState}>
           <HelpCircle size={36} style={{ color: '#94a3b8' }} />
@@ -404,7 +399,7 @@ export function DailyChallengePage() {
         </div>
       ) : (
         <div>
-          {/* Question Stepper Indicator */}
+
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', marginBottom: '20px' }}>
             {activeSet.map((q, idx) => {
               const res = questionResults[q.id];
@@ -453,7 +448,6 @@ export function DailyChallengePage() {
             })}
           </div>
 
-          {/* Active Question Card */}
           {currentQuestion && (
             <div className={styles.questionDetail} style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
               <div className={styles.questionHeader}>
@@ -483,7 +477,6 @@ export function DailyChallengePage() {
                 </div>
               </div>
 
-              {/* Options List */}
               {currentQuestion.options && currentQuestion.options.length > 0 ? (
                 <div className={styles.optionsList} style={{ margin: '20px 0' }}>
                   {currentQuestion.options.map((opt, idx) => {
@@ -545,7 +538,6 @@ export function DailyChallengePage() {
                 </div>
               )}
 
-              {/* Action Buttons & Result Banner */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '24px', flexWrap: 'wrap', gap: '12px' }}>
                 <button
                   onClick={handlePrevQuestion}
@@ -612,7 +604,6 @@ export function DailyChallengePage() {
                 )}
               </div>
 
-              {/* Explanation & Technical Feedback */}
               {currentResult && (() => {
                 const correctOpt = currentQuestion.options.find(o => o.isCorrect || o.id === currentResult.correctOptionId);
                 const correctIndex = correctOpt ? currentQuestion.options.indexOf(correctOpt) : -1;
@@ -627,7 +618,7 @@ export function DailyChallengePage() {
                     border: currentResult.correct ? '1.5px solid #86efac' : '1.5px solid #fecaca',
                     borderRadius: '8px',
                   }}>
-                    {/* Header */}
+
                     <div style={{
                       display: 'flex',
                       alignItems: 'center',
@@ -641,7 +632,6 @@ export function DailyChallengePage() {
                       <span>{currentResult.correct ? 'Correct Solution! (+25 XP & +10 Coins Earned)' : 'Incorrect Solution'}</span>
                     </div>
 
-                    {/* If incorrect, explicitly reveal the correct answer */}
                     {!currentResult.correct && (
                       <div style={{
                         background: '#ffffff',
@@ -671,7 +661,6 @@ export function DailyChallengePage() {
                       </div>
                     )}
 
-                    {/* Concept and Explanation breakdown */}
                     <div style={{
                       background: '#ffffff',
                       border: currentResult.correct ? '1px solid #bbf7d0' : '1px solid #fed7aa',
@@ -704,7 +693,6 @@ export function DailyChallengePage() {
             </div>
           )}
 
-          {/* Session Complete Celebration Banner */}
           {isFinished && (
             <div style={{ marginTop: '24px', background: 'linear-gradient(135deg, #1c2d81 0%, #253cac 100%)', color: '#ffffff', padding: '24px', borderRadius: '8px', textAlign: 'center' }}>
               <div style={{ marginBottom: '12px', display: 'flex', justifyContent: 'center' }}>

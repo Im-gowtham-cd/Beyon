@@ -10,3 +10,4 @@ public interface InstitutionProfileRepository extends JpaRepository<InstitutionP
     boolean existsByUserId(UUID userId);
     Optional<InstitutionProfile> findByInstitutionNameContainingIgnoreCase(String institutionName);
 }
+

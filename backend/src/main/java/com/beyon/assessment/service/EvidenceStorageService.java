@@ -10,10 +10,6 @@ import java.io.IOException;
 import java.time.Instant;
 import java.util.UUID;
 
-/**
- * Stores proctoring evidence frames (JPEG) on the local filesystem.
- * Files are served securely via /api/v1/evidence/{id} with authorization checks.
- */
 @Service
 public class EvidenceStorageService {
 
@@ -25,10 +21,6 @@ public class EvidenceStorageService {
     @Value("${beyon.proctoring.evidence-base-url:http://localhost:8085/api/v1/evidence}")
     private String evidenceBaseUrl;
 
-    /**
-     * Store a JPEG frame for an incident.
-     * @return the public URL to access this evidence
-     */
     public String storeFrame(UUID procSessionId, UUID incidentId, String deviceSource, byte[] imageBytes) {
         if (imageBytes == null || imageBytes.length == 0) return null;
 
@@ -45,7 +37,6 @@ public class EvidenceStorageService {
                 fos.write(imageBytes);
             }
 
-            // Return relative URL path - served by EvidenceController
             return "/api/v1/evidence/" + sessionDir + "/" + incidentDir + "/" + filename;
         } catch (IOException e) {
             log.error("Failed to store evidence frame: {}", e.getMessage());
@@ -53,12 +44,10 @@ public class EvidenceStorageService {
         }
     }
 
-    /**
-     * Resolve a relative storage URL to an absolute filesystem path.
-     */
     public File resolveStoragePath(String relativeUrl) {
-        // Strip /api/v1/evidence/ prefix
+
         String path = relativeUrl.replace("/api/v1/evidence/", "");
         return new File(evidenceBasePath + "/" + path);
     }
 }
+

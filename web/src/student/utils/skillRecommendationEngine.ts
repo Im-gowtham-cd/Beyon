@@ -214,7 +214,7 @@ export function computeSkillRecommendations(
   additionalExcludedNames?: Set<string>,
   additionalExcludedIds?: Set<string>
 ): RecommendationResult {
-  // 1. Compile existing skills to exclude
+
   const existingNormalizedNames = new Set<string>();
   const existingSkillIds = new Set<string>();
 
@@ -236,7 +236,6 @@ export function computeSkillRecommendations(
     additionalExcludedIds.forEach(id => existingSkillIds.add(id));
   }
 
-  // 2. Score student's interest in domains based on Top Skills & Learning Skills
   const domainScores: Record<TechDomain, number> = {
     frontend: 0,
     backend: 0,
@@ -251,7 +250,7 @@ export function computeSkillRecommendations(
   topSkills.forEach(skill => {
     const domain = findDomainForSkill(skill.skillName);
     if (domain) {
-      let weight = 2; // Default INTERMEDIATE
+      let weight = 2;
       if (skill.proficiency === 'EXPERT') weight = 4;
       else if (skill.proficiency === 'ADVANCED') weight = 3;
       else if (skill.proficiency === 'BEGINNER') weight = 1.5;
@@ -262,11 +261,10 @@ export function computeSkillRecommendations(
   learningSkills.forEach(skill => {
     const domain = findDomainForSkill(skill.skillName);
     if (domain) {
-      domainScores[domain] += 2.5; // High signal because student actively enrolled
+      domainScores[domain] += 2.5;
     }
   });
 
-  // Rank domains by student interest
   const rankedDomains = (Object.keys(domainScores) as TechDomain[])
     .filter(d => domainScores[d] > 0)
     .sort((a, b) => domainScores[b] - domainScores[a]);
@@ -303,7 +301,6 @@ export function computeSkillRecommendations(
     focusSummary = 'Essential foundational technologies to accelerate your technical interview and platform readiness';
   }
 
-  // 3. Filter Candidate Skills: exclude already owned/enrolled skills
   const candidates = allSkills.filter(skill => {
     if (existingSkillIds.has(skill.id)) return false;
     const norm = normalizeName(skill.name);
@@ -311,7 +308,6 @@ export function computeSkillRecommendations(
     return true;
   });
 
-  // 4. Score Candidate Skills
   const scoredSkills: RecommendedSkillItem[] = [];
 
   for (const candidate of candidates) {
@@ -324,20 +320,19 @@ export function computeSkillRecommendations(
     let matchReason = '';
     let synergyTag = 'Recommended';
 
-    // A. Domain Relevance Score
     if (hasSkills) {
       if (candidateDomain === primaryDomainId) {
-        // High priority: student is most interested in this domain!
+
         totalScore += 50;
         matchReason = `Matches your core focus in ${primaryDomainConfig?.label || 'this area'}`;
         synergyTag = 'Core Path';
       } else if (secondaryDomainId && candidateDomain === secondaryDomainId) {
-        // Secondary priority
+
         totalScore += 35;
         matchReason = `Complements your ${secondaryDomainConfig?.label || 'secondary stack'}`;
         synergyTag = 'Complementary';
       } else if (primaryDomainConfig?.companionDomains.includes(candidateDomain)) {
-        // Natural companion domain (e.g. Frontend -> Backend, or Backend -> Cloud)
+
         totalScore += 25;
         matchReason = `Natural next milestone for your engineering stack`;
         synergyTag = 'Expansion';
@@ -347,7 +342,7 @@ export function computeSkillRecommendations(
         synergyTag = 'New Domain';
       }
     } else {
-      // Fallback for students with 0 skills: prioritize DSA, Python, Git, React, Java
+
       if (['datastructuresalgorithms', 'dsa', 'python', 'git', 'react', 'java', 'sql', 'postgresql'].includes(candidateNorm)) {
         totalScore += 80;
         matchReason = 'Essential software engineering foundation recommended for all developers';
@@ -359,7 +354,6 @@ export function computeSkillRecommendations(
       }
     }
 
-    // B. Direct Companion Synergies with Student's Specific Top Skills
     if (hasSkills) {
       for (const studentSkill of topSkills) {
         const studentNorm = normalizeName(studentSkill.skillName);
@@ -380,7 +374,6 @@ export function computeSkillRecommendations(
       }
     }
 
-    // C. General System Design & DSA Bonus (Critical for every SDE interview)
     if (['systemdesign', 'datastructuresalgorithms', 'dsa', 'oop'].includes(candidateNorm)) {
       totalScore += 15;
       if (!matchReason.includes('interview')) {
@@ -397,7 +390,6 @@ export function computeSkillRecommendations(
     });
   }
 
-  // 5. Sort by score descending and return top candidates
   scoredSkills.sort((a, b) => b.score - a.score);
 
   return {
@@ -407,3 +399,4 @@ export function computeSkillRecommendations(
     recommendedSkills: scoredSkills.slice(0, limit),
   };
 }
+

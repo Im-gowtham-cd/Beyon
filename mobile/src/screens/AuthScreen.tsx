@@ -28,7 +28,7 @@ export const AuthScreen: React.FC = () => {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      {/* Brand Header */}
+
       <View style={styles.brandCard}>
         <View style={styles.logoMark} />
         <Text style={styles.brandTitle}>Beyon Mobile</Text>
@@ -37,9 +37,8 @@ export const AuthScreen: React.FC = () => {
         </Text>
       </View>
 
-      {/* Auth Card */}
       <View style={styles.authCard}>
-        {/* Tab switcher */}
+
         <View style={styles.tabRow}>
           <TouchableOpacity
             style={[styles.tabBtn, !isRegister && styles.tabBtnActive]}
@@ -57,7 +56,6 @@ export const AuthScreen: React.FC = () => {
 
         {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
-        {/* Inputs */}
         {isRegister && (
           <View style={styles.inputGroup}>
             <Text style={styles.inputLabel}>Full Name</Text>
@@ -119,7 +117,6 @@ export const AuthScreen: React.FC = () => {
           </View>
         )}
 
-        {/* Submit */}
         <TouchableOpacity
           style={styles.submitBtn}
           onPress={handleSubmit}
@@ -134,7 +131,6 @@ export const AuthScreen: React.FC = () => {
           )}
         </TouchableOpacity>
 
-        {/* Demo Fast Login */}
         <TouchableOpacity
           style={styles.demoBtn}
           onPress={() => login('gowtham@example.com', 'password123')}
@@ -288,3 +284,4 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
 });
+

@@ -8,3 +8,4 @@ import java.util.UUID;
 public interface MentorshipSessionRepository extends JpaRepository<MentorshipSession, UUID> {
     List<MentorshipSession> findByRequestId(UUID requestId);
 }
+

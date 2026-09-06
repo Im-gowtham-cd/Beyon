@@ -26,3 +26,4 @@ public class StudentCertificationRequest {
     public String getCertificateUrl() { return certificateUrl; }
     public void setCertificateUrl(String certificateUrl) { this.certificateUrl = certificateUrl; }
 }
+

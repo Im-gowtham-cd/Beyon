@@ -84,7 +84,8 @@ public class PlacementController {
                 return UUID.fromString(auth.getPrincipal().toString());
             } catch (Exception ignored) {}
         }
-        // Fallback default student ID (gowthamcd.cse@beyon.init) if unauthenticated in test environment
+
         return UUID.fromString("fd1ed23d-77d5-47a8-b069-4faa38058437");
     }
 }
+

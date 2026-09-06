@@ -16,3 +16,4 @@ public interface LeaderboardRepository extends JpaRepository<Leaderboard, UUID> 
 
     Leaderboard findByStudentIdAndBoardTypeAndBoardScopeAndPeriod(UUID studentId, String boardType, String boardScope, String period);
 }
+

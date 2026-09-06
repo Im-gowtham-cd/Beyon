@@ -31,7 +31,7 @@ export function useMobileAudio(stream: MediaStream | null) {
         }
         const avg = sum / dataArray.length;
         setAudioLevel(avg);
-        setSpeaking(avg > 35); // Threshold for voice activity
+        setSpeaking(avg > 35);
         animFrameRef.current = requestAnimationFrame(checkAudio);
       };
 
@@ -50,3 +50,4 @@ export function useMobileAudio(stream: MediaStream | null) {
 
   return { audioLevel, speaking };
 }
+

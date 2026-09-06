@@ -50,3 +50,4 @@ public class InstitutionRepresentative {
     public void setDepartment(String department) { this.department = department; }
     public Instant getCreatedAt() { return createdAt; }
 }
+

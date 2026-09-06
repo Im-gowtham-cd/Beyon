@@ -35,3 +35,4 @@ public class StudentLink {
     public void setUrl(String url) { this.url = url; }
     public Instant getCreatedAt() { return createdAt; }
 }
+

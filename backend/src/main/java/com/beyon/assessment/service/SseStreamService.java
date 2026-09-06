@@ -6,10 +6,6 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * Manages SSE (Server-Sent Events) connections for DualView proctoring.
- * Desktop and web recruiter dashboards subscribe to session events.
- */
 @Service
 public class SseStreamService {
 
@@ -22,13 +18,11 @@ public class SseStreamService {
         emitter.onTimeout(() -> emitters.remove(procSessionId));
         emitter.onError((e) -> emitters.remove(procSessionId));
 
-        // Replace existing connection
         SseEmitter existing = emitters.put(procSessionId, emitter);
         if (existing != null) {
             existing.complete();
         }
 
-        // Send initial heartbeat
         push(procSessionId, "CONNECTED", Map.of("procSessionId", procSessionId));
         return emitter;
     }
@@ -100,3 +94,4 @@ public class SseStreamService {
         return emitters.containsKey(procSessionId);
     }
 }
+

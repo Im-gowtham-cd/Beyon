@@ -108,7 +108,6 @@ export function CandidateIntelligencePage() {
         </div>
       </div>
 
-      {/* 4 Stats */}
       <div className={styles.statsRow}>
         <div className={styles.statCard}>
           <span className={styles.statLabel}>Intelligence Model</span>
@@ -130,7 +129,6 @@ export function CandidateIntelligencePage() {
         </div>
       </div>
 
-      {/* Controls */}
       <div className={styles.filterRow}>
         <div className={styles.filters}>
           <button
@@ -172,7 +170,6 @@ export function CandidateIntelligencePage() {
         </div>
       </div>
 
-      {/* Candidates Table Card */}
       {loading ? (
         <div style={{ padding: '32px', textAlign: 'center', color: '#64748b' }}>
           Calculating multi-vector candidate intelligence...
@@ -278,3 +275,4 @@ export function CandidateIntelligencePage() {
     </div>
   );
 }
+

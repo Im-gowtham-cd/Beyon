@@ -123,7 +123,6 @@ public class OnboardingController {
         profile.setCompletionPct(90);
         studentProfileRepository.save(profile);
 
-        // Link student to institution roster for verification
         String targetInst = profile.getInstitution();
         if (targetInst != null && !targetInst.isBlank()) {
             List<InstitutionProfile> matchingInstitutions = institutionProfileRepository.findAll();
@@ -153,7 +152,6 @@ public class OnboardingController {
             }
         }
 
-        // Process Skills
         if (body.get("skills") instanceof List<?> skillsList) {
             for (Object item : skillsList) {
                 if (item instanceof Map<?, ?> smap && smap.get("skillName") != null) {
@@ -174,7 +172,6 @@ public class OnboardingController {
             }
         }
 
-        // Process Projects
         if (body.get("projects") instanceof List<?> projList) {
             for (Object item : projList) {
                 if (item instanceof Map<?, ?> pmap && pmap.get("name") != null) {
@@ -194,7 +191,6 @@ public class OnboardingController {
             }
         }
 
-        // Process Certifications
         if (body.get("certifications") instanceof List<?> certList) {
             for (Object item : certList) {
                 if (item instanceof Map<?, ?> cmap && cmap.get("name") != null) {
@@ -213,7 +209,6 @@ public class OnboardingController {
             }
         }
 
-        // Process Links
         if (body.get("links") instanceof List<?> linkList) {
             for (Object item : linkList) {
                 if (item instanceof Map<?, ?> lmap && lmap.get("platform") != null && lmap.get("url") != null) {
@@ -229,14 +224,12 @@ public class OnboardingController {
             }
         }
 
-        // Mark user profile pending institutional verification
         userRepository.findById(userId).ifPresent(u -> {
             u.setProfileStatus(AccountStatus.PENDING_INSTITUTION_VERIFICATION);
             u.setStatus(AccountStatus.PENDING_VERIFICATION);
             userRepository.save(u);
         });
 
-        // Award 100 Welcome Coins
         try {
             coinService.getOrCreateWallet(userId);
             coinService.earnCoins(userId, "ONBOARDING_COMPLETED", "ONBOARDING", userId);
@@ -346,3 +339,4 @@ public class OnboardingController {
         return UUID.fromString(details.getUserId());
     }
 }
+

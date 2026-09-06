@@ -40,7 +40,7 @@ export function PlacementDashboardPage() {
       const intv = interviewsRes as any;
       setUpcomingInterviews(intv?.upcoming || []);
     } catch {
-      // Graceful fallback
+
     } finally {
       setLoading(false);
     }
@@ -121,7 +121,7 @@ export function PlacementDashboardPage() {
 
   return (
     <div className={styles.pageContainer}>
-      {/* Header */}
+
       <div className={styles.headerSection}>
         <div>
           <h1 className={styles.headerTitle}>
@@ -188,7 +188,6 @@ export function PlacementDashboardPage() {
         </div>
       )}
 
-      {/* Dynamic Status Hero Banner */}
       {isPlaced ? (
         <div className={styles.celebrationBanner}>
           <div className={styles.celebrationContent}>
@@ -255,7 +254,6 @@ export function PlacementDashboardPage() {
         </div>
       )}
 
-      {/* 4 Stats Grid */}
       <div className={styles.statsGrid}>
         <div className={styles.statCard}>
           <div className={styles.statTop}>
@@ -311,7 +309,6 @@ export function PlacementDashboardPage() {
         </div>
       </div>
 
-      {/* Placement Records & Offers Table */}
       <div className={styles.sectionCard}>
         <div className={styles.sectionHeader}>
           <h3 className={styles.sectionTitle}>
@@ -480,7 +477,6 @@ export function PlacementDashboardPage() {
         </div>
       </div>
 
-      {/* Upcoming Interviews & Schedule */}
       {upcomingInterviews.length > 0 && (
         <div className={styles.sectionCard}>
           <div className={styles.sectionHeader}>
@@ -536,7 +532,6 @@ export function PlacementDashboardPage() {
         </div>
       )}
 
-      {/* Academic & Verification Profile Card */}
       <div className={styles.sectionCard}>
         <div className={styles.sectionHeader}>
           <h3 className={styles.sectionTitle}>
@@ -599,3 +594,4 @@ export function PlacementDashboardPage() {
     </div>
   );
 }
+

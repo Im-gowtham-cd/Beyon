@@ -6,3 +6,4 @@ public enum WorkType {
     REMOTE,
     ANY
 }
+

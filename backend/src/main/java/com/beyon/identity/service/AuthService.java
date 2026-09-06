@@ -105,7 +105,6 @@ public class AuthService {
         user.setEmailVerified(true);
         User savedUser = userRepository.save(user);
 
-        // Auto-initialize role-specific profile & assets immediately
         if (request.getRole() == UserRole.STUDENT) {
             StudentProfile profile = new StudentProfile();
             profile.setUserId(savedUser.getId());
@@ -382,3 +381,4 @@ public class AuthService {
         }
     }
 }
+

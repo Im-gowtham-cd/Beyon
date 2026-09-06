@@ -53,7 +53,7 @@ export function InstitutionHome() {
         setPendingStudents(Array.isArray(pendingRes) ? pendingRes : (pendingRes as any)?.data || []);
         setDrives(Array.isArray(drivesRes) ? drivesRes : (drivesRes as any)?.data || []);
       } catch {
-        /* fallback */
+
       }
     }
     loadData();
@@ -134,7 +134,6 @@ export function InstitutionHome() {
         </div>
       )}
 
-      {/* Welcome Hero */}
       <section className={styles.welcomeHero}>
         <div className={styles.welcomeInfo}>
           <div className={styles.badgeRow}>
@@ -173,7 +172,6 @@ export function InstitutionHome() {
         </div>
       </section>
 
-      {/* 4 KPI Cards */}
       <div className={styles.kpiGrid}>
         <div className={styles.kpiCard}>
           <div className={styles.kpiHeader}>
@@ -230,7 +228,6 @@ export function InstitutionHome() {
         </div>
       </div>
 
-      {/* Fast Action Banner */}
       <div className={styles.actionBanner}>
         <div className={styles.actionBannerLeft}>
           <div className={styles.actionBannerIcon}>
@@ -257,7 +254,6 @@ export function InstitutionHome() {
         </div>
       </div>
 
-      {/* Main Grid: Student Roster + Right Sidebar */}
       <div className={styles.dashboardGrid}>
         <div className={styles.mainColumn}>
           <div className={styles.sectionHeader}>
@@ -323,9 +319,8 @@ export function InstitutionHome() {
           </div>
         </div>
 
-        {/* Right Aside */}
         <div className={styles.sideColumn}>
-          {/* Department Placement Summary */}
+
           <div className={styles.sideCard}>
             <div className={styles.sideCardHeader}>
               <Layers size={16} style={{ color: '#1c2d81' }} />
@@ -352,7 +347,6 @@ export function InstitutionHome() {
             </div>
           </div>
 
-          {/* Active Campus Drives Card */}
           <div className={styles.sideCard}>
             <div className={styles.sideCardHeader}>
               <Briefcase size={16} style={{ color: '#1c2d81' }} />
@@ -415,3 +409,4 @@ export function InstitutionHome() {
     </div>
   );
 }
+

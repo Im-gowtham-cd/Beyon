@@ -52,3 +52,4 @@ public class AssessmentPolicyController {
         throw new RuntimeException("Unauthorized");
     }
 }
+

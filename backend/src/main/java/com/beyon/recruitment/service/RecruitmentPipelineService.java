@@ -126,3 +126,4 @@ public class RecruitmentPipelineService {
         return stats;
     }
 }
+

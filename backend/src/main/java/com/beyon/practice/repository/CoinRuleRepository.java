@@ -9,3 +9,4 @@ import java.util.UUID;
 public interface CoinRuleRepository extends JpaRepository<CoinRule, UUID> {
     Optional<CoinRule> findByActionAndActiveTrue(String action);
 }
+

@@ -109,3 +109,4 @@ export const streakApi = {
   getInfo: () => api.get<StreakInfo>('/streak'),
   getFreezes: () => api.get<number>('/streak/freezes'),
 };
+

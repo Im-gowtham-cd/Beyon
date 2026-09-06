@@ -86,7 +86,7 @@ export function RegisterPage() {
     <div className={styles.loginPage}>
       <main className={styles.loginMain}>
         <div className={styles.loginCard}>
-          {/* Left Aside - Exact same as Login */}
+
           <aside className={styles.loginAside}>
             <div className={styles.asideBrand}>
               <span className={styles.asideMark} aria-hidden="true" />
@@ -117,7 +117,6 @@ export function RegisterPage() {
             </div>
           </aside>
 
-          {/* Right Panel - Register with identical UX */}
           <section className={styles.loginPanel}>
             <span className="section-label">Beyon Portal</span>
             <h1>Create Account</h1>
@@ -274,3 +273,4 @@ export function RegisterPage() {
     </div>
   );
 }
+

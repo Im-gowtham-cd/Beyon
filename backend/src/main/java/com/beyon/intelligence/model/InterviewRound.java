@@ -31,3 +31,4 @@ public class InterviewRound {
     public Boolean getIsEliminative() { return isEliminative; } public void setIsEliminative(Boolean v) { this.isEliminative = v; }
     public OffsetDateTime getCreatedAt() { return createdAt; } public void setCreatedAt(OffsetDateTime v) { this.createdAt = v; }
 }
+

@@ -31,7 +31,7 @@ export function InstitutionAnalyticsPage() {
       setDrives(Array.isArray(drivesRes) ? drivesRes : (drivesRes as any)?.data || []);
       setRating(ratingRes && (ratingRes as any).data !== undefined ? (ratingRes as any).data : ratingRes);
     } catch {
-      /* fallback */
+
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -64,7 +64,6 @@ export function InstitutionAnalyticsPage() {
       : null;
   const recruitingCorporates = drives.length > 0 ? `${drives.length} Partners` : null;
 
-  // Department analytics computed strictly from real student data
   const deptMap = new Map<string, { count: number; placed: number; totalPkg: number; pkgCount: number }>();
   students.forEach((s) => {
     const d = s.department || 'Unassigned Department';
@@ -112,7 +111,6 @@ export function InstitutionAnalyticsPage() {
         </button>
       </div>
 
-      {/* 4 Stats */}
       <div className={styles.statsRow}>
         <div className={styles.statCard}>
           <span className={styles.statLabel}>Total Placed Rate</span>
@@ -140,7 +138,6 @@ export function InstitutionAnalyticsPage() {
         </div>
       </div>
 
-      {/* Department Breakdown */}
       <div className={styles.formCard} style={{ marginTop: '16px' }}>
         <h2
           className={styles.sectionHeading}
@@ -206,7 +203,6 @@ export function InstitutionAnalyticsPage() {
         )}
       </div>
 
-      {/* NIRF Scorecard Table */}
       <div className={styles.formCard} style={{ marginTop: '16px' }}>
         <h2
           className={styles.sectionHeading}
@@ -276,3 +272,4 @@ export function InstitutionAnalyticsPage() {
     </div>
   );
 }
+

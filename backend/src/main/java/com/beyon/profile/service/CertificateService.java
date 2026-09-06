@@ -65,3 +65,4 @@ public class CertificateService {
         return certRepo.findById(id).orElseThrow(() -> new ResourceNotFoundException("Certificate not found"));
     }
 }
+

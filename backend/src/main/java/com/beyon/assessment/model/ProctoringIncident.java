@@ -20,7 +20,7 @@ public class ProctoringIncident {
     private String incidentType;
 
     @Column(nullable = false, length = 20)
-    private String severity; // LOW | MEDIUM | HIGH | CRITICAL
+    private String severity;
 
     @Column(nullable = false, precision = 4, scale = 3)
     private BigDecimal confidence = BigDecimal.ZERO;
@@ -32,7 +32,7 @@ public class ProctoringIncident {
     private String questionId;
 
     @Column(length = 200)
-    private String sources; // CSV: LAPTOP_CAMERA,MOBILE_CAMERA,LAPTOP_AUDIO,MOBILE_AUDIO
+    private String sources;
 
     @Column(name = "signal_count", nullable = false)
     private Integer signalCount = 1;
@@ -93,3 +93,4 @@ public class ProctoringIncident {
     public OffsetDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(OffsetDateTime v) { this.createdAt = v; }
 }
+

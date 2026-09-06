@@ -126,3 +126,4 @@ export const assessmentApi = {
     return api.get<AssessmentPolicy[]>('/assessment-policies');
   },
 };
+

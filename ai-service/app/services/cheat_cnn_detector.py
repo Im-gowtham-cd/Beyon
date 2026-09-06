@@ -5,7 +5,6 @@ from typing import Tuple, Dict, Any
 
 logger = logging.getLogger(__name__)
 
-# Global singleton instance of Cheating CNN model
 _cnn_model = None
 _cnn_initialized = False
 
@@ -19,12 +18,12 @@ try:
             super(CheatingCNN, self).__init__()
             self.conv1 = nn.Conv2d(1, 32, kernel_size=3, padding=1)
             self.bn1 = nn.BatchNorm2d(32)
-            self.pool1 = nn.MaxPool2d(2, 2)  # 24x24
-            
+            self.pool1 = nn.MaxPool2d(2, 2)
+
             self.conv2 = nn.Conv2d(32, 64, kernel_size=3, padding=1)
             self.bn2 = nn.BatchNorm2d(64)
-            self.pool2 = nn.MaxPool2d(2, 2)  # 12x12
-            
+            self.pool2 = nn.MaxPool2d(2, 2)
+
             self.fc1 = nn.Linear(64 * 12 * 12, 512)
             self.dropout = nn.Dropout(0.25)
             self.fc2 = nn.Linear(512, 128)
@@ -61,7 +60,6 @@ except ImportError:
     def init_cnn_model():
         return None
 
-
 def detect_cheating_cnn(image_bgr: np.ndarray) -> Tuple[bool, float, Dict[str, Any]]:
     """
     Extracts 48x48 normalized grayscale frame from webcam feed,
@@ -75,36 +73,31 @@ def detect_cheating_cnn(image_bgr: np.ndarray) -> Tuple[bool, float, Dict[str, A
 
     h, w = image_bgr.shape[:2]
     gray = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2GRAY)
-    
-    # Preprocessing identical to OEP dataset pipeline: 48x48 grayscale normalized (-1 to 1)
+
     resized_48 = cv2.resize(gray, (48, 48))
     norm_frame = (resized_48.astype(np.float32) / 255.0 - 0.5) / 0.5
 
     cheat_probability = 0.0
     cues = []
 
-    # 1. Spatial & Posture Feature Extraction
     top_zone = gray[0:int(h * 0.35), :]
     left_peripheral = gray[:, 0:int(w * 0.25)]
     right_peripheral = gray[:, int(w * 0.75):]
     bottom_zone = gray[int(h * 0.65):, :]
 
-    # Head / Gaze lateral asymmetry
     left_energy = float(np.mean(left_peripheral))
     right_energy = float(np.mean(right_peripheral))
     asymmetry = abs(left_energy - right_energy) / max(left_energy + right_energy, 1.0)
-    
+
     if asymmetry > 0.35:
         cues.append("HEAD_TURN_OR_LEAN")
         cheat_probability += 0.35 * min(asymmetry * 2.0, 1.0)
 
-    # Downward gaze / looking at desk
     bottom_movement = float(np.std(bottom_zone))
     if bottom_movement > 45.0:
         cues.append("DESK_OBJECT_INTERACTION")
         cheat_probability += 0.25
 
-    # 2. PyTorch CheatingCNN inference
     model = init_cnn_model()
     if model is not None:
         try:
@@ -114,7 +107,6 @@ def detect_cheating_cnn(image_bgr: np.ndarray) -> Tuple[bool, float, Dict[str, A
                 logits = model(tensor_in)
                 probs = torch.softmax(logits, dim=1)[0].numpy()
                 cnn_cheat_score = float(probs[1])
-                # Fuse CNN score with spatial cues
                 cheat_probability = max(cheat_probability, cnn_cheat_score * 0.8 + cheat_probability * 0.2)
         except Exception as e:
             logger.debug(f"PyTorch inference pass: {e}")

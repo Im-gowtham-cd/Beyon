@@ -66,3 +66,4 @@ public class PlacementRecord {
     public void setStatus(String status) { this.status = status; }
     public Instant getCreatedAt() { return createdAt; }
 }
+

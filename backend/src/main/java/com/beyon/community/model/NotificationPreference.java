@@ -24,3 +24,4 @@ public class NotificationPreference {
     public Boolean getPushEnabled() { return pushEnabled; } public void setPushEnabled(Boolean v) { this.pushEnabled = v; }
     public OffsetDateTime getCreatedAt() { return createdAt; } public void setCreatedAt(OffsetDateTime v) { this.createdAt = v; }
 }
+

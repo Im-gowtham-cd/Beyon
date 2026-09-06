@@ -72,3 +72,4 @@ public class ContentReport {
     public Instant getReviewedAt() { return reviewedAt; }
     public void setReviewedAt(Instant reviewedAt) { this.reviewedAt = reviewedAt; }
 }
+

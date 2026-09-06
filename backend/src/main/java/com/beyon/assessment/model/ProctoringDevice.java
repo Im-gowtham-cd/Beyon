@@ -16,7 +16,7 @@ public class ProctoringDevice {
     private UUID proctoringSessionId;
 
     @Column(name = "device_type", nullable = false, length = 20)
-    private String deviceType; // LAPTOP | MOBILE
+    private String deviceType;
 
     @Column(name = "pairing_token", length = 256)
     private String pairingToken;
@@ -87,3 +87,4 @@ public class ProctoringDevice {
     public OffsetDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(OffsetDateTime v) { this.createdAt = v; }
 }
+

@@ -16,3 +16,4 @@ public interface SkillTopicRepository extends JpaRepository<SkillTopic, UUID> {
     @Query("SELECT t.skillId, COUNT(t) FROM SkillTopic t WHERE t.active = true GROUP BY t.skillId")
     List<Object[]> countTopicsGroupedBySkill();
 }
+

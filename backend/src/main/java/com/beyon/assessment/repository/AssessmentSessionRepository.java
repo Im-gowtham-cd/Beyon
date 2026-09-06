@@ -23,3 +23,4 @@ public interface AssessmentSessionRepository extends JpaRepository<AssessmentSes
 
     long countByOpportunityIdAndIntegrityStatusIn(UUID opportunityId, List<String> statuses);
 }
+

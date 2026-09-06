@@ -24,10 +24,6 @@ public class AssessmentReattemptController {
         this.jwtUtil = jwtUtil;
     }
 
-    // ──────────────────────────────────────────────────────────────────────────
-    // Student Endpoints
-    // ──────────────────────────────────────────────────────────────────────────
-
     @PostMapping("/api/v1/assessment/reattempt-request")
     public ResponseEntity<ApiResponse<Map<String, Object>>> submitReattemptRequest(
             Authentication auth,
@@ -51,10 +47,6 @@ public class AssessmentReattemptController {
         UUID studentId = extractUserId(auth, request);
         return ResponseEntity.ok(ApiResponse.ok(reattemptService.getStudentReattemptRequests(studentId)));
     }
-
-    // ──────────────────────────────────────────────────────────────────────────
-    // Company / Recruiter Endpoints
-    // ──────────────────────────────────────────────────────────────────────────
 
     @GetMapping("/api/v1/company/reattempts")
     public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getCompanyReattemptRequests(
@@ -101,3 +93,4 @@ public class AssessmentReattemptController {
         throw new com.beyon.common.exception.UnauthorizedException("Missing or invalid authentication token");
     }
 }
+

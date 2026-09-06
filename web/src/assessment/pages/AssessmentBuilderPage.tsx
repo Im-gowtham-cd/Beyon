@@ -28,7 +28,6 @@ export function AssessmentBuilderPage() {
   const [submitting, setSubmitting] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
 
-  // Question Management State
   const [questions, setQuestions] = useState<any[]>([]);
   const [showQuestionModal, setShowQuestionModal] = useState(false);
   const [editingQuestionId, setEditingQuestionId] = useState<string | null>(null);
@@ -151,7 +150,7 @@ export function AssessmentBuilderPage() {
       setEditingId(null);
       setView('list');
     } catch {
-      /* fallback handled */
+
     } finally {
       setSubmitting(false);
     }
@@ -286,7 +285,7 @@ export function AssessmentBuilderPage() {
 
   return (
     <div className={styles.page}>
-      {/* Header */}
+
       <div className={styles.pageHeader}>
         <div>
           <h1 className={styles.title}>
@@ -312,7 +311,6 @@ export function AssessmentBuilderPage() {
         </button>
       </div>
 
-      {/* 4 Stats Cards */}
       <div className={styles.statsRow}>
         <div className={styles.statCard}>
           <span className={styles.statLabel}>Total Assessments</span>
@@ -336,7 +334,6 @@ export function AssessmentBuilderPage() {
         </div>
       </div>
 
-      {/* Form View */}
       {view === 'form' && (
         <form onSubmit={handleCreate} className={styles.formCard}>
           <h2 className={styles.sectionHeading} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -473,7 +470,6 @@ export function AssessmentBuilderPage() {
             </label>
           </div>
 
-          {/* Question Bank Section */}
           <div style={{ marginTop: '16px', borderTop: '1px solid #e2e8f0', paddingTop: '20px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: '10px' }}>
               <div>
@@ -506,7 +502,6 @@ export function AssessmentBuilderPage() {
               </button>
             </div>
 
-            {/* Question Search & Filters */}
             <div style={{ display: 'flex', gap: '10px', marginBottom: '14px', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between' }}>
               <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                 {(['ALL', 'EASY', 'MEDIUM', 'HARD'] as const).map(diff => (
@@ -548,7 +543,6 @@ export function AssessmentBuilderPage() {
               </div>
             </div>
 
-            {/* Modal for Add / Edit */}
             {showQuestionModal && (
               <div
                 style={{
@@ -704,7 +698,6 @@ export function AssessmentBuilderPage() {
               </div>
             )}
 
-            {/* Questions List */}
             {(() => {
               const filteredQuestions = questions.filter(q => {
                 const matchesDiff = questionDifficultyFilter === 'ALL' || q.difficulty === questionDifficultyFilter;
@@ -834,7 +827,6 @@ export function AssessmentBuilderPage() {
                           </div>
                         </div>
 
-                        {/* Expandable Options Preview */}
                         {isExpanded && (
                           <div style={{ marginTop: '6px', padding: '10px', background: '#f8fafc', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '6px' }}>
                             <div style={{ fontSize: '0.76rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
@@ -904,7 +896,6 @@ export function AssessmentBuilderPage() {
         </form>
       )}
 
-      {/* List View */}
       {view === 'list' && (
         <>
           <div className={styles.filterRow}>
@@ -1015,3 +1006,4 @@ export function AssessmentBuilderPage() {
     </div>
   );
 }
+

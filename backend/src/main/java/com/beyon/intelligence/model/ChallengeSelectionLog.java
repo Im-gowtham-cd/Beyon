@@ -29,3 +29,4 @@ public class ChallengeSelectionLog {
     public BigDecimal getStreakRelevance() { return streakRelevance; } public void setStreakRelevance(BigDecimal v) { this.streakRelevance = v; }
     public OffsetDateTime getSelectedAt() { return selectedAt; } public void setSelectedAt(OffsetDateTime v) { this.selectedAt = v; }
 }
+

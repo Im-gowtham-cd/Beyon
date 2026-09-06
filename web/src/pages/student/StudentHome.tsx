@@ -63,7 +63,7 @@ export function StudentHome() {
           }
         }
       } catch {
-        /* fallback gracefully */
+
       }
     }
     loadData();
@@ -141,7 +141,7 @@ export function StudentHome() {
 
   return (
     <div className={styles.page}>
-      {/* Hero Welcome Banner */}
+
       <section className={styles.welcomeHero}>
         <div className={styles.welcomeInfo}>
           <div className={styles.badgeRow}>
@@ -188,10 +188,9 @@ export function StudentHome() {
         </div>
       </section>
 
-      {/* Main Grid: Modules & Side Widgets */}
       <div className={styles.dashboardGrid}>
         <div className={styles.mainContent}>
-          {/* Daily Challenge Spotlight Banner */}
+
           {dailyChallenge?.question ? (
             <div className={styles.spotlightBanner}>
               <div className={styles.spotlightIcon}>
@@ -232,7 +231,6 @@ export function StudentHome() {
             </div>
           )}
 
-          {/* Core Modules Grid */}
           <div className={styles.sectionHeader}>
             <h2 className={styles.sectionTitle}>
               <Sparkles size={18} style={{ color: '#1c2d81' }} /> Workspace Modules
@@ -265,12 +263,10 @@ export function StudentHome() {
           </div>
         </div>
 
-        {/* Sidebar Column */}
         <div className={styles.sideCol}>
-          {/* Active Learning Widget */}
+
           <LearningWidget />
 
-          {/* Quick Benchmark Test Card */}
           <div className={styles.sideCard}>
             <div className={styles.sideCardHeader}>
               <ShieldCheck size={18} style={{ color: '#1c2d81' }} />
@@ -285,7 +281,6 @@ export function StudentHome() {
             </Link>
           </div>
 
-          {/* Academic Enrollment Card */}
           <div className={styles.sideCard}>
             <div className={styles.sideCardHeader}>
               <BookOpen size={18} style={{ color: '#1c2d81' }} />
@@ -312,3 +307,4 @@ export function StudentHome() {
     </div>
   );
 }
+

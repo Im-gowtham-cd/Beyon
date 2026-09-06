@@ -152,3 +152,4 @@ public class StudentLearningService {
         return skillProgressRepository.findByStudentIdAndSkillId(studentId, skillId);
     }
 }
+

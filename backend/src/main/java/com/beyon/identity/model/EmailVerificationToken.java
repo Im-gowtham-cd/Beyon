@@ -77,3 +77,4 @@ public class EmailVerificationToken {
         this.createdAt = createdAt;
     }
 }
+

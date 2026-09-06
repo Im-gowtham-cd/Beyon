@@ -41,3 +41,4 @@ public class StudentCertificate {
     public String getVerificationUrl() { return verificationUrl; } public void setVerificationUrl(String v) { this.verificationUrl = v; }
     public OffsetDateTime getCreatedAt() { return createdAt; }
 }
+

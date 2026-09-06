@@ -79,13 +79,13 @@ public class AssessmentSessionService {
     }
 
     public AssessmentSession createSession(UUID applicationId, UUID studentId, UUID opportunityId, int questionCount, int durationMinutes) {
-        // 1. Single attempt guard & Reattempt verification
+
         if (opportunityId != null && studentId != null) {
             boolean isApprovedForReattempt = reattemptRequestRepository != null &&
                     reattemptRequestRepository.findFirstByStudentIdAndOpportunityIdAndStatusOrderByCreatedAtDesc(studentId, opportunityId, "APPROVED").isPresent();
 
             if (isApprovedForReattempt) {
-                // Consume the approved reattempt so only 1 new session can be launched
+
                 reattemptRequestRepository.findFirstByStudentIdAndOpportunityIdAndStatusOrderByCreatedAtDesc(studentId, opportunityId, "APPROVED")
                         .ifPresent(req -> {
                             req.setStatus("CONSUMED");
@@ -129,8 +129,6 @@ public class AssessmentSessionService {
             }
         }
 
-
-        // 2. Derive question count and duration minutes from drive configuration
         int resolvedDuration = durationMinutes;
         int resolvedQuestions = questionCount;
 
@@ -140,7 +138,7 @@ public class AssessmentSessionService {
                     if (opp.getAssessmentId() != null && assessmentConfigRepository != null) {
                         assessmentConfigRepository.findById(opp.getAssessmentId()).ifPresent(cfg -> {
                             if (cfg.getDurationMinutes() > 0) {
-                                // use cfg duration
+
                             }
                         });
                     }
@@ -168,8 +166,8 @@ public class AssessmentSessionService {
             }
         }
 
-        Optional<AssessmentPolicy> policy = opportunityId != null 
-                ? policyRepository.findByOpportunityId(opportunityId) 
+        Optional<AssessmentPolicy> policy = opportunityId != null
+                ? policyRepository.findByOpportunityId(opportunityId)
                 : Optional.empty();
 
         AssessmentSession session = new AssessmentSession();
@@ -391,7 +389,6 @@ public class AssessmentSessionService {
             return session;
         }
 
-        // 1. Resolve session questions
         List<com.beyon.practice.model.Question> questions = new ArrayList<>();
         if (session.getOpportunityId() != null) {
             questions = questionRepository.findByTagsContainingOrderByCreatedAtAsc("opportunity:" + session.getOpportunityId());
@@ -409,13 +406,11 @@ public class AssessmentSessionService {
             questions = questionRepository.findByStatusOrderByCreatedAtDesc("PUBLISHED", org.springframework.data.domain.PageRequest.of(0, qCount));
         }
 
-        // 2. Extract submitted answers from payload
         Map<String, Object> submittedAnswers = new HashMap<>();
         if (submissionPayload != null && submissionPayload.get("answers") instanceof Map) {
             submittedAnswers = (Map<String, Object>) submissionPayload.get("answers");
         }
 
-        // 3. Grade each question precisely against database correct options
         long attempted = 0;
         long correct = 0;
 
@@ -424,7 +419,6 @@ public class AssessmentSessionService {
             UUID qId = q.getId();
             String qKey = "q-" + (i + 1);
 
-            // Fetch candidate answer for this question from payload or existing answer repo
             Object userAnsObj = submittedAnswers.containsKey(qId.toString())
                     ? submittedAnswers.get(qId.toString())
                     : submittedAnswers.get(qKey);
@@ -461,7 +455,6 @@ public class AssessmentSessionService {
                 candidateSelectedOptionIds.add(((String) userAnsObj).trim());
             }
 
-            // Also check existing answers in repository if not in payload
             if (candidateSelectedOptionIds.isEmpty()) {
                 var existingOpt = answerRepository.findBySessionIdAndQuestionId(sessionId, qId);
                 if (existingOpt.isPresent()) {
@@ -478,7 +471,6 @@ public class AssessmentSessionService {
                 }
             }
 
-            // Fetch actual options from DB
             List<com.beyon.practice.model.QuestionOption> dbOptions = questionOptionRepository.findByQuestionIdOrderByDisplayOrder(qId);
             Set<String> correctOptionIds = dbOptions.stream()
                     .filter(com.beyon.practice.model.QuestionOption::isCorrect)
@@ -490,8 +482,6 @@ public class AssessmentSessionService {
                 attempted++;
             }
 
-            // Real correctness evaluation:
-            // Must have at least 1 correct option defined, and candidate's selected set must match exactly
             boolean isCorrect = false;
             if (!correctOptionIds.isEmpty()) {
                 isCorrect = candidateSelectedOptionIds.equals(correctOptionIds);
@@ -500,7 +490,6 @@ public class AssessmentSessionService {
                 correct++;
             }
 
-            // Persist AssessmentAnswer
             AssessmentAnswer answer = answerRepository.findBySessionIdAndQuestionId(sessionId, qId)
                     .orElse(new AssessmentAnswer());
             answer.setSessionId(sessionId);
@@ -522,7 +511,6 @@ public class AssessmentSessionService {
 
         int totalQuestions = questions.isEmpty() ? (session.getTotalQuestions() > 0 ? session.getTotalQuestions() : 1) : questions.size();
 
-        // Exact percentage score: (correct / totalQuestions) * 100
         BigDecimal score = BigDecimal.valueOf(correct)
                 .multiply(BigDecimal.valueOf(100))
                 .divide(BigDecimal.valueOf(totalQuestions), 1, RoundingMode.HALF_UP);
@@ -570,7 +558,6 @@ public class AssessmentSessionService {
         audit(sessionId, session.getStudentId(), "SUBMIT", "Assessment submitted", null, null, null);
         AssessmentSession savedSession = sessionRepository.save(session);
 
-        // Persist AssessmentResult
         try {
             AssessmentResult result = new AssessmentResult();
             result.setSessionId(savedSession.getId());
@@ -589,7 +576,6 @@ public class AssessmentSessionService {
             e.printStackTrace();
         }
 
-        // Publish AssessmentCompletedEvent to trigger all downstream updates
         try {
             eventPublisher.publishEvent(new com.beyon.common.event.AssessmentCompletedEvent(
                     savedSession.getId(),
@@ -602,10 +588,9 @@ public class AssessmentSessionService {
                     savedSession.getIntegrityStatus()
             ));
         } catch (Exception e) {
-            // Continue safely
+
         }
 
-        // Direct synchronization for recruitment application pipeline & placement drive statistics
         try {
             if (savedSession.getOpportunityId() != null && savedSession.getStudentId() != null) {
                 if (applicationRepository != null) {
@@ -815,3 +800,4 @@ public class AssessmentSessionService {
         return sessionRepository.findById(sessionId).orElse(null);
     }
 }
+

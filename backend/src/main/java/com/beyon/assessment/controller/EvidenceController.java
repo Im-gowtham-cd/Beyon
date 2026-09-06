@@ -14,10 +14,6 @@ import java.io.File;
 import java.nio.file.Files;
 import java.util.UUID;
 
-/**
- * Serves proctoring evidence files with authorization checks.
- * Only company/institution users who own the proctoring session can access evidence.
- */
 @RestController
 @RequestMapping("/api/v1/evidence")
 public class EvidenceController {
@@ -42,7 +38,6 @@ public class EvidenceController {
             @PathVariable String filename,
             HttpServletRequest request) {
 
-        // Authorization: must have a valid JWT (COMPANY or INSTITUTION role)
         String authHeader = request.getHeader("Authorization");
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             return ResponseEntity.status(401).build();
@@ -76,3 +71,4 @@ public class EvidenceController {
         }
     }
 }
+

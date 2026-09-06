@@ -78,7 +78,7 @@ public class TaxonomyService {
                 s.setTopicCount(countMap.getOrDefault(s.getId(), 0L).intValue());
             }
         } catch (Exception ignored) {
-            // fallback
+
             for (Skill s : skills) {
                 s.setTopicCount(getTopicCountForSkill(s.getId()));
             }
@@ -111,3 +111,4 @@ public class TaxonomyService {
         return skillTopicRepository.findBySkillIdAndActiveTrueOrderByDisplayOrder(skillId).size();
     }
 }
+

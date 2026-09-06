@@ -12,11 +12,6 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import java.util.*;
 import java.util.stream.Collectors;
 
-/**
- * DualView Proctoring REST API + SSE stream.
- *
- * All /api/v1/proctoring/dualview/* endpoints.
- */
 @RestController
 @RequestMapping("/api/v1/proctoring/dualview")
 public class DualViewProctoringController {
@@ -63,11 +58,6 @@ public class DualViewProctoringController {
         this.jwtUtil = jwtUtil;
     }
 
-    // ──────────────────────────────────────────────────────────────────────────
-    // Session lifecycle
-    // ──────────────────────────────────────────────────────────────────────────
-
-    /** Initiate a dualview proctoring session (called from desktop before assessment starts) */
     @PostMapping("/initiate")
     public ResponseEntity<?> initiate(@RequestBody Map<String, Object> body, HttpServletRequest request) {
         UUID assessmentSessionId = UUID.fromString((String) body.get("assessmentSessionId"));
@@ -86,22 +76,20 @@ public class DualViewProctoringController {
         ));
     }
 
-    /** Record candidate consent */
     @PostMapping("/{id}/consent")
     public ResponseEntity<?> consent(@PathVariable UUID id) {
         dvService.recordConsent(id);
         return ResponseEntity.ok(Map.of("ok", true));
     }
 
-    /** Generate pairing token for QR code */
     @PostMapping("/{id}/pairing-token")
     public ResponseEntity<?> generatePairingToken(@PathVariable UUID id, HttpServletRequest request) {
         String token = dvService.generatePairingToken(id);
-        // Return full pairing URL for QR code
+
         String baseUrl = request.getScheme() + "://" + request.getServerName();
         int port = request.getServerPort();
         if (port != 80 && port != 443) {
-            // For mobile access, use the web frontend port (5173 in dev)
+
             baseUrl = baseUrl.replace("8085", "5173");
         }
         String pairingUrl = baseUrl + "/proctor?token=" + token;
@@ -113,7 +101,6 @@ public class DualViewProctoringController {
         ));
     }
 
-    /** Mobile device calls this to join the session */
     @PostMapping("/pair")
     public ResponseEntity<?> pair(@RequestBody Map<String, String> body, HttpServletRequest request) {
         String token = body.get("token");
@@ -128,7 +115,6 @@ public class DualViewProctoringController {
         ));
     }
 
-    /** Get current session status */
     @GetMapping("/{id}/status")
     public ResponseEntity<?> getStatus(@PathVariable UUID id) {
         DualViewSession session = dvService.getSession(id);
@@ -156,7 +142,6 @@ public class DualViewProctoringController {
         ));
     }
 
-    /** Heartbeat from laptop or mobile */
     @PostMapping("/{id}/heartbeat")
     public ResponseEntity<?> heartbeat(@PathVariable UUID id, @RequestBody Map<String, Object> body) {
         String deviceType = (String) body.getOrDefault("deviceType", "LAPTOP");
@@ -166,14 +151,12 @@ public class DualViewProctoringController {
         return ResponseEntity.ok(Map.of("ok", true));
     }
 
-    /** Activate proctoring when exam starts */
     @PostMapping("/{id}/activate")
     public ResponseEntity<?> activate(@PathVariable UUID id) {
         dvService.activateSession(id);
         return ResponseEntity.ok(Map.of("ok", true, "status", "ACTIVE"));
     }
 
-    /** Complete proctoring when exam ends */
     @PostMapping("/{id}/complete")
     public ResponseEntity<?> complete(@PathVariable UUID id) {
         DualViewSession session = dvService.completeSession(id);
@@ -187,11 +170,6 @@ public class DualViewProctoringController {
         ));
     }
 
-    // ──────────────────────────────────────────────────────────────────────────
-    // Event ingestion
-    // ──────────────────────────────────────────────────────────────────────────
-
-    /** Receive batched laptop AI events (aggregated, not per-frame) */
     @PostMapping("/{id}/laptop-events")
     public ResponseEntity<?> laptopEvents(@PathVariable UUID id, @RequestBody Map<String, Object> body) {
         @SuppressWarnings("unchecked")
@@ -210,7 +188,6 @@ public class DualViewProctoringController {
         return ResponseEntity.ok(Map.of("ok", true));
     }
 
-    /** Receive mobile frame (base64 JPEG) — relay to AI service */
     @PostMapping("/{id}/mobile-frame")
     public ResponseEntity<?> mobileFrame(@PathVariable UUID id, @RequestBody Map<String, Object> body) {
         DualViewSession session = dvSessionRepo.findById(id).orElse(null);
@@ -308,14 +285,12 @@ public class DualViewProctoringController {
         return ResponseEntity.ok(resp);
     }
 
-    /** Receive mobile audio chunk */
     @PostMapping("/{id}/mobile-audio")
     public ResponseEntity<?> mobileAudio(@PathVariable UUID id, @RequestBody Map<String, Object> body) {
-        // TODO Phase 4: relay audio chunk to AI service, record audio signals
+
         return ResponseEntity.ok(Map.of("ok", true));
     }
 
-    /** Mobile disconnect notification */
     @PostMapping("/{id}/mobile-disconnect")
     public ResponseEntity<?> mobileDisconnect(@PathVariable UUID id) {
         dvService.handleMobileDisconnect(id);
@@ -323,11 +298,6 @@ public class DualViewProctoringController {
         return ResponseEntity.ok(Map.of("ok", true));
     }
 
-    // ──────────────────────────────────────────────────────────────────────────
-    // Incidents & Evidence
-    // ──────────────────────────────────────────────────────────────────────────
-
-    /** Direct violation incident logging from Desktop Lockdown AI Rule Engine */
     @PostMapping("/{id}/incidents")
     public ResponseEntity<?> createIncident(
             @PathVariable UUID id,
@@ -339,7 +309,7 @@ public class DualViewProctoringController {
         int riskContribution = body.get("riskContribution") instanceof Number
                 ? ((Number) body.get("riskContribution")).intValue() : 25;
         String questionId = (String) body.get("questionId");
-        
+
         List<String> sources = new ArrayList<>();
         if (body.get("sources") instanceof List<?> list) {
             for (Object item : list) {
@@ -376,7 +346,6 @@ public class DualViewProctoringController {
         ));
     }
 
-    /** List all incidents for a session */
     @GetMapping("/{id}/incidents")
     public ResponseEntity<?> getIncidents(@PathVariable UUID id) {
         DualViewSession session = dvService.getSession(id);
@@ -384,7 +353,6 @@ public class DualViewProctoringController {
         return ResponseEntity.ok(incidentService.getIncidentsForSession(queryId));
     }
 
-    /** Recruiter reviews an incident */
     @PostMapping("/{id}/incidents/{incidentId}/review")
     public ResponseEntity<?> reviewIncident(
             @PathVariable UUID id,
@@ -392,7 +360,7 @@ public class DualViewProctoringController {
             @RequestBody Map<String, String> body,
             HttpServletRequest request) {
         UUID reviewerId = extractUserId(request);
-        String action = body.get("action"); // DISMISSED | VIOLATION_CONFIRMED | ACKNOWLEDGED
+        String action = body.get("action");
         String notes = body.getOrDefault("notes", "");
         var incident = incidentService.reviewIncident(incidentId, reviewerId, action, notes);
         return ResponseEntity.ok(Map.of(
@@ -402,7 +370,6 @@ public class DualViewProctoringController {
         ));
     }
 
-    /** Chronological event + incident timeline for a session */
     @GetMapping("/{id}/timeline")
     public ResponseEntity<?> getTimeline(@PathVariable UUID id) {
         DualViewSession session = dvService.getSession(id);
@@ -431,7 +398,6 @@ public class DualViewProctoringController {
         return ResponseEntity.ok(timeline);
     }
 
-    /** Full proctoring report for recruiter */
     @GetMapping("/{id}/report")
     public ResponseEntity<?> getReport(@PathVariable UUID id) {
         DualViewSession session = dvService.getSession(id);
@@ -500,19 +466,10 @@ public class DualViewProctoringController {
         return ResponseEntity.ok(report);
     }
 
-    // ──────────────────────────────────────────────────────────────────────────
-    // SSE Stream
-    // ──────────────────────────────────────────────────────────────────────────
-
-    /** Desktop and recruiter dashboard subscribe to real-time updates */
     @GetMapping(value = "/stream/{procSessionId}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter stream(@PathVariable String procSessionId) {
         return sseStreamService.subscribe(procSessionId);
     }
-
-    // ──────────────────────────────────────────────────────────────────────────
-    // Helpers
-    // ──────────────────────────────────────────────────────────────────────────
 
     private UUID extractUserId(HttpServletRequest request) {
         try {
@@ -522,7 +479,7 @@ public class DualViewProctoringController {
                 return jwtUtil.getUserId(token);
             }
         } catch (Exception e) {
-            // fallback
+
         }
         return UUID.randomUUID();
     }

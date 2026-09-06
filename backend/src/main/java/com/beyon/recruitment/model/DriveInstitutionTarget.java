@@ -29,3 +29,4 @@ public class DriveInstitutionTarget {
     public Boolean getPlacementWillingOnly() { return placementWillingOnly; } public void setPlacementWillingOnly(Boolean v) { this.placementWillingOnly = v; }
     public OffsetDateTime getCreatedAt() { return createdAt; } public void setCreatedAt(OffsetDateTime v) { this.createdAt = v; }
 }
+

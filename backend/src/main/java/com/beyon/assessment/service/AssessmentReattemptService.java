@@ -95,7 +95,6 @@ public class AssessmentReattemptService {
         CompanyOpportunity opp = opportunityRepo.findById(opportunityId)
                 .orElseThrow(() -> new ResourceNotFoundException("Opportunity", opportunityId.toString()));
 
-        // Check if there is already a PENDING request
         Optional<AssessmentReattemptRequest> existing = reattemptRepo
                 .findFirstByStudentIdAndOpportunityIdOrderByCreatedAtDesc(studentId, opportunityId);
 
@@ -126,7 +125,6 @@ public class AssessmentReattemptService {
 
         AssessmentReattemptRequest saved = reattemptRepo.save(req);
 
-        // Notify company recruiter about the incoming appeal
         try {
             if (opp.getCompanyUserId() != null) {
                 User student = userRepo.findById(studentId).orElse(null);
@@ -157,20 +155,19 @@ public class AssessmentReattemptService {
     }
 
     public List<Map<String, Object>> getCompanyReattemptRequests(UUID companyUserId) {
-        // Find opportunities by company user id
+
         List<CompanyOpportunity> companyOpps = opportunityRepo.findByCompanyUserIdOrderByCreatedAtDesc(companyUserId);
         Map<UUID, CompanyOpportunity> oppMap = companyOpps.stream()
                 .collect(Collectors.toMap(CompanyOpportunity::getId, o -> o, (a, b) -> a));
 
         List<AssessmentReattemptRequest> requests = reattemptRepo.findByCompanyIdOrderByCreatedAtDesc(companyUserId);
         if (requests.isEmpty() && !companyOpps.isEmpty()) {
-            // Also lookup by opportunity ids if companyId was null
+
             for (CompanyOpportunity opp : companyOpps) {
                 requests.addAll(reattemptRepo.findByOpportunityIdOrderByCreatedAtDesc(opp.getId()));
             }
         }
 
-        // Deduplicate
         Map<UUID, AssessmentReattemptRequest> distinctMap = new LinkedHashMap<>();
         for (AssessmentReattemptRequest r : requests) {
             distinctMap.putIfAbsent(r.getId(), r);
@@ -198,7 +195,6 @@ public class AssessmentReattemptService {
         req.setReviewedAt(OffsetDateTime.now());
         AssessmentReattemptRequest saved = reattemptRepo.save(req);
 
-        // Reset OpportunityApplication status and score so candidate can retake
         Optional<OpportunityApplication> appOpt = applicationRepo.findByOpportunityIdAndStudentId(req.getOpportunityId(), req.getStudentId());
         if (appOpt.isPresent()) {
             OpportunityApplication app = appOpt.get();
@@ -211,7 +207,6 @@ public class AssessmentReattemptService {
         User student = userRepo.findById(req.getStudentId()).orElse(null);
         StudentProfile profile = profileRepo.findByUserId(req.getStudentId()).orElse(null);
 
-        // Notify student that their reattempt has been approved
         try {
             notificationService.send(
                     req.getStudentId(),
@@ -240,7 +235,6 @@ public class AssessmentReattemptService {
         User student = userRepo.findById(req.getStudentId()).orElse(null);
         StudentProfile profile = profileRepo.findByUserId(req.getStudentId()).orElse(null);
 
-        // Notify student about rejection
         try {
             notificationService.send(
                     req.getStudentId(),
@@ -327,3 +321,4 @@ public class AssessmentReattemptService {
         return m;
     }
 }
+

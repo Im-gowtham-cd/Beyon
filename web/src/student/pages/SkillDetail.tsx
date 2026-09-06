@@ -34,7 +34,7 @@ export function SkillDetail() {
       setSkill(s);
       setTopics(t);
       setLearningTopics(lt);
-    } catch { /* */ }
+    } catch {  }
     setLoading(false);
   }, [skillSlug]);
 
@@ -45,14 +45,14 @@ export function SkillDetail() {
       await studentLearningApi.addTopic(topicId);
       const lt = await studentLearningApi.getTopics();
       setLearningTopics(lt);
-    } catch { /* */ }
+    } catch {  }
   }
 
   async function handleRemoveLearning(learningId: string) {
     try {
       await studentLearningApi.removeTopic(learningId);
       setLearningTopics(prev => prev.filter(l => l.id !== learningId));
-    } catch { /* */ }
+    } catch {  }
   }
 
   async function handleEnrollAllTopics() {
@@ -69,7 +69,7 @@ export function SkillDetail() {
       setLearningTopics(lt);
       setEnrolledSuccess(true);
       setTimeout(() => setEnrolledSuccess(false), 4000);
-    } catch { /* */ }
+    } catch {  }
     finally {
       setEnrollingSkill(false);
     }
@@ -115,7 +115,6 @@ export function SkillDetail() {
         <span style={{ color: '#1c2d81', fontWeight: 700 }}>{skill.name}</span>
       </nav>
 
-      {/* Skill Banner & Actions */}
       <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '24px', marginBottom: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px' }}>
           <div>
@@ -208,7 +207,6 @@ export function SkillDetail() {
           </div>
         </div>
 
-        {/* Progress Tracker */}
         <div style={{ marginTop: '20px', paddingTop: '16px', borderTop: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <div style={{ width: '160px', height: '8px', background: '#e2e8f0', borderRadius: '4px', overflow: 'hidden' }}>
@@ -227,7 +225,6 @@ export function SkillDetail() {
         </div>
       </div>
 
-      {/* Topics & Study Modules */}
       <div style={{ marginBottom: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <h2 style={{ fontSize: '1.15rem', fontWeight: 700, color: '#0f172a', margin: 0 }}>
           Study Lessons &amp; Documentation Modules

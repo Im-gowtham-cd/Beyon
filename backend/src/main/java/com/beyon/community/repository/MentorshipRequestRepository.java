@@ -10,3 +10,4 @@ public interface MentorshipRequestRepository extends JpaRepository<MentorshipReq
     List<MentorshipRequest> findByMentorId(UUID mentorId);
     List<MentorshipRequest> findByMentorIdAndStatus(UUID mentorId, String status);
 }
+

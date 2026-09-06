@@ -36,3 +36,4 @@ export const studentLearningApi = {
   removeSkill: (skillId: string) => api.delete<void>(`/student/learning/skills/${skillId}`),
   getProgress: () => api.get<StudentSkillProgress[]>('/student/learning/progress'),
 };
+

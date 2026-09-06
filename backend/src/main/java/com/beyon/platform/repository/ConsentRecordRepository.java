@@ -10,3 +10,4 @@ public interface ConsentRecordRepository extends JpaRepository<ConsentRecord, UU
     List<ConsentRecord> findByUserId(UUID userId);
     Optional<ConsentRecord> findByUserIdAndConsentType(UUID userId, String consentType);
 }
+

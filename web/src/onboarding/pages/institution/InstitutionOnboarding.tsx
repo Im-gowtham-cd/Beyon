@@ -86,7 +86,6 @@ export function InstitutionOnboarding() {
   const [error, setError] = useState('');
   const [agreeTerms, setAgreeTerms] = useState(false);
 
-  // Coordinator Subform
   const [showAddRep, setShowAddRep] = useState(false);
   const [newRep, setNewRep] = useState<InstitutionRepresentativeEntry>({
     name: '',
@@ -225,7 +224,7 @@ export function InstitutionOnboarding() {
 
   return (
     <div className={styles.pageContainer}>
-      {/* ── Top Platform Header ── */}
+
       <header className={styles.topHeader}>
         <Link to="/" className={styles.brandLink}>
           <div className={styles.brandLogo}>B</div>
@@ -245,7 +244,6 @@ export function InstitutionOnboarding() {
         </div>
       </header>
 
-      {/* ── Hero Welcome Banner ── */}
       <div className={styles.heroWrapper}>
         <div className={styles.welcomeHero}>
           <div className={styles.badgeRow}>
@@ -270,11 +268,10 @@ export function InstitutionOnboarding() {
         </div>
       </div>
 
-      {/* ── Main Workspace Grid (Split Grid) ── */}
       <div className={styles.mainWorkspace}>
-        {/* ── Left Sticky Sidebar Guide ── */}
+
         <aside className={styles.asideGuide}>
-          {/* Active Step Info Card */}
+
           <div className={styles.currentStepInfoCard}>
             <span className={styles.stepNumLabel}>
               <StepIcon size={14} /> Step {step + 1}
@@ -288,7 +285,6 @@ export function InstitutionOnboarding() {
             </p>
           </div>
 
-          {/* Vertical Step Roadmap */}
           <div className={styles.stepTrackerCard}>
             <div className={styles.trackerTitle}>Onboarding Roadmap</div>
             <div className={styles.trackerList}>
@@ -327,7 +323,6 @@ export function InstitutionOnboarding() {
             </div>
           </div>
 
-          {/* Verification Advisory Tip Card */}
           <div className={styles.benefitsCard}>
             <div className={styles.benefitsTitle}>
               <HelpCircle size={14} color="#1c2d81" /> Institutional Standards
@@ -353,7 +348,6 @@ export function InstitutionOnboarding() {
           </div>
         </aside>
 
-        {/* ── Right Content Form Card ── */}
         <main className={styles.formCard}>
           {error && (
             <div className={styles.errorAlert}>
@@ -367,7 +361,6 @@ export function InstitutionOnboarding() {
             </div>
           )}
 
-          {/* ═════════ STEP 0: CAMPUS IDENTITY & LOCATION ═════════ */}
           {step === 0 && (
             <div className={styles.sectionBlock}>
               <div className={styles.sectionHeader}>
@@ -545,7 +538,6 @@ export function InstitutionOnboarding() {
             </div>
           )}
 
-          {/* ═════════ STEP 1: ACADEMIC GOVERNANCE & NAAC ═════════ */}
           {step === 1 && (
             <div className={styles.sectionBlock}>
               <div className={styles.sectionHeader}>
@@ -696,7 +688,6 @@ export function InstitutionOnboarding() {
             </div>
           )}
 
-          {/* ═════════ STEP 2: LEADERSHIP & PLACEMENT CELL ═════════ */}
           {step === 2 && (
             <div className={styles.sectionBlock}>
               <div className={styles.sectionHeader}>
@@ -711,7 +702,6 @@ export function InstitutionOnboarding() {
                 </div>
               </div>
 
-              {/* 1. Principal / Dean */}
               <div style={{ background: '#ffffff', padding: '18px 20px', border: '1px solid #cbd5e1', borderLeft: '4px solid #1c2d81' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
                   <User size={16} color="#1c2d81" />
@@ -757,7 +747,6 @@ export function InstitutionOnboarding() {
                 </div>
               </div>
 
-              {/* 2. Training & Placement Officer */}
               <div style={{ background: '#ffffff', padding: '18px 20px', border: '1px solid #cbd5e1', borderLeft: '4px solid #15803d' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
                   <UserCheck size={16} color="#15803d" />
@@ -803,7 +792,6 @@ export function InstitutionOnboarding() {
                 </div>
               </div>
 
-              {/* 3. Department Placement Coordinators */}
               <div style={{ background: '#ffffff', padding: '18px 20px', border: '1px solid #cbd5e1' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -930,7 +918,6 @@ export function InstitutionOnboarding() {
             </div>
           )}
 
-          {/* ═════════ STEP 3: REVIEW & VERIFY ═════════ */}
           {step === 3 && (
             <div className={styles.sectionBlock}>
               <div className={styles.sectionHeader}>
@@ -945,7 +932,6 @@ export function InstitutionOnboarding() {
                 </div>
               </div>
 
-              {/* Protocol Callout */}
               <div className={styles.rewardCallout}>
                 <div className={styles.rewardCalloutIcon}>
                   <ShieldCheck size={24} />
@@ -958,7 +944,6 @@ export function InstitutionOnboarding() {
                 </div>
               </div>
 
-              {/* Review Summary Grid */}
               <div className={styles.reviewGrid}>
                 <div className={styles.reviewCard}>
                   <div className={styles.reviewCardHeader}>
@@ -1052,7 +1037,6 @@ export function InstitutionOnboarding() {
                 </div>
               </div>
 
-              {/* Compliance Checkbox */}
               <label style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', cursor: 'pointer', background: '#ffffff', padding: '16px', border: '1px solid #cbd5e1' }}>
                 <input
                   type="checkbox"
@@ -1067,7 +1051,6 @@ export function InstitutionOnboarding() {
             </div>
           )}
 
-          {/* ── Navigation Footer Actions ── */}
           <div className={styles.navigationFooter}>
             {step > 0 ? (
               <button type="button" onClick={handlePrev} className={styles.backButton}>
@@ -1109,3 +1092,4 @@ export function InstitutionOnboarding() {
     </div>
   );
 }
+

@@ -9,3 +9,4 @@ public interface AssessmentQuestionOrderRepository extends JpaRepository<Assessm
     List<AssessmentQuestionOrder> findBySessionIdOrderBySortOrder(UUID sessionId);
     void deleteBySessionId(UUID sessionId);
 }
+

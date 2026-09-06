@@ -10,3 +10,4 @@ public interface FraudSignalRepository extends JpaRepository<FraudSignal, UUID> 
     List<FraudSignal> findByUserId(UUID userId);
     long countByUserIdAndSignalType(UUID userId, String signalType);
 }
+

@@ -19,7 +19,7 @@ interface QuestionDef {
 }
 
 const REAL_QUESTIONS: QuestionDef[] = [
-  // ─── Computer Networks (CN) ───
+
   {
     skillSlug: "networking",
     title: "TCP Handshake Sequence",
@@ -105,7 +105,6 @@ const REAL_QUESTIONS: QuestionDef[] = [
     ]
   },
 
-  // ─── Database Systems & SQL ───
   {
     skillSlug: "sqlite",
     title: "ACID Properties: Atomicity Definition",
@@ -158,7 +157,6 @@ const REAL_QUESTIONS: QuestionDef[] = [
     expectedOutput: "SELECT department_id, SUM(salary) AS total_salary FROM employees GROUP BY department_id ORDER BY total_salary DESC LIMIT 1;"
   },
 
-  // ─── Data Structures & Algorithms (DSA) ───
   {
     skillSlug: "datastructures",
     title: "Balanced BST Lookup Time Complexity",
@@ -210,7 +208,6 @@ const REAL_QUESTIONS: QuestionDef[] = [
     codeTemplate: "function twoSum(nums: number[], target: number): number[] {\n  const map = new Map<number, number>();\n  for (let i = 0; i < nums.length; i++) {\n    const complement = target - nums[i];\n    if (map.has(complement)) {\n      return [map.get(complement)!, i];\n    }\n    map.set(nums[i], i);\n  }\n  return [];\n}"
   },
 
-  // ─── Java & Spring Boot ───
   {
     skillSlug: "java",
     title: "Java Memory Model: Stack vs Heap",
@@ -240,7 +237,6 @@ const REAL_QUESTIONS: QuestionDef[] = [
     ]
   },
 
-  // ─── Operating Systems (OS) ───
   {
     skillSlug: "linux",
     title: "Coffman Conditions for System Deadlock",
@@ -270,7 +266,6 @@ const REAL_QUESTIONS: QuestionDef[] = [
     ]
   },
 
-  // ─── System Design & Cloud ───
   {
     skillSlug: "system-design",
     title: "CAP Theorem Trade-Offs",
@@ -310,7 +305,7 @@ async function main() {
   });
 
   console.log("Cleaning up dummy placeholder questions...");
-  // Delete options and attempts for generic placeholder questions
+
   const [dummyQs] = await conn.query(
     "SELECT id FROM questions WHERE title LIKE 'Practice question %: Which of the following best describes%' OR title LIKE 'Practice question %';"
   ) as any[];
@@ -324,7 +319,6 @@ async function main() {
     await conn.query(`DELETE FROM questions WHERE id IN (${ids});`);
   }
 
-  // Fetch skill map
   const [skills] = await conn.query("SELECT id, slug FROM skills;") as any[];
   const skillMap: Record<string, string> = {};
   for (const s of skills) {
@@ -360,7 +354,7 @@ async function main() {
     );
 
     if (q.options) {
-      // Remove old options for this question
+
       await conn.query("DELETE FROM question_options WHERE question_id = ?;", [qId]);
       for (let oi = 0; oi < q.options.length; oi++) {
         const opt = q.options[oi];
@@ -377,7 +371,6 @@ async function main() {
 
   console.log(`✅ Seeded ${insertedCount} authentic curated questions.`);
 
-  // Update Today's Daily Challenge
   const today = new Date().toISOString().slice(0, 10);
   console.log(`Configuring Today's Daily Challenge for date: ${today}`);
   const [users] = await conn.query("SELECT id FROM users LIMIT 10;") as any[];
@@ -404,3 +397,4 @@ main().catch(err => {
   console.error("Seeding error:", err);
   process.exit(1);
 });
+

@@ -22,7 +22,7 @@ export function AdminCompaniesPage() {
         setCompanies(data.data || []);
       }
     } catch {
-      /* fallback */
+
     } finally {
       setLoading(false);
     }
@@ -158,7 +158,6 @@ export function AdminCompaniesPage() {
         </div>
       )}
 
-      {/* Tabs */}
       <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', flexWrap: 'wrap' }}>
         <button
           onClick={() => setTab('ALL')}

@@ -23,7 +23,6 @@ public class PublicLandingController {
     public ResponseEntity<ApiResponse<Map<String, Object>>> getLandingData() {
         Map<String, Object> data = new LinkedHashMap<>();
 
-        // 1. Real Stats
         Map<String, Object> stats = new LinkedHashMap<>();
         try {
             stats.put("totalSkills", queryCount("SELECT COUNT(*) FROM skills"));
@@ -42,7 +41,6 @@ public class PublicLandingController {
         }
         data.put("stats", stats);
 
-        // 2. Real Institutions
         try {
             List<String> institutions = jdbcTemplate.query(
                 "SELECT DISTINCT institution_name FROM institution_profiles WHERE institution_name IS NOT NULL AND institution_name != '' ORDER BY institution_name LIMIT 6",
@@ -53,7 +51,6 @@ public class PublicLandingController {
             data.put("institutions", Collections.emptyList());
         }
 
-        // 3. Real Companies
         try {
             List<String> companies = jdbcTemplate.query(
                 "SELECT DISTINCT company_name FROM company_profiles WHERE company_name IS NOT NULL AND company_name != '' ORDER BY company_name LIMIT 6",
@@ -64,7 +61,6 @@ public class PublicLandingController {
             data.put("companies", Collections.emptyList());
         }
 
-        // 4. Real Placements
         try {
             List<Map<String, Object>> placements = jdbcTemplate.query(
                 "SELECT rp.job_role, rp.ctc_amount, rp.status, rp.verified, " +
@@ -94,7 +90,6 @@ public class PublicLandingController {
             data.put("placements", Collections.emptyList());
         }
 
-        // 5. Real Tests
         try {
             List<Map<String, Object>> tests = jdbcTemplate.query(
                 "SELECT id, title, description, test_type, duration_minutes, difficulty, total_questions, passing_score " +
@@ -117,7 +112,6 @@ public class PublicLandingController {
             data.put("tests", Collections.emptyList());
         }
 
-        // 6. Real Opportunities / Drives
         try {
             List<Map<String, Object>> drives = jdbcTemplate.query(
                 "SELECT co.title, co.location, co.package_lpa, co.required_skills, co.target_institution_names, " +
@@ -142,7 +136,6 @@ public class PublicLandingController {
             data.put("drives", Collections.emptyList());
         }
 
-        // 7. Real Skills
         try {
             List<Map<String, Object>> skills = jdbcTemplate.query(
                 "SELECT name, category FROM skills WHERE is_active = 1 ORDER BY name ASC LIMIT 12",
@@ -166,3 +159,4 @@ public class PublicLandingController {
         return count != null ? count : 0;
     }
 }
+

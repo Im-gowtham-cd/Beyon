@@ -65,7 +65,7 @@ export function CompanySidebar({
           }
         }
       } catch {
-        /* fallback */
+
       }
     }
     loadCompanyData();
@@ -119,7 +119,7 @@ export function CompanySidebar({
     <aside
       className={`${styles.sidebar} ${collapsed ? styles.sidebarCollapsed : ''} ${mobileOpen ? styles.sidebarMobileOpen : ''}`}
     >
-      {/* Brand Header */}
+
       <div className={styles.brandHeader}>
         <Link to="/company/home" className={styles.brandLink}>
           <div className={styles.brandLogo} style={{ background: 'transparent', boxShadow: 'none' }}>
@@ -134,9 +134,8 @@ export function CompanySidebar({
         </Link>
       </div>
 
-      {/* Sidebar Scrollable Body */}
       <div className={styles.sidebarScroll}>
-        {/* User Card */}
+
         <div className={`${styles.userCard} ${collapsed ? styles.userCardCollapsed : ''}`}>
           <div className={styles.userInfo}>
             <div className={styles.avatar}>
@@ -161,7 +160,6 @@ export function CompanySidebar({
           )}
         </div>
 
-        {/* Navigation Sections */}
         {navSections.map((section) => (
           <div key={section.title} className={styles.navSection}>
             {!collapsed && <span className={styles.sectionTitle}>{section.title}</span>}
@@ -197,7 +195,6 @@ export function CompanySidebar({
         ))}
       </div>
 
-      {/* Footer Utility Actions */}
       <div className={styles.footerSection}>
         {onToggleCollapse && (
           <button
@@ -214,3 +211,4 @@ export function CompanySidebar({
     </aside>
   );
 }
+

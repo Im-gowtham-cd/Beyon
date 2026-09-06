@@ -10,3 +10,4 @@ public interface CareerRoadmapItemRepository extends JpaRepository<CareerRoadmap
     List<CareerRoadmapItem> findByStudentIdOrderBySortOrder(UUID studentId);
     long countByStudentIdAndCareerPathIdAndState(UUID studentId, UUID careerPathId, String state);
 }
+

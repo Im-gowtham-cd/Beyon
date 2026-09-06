@@ -10,7 +10,6 @@ async def analyze_audio_chunk(req: AudioChunkRequest):
     voice_active = rms > 30.0
     second_voice = False
 
-    # Elevated sustained audio with speech energy implies conversation
     if rms > 55.0:
         second_voice = True
         events.append(DetectionEvent(

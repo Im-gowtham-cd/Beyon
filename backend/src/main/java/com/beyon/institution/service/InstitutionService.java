@@ -251,7 +251,7 @@ public class InstitutionService {
     }
 
     public List<PlacementDrive> getDrives(UUID institutionId) {
-        // Sync any published campus drives targeted at this institution
+
         try {
             var campusOpps = opportunityRepository.findAll();
             for (var opp : campusOpps) {
@@ -305,7 +305,6 @@ public class InstitutionService {
             d.setDriveType("ON_CAMPUS");
             d.setInterviewDate(d.getDriveDate() != null ? d.getDriveDate().toString() : "Scheduled on Confirmation");
 
-            // Calculate actual applied candidates count dynamically
             List<com.beyon.recruitment.model.RecruitmentApplication> apps = new ArrayList<>();
             if (d.getOpportunityId() != null) {
                 apps.addAll(recruitmentApplicationRepository.findByOpportunityId(d.getOpportunityId()));
@@ -436,3 +435,4 @@ public class InstitutionService {
         return placementDriveRepository.save(drive);
     }
 }
+

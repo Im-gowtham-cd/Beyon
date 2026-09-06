@@ -12,3 +12,4 @@ public enum AuditEventType {
     SUPER_ADMIN_APPROVAL,
     SUPER_ADMIN_REJECTION
 }
+

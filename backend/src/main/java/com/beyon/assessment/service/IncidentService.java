@@ -9,10 +9,6 @@ import java.time.OffsetDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
-/**
- * Manages proctoring incidents: creation, evidence linking, and recruiter review.
- * Incidents are only created when multi-signal correlation justifies them.
- */
 @Service
 @Transactional
 public class IncidentService {
@@ -39,18 +35,6 @@ public class IncidentService {
         this.evidenceStorageService = evidenceStorageService;
     }
 
-    /**
-     * Create a proctoring incident.
-     * @param procSessionId  proctoring session ID
-     * @param incidentType   incident type constant e.g. POSSIBLE_EXTERNAL_ASSISTANCE
-     * @param severity       LOW | MEDIUM | HIGH | CRITICAL
-     * @param confidence     0.0 - 1.0
-     * @param riskContribution points to add to risk score
-     * @param questionId     current question when incident occurred (nullable)
-     * @param sources        list of signal sources e.g. ["LAPTOP_CAMERA", "MOBILE_CAMERA"]
-     * @param signalCount    number of correlated signals
-     * @return created incident
-     */
     public ProctoringIncident createIncident(
             UUID procSessionId,
             String incidentType,
@@ -74,12 +58,10 @@ public class IncidentService {
 
         ProctoringIncident saved = incidentRepo.save(incident);
 
-        // Apply risk contribution
         if (riskContribution > 0) {
             riskScoringService.applyEvent(procSessionId, incidentType);
         }
 
-        // Notify via SSE
         DualViewSession session = dvSessionRepo.findById(procSessionId).orElse(null);
         if (session != null) {
             sseStreamService.pushIncidentCreated(
@@ -94,9 +76,6 @@ public class IncidentService {
         return saved;
     }
 
-    /**
-     * Store a frame capture as evidence for an incident.
-     */
     public ProctoringEvidence recordFrameEvidence(
             UUID incidentId,
             String deviceSource,
@@ -117,9 +96,6 @@ public class IncidentService {
         return evidenceRepo.save(evidence);
     }
 
-    /**
-     * Recruiter reviews an incident: DISMISSED | VIOLATION_CONFIRMED | ACKNOWLEDGED
-     */
     public ProctoringIncident reviewIncident(UUID incidentId, UUID reviewerId, String action, String notes) {
         ProctoringIncident incident = incidentRepo.findById(incidentId)
                 .orElseThrow(() -> new RuntimeException("Incident not found: " + incidentId));
@@ -131,7 +107,6 @@ public class IncidentService {
 
         ProctoringIncident saved = incidentRepo.save(incident);
 
-        // If VIOLATION_CONFIRMED, update session reviewerDecision
         if ("VIOLATION_CONFIRMED".equals(action)) {
             dvSessionRepo.findById(incident.getProctoringSessionId())
                     .ifPresent(session -> {
@@ -162,7 +137,7 @@ public class IncidentService {
                     m.put("startedAt", incident.getStartedAt());
                     m.put("endedAt", incident.getEndedAt());
                     m.put("reviewerAction", incident.getReviewerAction());
-                    // Include evidence
+
                     List<Map<String, Object>> evidenceList = evidenceRepo
                             .findByIncidentIdOrderByCapturedAt(incident.getId())
                             .stream().map(e -> {
@@ -180,3 +155,4 @@ public class IncidentService {
                 .collect(Collectors.toList());
     }
 }
+

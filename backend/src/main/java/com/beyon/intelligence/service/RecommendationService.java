@@ -47,14 +47,12 @@ public class RecommendationService {
 
         List<SkillRecommendation> recs = new ArrayList<>();
 
-        // 1. Fetch Student Profile & Skills
         StudentProfile profile = profileRepo.findByUserId(studentId).orElse(null);
         List<StudentSkill> currentSkills = studentSkillRepo.findByUserId(studentId);
         Set<String> knownSkillNames = currentSkills.stream()
                 .map(s -> s.getSkillName().trim().toLowerCase())
                 .collect(Collectors.toSet());
 
-        // Also fetch any new skills the student is currently learning
         try {
             List<String> learningSkills = jdbcTemplate.queryForList(
                     "SELECT DISTINCT s.name FROM student_learning_topics slt " +
@@ -65,7 +63,6 @@ public class RecommendationService {
             learningSkills.forEach(s -> knownSkillNames.add(s.trim().toLowerCase()));
         } catch (Exception ignored) {}
 
-        // 2. Recommend Missing Skills for Target Career Paths
         String targetRoles = profile != null && profile.getPreferredJobRoles() != null ? profile.getPreferredJobRoles() : "Full Stack Developer";
         List<Map<String, Object>> pathSkills = jdbcTemplate.queryForList(
                 "SELECT s.id, s.name, cp.title AS pathTitle, cps.proficiency_level, cps.is_core " +
@@ -92,7 +89,6 @@ public class RecommendationService {
             }
         }
 
-        // 3. Recommend Daily Practice & Assessments for Active / Current Skills
         for (StudentSkill ss : currentSkills) {
             SkillRecommendation practiceRec = new SkillRecommendation();
             practiceRec.setStudentId(studentId);
@@ -113,7 +109,6 @@ public class RecommendationService {
             recs.add(assessRec);
         }
 
-        // 4. Recommend Top Recommended Learning Program
         try {
             List<Map<String, Object>> programs = jdbcTemplate.queryForList(
                     "SELECT id, title, domain FROM learning_programs ORDER BY created_at DESC LIMIT 3"
@@ -130,7 +125,6 @@ public class RecommendationService {
             }
         } catch (Exception ignored) {}
 
-        // Fallback recommendations if empty
         if (recs.isEmpty()) {
             List<String> defaults = List.of("Java & Spring Boot", "Python & Data Structures", "React & TypeScript", "SQL & Database Systems", "Docker & Cloud Deployments");
             for (int i = 0; i < defaults.size(); i++) {
@@ -145,7 +139,6 @@ public class RecommendationService {
             }
         }
 
-        // Deduplicate by skillName and limit
         Map<String, SkillRecommendation> uniqueRecs = new LinkedHashMap<>();
         for (SkillRecommendation r : recs) {
             String key = r.getSkillName() + "_" + r.getRecommendationType();

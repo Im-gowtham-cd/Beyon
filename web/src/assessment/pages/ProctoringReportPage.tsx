@@ -145,7 +145,7 @@ export const ProctoringReportPage: React.FC = () => {
 
   return (
     <div className={styles.builderContainer}>
-      {/* Navigation Header */}
+
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
         <button className={styles.btnSecondary} onClick={() => navigate('/company/assessments')}>
           <ArrowLeft size={16} /> Back to Assessments
@@ -158,7 +158,6 @@ export const ProctoringReportPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Hero Overview */}
       <div className={styles.formCard} style={{ borderLeft: `6px solid ${getRiskColor(report.riskLevel)}` }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
           <div>
@@ -194,7 +193,6 @@ export const ProctoringReportPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Health Indicators */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid #f1f5f9' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             <Camera size={20} color={report.laptopCameraHealth === 'OK' ? '#16a34a' : '#ea580c'} />
@@ -236,7 +234,6 @@ export const ProctoringReportPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Incident Timeline */}
       <div className={styles.formCard} style={{ marginTop: '1.5rem' }}>
         <h2 className={styles.sectionHeading}>
           Correlated Incident Timeline ({report.incidents.length})
@@ -310,7 +307,6 @@ export const ProctoringReportPage: React.FC = () => {
                   )}
                 </div>
 
-                {/* Signals Sources */}
                 <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.75rem', flexWrap: 'wrap' }}>
                   {inc.sources?.map((s, idx) => (
                     <span
@@ -329,7 +325,6 @@ export const ProctoringReportPage: React.FC = () => {
                   ))}
                 </div>
 
-                {/* Audit Action Panel */}
                 {reviewingId === inc.id && (
                   <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid #e2e8f0' }}>
                     <div style={{ fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.5rem' }}>

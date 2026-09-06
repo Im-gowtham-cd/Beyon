@@ -138,7 +138,6 @@ export function AssessmentApp() {
   const alertCounterRef = useRef(0);
   const launchToken = new URLSearchParams(window.location.search).get('token');
 
-  // Reattempt Request state
   const [reattemptsMap, setReattemptsMap] = useState<Record<string, any>>({});
   const [showReattemptModal, setShowReattemptModal] = useState<{
     oppId: string;
@@ -150,7 +149,6 @@ export function AssessmentApp() {
   const [isSubmittingReattempt, setIsSubmittingReattempt] = useState<boolean>(false);
   const [reattemptSuccessMsg, setReattemptSuccessMsg] = useState<string>('');
 
-  // Application Settings & Exit state
   const [showExitModal, setShowExitModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [systemInfo, setSystemInfo] = useState<any>(null);
@@ -159,7 +157,6 @@ export function AssessmentApp() {
   const settingsVideoRef = useRef<HTMLVideoElement | null>(null);
   const settingsStreamRef = useRef<MediaStream | null>(null);
 
-  // Real-Time Proctoring AI Engine state
   const [proctorStatus, setProctorStatus] = useState<'CLEAR' | 'WARNING' | 'CRITICAL'>('CLEAR');
   const [proctorMessage, setProctorMessage] = useState('Face Detected & Monitored');
   const [activeWarningModal, setActiveWarningModal] = useState<{
@@ -199,7 +196,6 @@ export function AssessmentApp() {
   const proctorIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const handleSubmitRef = useRef<(() => void) | null>(null);
 
-  // DualView AI Proctoring states
   const [procSessionId, setProcSessionId] = useState<string | null>(null);
   const [pairingToken, setPairingToken] = useState<string | null>(null);
   const [pairingUrl, setPairingUrl] = useState<string | null>(null);
@@ -264,11 +260,11 @@ export function AssessmentApp() {
 
   const getMaxWarningsForCategory = (cat: 'PHONE' | 'PERSON' | 'SOUND' | 'ABSENT' | 'GAZE' | 'OTHER'): number => {
     switch (cat) {
-      case 'PHONE': return 0;   // 0 warnings -> Instant Disqualification on phone detection
-      case 'PERSON': return 1;  // 1 warning allowed -> Terminates on 2nd person strike
-      case 'SOUND': return 3;   // 3 warnings allowed -> Terminates on 4th voice infraction
-      case 'ABSENT': return 2;  // 2 warnings allowed -> Terminates on 3rd absence
-      case 'GAZE': return 3;    // 3 warnings allowed -> Terminates on 4th looking-away infraction
+      case 'PHONE': return 0;
+      case 'PERSON': return 1;
+      case 'SOUND': return 3;
+      case 'ABSENT': return 2;
+      case 'GAZE': return 3;
       default: return 3;
     }
   };
@@ -285,7 +281,6 @@ export function AssessmentApp() {
     const category = getViolationCategory(eventType);
     const maxAllowed = getMaxWarningsForCategory(category);
 
-    // 📱 PHONE DETECTED: 0 Warnings Allowed -> Instant Kill Switch
     if (isInstantKill || maxAllowed === 0) {
       isTerminatingRef.current = true;
       setProctorStatus('CRITICAL');
@@ -308,7 +303,6 @@ export function AssessmentApp() {
       return;
     }
 
-    // Temporal Smoothing & Cooldown filter (3s between strikes)
     const now = Date.now();
     if (now - lastStrikeTimeRef.current < 3000) return;
     lastStrikeTimeRef.current = now;
@@ -359,7 +353,6 @@ export function AssessmentApp() {
       addMalpracticeAlert(`VIOLATION_${category}_${catStrikes}`, `⚠️ Warning (${catStrikes}/${maxAllowed}): ${reason}`);
     }
   };
-
 
   useEffect(() => {
     if (pairingUrl) {
@@ -431,7 +424,6 @@ export function AssessmentApp() {
     setTimeout(() => setActiveAlert(null), 5000);
   };
 
-
   const apiFetch = async (path: string, options: RequestInit = {}) => {
     const activeToken = token || (await window.beyon?.auth?.getToken?.()) || null;
     const headers: Record<string, string> = {
@@ -487,7 +479,7 @@ export function AssessmentApp() {
         const map: Record<string, any> = {};
         reqs.forEach((r: any) => {
           if (r.opportunityId) {
-            // Keep the latest request for this opportunity
+
             if (!map[r.opportunityId] || new Date(r.createdAt).getTime() > new Date(map[r.opportunityId].createdAt).getTime()) {
               map[r.opportunityId] = r;
             }
@@ -581,7 +573,7 @@ export function AssessmentApp() {
               return;
             }
           } else {
-            // Token expired or invalid -> clear stale token so user can authenticate afresh
+
             await window.beyon?.auth?.clearToken();
             setToken(null);
             setUser(null);
@@ -603,10 +595,9 @@ export function AssessmentApp() {
     };
   }, [launchToken]);
 
-  // ── Camera lifecycle: start when entering 'verify', stop when leaving ────────
   useEffect(() => {
     if (step !== 'verify') {
-      // Stop any running camera stream when navigating away
+
       if (cameraStreamRef.current) {
         cameraStreamRef.current.getTracks().forEach(t => t.stop());
         cameraStreamRef.current = null;
@@ -654,7 +645,7 @@ export function AssessmentApp() {
 
   useEffect(() => {
     if (step !== 'exam') {
-      // Stop exam camera and analyzer when leaving exam
+
       if (proctorIntervalRef.current) {
         clearInterval(proctorIntervalRef.current);
         proctorIntervalRef.current = null;
@@ -704,7 +695,6 @@ export function AssessmentApp() {
     window.beyon?.proctoring?.onMinimize(handleMinimize);
     window.beyon?.proctoring?.onBeforeQuit(handleBeforeQuit);
 
-    // ── Start exam camera feed + Real-Time AI Proctoring Engine ─────────────────
     const startExamCamera = async () => {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
@@ -720,7 +710,6 @@ export function AssessmentApp() {
           };
         }
 
-        // Setup Web Audio Analyser for VAD & Speech Energy
         try {
           const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
           if (AudioContextClass) {
@@ -734,7 +723,7 @@ export function AssessmentApp() {
             const freqData = new Uint8Array(analyser.frequencyBinCount);
 
             (stream as any)._checkAudio = () => {
-              // 1. RMS Energy
+
               analyser.getByteTimeDomainData(timeData);
               let sumSquares = 0;
               for (let i = 0; i < timeData.length; i++) {
@@ -743,7 +732,6 @@ export function AssessmentApp() {
               }
               const rms = Math.sqrt(sumSquares / timeData.length);
 
-              // 2. Vocal Frequencies (Bins 2..45 in 512 FFT ~ 85Hz to 255Hz)
               analyser.getByteFrequencyData(freqData);
               let voiceSum = 0;
               for (let i = 2; i < 45; i++) {
@@ -751,10 +739,9 @@ export function AssessmentApp() {
               }
               const voiceAvg = voiceSum / 43;
 
-              // VAD speech detection threshold
               if (rms > 0.045 || voiceAvg > 28) {
                 voiceStreakRef.current++;
-                if (voiceStreakRef.current >= 6) { // ~3.0s of continuous speech
+                if (voiceStreakRef.current >= 6) {
                   voiceStreakRef.current = 0;
                   triggerRuleEngineViolation(
                     'SUSPICIOUS_SPEECH',
@@ -769,7 +756,6 @@ export function AssessmentApp() {
           }
         } catch {}
 
-        // Setup Computer Vision Frame Analysis Canvas
         const canvas = analysisCanvasRef.current || document.createElement('canvas');
         canvas.width = 160;
         canvas.height = 120;
@@ -779,12 +765,10 @@ export function AssessmentApp() {
           if (isTerminatingRef.current) return;
           if (!examVideoRef.current || examVideoRef.current.readyState < 2 || !ctx) return;
 
-          // 1. Run Audio Check
           if ((stream as any)._checkAudio) {
             (stream as any)._checkAudio();
           }
 
-          // 2. Capture and analyze visual frame
           ctx.drawImage(examVideoRef.current, 0, 0, 160, 120);
           const frame = ctx.getImageData(0, 0, 160, 120);
           const data = frame.data;
@@ -816,7 +800,6 @@ export function AssessmentApp() {
                 }
               }
 
-              // Biometric YCbCr skin chrominance formula
               const Y  =  0.299 * r + 0.587 * g + 0.114 * b;
               const Cb = -0.1687 * r - 0.3313 * g + 0.5 * b + 128;
               const Cr =  0.5 * r - 0.4187 * g - 0.0813 * b + 128;
@@ -836,13 +819,12 @@ export function AssessmentApp() {
                 if (x >= 35 && x <= 125 && y >= 10 && y <= 95) {
                   centerSkinPixels++;
                 }
-                // Record upper head column distribution (y <= 65)
+
                 if (y >= 10 && y <= 65) {
                   colSkin[x]++;
                 }
               }
 
-              // Smartphone / Electronic device screen detection (lum > 230)
               if (y >= 25 && y <= 100 && x >= 25 && x <= 135) {
                 if (lum > 230) {
                   phoneBrightPixels++;
@@ -861,7 +843,6 @@ export function AssessmentApp() {
           const avgLum = totalLum / (160 * 120);
           const isLaptopCameraCovered = (avgLum < 22) || (totalEdges < 50 && (avgLum < 45 || centerSkinPixels > 1000));
 
-          // RULE 1: Camera Lens Covered / Obstructed (Streak >= 3s)
           if (isLaptopCameraCovered) {
             cameraCoverStreakRef.current++;
             if (cameraCoverStreakRef.current >= 6) {
@@ -872,10 +853,9 @@ export function AssessmentApp() {
             cameraCoverStreakRef.current = 0;
           }
 
-          // RULE 2: Candidate Absent / Left Viewport (Streak >= 4s)
           if (!isLaptopCameraCovered && centerSkinPixels < 130) {
             absenceStreakRef.current++;
-            if (absenceStreakRef.current >= 8) { // ~4.0s continuous absence
+            if (absenceStreakRef.current >= 8) {
               absenceStreakRef.current = 0;
               triggerRuleEngineViolation('CANDIDATE_ABSENT', 'Candidate absent from camera viewport', 'LAPTOP_FRONT');
             }
@@ -883,7 +863,6 @@ export function AssessmentApp() {
             absenceStreakRef.current = 0;
           }
 
-          // RULE 3: Looking Away / Gaze Pose Deviation (Streak >= 3.5s)
           if (!isLaptopCameraCovered && totalSkinMass > 150) {
             const faceCenterX = sumSkinX / totalSkinMass;
             const faceCenterY = sumSkinY / totalSkinMass;
@@ -893,7 +872,7 @@ export function AssessmentApp() {
             const isLookingAway = Math.abs(xOffset) > 0.32 || yOffset > 0.38;
             if (isLookingAway) {
               lookAwayStreakRef.current++;
-              if (lookAwayStreakRef.current >= 7) { // ~3.5s continuous look away
+              if (lookAwayStreakRef.current >= 7) {
                 lookAwayStreakRef.current = 0;
                 const dir = xOffset < -0.32 ? 'left' : xOffset > 0.32 ? 'right' : 'downwards';
                 triggerRuleEngineViolation('LOOKING_AWAY', `Candidate continuously looking away (${dir})`, 'LAPTOP_FRONT');
@@ -905,7 +884,6 @@ export function AssessmentApp() {
             lookAwayStreakRef.current = 0;
           }
 
-          // RULE 4: Multiple People in Viewport (Streak >= 2.5s)
           let leftHeadMass = 0;
           let rightHeadMass = 0;
           let valleyColumns = 0;
@@ -921,7 +899,7 @@ export function AssessmentApp() {
           const hasTwoDistinctHeads = leftHeadMass > 600 && rightHeadMass > 600 && valleyColumns >= 6;
           if (hasTwoDistinctHeads) {
             multiPersonStreakRef.current++;
-            if (multiPersonStreakRef.current >= 5) { // ~2.5s continuous multiple people
+            if (multiPersonStreakRef.current >= 5) {
               multiPersonStreakRef.current = 0;
               triggerRuleEngineViolation('MULTIPLE_PEOPLE', 'Multiple people detected in examination view', 'LAPTOP_FRONT');
             }
@@ -940,7 +918,6 @@ export function AssessmentApp() {
       }
     };
 
-    // Cross-Camera Incident Poller for DualView / Mobile Camera
     let incidentPollInterval: any = null;
     if (procSessionId) {
       const examStartTime = Date.now();
@@ -957,7 +934,6 @@ export function AssessmentApp() {
                 if (seenIncidentIds.has(incId)) continue;
                 seenIncidentIds.add(incId);
 
-                // Ignore stale incidents from before the exam started
                 const incidentTime = inc.startedAt ? Date.parse(inc.startedAt) : 0;
                 if (incidentTime > 0 && incidentTime < examStartTime - 3000) continue;
 
@@ -967,7 +943,7 @@ export function AssessmentApp() {
                     'PHONE_DETECTED',
                     'Unauthorized mobile device detected in camera view',
                     'MOBILE_SIDE',
-                    false /* Progressive strikes with warning modal */
+                    false
                   );
                 } else if (type === 'SECOND_PERSON' || type === 'MULTIPLE_PEOPLE') {
                   triggerRuleEngineViolation(
@@ -995,7 +971,6 @@ export function AssessmentApp() {
       }, 2000);
     }
 
-    // Maximize + lock after a short delay to avoid race on startup
     const timer = setTimeout(() => {
       window.beyon?.assessment?.enterFullscreen();
       window.beyon?.assessment?.lockWindow();
@@ -1076,14 +1051,14 @@ export function AssessmentApp() {
     setVerifying(true);
     setError('');
     try {
-      // If a backend session exists, record verification; otherwise skip the API call
+
       if (session) {
         await apiFetch(`/assessment/session/${session.sessionId}/verify`, {
           method: 'POST',
           body: JSON.stringify({ status: 'VERIFIED', faceDetected: true, faceCount: 1, livenessScore: 0.95 }),
         });
       }
-      // Stop the camera stream before moving on
+
       if (cameraStreamRef.current) {
         cameraStreamRef.current.getTracks().forEach(t => t.stop());
         cameraStreamRef.current = null;
@@ -1091,7 +1066,7 @@ export function AssessmentApp() {
       setStep('system-check');
     } catch (err: any) {
       setError(`Verification failed: ${err.message}. You may still proceed.`);
-      // Don't block the user — let them continue anyway after a short delay
+
       setTimeout(() => {
         setStep('system-check');
       }, 2000);
@@ -1104,13 +1079,13 @@ export function AssessmentApp() {
     if (checksRunning) return;
     setError('');
     setChecksRunning(true);
-    // Reset all checks to pending first
+
     setCheckStatus({});
-    // Run each check sequentially with a visual delay so user can see progress
+
     for (const ct of CHECK_TYPES) {
-      await new Promise(resolve => setTimeout(resolve, 700)); // simulate hardware check
+      await new Promise(resolve => setTimeout(resolve, 700));
       setCheckStatus(prev => ({ ...prev, [ct]: 'PASS' }));
-      // Best-effort API call — ignore failures
+
       if (session) {
         apiFetch(`/assessment/session/${session.sessionId}/system-check`, {
           method: 'POST',
@@ -1118,13 +1093,13 @@ export function AssessmentApp() {
         }).catch(() => {});
       }
     }
-    // Mark complete
+
     if (session) {
       apiFetch(`/assessment/session/${session.sessionId}/system-check/complete`, {
         method: 'POST',
       }).catch(() => {});
     }
-    // Small pause so user sees all checks green before navigating
+
     await new Promise(resolve => setTimeout(resolve, 600));
     setChecksRunning(false);
     setStep('dualview-setup');
@@ -1192,7 +1167,6 @@ export function AssessmentApp() {
     }
   };
 
-  // Auto-run diagnostics when entering system-check step
   useEffect(() => {
     if (step === 'system-check') {
       setCheckStatus({});
@@ -1203,7 +1177,7 @@ export function AssessmentApp() {
   const startExam = async () => {
     setError('');
     if (!session) {
-      // No backend session — navigate to exam with placeholder data
+
       setStep('exam');
       return;
     }
@@ -1282,11 +1256,10 @@ export function AssessmentApp() {
         headers: token ? { 'Authorization': `Bearer ${token}` } : {}
       }).catch(() => {});
     }
-    // Keep application in fullscreen lockdown until candidate explicitly exits
+
     window.beyon?.assessment?.unlockWindow();
     setStep('submitting');
 
-    // Build structured answer mapping using question IDs and order keys
     const payloadAnswers: Record<string, any> = {};
     examQuestionsList.forEach((q: any, idx: number) => {
       const qKey = `q-${idx + 1}`;
@@ -1419,12 +1392,11 @@ export function AssessmentApp() {
         durationMinutes: durationMinutesVal,
       });
 
-      // Pre-load company drive questions or benchmark questions for the examination
       try {
         const qEndpoint = oppId
           ? `${API_BASE}/opportunities/${oppId}/questions`
           : `${API_BASE}/practice/questions?size=${totalQuestionsCount}`;
-        
+
         const qRes = await fetch(qEndpoint, {
           headers: activeToken ? { Authorization: `Bearer ${activeToken}` } : {},
         });
@@ -1486,7 +1458,7 @@ export function AssessmentApp() {
 
   return (
     <div className={styles.container}>
-      {/* Top Header */}
+
       <header className={styles.assessmentHeader}>
         <div className={styles.brandTitle}>
           <img src={logoTransparent} alt="Beyon" className={styles.brandLogoImg} />
@@ -1585,7 +1557,6 @@ export function AssessmentApp() {
         </div>
       </header>
 
-      {/* Auth Step */}
       {step === 'auth' && (
         <main className={styles.main}>
           <div className={styles.authCard}>
@@ -1672,10 +1643,9 @@ export function AssessmentApp() {
         </main>
       )}
 
-      {/* Student Dashboard Step: ONLY Pending Assessments and Weekly Contests */}
       {step === 'dashboard' && (
         <main className={styles.dashboardMain}>
-          {/* Welcome Banner */}
+
           <div className={styles.dashHero}>
             <div className={styles.dashHeroContent}>
               <div className={styles.dashBadgeRow}>
@@ -1699,7 +1669,6 @@ export function AssessmentApp() {
             </div>
           </div>
 
-          {/* Section 1: Pending Proctored Assessments */}
           <section className={styles.dashSectionBlock}>
             <div className={styles.dashSectionHeader}>
               <div className={styles.dashSectionTitleRow}>
@@ -1785,7 +1754,6 @@ export function AssessmentApp() {
                         const reattempt = reattemptsMap[opp.id];
                         const isCompleted = opp.applicationStatus === 'ASSESSED' || opp.assessmentScore != null;
 
-                        // Case 1: Reattempt Approved by Company -> Ready to start fresh test!
                         if (reattempt && reattempt.status === 'APPROVED') {
                           return (
                             <button
@@ -1808,7 +1776,6 @@ export function AssessmentApp() {
                           );
                         }
 
-                        // Case 2: Reattempt Request Pending Recruiter Review
                         if (reattempt && reattempt.status === 'PENDING') {
                           return (
                             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
@@ -1835,7 +1802,6 @@ export function AssessmentApp() {
                           );
                         }
 
-                        // Case 3: Reattempt Rejected by Company (can re-appeal if desired)
                         if (reattempt && reattempt.status === 'REJECTED') {
                           return (
                             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
@@ -1862,7 +1828,6 @@ export function AssessmentApp() {
                           );
                         }
 
-                        // Case 4: Already Completed or Assessed (Prompt to Request Reattempt)
                         if (isCompleted) {
                           return (
                             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '6px' }}>
@@ -1904,7 +1869,6 @@ export function AssessmentApp() {
                           );
                         }
 
-                        // Case 5: Fresh, not attempted yet
                         return (
                           <button
                             className={styles.btnTakeTest}
@@ -1935,7 +1899,6 @@ export function AssessmentApp() {
             )}
           </section>
 
-          {/* Section 2: Weekly Benchmark Contests & Exams */}
           <section className={styles.dashSectionBlock} style={{ marginTop: '36px' }}>
             <div className={styles.dashSectionHeader}>
               <div className={styles.dashSectionTitleRow}>
@@ -2013,7 +1976,6 @@ export function AssessmentApp() {
         </main>
       )}
 
-      {/* Launch Step */}
       {step === 'launch' && (
         <main className={styles.main}>
           <div className={styles.contentCard}>
@@ -2030,7 +1992,6 @@ export function AssessmentApp() {
         </main>
       )}
 
-      {/* Verify Step */}
       {step === 'verify' && (
         <main className={styles.main}>
           <div className={styles.contentCard}>
@@ -2039,9 +2000,8 @@ export function AssessmentApp() {
               Ensure your face is clearly visible in the camera frame.
             </p>
 
-            {/* Camera preview area */}
             <div className={styles.cameraPreview} style={{ position: 'relative', background: '#0f172a', overflow: 'hidden' }}>
-              {/* Always render the video element so the ref is attached */}
+
               <video
                 ref={videoRef}
                 autoPlay
@@ -2052,24 +2012,24 @@ export function AssessmentApp() {
                   height: '100%',
                   objectFit: 'cover',
                   display: cameraReady ? 'block' : 'none',
-                  transform: 'scaleX(-1)', // mirror effect
+                  transform: 'scaleX(-1)',
                 }}
               />
-              {/* Placeholder while camera is loading or errored */}
+
               {!cameraReady && !cameraError && (
                 <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10, color: '#94a3b8' }}>
                   <i className="bx bx-loader-alt bx-spin" style={{ fontSize: 36 }} />
                   <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>Starting camera...</span>
                 </div>
               )}
-              {/* Camera error state */}
+
               {cameraError && (
                 <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10, padding: 16, textAlign: 'center', color: '#f87171', background: '#0f172a' }}>
                   <i className="bx bx-camera-off" style={{ fontSize: 36 }} />
                   <span style={{ fontSize: '0.82rem', fontWeight: 600, lineHeight: 1.5 }}>{cameraError}</span>
                 </div>
               )}
-              {/* Live indicator */}
+
               {cameraReady && (
                 <div style={{ position: 'absolute', top: 10, left: 10, display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(0,0,0,0.6)', padding: '4px 10px', borderRadius: 0 }}>
                   <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#22c55e', display: 'inline-block', boxShadow: '0 0 6px #22c55e' }} />
@@ -2082,7 +2042,7 @@ export function AssessmentApp() {
               <button
                 className={styles.btnOutline}
                 style={{ marginTop: 4 }}
-                onClick={() => setStep('verify')} // re-trigger the useEffect
+                onClick={() => setStep('verify')}
               >
                 <i className="bx bx-refresh" /> Retry Camera
               </button>
@@ -2107,7 +2067,6 @@ export function AssessmentApp() {
         </main>
       )}
 
-      {/* System Check Step */}
       {step === 'system-check' && (
         <main className={styles.main}>
           <div className={styles.contentCard}>
@@ -2161,7 +2120,6 @@ export function AssessmentApp() {
         </main>
       )}
 
-      {/* DualView AI Proctoring Mobile Pairing Step */}
       {step === 'dualview-setup' && (
         <main className={styles.main}>
           <div className={styles.dualViewCard}>
@@ -2275,7 +2233,6 @@ export function AssessmentApp() {
         </main>
       )}
 
-      {/* Instructions Step */}
       {step === 'instructions' && (
         <main className={styles.main}>
           <div className={styles.contentCard}>
@@ -2308,11 +2265,9 @@ export function AssessmentApp() {
         </main>
       )}
 
-      {/* Exam Interface */}
       {step === 'exam' && (
         <div className={styles.body}>
 
-          {/* Live Malpractice Alert Banner */}
           {activeAlert && (
             <div className={styles.alertBanner}>
               <i className="bx bx-error-circle" />
@@ -2320,9 +2275,8 @@ export function AssessmentApp() {
             </div>
           )}
 
-          {/* Left Sidebar — Question Palette + Camera */}
           <aside className={styles.paletteContainer}>
-            {/* Camera Panel with AI Detection HUD */}
+
             <div className={styles.examCameraPanel}>
               <div className={styles.examCameraHeader}>
                 <i className="bx bx-camera" style={{ fontSize: 14 }} />
@@ -2370,7 +2324,7 @@ export function AssessmentApp() {
                     <span>Camera unavailable</span>
                   </div>
                 )}
-                {/* Real-time AI HUD Overlay */}
+
                 {examCameraReady && (
                   <div
                     style={{
@@ -2429,7 +2383,6 @@ export function AssessmentApp() {
               )}
             </div>
 
-            {/* Question Palette */}
             <div className={styles.paletteSection}>
               <div className={styles.paletteSectionTitle}>Question Palette</div>
               <div className={styles.palette}>
@@ -2465,7 +2418,6 @@ export function AssessmentApp() {
             </div>
           </aside>
 
-          {/* Main Question Area */}
           <main className={styles.questionArea}>
             <div className={styles.questionHeader}>
               <span className={styles.questionNum}>
@@ -2582,7 +2534,6 @@ export function AssessmentApp() {
               );
             })()}
 
-            {/* Bottom Nav */}
             <div className={styles.navBar}>
               <button
                 className={styles.navBtn}
@@ -2612,7 +2563,6 @@ export function AssessmentApp() {
         </div>
       )}
 
-      {/* Submitting Step */}
       {step === 'submitting' && (
         <main className={styles.main}>
           <div className={styles.contentCard}>
@@ -2623,12 +2573,10 @@ export function AssessmentApp() {
         </main>
       )}
 
-      {/* Results Step */}
       {step === 'results' && (
         <main className={styles.main} style={{ overflowY: 'auto', alignItems: 'center', padding: '32px 24px' }}>
           <div className={styles.resultsContainer}>
 
-            {/* Score Card */}
             <div className={styles.resultsScoreCard}>
               <span className="section-label">Assessment Completed</span>
               <h1 className={styles.title}>Examination Submitted Successfully</h1>
@@ -2670,7 +2618,6 @@ export function AssessmentApp() {
               </div>
             </div>
 
-            {/* Malpractice Report */}
             <div className={styles.resultsReportCard}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
                 <i className="bx bx-shield-quarter" style={{ fontSize: 20, color: '#1c2d81' }} />

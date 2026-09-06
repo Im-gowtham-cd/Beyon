@@ -44,7 +44,7 @@ export function CompanyOpportunitiesPage() {
           }
         }
       } catch {
-        /* fallback */
+
       } finally {
         setLoading(false);
       }
@@ -83,7 +83,6 @@ export function CompanyOpportunitiesPage() {
         </Link>
       </div>
 
-      {/* Stats Row */}
       <div className={styles.statsRow}>
         <div className={styles.statCard}>
           <span className={styles.statLabel}>Total Opportunities</span>
@@ -103,7 +102,6 @@ export function CompanyOpportunitiesPage() {
         </div>
       </div>
 
-      {/* Filter Row */}
       <div className={styles.filterRow}>
         <div className={styles.filters}>
           {(['ALL', 'CAMPUS_DRIVE', 'FULL_TIME', 'INTERNSHIP'] as const).map((t) => (
@@ -130,7 +128,6 @@ export function CompanyOpportunitiesPage() {
         </div>
       </div>
 
-      {/* Grid */}
       {loading ? (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '16px' }}>
           {[1, 2, 3, 4].map((i) => (
@@ -214,3 +211,4 @@ export function CompanyOpportunitiesPage() {
     </div>
   );
 }
+

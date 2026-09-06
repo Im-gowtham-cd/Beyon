@@ -10,3 +10,4 @@ public interface DiscussionThreadRepository extends JpaRepository<DiscussionThre
     List<DiscussionThread> findByAuthorIdOrderByCreatedAtDesc(UUID authorId);
     List<DiscussionThread> findByOrderByCreatedAtDesc();
 }
+
