@@ -108,7 +108,7 @@ desktop/dist/
 desktop/release/
 
 # ─── Dolt Database & History ───────────────────────────────────
-beyon/
+/beyon/
 .doltcfg/
 .dolt_dropped_databases/
 .sqlhistory
