@@ -474,13 +474,13 @@ ul, ol {
 }
 
 @media (max-width: 1024px) {
-  :root { --nav-main: 72px; }
+  :root { --nav-main: 70px; --nav-height: calc(var(--nav-utility) + var(--nav-main)); }
   .section h2 { font-size: var(--fs-4xl); }
   .hero-dark .hero-content h1 { font-size: var(--fs-4xl); }
 }
 
 @media (max-width: 768px) {
-  :root { --nav-utility: 0px; --nav-main: 64px; }
+  :root { --nav-utility: 0px; --nav-main: 64px; --nav-height: 64px; }
   .section h2 { font-size: var(--fs-3xl); }
   .section-title-left { font-size: var(--fs-3xl); }
   .hero-dark { padding: calc(var(--nav-height) + 32px) 5% 28px; min-height: 0; }

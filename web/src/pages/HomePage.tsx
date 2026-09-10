@@ -80,7 +80,7 @@ export function HomePage() {
       'Beyon Engineering College',
       'Bannari Amman Institute of Technology',
       'Premier Engineering Institute',
-      'Standford University',
+      'Stanford University',
     ],
     companies: [
       'Beyon Tech Pvt. Ltd.',
@@ -270,169 +270,250 @@ export function HomePage() {
 
   return (
     <div className={styles.homePage}>
+      {/* Modern Hero Section */}
+      <section className={styles.heroSection}>
+        <div className={styles.heroContainer}>
+          <div className={styles.heroBadge}>
+            <span className={styles.badgeDot} />
+            <i className="bx bx-atom" />
+            <span>AI-Powered Skill Matrix &amp; Intelligent Career Architecture</span>
+          </div>
 
-      <div className={styles.foamBoard}>
-        <span />
-        <span />
-        <span />
-        <span />
-        <span />
-        <div className={styles.foamBrand}>
-          <span className={styles.brandMarkLarge} />
-          <h1 className={styles.foamTitle}>BEYON</h1>
+          <h1 className={styles.heroHeading}>
+            Learn, Practice, Prove <br />
+            <span className={styles.heroHighlight}>&amp; Get Hired.</span>
+          </h1>
+
+          <p className={styles.heroSubtitle}>
+            Beyon is an enterprise-grade career intelligence platform connecting ambitious students,
+            academic institutions, and leading technology companies through adaptive skill diagnostics,
+            lockdown proctoring, and verified competency pipelines.
+          </p>
+
+          <div className={styles.heroCtas}>
+            <Link to="/register" className={styles.btnPrimary}>
+              <i className="bx bx-rocket" /> Get Started Free
+            </Link>
+            <Link to="/practice" className={styles.btnSecondary}>
+              <i className="bx bx-code-alt" /> Launch Practice
+            </Link>
+            <Link to="/verify" className={styles.btnOutline}>
+              <i className="bx bx-badge-check" /> Verify Credentials
+            </Link>
+          </div>
+
+          {/* Quick Metrics Strip */}
+          <div className={styles.heroMetricsStrip}>
+            <div className={styles.metricItem}>
+              <span className={styles.metricVal}>{data.stats.totalSkills}+</span>
+              <span className={styles.metricLbl}>Verified Skills Matrix</span>
+            </div>
+            <div className={styles.metricDivider} />
+            <div className={styles.metricItem}>
+              <span className={styles.metricVal}>{data.stats.totalQuestions}+</span>
+              <span className={styles.metricLbl}>Curated Question Bank</span>
+            </div>
+            <div className={styles.metricDivider} />
+            <div className={styles.metricItem}>
+              <span className={styles.metricVal}>{data.stats.integrityRate}</span>
+              <span className={styles.metricLbl}>Proctoring Integrity</span>
+            </div>
+            <div className={styles.metricDivider} />
+            <div className={styles.metricItem}>
+              <span className={styles.metricVal}>₹18.5 LPA</span>
+              <span className={styles.metricLbl}>Highest Placement Record</span>
+            </div>
+          </div>
         </div>
-        <ul>
-          <li>Platform for</li>
-          <li>High-Impact Learning</li>
-          <li>&amp;</li>
-          <li>Intelligent Recruitment</li>
-          <li>For</li>
-          <li>Next-Generation Engineers</li>
-          <li>( Beyon AI · CoE )</li>
-        </ul>
-      </div>
+      </section>
 
-      <div className={styles.slider}>
-
-        <div className={styles.hero}>
-          <span>
-            <p className={styles.heroTitle}>Vision &amp; Mission</p>
-            <p className={styles.heroText}>
-              To empower students, academic institutions, and leading enterprises with an intelligent,
-              data-driven ecosystem for verified skill development, assessment, and career matching.
-            </p>
-          </span>
+      {/* Vision & Mission Section */}
+      <section className={styles.sectionWrapper}>
+        <div className={styles.sectionHeader}>
+          <span className={styles.sectionTag}>Strategic Foundation</span>
+          <h2 className={styles.sectionTitle}>Vision &amp; Mission</h2>
+          <div className={styles.accentLine} />
+          <p className={styles.sectionSubtitle}>
+            To empower students, academic institutions, and leading enterprises with an intelligent,
+            data-driven ecosystem for verified skill development, assessment, and career matching.
+          </p>
         </div>
 
-        <div className={styles.versionDownload}>
+        {/* 5 Core Pillars */}
+        <div className={styles.pillarsGrid}>
           {missionCards.map((card) => (
-            <div key={card.title} className={styles.versionDownloadContent}>
-              <p className={styles.missionIcon}>
+            <div key={card.title} className={styles.pillarCard}>
+              <div className={styles.pillarIconBox}>
                 <i className={card.icon} />
-              </p>
-              <h3 className={styles.cardHeading}>{card.title}</h3>
-              <p className={styles.cardDesc}>{card.text}</p>
+              </div>
+              <h3 className={styles.pillarTitle}>{card.title}</h3>
+              <p className={styles.pillarDesc}>{card.text}</p>
             </div>
           ))}
         </div>
+      </section>
 
-        <div className={styles.section}>
-          <h2 className={styles.sectionHeaderTitle}>Real Proctored Certification Exams</h2>
-          <div className={styles.testsGrid}>
-            {data.tests.map((test) => (
-              <div key={test.id} className={styles.testCard}>
-                <div>
-                  <div className={styles.testCardTop}>
-                    <span
-                      className={`${styles.badgeDifficulty} ${
-                        test.difficulty === 'HARD'
-                          ? styles.diffHard
-                          : test.difficulty === 'MEDIUM'
-                          ? styles.diffMedium
-                          : styles.diffEasy
-                      }`}
-                    >
-                      {test.difficulty}
-                    </span>
-                    <span className={styles.testDuration}>
-                      <i className="bx bx-time-five" /> {test.durationMinutes} mins
-                    </span>
-                  </div>
-                  <h3 className={styles.testTitle}>{test.title}</h3>
-                  <p className={styles.testDesc}>{test.description}</p>
-                </div>
+      {/* Real Proctored Certification Exams */}
+      <section className={`${styles.sectionWrapper} ${styles.sectionAltBg}`}>
+        <div className={styles.sectionHeader}>
+          <span className={styles.sectionTag}>Standardized Benchmarks</span>
+          <h2 className={styles.sectionTitle}>Real Proctored Certification Exams</h2>
+          <div className={styles.accentLine} />
+          <p className={styles.sectionSubtitle}>
+            Industry-benchmarked technical evaluations with dual-view proctoring, live incident telemetry,
+            and cryptographically signed credentials.
+          </p>
+        </div>
 
-                <div className={styles.testFooter}>
-                  <span className={styles.testStats}>
-                    {test.totalQuestions} Questions &bull; Pass: {test.passingScore}%
+        <div className={styles.testsGrid}>
+          {data.tests.map((test) => (
+            <div key={test.id} className={styles.testCard}>
+              <div>
+                <div className={styles.testCardTop}>
+                  <span
+                    className={`${styles.badgeDifficulty} ${
+                      test.difficulty === 'HARD'
+                        ? styles.diffHard
+                        : test.difficulty === 'MEDIUM'
+                        ? styles.diffMedium
+                        : styles.diffEasy
+                    }`}
+                  >
+                    {test.difficulty}
                   </span>
-                  <Link to="/student/practice" className={styles.testActionLink}>
-                    <span>Launch Exam</span>
-                    <i className="bx bx-right-arrow-alt" />
-                  </Link>
+                  <span className={styles.testDuration}>
+                    <i className="bx bx-time-five" /> {test.durationMinutes} mins
+                  </span>
                 </div>
+                <h3 className={styles.testTitle}>{test.title}</h3>
+                <p className={styles.testDesc}>{test.description}</p>
               </div>
-            ))}
-          </div>
-        </div>
 
-        {data.placements && data.placements.length > 0 && (
-          <div className={styles.placementSection}>
-            <h2 className={styles.sectionHeaderTitle}>Verified Campus Placement Records</h2>
-            <div className={styles.placementGrid}>
-              {data.placements.map((p, idx) => (
-                <div key={idx} className={styles.placementCard}>
-                  <div className={styles.placementLeft}>
-                    <div className={styles.placementAvatar}>
-                      {p.companyName ? p.companyName.substring(0, 2).toUpperCase() : 'BY'}
-                    </div>
-                    <div className={styles.placementInfo}>
-                      <h4>{p.companyName} &bull; {p.jobRole}</h4>
-                      <p>
-                        Candidate: <strong>{p.studentName}</strong> &bull; {p.department}
-                      </p>
-                    </div>
-                  </div>
-                  <div className={styles.placementRight}>
-                    <span className={styles.placementPackage}>{p.packageLpa}</span>
-                    <span className={styles.placementStatus}>✓ {p.status}</span>
-                  </div>
-                </div>
-              ))}
+              <div className={styles.testFooter}>
+                <span className={styles.testStats}>
+                  {test.totalQuestions} Questions &bull; Pass: {test.passingScore}%
+                </span>
+                <Link to="/practice" className={styles.testActionLink}>
+                  <span>Launch Exam</span>
+                  <i className="bx bx-right-arrow-alt" />
+                </Link>
+              </div>
             </div>
-          </div>
-        )}
+          ))}
+        </div>
+      </section>
 
-        <div className={styles.section}>
-          <h2 className={styles.sectionHeaderTitle}>Platform Capabilities</h2>
-          <div className={styles.featuresGrid}>
-            {features.map((f) => (
-              <div key={f.title} className={styles.featureBox}>
-                <i className={f.icon} />
-                <h3>{f.title}</h3>
-                <p>{f.desc}</p>
+      {/* Verified Campus Placement Records */}
+      {data.placements && data.placements.length > 0 && (
+        <section className={styles.sectionWrapper}>
+          <div className={styles.sectionHeader}>
+            <span className={styles.sectionTag}>Measurable Outcomes</span>
+            <h2 className={styles.sectionTitle}>Verified Campus Placement Records</h2>
+            <div className={styles.accentLine} />
+            <p className={styles.sectionSubtitle}>
+              Direct hiring drive offers authenticated across partner academic institutions and corporate employers.
+            </p>
+          </div>
+
+          <div className={styles.placementGrid}>
+            {data.placements.map((p, idx) => (
+              <div key={idx} className={styles.placementCard}>
+                <div className={styles.placementLeft}>
+                  <div className={styles.placementAvatar}>
+                    {p.companyName ? p.companyName.substring(0, 2).toUpperCase() : 'BY'}
+                  </div>
+                  <div className={styles.placementInfo}>
+                    <h4>{p.companyName} &bull; {p.jobRole}</h4>
+                    <p>
+                      Candidate: <strong>{p.studentName}</strong> &bull; {p.department}
+                    </p>
+                  </div>
+                </div>
+                <div className={styles.placementRight}>
+                  <span className={styles.placementPackage}>{p.packageLpa}</span>
+                  <span className={styles.placementStatus}>✓ {p.status}</span>
+                </div>
               </div>
             ))}
           </div>
+        </section>
+      )}
+
+      {/* Platform Capabilities */}
+      <section className={`${styles.sectionWrapper} ${styles.sectionAltBg}`}>
+        <div className={styles.sectionHeader}>
+          <span className={styles.sectionTag}>System Architecture</span>
+          <h2 className={styles.sectionTitle}>Platform Capabilities</h2>
+          <div className={styles.accentLine} />
+          <p className={styles.sectionSubtitle}>
+            Architected for high throughput, AI-driven personalization, and multi-tenant enterprise security.
+          </p>
         </div>
 
-        <h2 className={styles.versionTitle}>Strategic Objectives</h2>
-        <div className={styles.instruction}>
+        <div className={styles.featuresGrid}>
+          {features.map((f) => (
+            <div key={f.title} className={styles.featureBox}>
+              <div className={styles.featureIconWrap}>
+                <i className={f.icon} />
+              </div>
+              <h3>{f.title}</h3>
+              <p>{f.desc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Strategic Objectives */}
+      <section className={styles.sectionWrapper}>
+        <div className={styles.sectionHeader}>
+          <span className={styles.sectionTag}>Ecosystem Roadmap</span>
+          <h2 className={styles.sectionTitle}>Strategic Objectives</h2>
+          <div className={styles.accentLine} />
+          <p className={styles.sectionSubtitle}>
+            Continuous acceleration and alignment between academic curricula and tech industry demand.
+          </p>
+        </div>
+
+        <div className={styles.objectivesGrid}>
           {objectives.map((obj) => (
             <div key={obj.text} className={styles.objectiveCard}>
-              <span className={styles.objNum}>
+              <div className={styles.objIconWrap}>
                 <i className={obj.icon} />
-              </span>
+              </div>
               <p>{obj.text}</p>
             </div>
           ))}
         </div>
+      </section>
 
-        <div className={styles.statsSection}>
-          <div className={styles.statsGrid}>
-            <div className={styles.statCard}>
-              <span className={styles.statNum}>{data.stats.totalSkills}+</span>
-              <span className={styles.statLabel}>Verified Skills</span>
-              <span className={styles.statSub}>From Database Skills Matrix</span>
-            </div>
-            <div className={styles.statCard}>
-              <span className={styles.statNum}>{data.stats.totalQuestions}+</span>
-              <span className={styles.statLabel}>Questions in Bank</span>
-              <span className={styles.statSub}>Curated Real Test Bank</span>
-            </div>
-            <div className={styles.statCard}>
-              <span className={styles.statNum}>{data.stats.totalDrives}+</span>
-              <span className={styles.statLabel}>Placement Drives</span>
-              <span className={styles.statSub}>Corporate Hiring Drives</span>
-            </div>
-            <div className={styles.statCard}>
-              <span className={styles.statNum}>{data.stats.totalCompanies}+</span>
-              <span className={styles.statLabel}>Enterprise Partners</span>
-              <span className={styles.statSub}>Registered Hiring Partners</span>
-            </div>
+      {/* Platform Statistics */}
+      <section className={styles.statsSection}>
+        <div className={styles.statsGrid}>
+          <div className={styles.statCard}>
+            <span className={styles.statNum}>{data.stats.totalSkills}+</span>
+            <span className={styles.statLabel}>Verified Skills</span>
+            <span className={styles.statSub}>Industry-Standardized Taxonomy</span>
+          </div>
+          <div className={styles.statCard}>
+            <span className={styles.statNum}>{data.stats.totalQuestions}+</span>
+            <span className={styles.statLabel}>Curated Questions</span>
+            <span className={styles.statSub}>Comprehensive Test Bank</span>
+          </div>
+          <div className={styles.statCard}>
+            <span className={styles.statNum}>{data.stats.totalDrives}+</span>
+            <span className={styles.statLabel}>Placement Drives</span>
+            <span className={styles.statSub}>Active Enterprise Campaigns</span>
+          </div>
+          <div className={styles.statCard}>
+            <span className={styles.statNum}>{data.stats.totalCompanies}+</span>
+            <span className={styles.statLabel}>Enterprise Partners</span>
+            <span className={styles.statSub}>Registered Hiring Partners</span>
           </div>
         </div>
+      </section>
 
+      {/* Call to Action Banner */}
+      <section className={styles.ctaBannerSection}>
         <div className={styles.ctaBanner}>
           <h2>Ready to Unlock Your Career Potential?</h2>
           <p>
@@ -446,9 +527,12 @@ export function HomePage() {
             <Link to="/placement" className={styles.ctaBtnSecondary}>
               <i className="bx bx-briefcase" /> Explore Placements Hub
             </Link>
+            <Link to="/practice" className={styles.ctaBtnOutline}>
+              <i className="bx bx-code-block" /> Practice Arena
+            </Link>
           </div>
         </div>
-      </div>
+      </section>
     </div>
   );
 }
