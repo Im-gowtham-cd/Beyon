@@ -120,7 +120,37 @@ public class OnboardingController {
             } catch (Exception ignored) {}
         }
 
-        profile.setCompletionPct(90);
+        if (body.get("graduationYear") != null && !body.get("graduationYear").toString().isBlank()) {
+            try {
+                profile.setGraduationYear(Integer.parseInt(body.get("graduationYear").toString()));
+            } catch (Exception ignored) {}
+        }
+
+        if (body.get("dateOfBirth") != null && !body.get("dateOfBirth").toString().isBlank()) {
+            try {
+                profile.setDateOfBirth(java.time.LocalDate.parse(body.get("dateOfBirth").toString()));
+            } catch (Exception ignored) {}
+        }
+
+        if (body.get("preferredJobRoles") instanceof List<?> roles) {
+            profile.setPreferredJobRoles(String.join(",", roles.stream().map(Object::toString).toList()));
+        } else if (body.get("preferredJobRoles") != null) {
+            profile.setPreferredJobRoles(body.get("preferredJobRoles").toString());
+        }
+
+        if (body.get("preferredIndustries") instanceof List<?> ind) {
+            profile.setPreferredIndustries(String.join(",", ind.stream().map(Object::toString).toList()));
+        } else if (body.get("preferredIndustries") != null) {
+            profile.setPreferredIndustries(body.get("preferredIndustries").toString());
+        }
+
+        if (body.get("preferredLocations") instanceof List<?> locs) {
+            profile.setPreferredLocations(String.join(",", locs.stream().map(Object::toString).toList()));
+        } else if (body.get("preferredLocations") != null) {
+            profile.setPreferredLocations(body.get("preferredLocations").toString());
+        }
+
+        profile.setCompletionPct(100);
         studentProfileRepository.save(profile);
 
         String targetInst = profile.getInstitution();
@@ -225,20 +255,23 @@ public class OnboardingController {
         }
 
         userRepository.findById(userId).ifPresent(u -> {
-            u.setProfileStatus(AccountStatus.PENDING_INSTITUTION_VERIFICATION);
-            u.setStatus(AccountStatus.PENDING_VERIFICATION);
+            u.setProfileStatus(AccountStatus.COMPLETED);
+            u.setStatus(AccountStatus.ACTIVE);
             userRepository.save(u);
         });
 
+        long currentBalance = 100;
         try {
             coinService.getOrCreateWallet(userId);
             coinService.earnCoins(userId, "ONBOARDING_COMPLETED", "ONBOARDING", userId);
+            currentBalance = coinService.getBalance(userId);
         } catch (Exception ignored) {}
 
         return ResponseEntity.ok(ApiResponse.ok(Map.of(
-                "status", "PENDING_INSTITUTION_VERIFICATION",
-                "message", "Student profile created. Awaiting institutional verification.",
-                "coinsAwarded", 100
+                "status", "COMPLETED",
+                "message", "Student profile created and activated successfully! 100 Welcome Coins awarded.",
+                "coinsAwarded", 100,
+                "balance", currentBalance
         )));
     }
 

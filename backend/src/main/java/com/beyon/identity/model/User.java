@@ -32,11 +32,11 @@ public class User {
     private UserRole role;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 30)
+    @Column(nullable = false, length = 64)
     private AccountStatus status = AccountStatus.PENDING_VERIFICATION;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 30)
+    @Column(nullable = false, length = 64)
     private AccountStatus profileStatus = AccountStatus.INCOMPLETE;
 
     @Column(nullable = false)

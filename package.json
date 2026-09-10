@@ -27,6 +27,7 @@
     "seed:recruitment": "cd scripts/seed && bun run seed.ts recruitment",
     "seed:community": "cd scripts/seed && bun run seed.ts community",
     "seed:validate": "cd scripts/seed && bun run seed.ts validate",
-    "seed:reset": "cd scripts/seed && bun run seed.ts reset"
+    "seed:reset": "cd scripts/seed && bun run seed.ts reset",
+    "dev:floci": "bun run scripts/dev-floci.ts"
   }
 }

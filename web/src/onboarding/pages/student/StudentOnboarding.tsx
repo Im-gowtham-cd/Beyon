@@ -359,9 +359,11 @@ export function StudentOnboarding() {
 
       await refreshProfileStatus().catch(() => {});
 
-      navigate('/verification-pending');
-    } catch {
-      setError("We encountered an error saving your profile. Your information is preserved; please retry.");
+      navigate('/onboarding/complete');
+    } catch (err: any) {
+      console.error('Student onboarding submission error:', err);
+      const serverMsg = err?.response?.data?.message || err?.message;
+      setError(serverMsg ? `Error saving profile: ${serverMsg}` : "We encountered an error saving your profile. Your information is preserved; please retry.");
     } finally {
       setLoading(false);
     }
