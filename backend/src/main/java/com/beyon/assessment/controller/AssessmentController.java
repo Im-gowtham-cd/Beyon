@@ -16,15 +16,18 @@ public class AssessmentController {
     private final ProctoringService proctoringService;
     private final JwtUtil jwtUtil;
     private final com.beyon.practice.service.CompanyService companyService;
+    private final com.beyon.common.aws.AwsEventBridgePublisher eventBridgePublisher;
 
     public AssessmentController(AssessmentSessionService sessionService,
                                 ProctoringService proctoringService,
                                 JwtUtil jwtUtil,
-                                com.beyon.practice.service.CompanyService companyService) {
+                                com.beyon.practice.service.CompanyService companyService,
+                                @org.springframework.beans.factory.annotation.Autowired(required = false) com.beyon.common.aws.AwsEventBridgePublisher eventBridgePublisher) {
         this.sessionService = sessionService;
         this.proctoringService = proctoringService;
         this.jwtUtil = jwtUtil;
         this.companyService = companyService;
+        this.eventBridgePublisher = eventBridgePublisher;
     }
 
     @PostMapping("/session")
@@ -138,11 +141,7 @@ public class AssessmentController {
 
     @GetMapping("/session/{sessionId}/questions")
     public ResponseEntity<?> getSessionQuestions(@PathVariable UUID sessionId) {
-        var session = sessionService.getAssessmentSession(sessionId);
-        if (session != null && session.getOpportunityId() != null) {
-            return ResponseEntity.ok(com.beyon.common.response.ApiResponse.ok(companyService.getOpportunityQuestions(session.getOpportunityId())));
-        }
-        return ResponseEntity.ok(com.beyon.common.response.ApiResponse.ok(companyService.getOpportunityQuestions(null)));
+        return ResponseEntity.ok(com.beyon.common.response.ApiResponse.ok(sessionService.getSessionQuestions(sessionId)));
     }
 
     @PostMapping("/session/{sessionId}/answer")
@@ -188,6 +187,20 @@ public class AssessmentController {
     @PostMapping("/session/{sessionId}/submit")
     public ResponseEntity<?> submitAssessment(@PathVariable UUID sessionId, @RequestBody(required = false) Map<String, Object> body) {
         var session = sessionService.submitAssessment(sessionId, body);
+
+        if (eventBridgePublisher != null) {
+            Map<String, Object> eventDetail = new LinkedHashMap<>();
+            eventDetail.put("sessionId", session.getId().toString());
+            eventDetail.put("studentId", session.getStudentId() != null ? session.getStudentId().toString() : "");
+            eventDetail.put("opportunityId", session.getOpportunityId() != null ? session.getOpportunityId().toString() : "");
+            eventDetail.put("score", session.getScore() != null ? session.getScore() : 0);
+            eventDetail.put("accuracy", session.getAccuracy() != null ? session.getAccuracy() : 0);
+            eventDetail.put("questionsAttempted", session.getQuestionsAttempted());
+            eventDetail.put("questionsCorrect", session.getQuestionsCorrect());
+            eventDetail.put("completedAt", session.getCompletedAt() != null ? session.getCompletedAt().toString() : java.time.Instant.now().toString());
+            eventBridgePublisher.publishEvent("AssessmentCompleted", "com.beyon.assessment", eventDetail);
+        }
+
         Map<String, Object> res = new LinkedHashMap<>();
         res.put("sessionId", session.getId());
         res.put("status", session.getStatus());

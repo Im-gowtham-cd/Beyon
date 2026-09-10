@@ -94,6 +94,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/v1/search/**").authenticated()
                 .requestMatchers("/api/v1/realtime/**").authenticated()
                 .requestMatchers("/api/v1/rec-feedback/**").authenticated()
+                .requestMatchers("/api/v1/telemetry/**").authenticated()
                 .requestMatchers("/api/v1/discussions/**").authenticated()
                 .requestMatchers("/api/v1/achievements/**").authenticated()
                 .requestMatchers("/api/v1/messages/**").authenticated()

@@ -5,20 +5,22 @@
   padding: 0;
   box-sizing: border-box;
   scrollbar-width: none;
-  font-family: 'ClashDisplay', 'Clash Display', sans-serif !important;
+  border-radius: 0px !important;
+}
+
+html, body {
+  font-family: 'ClashDisplay', 'Clash Display', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 html {
   scroll-behavior: smooth;
   scroll-padding-top: var(--nav-height);
   font-size: 16px;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  font-family: 'ClashDisplay', 'Clash Display', sans-serif !important;
 }
 
 body {
-  font-family: 'ClashDisplay', 'Clash Display', sans-serif !important;
   font-size: var(--fs-base, 0.95rem);
   font-weight: 500;
   color: var(--text-primary, #020617);
@@ -26,8 +28,6 @@ body {
   line-height: 1.6;
   overflow-x: hidden;
   width: 100%;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
 }
 
@@ -39,10 +39,39 @@ h1, h2, h3, h4, h5, h6 {
   letter-spacing: -0.01em;
 }
 
-p, a, button, td, th, li, label, span, input, textarea, div, select, option, optgroup {
-  font-family: 'ClashDisplay', 'Clash Display', sans-serif !important;
+p, a, button, td, th, li, label, input, textarea, select, option, optgroup {
+  font-family: 'ClashDisplay', 'Clash Display', sans-serif;
   overflow-wrap: break-word;
   overflow-wrap: anywhere;
+}
+
+/* Ensure Boxicons always retain the boxicons font */
+.bx, .bxs, .bxl,
+[class^="bx-"], [class*=" bx-"],
+[class^="bxs-"], [class*=" bxs-"],
+[class^="bxl-"], [class*=" bxl-"],
+i.bx, i.bxs, i.bxl,
+.bx::before, .bxs::before, .bxl::before,
+[class^="bx-"]::before, [class*=" bx-"]::before,
+[class^="bxs-"]::before, [class*=" bxs-"]::before,
+[class^="bxl-"]::before, [class*=" bxl-"]::before {
+  font-family: 'boxicons' !important;
+  font-style: normal !important;
+  font-weight: normal !important;
+  font-variant: normal !important;
+  text-transform: none !important;
+  line-height: 1 !important;
+  display: inline-block !important;
+  speak: none;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Ensure Lucide React SVGs never get distorted */
+svg.lucide, svg[class*="lucide-"] {
+  display: inline-block;
+  vertical-align: middle;
+  flex-shrink: 0;
 }
 
 a {

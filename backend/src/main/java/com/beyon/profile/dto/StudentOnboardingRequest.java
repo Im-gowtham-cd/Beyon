@@ -103,12 +103,19 @@ public class StudentOnboardingRequest {
         @NotBlank private String skillName;
         private String category;
         @NotNull private SkillProficiency proficiency;
+        private Boolean verified;
+        private String source;
+
         public String getSkillName() { return skillName; }
         public void setSkillName(String skillName) { this.skillName = skillName; }
         public String getCategory() { return category; }
         public void setCategory(String category) { this.category = category; }
         public SkillProficiency getProficiency() { return proficiency; }
         public void setProficiency(SkillProficiency proficiency) { this.proficiency = proficiency; }
+        public Boolean getVerified() { return verified; }
+        public void setVerified(Boolean verified) { this.verified = verified; }
+        public String getSource() { return source; }
+        public void setSource(String source) { this.source = source; }
     }
 
     public static class CertificationEntry {

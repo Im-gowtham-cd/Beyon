@@ -127,6 +127,10 @@ public class OnboardingService {
                 skill.setSkillName(s.getSkillName());
                 skill.setCategory(s.getCategory());
                 skill.setProficiency(s.getProficiency());
+                if (s.getVerified() != null && s.getVerified()) {
+                    skill.setVerified(true);
+                    skill.setSource(s.getSource() != null ? s.getSource() : "ONBOARDING_VERIFIED");
+                }
                 studentSkillRepository.save(skill);
             }
         }

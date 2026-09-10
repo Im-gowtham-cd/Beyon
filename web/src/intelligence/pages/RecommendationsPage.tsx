@@ -55,9 +55,17 @@ export function RecommendationsPage() {
     }
   };
 
-  const markDone = async (id: string) => {
-    await api.post(`/recommendations/${id}/complete`);
-    setRecommendations(recommendations.map(r => r.id === id ? { ...r, status: 'COMPLETED' } : r));
+  const markDone = async (id: string, skillName?: string, recType?: string) => {
+    try {
+      await api.post(`/recommendations/${id}/complete`);
+      api.post('/telemetry/feedback', {
+        recommendationId: id,
+        skillName: skillName || 'Skill',
+        recommendationType: recType || 'COURSE',
+        feedbackAction: 'COMPLETED'
+      }).catch(() => {});
+      setRecommendations(recommendations.map(r => r.id === id ? { ...r, status: 'COMPLETED' } : r));
+    } catch {}
   };
 
   const filtered = recommendations.filter(r => filter === 'ALL' || r.recommendationType === filter);
@@ -77,15 +85,15 @@ export function RecommendationsPage() {
     <div className={styles.container}>
       <div className={styles.header}>
         <div>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: '#eff6ff', color: '#1d4ed8', padding: '4px 12px', borderRadius: '16px', fontSize: '0.8rem', fontWeight: 700, marginBottom: '8px' }}>
-            <Sparkles size={14} /> AI Profile Intelligence Engine
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: '#eff6ff', color: '#1d4ed8', padding: '4px 12px', borderRadius: '0px', fontSize: '0.8rem', fontWeight: 700, marginBottom: '8px' }}>
+            <Sparkles size={14} /> AI Profile Intelligence Engine • Anti-Popular Filter Active
           </div>
           <h1 className={styles.title}>Personalized Learning &amp; Skill Recommendations</h1>
           <p className={styles.subtitle}>
-            Dynamic recommendations curated from your enrolled skills, target job roles, and platform placement benchmarks.
+            Calculated strictly from your verified skill gaps, career requirements, and industry benchmarks. Zero generic course spam.
           </p>
         </div>
-        <button className={styles.createBtn} onClick={generate} disabled={generating} style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+        <button className={styles.createBtn} onClick={generate} disabled={generating} style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', borderRadius: '0px' }}>
           <RefreshCw size={15} className={generating ? styles.spin : ''} />
           {generating ? 'Analyzing Profile...' : 'Refresh Suggestions'}
         </button>
@@ -145,7 +153,7 @@ export function RecommendationsPage() {
                     <span className={styles.recType} style={{ color: conf.color, display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
                       <Icon size={14} /> {conf.label}
                     </span>
-                    <span className={styles.recScore} style={{ background: '#f8fafc', padding: '2px 8px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+                    <span className={styles.recScore} style={{ background: '#f8fafc', padding: '2px 8px', borderRadius: '0px', border: '1px solid #e2e8f0' }}>
                       {Math.round(Number(rec.score))}% Alignment
                     </span>
                   </div>
@@ -155,6 +163,14 @@ export function RecommendationsPage() {
                   <div style={{ marginTop: '12px', display: 'flex', gap: '8px', alignItems: 'center' }}>
                     <Link
                       to={conf.link}
+                      onClick={() => {
+                        api.post('/telemetry/feedback', {
+                          recommendationId: rec.id,
+                          skillName: rec.skillName,
+                          recommendationType: rec.recommendationType,
+                          feedbackAction: 'CLICKED'
+                        }).catch(() => {});
+                      }}
                       style={{
                         display: 'inline-flex',
                         alignItems: 'center',
@@ -162,7 +178,7 @@ export function RecommendationsPage() {
                         padding: '6px 14px',
                         background: '#1c2d81',
                         color: '#ffffff',
-                        borderRadius: '6px',
+                        borderRadius: '0px',
                         fontSize: '0.825rem',
                         fontWeight: 600,
                         textDecoration: 'none',
@@ -174,8 +190,16 @@ export function RecommendationsPage() {
                     {!isDone && (
                       <button
                         className={styles.recAction}
-                        onClick={() => markDone(rec.id)}
-                        style={{ background: 'transparent', border: '1px solid #cbd5e1', color: '#64748b' }}
+                        onClick={() => {
+                          api.post('/telemetry/feedback', {
+                            recommendationId: rec.id,
+                            skillName: rec.skillName,
+                            recommendationType: rec.recommendationType,
+                            feedbackAction: 'DISMISSED'
+                          }).catch(() => {});
+                          markDone(rec.id, rec.skillName, rec.recommendationType);
+                        }}
+                        style={{ background: 'transparent', border: '1px solid #cbd5e1', color: '#64748b', borderRadius: '0px' }}
                       >
                         Dismiss
                       </button>

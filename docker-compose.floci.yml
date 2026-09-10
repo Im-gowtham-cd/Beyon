@@ -1,0 +1,83 @@
+version: '3.8'
+
+services:
+  # ─── Floci AWS Emulator ───
+  floci:
+    image: floci/floci:latest
+    container_name: beyon-floci
+    ports:
+      - "4566:4566"
+    environment:
+      - SERVICES=s3,sqs,sns,events,cognito-idp
+      - AWS_DEFAULT_REGION=us-east-1
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./floci-data:/app/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:4566/_floci/health || exit 0"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ─── Floci Initializer ───
+  floci-init:
+    image: amazon/aws-cli:latest
+    container_name: beyon-floci-init
+    depends_on:
+      floci:
+        condition: service_started
+    environment:
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      - AWS_DEFAULT_REGION=us-east-1
+      - AWS_ENDPOINT_URL=http://floci:4566
+    entrypoint: /bin/sh -c
+    command: >
+      "
+      echo 'Waiting for Floci to be ready...';
+      sleep 3;
+      echo 'Creating S3 Buckets...';
+      aws --endpoint-url=http://floci:4566 s3 mb s3://beyon-documents || true;
+      aws --endpoint-url=http://floci:4566 s3 mb s3://beyon-resumes || true;
+      aws --endpoint-url=http://floci:4566 s3 mb s3://beyon-certificates || true;
+      aws --endpoint-url=http://floci:4566 s3 mb s3://beyon-evidence || true;
+      echo 'Creating SQS Queues...';
+      aws --endpoint-url=http://floci:4566 sqs create-queue --queue-name beyon-recommendation-queue || true;
+      aws --endpoint-url=http://floci:4566 sqs create-queue --queue-name beyon-assessment-events || true;
+      echo 'Creating SNS Topics...';
+      aws --endpoint-url=http://floci:4566 sns create-topic --name beyon-notifications || true;
+      echo 'Creating EventBridge Bus...';
+      aws --endpoint-url=http://floci:4566 events create-event-bus --name beyon.events || true;
+      echo 'Floci initialization complete!';
+      "
+
+  # ─── Dolt Relational Source of Truth ───
+  dolt:
+    image: dolthub/dolt-sql-server:latest
+    container_name: beyon-dolt
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./.dolt:/var/lib/dolt/.dolt
+    environment:
+      - DOLT_HOST=0.0.0.0
+      - DOLT_PORT=3306
+
+  # ─── MongoDB Event / Telemetry Store ───
+  mongodb:
+    image: mongo:7.0
+    container_name: beyon-mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+
+  # ─── Redis Cache Layer (ElastiCache Compatible) ───
+  redis:
+    image: redis:7.2-alpine
+    container_name: beyon-redis
+    ports:
+      - "6379:6379"
+
+volumes:
+  mongo-data:

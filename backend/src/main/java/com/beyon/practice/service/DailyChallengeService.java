@@ -27,6 +27,8 @@ public class DailyChallengeService {
     private final org.springframework.jdbc.core.JdbcTemplate jdbcTemplate;
 
     private final QuestionOptionRepository optionRepository;
+    private final com.beyon.modules.telemetry.service.TelemetryService telemetryService;
+    private final com.beyon.intelligence.client.AiIntelligenceClient aiClient;
 
     public DailyChallengeService(DailyChallengeRepository challengeRepository,
                                   QuestionRepository questionRepository,
@@ -36,7 +38,9 @@ public class DailyChallengeService {
                                   SkillXpService skillXpService,
                                   AchievementBadgeService badgeService,
                                   PracticeService practiceService,
-                                  org.springframework.jdbc.core.JdbcTemplate jdbcTemplate) {
+                                  org.springframework.jdbc.core.JdbcTemplate jdbcTemplate,
+                                  @org.springframework.beans.factory.annotation.Autowired(required = false) com.beyon.modules.telemetry.service.TelemetryService telemetryService,
+                                  @org.springframework.beans.factory.annotation.Autowired(required = false) com.beyon.intelligence.client.AiIntelligenceClient aiClient) {
         this.challengeRepository = challengeRepository;
         this.questionRepository = questionRepository;
         this.optionRepository = optionRepository;
@@ -46,6 +50,8 @@ public class DailyChallengeService {
         this.badgeService = badgeService;
         this.practiceService = practiceService;
         this.jdbcTemplate = jdbcTemplate;
+        this.telemetryService = telemetryService;
+        this.aiClient = aiClient;
     }
 
     public List<Map<String, Object>> getRecommendedDailySet(UUID studentId, int count) {
@@ -272,6 +278,26 @@ public class DailyChallengeService {
                 if (q.getSkillId() != null) {
                     skillXpService.earnXp(studentId, q.getSkillId(), xpEarned, "DAILY_SPRINT", questionId, "Daily sprint question: " + q.getTitle());
                 }
+            });
+        }
+
+        // Record telemetry to MongoDB & EventBridge
+        if (telemetryService != null) {
+            Map<String, Object> meta = new HashMap<>();
+            meta.put("questionId", questionId.toString());
+            meta.put("selectedOptionId", selectedOptionId != null ? selectedOptionId.toString() : null);
+            meta.put("correct", correct);
+            telemetryService.logActivity(studentId.toString(), "PRACTICE_SPRINT_ANSWER", questionId.toString(), timeSpent != null ? timeSpent : 30, meta);
+        }
+
+        // Trigger adaptive learning update in AI Intelligence engine
+        if (aiClient != null) {
+            final boolean isAnsCorrect = correct;
+            questionRepository.findById(questionId).ifPresent(q -> {
+                try {
+                    String sName = q.getTitle() != null ? q.getTitle() : "Skill Sprint";
+                    aiClient.processAttempt(studentId.toString(), sName, "Sprint", isAnsCorrect, timeSpent != null ? timeSpent : 30, isAnsCorrect ? 80.0 : 40.0, 0.85);
+                } catch (Exception ignored) {}
             });
         }
 

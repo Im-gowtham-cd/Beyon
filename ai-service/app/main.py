@@ -5,11 +5,12 @@ from datetime import datetime
 from app.routers.laptop_analysis import router as laptop_router
 from app.routers.mobile_analysis import router as mobile_router
 from app.routers.audio_analysis import router as audio_router
+from app.routers.recommendations import router as recommendations_router
 
 app = FastAPI(
-    title="Beyon DualView AI Proctoring Service",
-    description="Multi-camera visual and acoustic intelligence analysis",
-    version="1.0.0",
+    title="Beyon Skill Intelligence & DualView AI Service",
+    description="Skill profiling, closed-loop recommendations, and multi-camera proctoring",
+    version="2.0.0",
 )
 
 app.add_middleware(
@@ -23,6 +24,7 @@ app.add_middleware(
 app.include_router(laptop_router)
 app.include_router(mobile_router)
 app.include_router(audio_router)
+app.include_router(recommendations_router)
 
 @app.get("/health")
 async def health():
