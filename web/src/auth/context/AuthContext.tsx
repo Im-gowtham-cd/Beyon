@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 import type { AuthState, UserInfo, AccountStatus } from '../types/auth';
+import { getRoleTier, getRoleDashboardPath } from '../types/auth';
 import { authApi } from '../services/authApi';
 
 interface AuthContextValue extends AuthState {
@@ -78,15 +79,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const getDashboardRoute = (): string => {
-    const role = state.user?.role;
-    if (!role) return '/';
-    return `/${role.toLowerCase()}/home`;
+    if (!state.user) return '/';
+    return getRoleDashboardPath(state.user.role, state.user.tier);
   };
 
   const getOnboardingRoute = (): string => {
-    const role = state.user?.role;
-    if (!role) return '/login';
-    return `/onboarding/${role.toLowerCase()}`;
+    if (!state.user) return '/login';
+    const tier = getRoleTier(state.user.role);
+    if (tier === 'SUPER_ADMIN') return '/admin/home';
+    return `/onboarding/${tier.toLowerCase()}`;
   };
 
   return (

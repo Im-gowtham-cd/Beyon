@@ -1,5 +1,6 @@
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { getRoleTier } from '../types/auth';
 
 export function ProtectedRoute() {
   const { authenticated, loading, user, profileStatus } = useAuth();
@@ -39,11 +40,12 @@ export function ProtectedRoute() {
   }
 
   if (profileStatus === 'INCOMPLETE') {
-    const role = user?.role?.toLowerCase();
-    if (role) {
-      return <Navigate to={`/onboarding/${role}`} replace />;
+    const tier = getRoleTier(user?.role);
+    if (tier === 'SUPER_ADMIN') {
+      return <Outlet />;
     }
-    return <Navigate to="/login" replace />;
+    const onboardingTier = tier.toLowerCase();
+    return <Navigate to={`/onboarding/${onboardingTier}`} replace />;
   }
 
   if (

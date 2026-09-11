@@ -169,9 +169,13 @@ public class AdminDashboardService {
             eco.put("topWallets", topWallets);
             eco.put("recentTransactions", recentTx);
         } catch (Exception e) {
-            eco.put("totalWallets", 123);
-            eco.put("totalCirculating", 96375);
-            eco.put("totalTransactions", 1887);
+            eco.put("totalWallets", 0L);
+            eco.put("totalCirculating", 0L);
+            eco.put("totalEarned", 0L);
+            eco.put("totalSpent", 0L);
+            eco.put("totalTransactions", 0L);
+            eco.put("topWallets", List.of());
+            eco.put("recentTransactions", List.of());
         }
         return eco;
     }

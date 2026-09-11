@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { authApi } from '../services/authApi';
+import { getRoleTier, getRoleDashboardPath } from '../types/auth';
 import type { ApiError } from '../../services/api/client';
 import styles from './LoginPage.module.css';
 
@@ -65,8 +66,13 @@ export function LoginPage() {
       }
 
       if (profileStatus === 'INCOMPLETE') {
-        const role = response.user.role.toLowerCase();
-        navigate(`/onboarding/${role}`);
+        const tier = getRoleTier(response.user.role);
+        if (tier === 'SUPER_ADMIN') {
+          navigate('/admin/home');
+          return;
+        }
+        const onboardingTier = tier.toLowerCase();
+        navigate(`/onboarding/${onboardingTier}`);
         return;
       }
 
@@ -83,13 +89,8 @@ export function LoginPage() {
 
       showToast('Login successful! Redirecting...');
       setTimeout(() => {
-        const roleRoutes: Record<string, string> = {
-          STUDENT: '/student/home',
-          INSTITUTION: '/institution/home',
-          COMPANY: '/company/home',
-          ADMIN: '/admin/home',
-        };
-        navigate(roleRoutes[response.user.role] || '/student/home');
+        const destination = getRoleDashboardPath(response.user.role, response.user.tier);
+        navigate(destination);
       }, 1000);
     } catch (err) {
       const apiErr = err as ApiError;

@@ -1,6 +1,6 @@
 import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import type { UserRole } from '../types/auth';
+import { getRoleTier, type UserRole } from '../types/auth';
 
 interface Props {
   allowedRoles: UserRole[];
@@ -55,11 +55,12 @@ export function RoleGuard({ allowedRoles, requireProfile = false }: Props) {
   }
 
   if (requireProfile && !profileCompleted) {
-    const tier = user.tier?.toLowerCase() ||
-      (user.role.startsWith('INSTITUTION') ? 'institution' :
-       user.role.startsWith('COMPANY') ? 'company' :
-       user.role === 'SUPER_ADMIN' || user.role === 'ADMIN' ? 'admin' : 'student');
-    return <Navigate to={`/onboarding/${tier}`} replace />;
+    const tier = getRoleTier(user.role);
+    if (tier === 'SUPER_ADMIN') {
+      return <Outlet />;
+    }
+    const onboardingTier = tier.toLowerCase();
+    return <Navigate to={`/onboarding/${onboardingTier}`} replace />;
   }
 
   return <Outlet />;

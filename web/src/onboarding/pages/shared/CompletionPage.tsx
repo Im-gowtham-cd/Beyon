@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../../auth/context/AuthContext';
+import { getRoleTier } from '../../../auth/types/auth';
 import { OnboardingLayout } from '../../components/OnboardingLayout';
 import styles from './CompletionPage.module.css';
 
@@ -23,12 +24,18 @@ const ROLE_MESSAGES: Record<string, { title: string; subtitle: string; cta: stri
     cta: 'View Company Dashboard',
     path: '/company/home',
   },
+  SUPER_ADMIN: {
+    title: 'Platform Administrator Initialized',
+    subtitle: 'Your administrative portal is ready for system governance and verification oversight.',
+    cta: 'Go to Admin Portal',
+    path: '/admin/home',
+  },
 };
 
 export function CompletionPage() {
   const { user } = useAuth();
-  const role = user?.role || 'STUDENT';
-  const msg = ROLE_MESSAGES[role] || ROLE_MESSAGES.STUDENT;
+  const tier = getRoleTier(user?.role);
+  const msg = ROLE_MESSAGES[tier] || ROLE_MESSAGES.STUDENT;
 
   useEffect(() => {
     window.scrollTo(0, 0);
