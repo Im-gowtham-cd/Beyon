@@ -29,6 +29,7 @@ import {
   FileText,
 } from 'lucide-react';
 import styles from './AdminHome.module.css';
+import { JsonQuestionExtractorModal } from './JsonQuestionExtractorModal';
 
 interface SkillCategory {
   id: string;
@@ -135,6 +136,15 @@ export function AdminSkillTaxonomyPage() {
   } | null>(null);
 
   const [toastMsg, setToastMsg] = useState<string | null>(null);
+
+  // AI JSON Question Extractor Modal State
+  const [showExtractorModal, setShowExtractorModal] = useState(false);
+  const [extractorSkill, setExtractorSkill] = useState<SkillItem | null>(null);
+
+  const openJsonExtractorModal = (skill?: SkillItem) => {
+    setExtractorSkill(skill || null);
+    setShowExtractorModal(true);
+  };
 
   const fetchTaxonomyData = async () => {
     setLoading(true);
@@ -1030,7 +1040,7 @@ export function AdminSkillTaxonomyPage() {
       description: form.description,
     });
     setCreateChapters(generated);
-    showToast(`⚡ Generated 3-tier course blueprint calibrated for ${form.name || 'skill'} (${categoryName || 'Technical Domain'}, ${form.demand} Demand, ${form.salary}).`);
+    showToast(`Generated 3-tier course blueprint calibrated for ${form.name || 'skill'} (${categoryName || 'Technical Domain'}, ${form.demand} Demand, ${form.salary}).`);
   };
 
   const addCreateChapter = () => {
@@ -1422,11 +1432,34 @@ export function AdminSkillTaxonomyPage() {
               textDecoration: 'none',
               cursor: 'pointer',
               borderRadius: '3px',
+              whiteSpace: 'nowrap',
             }}
           >
             <HelpCircle size={15} />
             <span>Question Bank</span>
           </Link>
+
+          <button
+            type="button"
+            onClick={() => openJsonExtractorModal()}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              background: '#fef3c7',
+              border: '1px solid #fde68a',
+              color: '#92400e',
+              padding: '8px 16px',
+              fontSize: '0.84rem',
+              fontWeight: 800,
+              cursor: 'pointer',
+              borderRadius: '3px',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            <Sparkles size={15} color="#b45309" />
+            <span>AI JSON Extractor</span>
+          </button>
         </div>
       </div>
 
@@ -1868,7 +1901,7 @@ export function AdminSkillTaxonomyPage() {
                       </button>
 
                       <Link
-                        to={`/admin/questions?skillId=${skill.id}&search=${encodeURIComponent(skill.name)}`}
+                        to={`/admin/questions?skillId=${skill.id}`}
                         title="View Question Bank"
                         style={{
                           height: '32px',
@@ -2080,15 +2113,15 @@ export function AdminSkillTaxonomyPage() {
       ) : (
         /* Full Registry Table View */
         <div className={styles.tableCard}>
-          <table className={styles.adminTable}>
+          <table className={styles.adminTable} style={{ minWidth: '1100px' }}>
             <thead>
               <tr>
-                <th style={{ width: '30%' }}>Competency / Skill</th>
-                <th style={{ width: '18%' }}>Domain Category</th>
-                <th style={{ width: '12%', textAlign: 'center' }}>Hierarchy Level</th>
-                <th style={{ width: '12%', textAlign: 'center' }}>Industry Demand</th>
-                <th style={{ width: '8%', textAlign: 'center' }}>Chapters</th>
-                <th style={{ width: '22%', textAlign: 'center' }}>Actions &amp; Options</th>
+                <th style={{ width: '25%', minWidth: '220px' }}>Competency / Skill</th>
+                <th style={{ width: '16%', minWidth: '140px' }}>Domain Category</th>
+                <th style={{ width: '10%', minWidth: '90px', textAlign: 'center' }}>Hierarchy Level</th>
+                <th style={{ width: '11%', minWidth: '100px', textAlign: 'center' }}>Industry Demand</th>
+                <th style={{ width: '8%', minWidth: '75px', textAlign: 'center' }}>Chapters</th>
+                <th style={{ width: '30%', minWidth: '420px', textAlign: 'center', whiteSpace: 'nowrap' }}>Actions &amp; Options</th>
               </tr>
             </thead>
             <tbody>
@@ -2162,8 +2195,84 @@ export function AdminSkillTaxonomyPage() {
                       <td style={{ textAlign: 'center', fontWeight: 700, color: '#1c2d81' }}>
                         {skill.topicCount || 0}
                       </td>
-                      <td style={{ textAlign: 'center' }}>
-                        <div style={{ display: 'inline-flex', gap: '6px', alignItems: 'center', justifyContent: 'center' }}>
+                      <td style={{ textAlign: 'center', whiteSpace: 'nowrap', minWidth: '420px' }}>
+                        <div style={{ display: 'inline-flex', gap: '6px', alignItems: 'center', justifyContent: 'center', flexWrap: 'nowrap', whiteSpace: 'nowrap' }}>
+                          <button
+                            type="button"
+                            onClick={() => openCurriculumModal(skill)}
+                            title="Manage Course Chapters & Lessons"
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '5px',
+                              background: '#eff6ff',
+                              border: '1px solid #bfdbfe',
+                              color: '#1d4ed8',
+                              padding: '5px 9px',
+                              fontSize: '0.74rem',
+                              fontWeight: 700,
+                              cursor: 'pointer',
+                              height: '28px',
+                              borderRadius: '3px',
+                              whiteSpace: 'nowrap',
+                              flexShrink: 0,
+                            }}
+                          >
+                            <BookOpen size={13} />
+                            <span>Curriculum</span>
+                          </button>
+
+                          <Link
+                            to={`/admin/questions?skillId=${skill.id}`}
+                            title="View Question Bank"
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '5px',
+                              background: '#1c2d81',
+                              border: '1px solid #1c2d81',
+                              color: '#fed601',
+                              padding: '5px 9px',
+                              fontSize: '0.74rem',
+                              fontWeight: 800,
+                              textDecoration: 'none',
+                              cursor: 'pointer',
+                              height: '28px',
+                              boxSizing: 'border-box',
+                              borderRadius: '3px',
+                              whiteSpace: 'nowrap',
+                              flexShrink: 0,
+                            }}
+                          >
+                            <HelpCircle size={13} />
+                            <span>Questions</span>
+                          </Link>
+
+                          <button
+                            type="button"
+                            onClick={() => openJsonExtractorModal(skill)}
+                            title="AI JSON Question Extractor & Importer"
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              background: '#fef3c7',
+                              border: '1px solid #fde68a',
+                              color: '#92400e',
+                              padding: '5px 9px',
+                              fontSize: '0.74rem',
+                              fontWeight: 800,
+                              cursor: 'pointer',
+                              height: '28px',
+                              borderRadius: '3px',
+                              whiteSpace: 'nowrap',
+                              flexShrink: 0,
+                            }}
+                          >
+                            <Sparkles size={12} color="#b45309" />
+                            <span>AI JSON</span>
+                          </button>
+
                           <button
                             type="button"
                             onClick={() => setInspectNode({ type: 'SKILL', item: skill, domainName: catName })}
@@ -2175,12 +2284,14 @@ export function AdminSkillTaxonomyPage() {
                               background: '#ffffff',
                               border: '1px solid #cbd5e1',
                               color: '#1c2d81',
-                              padding: '4px 8px',
-                              fontSize: '0.75rem',
+                              padding: '5px 9px',
+                              fontSize: '0.74rem',
                               fontWeight: 700,
                               cursor: 'pointer',
                               height: '28px',
-                              borderRadius: '2px',
+                              borderRadius: '3px',
+                              whiteSpace: 'nowrap',
+                              flexShrink: 0,
                             }}
                           >
                             <Eye size={13} />
@@ -2189,31 +2300,8 @@ export function AdminSkillTaxonomyPage() {
 
                           <button
                             type="button"
-                            onClick={() => openCurriculumModal(skill)}
-                            title="Manage Course Chapters & Lessons"
-                            style={{
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: '4px',
-                              background: '#eff6ff',
-                              border: '1px solid #bfdbfe',
-                              color: '#1d4ed8',
-                              padding: '4px 8px',
-                              fontSize: '0.75rem',
-                              fontWeight: 700,
-                              cursor: 'pointer',
-                              height: '28px',
-                              borderRadius: '2px',
-                            }}
-                          >
-                            <BookOpen size={13} />
-                            <span>Curriculum</span>
-                          </button>
-
-                          <button
-                            type="button"
                             onClick={() => openEditModal(skill)}
-                            title="Edit Skill"
+                            title="Edit Skill Details"
                             style={{
                               display: 'inline-flex',
                               alignItems: 'center',
@@ -2221,41 +2309,19 @@ export function AdminSkillTaxonomyPage() {
                               background: '#ffffff',
                               border: '1px solid #cbd5e1',
                               color: '#475569',
-                              padding: '4px 8px',
-                              fontSize: '0.75rem',
+                              padding: '5px 9px',
+                              fontSize: '0.74rem',
                               fontWeight: 700,
                               cursor: 'pointer',
                               height: '28px',
-                              borderRadius: '2px',
+                              borderRadius: '3px',
+                              whiteSpace: 'nowrap',
+                              flexShrink: 0,
                             }}
                           >
                             <Edit2 size={13} />
                             <span>Edit</span>
                           </button>
-
-                          <Link
-                            to={`/admin/questions?skillId=${skill.id}&search=${encodeURIComponent(skill.name)}`}
-                            title="View in Question Bank"
-                            style={{
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: '4px',
-                              background: '#1c2d81',
-                              border: '1px solid #1c2d81',
-                              color: '#fed601',
-                              padding: '4px 10px',
-                              fontSize: '0.75rem',
-                              fontWeight: 800,
-                              textDecoration: 'none',
-                              cursor: 'pointer',
-                              height: '28px',
-                              boxSizing: 'border-box',
-                              borderRadius: '2px',
-                            }}
-                          >
-                            <HelpCircle size={13} />
-                            <span>Questions</span>
-                          </Link>
 
                           <button
                             type="button"
@@ -2272,7 +2338,9 @@ export function AdminSkillTaxonomyPage() {
                               height: '28px',
                               padding: 0,
                               cursor: 'pointer',
-                              borderRadius: '2px',
+                              borderRadius: '3px',
+                              whiteSpace: 'nowrap',
+                              flexShrink: 0,
                             }}
                           >
                             <Trash2 size={13} />
@@ -2663,7 +2731,7 @@ export function AdminSkillTaxonomyPage() {
                     >
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '6px' }}>
                         <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#1c2d81', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                          🎯 Blueprint Synthesizer Configuration
+                          Blueprint Synthesizer Configuration
                         </span>
                         <span style={{ fontSize: '0.7rem', color: '#64748b' }}>
                           Calibrated from Competency Scope &amp; Domestic INR Benchmark
@@ -2736,7 +2804,7 @@ export function AdminSkillTaxonomyPage() {
                           }}
                         >
                           <Sparkles size={14} color="#ca8a04" />
-                          <span>⚡ Auto-Generate Blueprint</span>
+                          <span>Auto-Generate Blueprint</span>
                         </button>
 
                         <button
@@ -2797,7 +2865,7 @@ export function AdminSkillTaxonomyPage() {
                           }}
                         >
                           <Wand2 size={15} />
-                          <span>⚡ Auto-Generate Standard Course Blueprint</span>
+                          <span>Auto-Generate Standard Course Blueprint</span>
                         </button>
                       </div>
                     ) : (
@@ -4467,6 +4535,24 @@ export function AdminSkillTaxonomyPage() {
           </div>
         </div>
       )}
+
+      {/* AI JSON QUESTION EXTRACTOR & BULK IMPORTER MODAL */}
+      <JsonQuestionExtractorModal
+        isOpen={showExtractorModal}
+        onClose={() => setShowExtractorModal(false)}
+        initialSkillId={extractorSkill?.id}
+        initialSkillName={extractorSkill?.name}
+        allSkills={skills.map((s) => ({
+          id: s.id,
+          name: s.name,
+          slug: s.slug,
+          category: s.category,
+        }))}
+        onImportSuccess={(count, skillName) => {
+          showToast(`Successfully extracted and imported ${count} questions into ${skillName}!`);
+          fetchTaxonomyData();
+        }}
+      />
     </div>
   );
 }

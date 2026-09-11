@@ -6,6 +6,7 @@ import {
   ChevronDown
 } from 'lucide-react';
 import styles from './AdminHome.module.css';
+import { JsonQuestionExtractorModal } from './JsonQuestionExtractorModal';
 
 interface QuestionItem {
   id: string;
@@ -59,6 +60,7 @@ export function AdminQuestionsPage() {
   const [questionToDelete, setQuestionToDelete] = useState<QuestionItem | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [recommendLevelMenuOpen, setRecommendLevelMenuOpen] = useState(false);
+  const [showExtractorModal, setShowExtractorModal] = useState(false);
 
   // Fetch taxonomy skills for dropdown and mapping labels
   useEffect(() => {
@@ -129,18 +131,28 @@ export function AdminQuestionsPage() {
   // Sync state when URL search params change
   useEffect(() => {
     const pSkillId = searchParams.get('skillId') || 'ALL';
-    const pSearch = searchParams.get('search') || '';
+    let pSearch = searchParams.get('search') || '';
+    if (pSkillId !== 'ALL') {
+      const targetSkill = skillsMap.get(pSkillId) || skills.find((s) => s.id === pSkillId);
+      if (targetSkill && pSearch.trim().toLowerCase() === targetSkill.name.toLowerCase()) {
+        pSearch = '';
+        const nextParams = new URLSearchParams(searchParams);
+        nextParams.delete('search');
+        setSearchParams(nextParams, { replace: true });
+      }
+    }
     setSelectedSkillId(pSkillId);
     setSearch(pSearch);
     fetchQuestions(pSkillId, pSearch);
-  }, [searchParams, fetchQuestions]);
+  }, [searchParams, fetchQuestions, skillsMap, skills]);
 
   const handleSelectSkill = (newSkillId: string) => {
     setSelectedSkillId(newSkillId);
+    setSearch('');
     const nextParams = new URLSearchParams();
     if (newSkillId && newSkillId !== 'ALL') nextParams.set('skillId', newSkillId);
-    if (search.trim()) nextParams.set('search', search.trim());
     setSearchParams(nextParams);
+    fetchQuestions(newSkillId, '');
   };
 
   const handleClearSkillFilter = () => {
@@ -148,6 +160,7 @@ export function AdminQuestionsPage() {
     const nextParams = new URLSearchParams();
     if (search.trim()) nextParams.set('search', search.trim());
     setSearchParams(nextParams);
+    fetchQuestions('ALL', search.trim());
   };
 
   const openQuestionAudit = async (q: QuestionItem) => {
@@ -209,7 +222,7 @@ export function AdminQuestionsPage() {
       if (count === 0) {
         handleAction(`All authentic ${targetLevel === 'ALL' ? 'Level 1-3' : targetLevel} questions for ${skillName} are already in your bank!`);
       } else {
-        handleAction(`⚡ Successfully recommended & seeded ${count} authentic ${targetLevel === 'ALL' ? 'Level-by-Level' : targetLevel} questions for ${skillName}!`);
+        handleAction(`Successfully recommended & seeded ${count} authentic ${targetLevel === 'ALL' ? 'Level-by-Level' : targetLevel} questions for ${skillName}!`);
       }
       await fetchQuestions(skId, search);
     } catch (err: any) {
@@ -245,18 +258,24 @@ export function AdminQuestionsPage() {
     }
   };
 
-  const filtered = questions.filter((q) => {
-    const title = (q.title || q.description || '').toLowerCase();
-    const s = search.toLowerCase();
-    const matchesSearch = !search || title.includes(s);
-    const matchesDiff = difficulty === 'ALL' || q.difficulty === difficulty;
-    const matchesSkill = selectedSkillId === 'ALL' || q.skillId === selectedSkillId;
-    return matchesSearch && matchesDiff && matchesSkill;
-  });
+  const scopedQuestions = useMemo(() => {
+    const s = search.toLowerCase().trim();
+    return questions.filter((q) => {
+      const matchesSkill = selectedSkillId === 'ALL' || q.skillId === selectedSkillId;
+      const text = `${q.title || ''} ${q.description || ''} ${q.codeTemplate || ''} ${q.tags || ''}`.toLowerCase();
+      const matchesSearch = !s || text.includes(s);
+      return matchesSkill && matchesSearch;
+    });
+  }, [questions, selectedSkillId, search]);
 
-  const level1Count = questions.filter((q) => (selectedSkillId === 'ALL' || q.skillId === selectedSkillId) && q.difficulty === 'EASY').length;
-  const level2Count = questions.filter((q) => (selectedSkillId === 'ALL' || q.skillId === selectedSkillId) && q.difficulty === 'MEDIUM').length;
-  const level3Count = questions.filter((q) => (selectedSkillId === 'ALL' || q.skillId === selectedSkillId) && q.difficulty === 'HARD').length;
+  const filtered = useMemo(() => {
+    return scopedQuestions.filter((q) => difficulty === 'ALL' || q.difficulty === difficulty);
+  }, [scopedQuestions, difficulty]);
+
+  const allCount = scopedQuestions.length;
+  const level1Count = scopedQuestions.filter((q) => q.difficulty === 'EASY').length;
+  const level2Count = scopedQuestions.filter((q) => q.difficulty === 'MEDIUM').length;
+  const level3Count = scopedQuestions.filter((q) => q.difficulty === 'HARD').length;
 
   const getOptionLetter = (idx: number) => String.fromCharCode(65 + idx);
 
@@ -265,7 +284,7 @@ export function AdminQuestionsPage() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px', marginBottom: '20px' }}>
         <div>
           <h1 style={{ fontSize: '1.6rem', fontWeight: 800, color: '#1c2d81', margin: '0 0 4px', letterSpacing: '-0.02em' }}>
-            Technical Question Bank &amp; Taxonomy ({questions.length} Questions)
+            Technical Question Bank &amp; Taxonomy ({allCount} Questions)
           </h1>
           <p style={{ fontSize: '0.86rem', color: '#64748b', margin: 0 }}>
             Curate verified Single Choice MCQs, Multi-Select questions, coding challenges, and syllabus-aligned benchmarks.
@@ -291,7 +310,7 @@ export function AdminQuestionsPage() {
                 }}
               >
                 <Sparkles size={15} className={recommending ? 'spin' : ''} />
-                <span>{recommending ? 'Generating...' : `⚡ Recommend ${activeSkillMeta.name} Questions`}</span>
+                <span>{recommending ? 'Generating...' : `Recommend ${activeSkillMeta.name} Questions`}</span>
                 <ChevronDown size={14} />
               </button>
 
@@ -328,7 +347,7 @@ export function AdminQuestionsPage() {
                     onMouseLeave={(e) => (e.currentTarget.style.background = 'none')}
                   >
                     <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981' }} />
-                    <span>🟢 Level 1: Beginner (Syntax &amp; Types)</span>
+                    <span>Level 1: Beginner (Syntax &amp; Fundamentals)</span>
                   </button>
                   <button
                     onClick={() => handleRecommendSkillQuestions(activeSkillMeta.id, 'MEDIUM')}
@@ -337,7 +356,7 @@ export function AdminQuestionsPage() {
                     onMouseLeave={(e) => (e.currentTarget.style.background = 'none')}
                   >
                     <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#f59e0b' }} />
-                    <span>🟡 Level 2: Intermediate (Memory &amp; Pointers)</span>
+                    <span>Level 2: Intermediate (Core Concepts &amp; Usage)</span>
                   </button>
                   <button
                     onClick={() => handleRecommendSkillQuestions(activeSkillMeta.id, 'HARD')}
@@ -346,7 +365,7 @@ export function AdminQuestionsPage() {
                     onMouseLeave={(e) => (e.currentTarget.style.background = 'none')}
                   >
                     <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#ef4444' }} />
-                    <span>🔴 Level 3: Advanced (Internals &amp; UB)</span>
+                    <span>Level 3: Advanced (Architecture &amp; Internals)</span>
                   </button>
                 </div>
               )}
@@ -385,11 +404,33 @@ export function AdminQuestionsPage() {
               fontWeight: 800,
               textDecoration: 'none',
               cursor: 'pointer',
+              whiteSpace: 'nowrap',
             }}
           >
             <Plus size={15} />
             <span>Post / Create Question</span>
           </Link>
+
+          <button
+            type="button"
+            onClick={() => setShowExtractorModal(true)}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              background: '#fef3c7',
+              border: '1px solid #fde68a',
+              color: '#92400e',
+              padding: '8px 16px',
+              fontSize: '0.84rem',
+              fontWeight: 800,
+              cursor: 'pointer',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            <Sparkles size={15} color="#b45309" />
+            <span>AI JSON Extractor</span>
+          </button>
         </div>
       </div>
 
@@ -443,19 +484,22 @@ export function AdminQuestionsPage() {
                 )}
               </div>
               <h2 style={{ margin: '2px 0 0', fontSize: '1.2rem', fontWeight: 800, color: '#ffffff', letterSpacing: '-0.01em' }}>
-                {activeSkillMeta.name} — Technical Curriculum ({filtered.length} Questions Active)
+                {activeSkillMeta.name} — Technical Curriculum ({allCount} Questions Active)
               </h2>
 
               {/* Level-by-Level Distribution Badges */}
               <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginTop: '8px', flexWrap: 'wrap' }}>
-                <span style={{ fontSize: '0.72rem', padding: '2px 8px', background: 'rgba(16, 185, 129, 0.25)', border: '1px solid rgba(16, 185, 129, 0.6)', color: '#a7f3d0', borderRadius: '3px', fontWeight: 700 }}>
-                  🟢 Level 1 (Beginner): {level1Count} Qs
+                <span style={{ fontSize: '0.72rem', padding: '3px 8px', background: 'rgba(16, 185, 129, 0.25)', border: '1px solid rgba(16, 185, 129, 0.6)', color: '#a7f3d0', borderRadius: '3px', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                  <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981' }} />
+                  Level 1 (Beginner): {level1Count} Qs
                 </span>
-                <span style={{ fontSize: '0.72rem', padding: '2px 8px', background: 'rgba(245, 158, 11, 0.25)', border: '1px solid rgba(245, 158, 11, 0.6)', color: '#fde68a', borderRadius: '3px', fontWeight: 700 }}>
-                  🟡 Level 2 (Intermediate): {level2Count} Qs
+                <span style={{ fontSize: '0.72rem', padding: '3px 8px', background: 'rgba(245, 158, 11, 0.25)', border: '1px solid rgba(245, 158, 11, 0.6)', color: '#fde68a', borderRadius: '3px', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                  <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#f59e0b' }} />
+                  Level 2 (Intermediate): {level2Count} Qs
                 </span>
-                <span style={{ fontSize: '0.72rem', padding: '2px 8px', background: 'rgba(239, 68, 68, 0.25)', border: '1px solid rgba(239, 68, 68, 0.6)', color: '#fecaca', borderRadius: '3px', fontWeight: 700 }}>
-                  🔴 Level 3 (Advanced): {level3Count} Qs
+                <span style={{ fontSize: '0.72rem', padding: '3px 8px', background: 'rgba(239, 68, 68, 0.25)', border: '1px solid rgba(239, 68, 68, 0.6)', color: '#fecaca', borderRadius: '3px', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                  <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#ef4444' }} />
+                  Level 3 (Advanced): {level3Count} Qs
                 </span>
               </div>
             </div>
@@ -480,7 +524,7 @@ export function AdminQuestionsPage() {
               }}
             >
               <Sparkles size={15} className={recommending ? 'spin' : ''} />
-              <span>{recommending ? 'Generating...' : '⚡ Recommend Level Questions'}</span>
+              <span>{recommending ? 'Generating...' : 'Recommend Level Questions'}</span>
             </button>
 
             <Link
@@ -569,7 +613,7 @@ export function AdminQuestionsPage() {
           Proficiency Level:
         </span>
         {[
-          { id: 'ALL', label: 'All Levels', count: filtered.length },
+          { id: 'ALL', label: 'All Levels', count: allCount },
           { id: 'EASY', label: 'Level 1 • Beginner', color: '#10b981', bg: '#ecfdf5', border: '#a7f3d0', text: '#065f46', count: level1Count },
           { id: 'MEDIUM', label: 'Level 2 • Intermediate', color: '#f59e0b', bg: '#fffbeb', border: '#fde68a', text: '#92400e', count: level2Count },
           { id: 'HARD', label: 'Level 3 • Advanced', color: '#ef4444', bg: '#fef2f2', border: '#fecaca', text: '#991b1b', count: level3Count },
@@ -672,7 +716,7 @@ export function AdminQuestionsPage() {
                           }}
                         >
                           <Sparkles size={16} className={recommending ? 'spin' : ''} />
-                          <span>{recommending ? `Generating ${activeSkillMeta.name} Questions...` : `⚡ Seed Level-by-Level ${activeSkillMeta.name} Questions`}</span>
+                          <span>{recommending ? `Generating ${activeSkillMeta.name} Questions...` : `Seed Level-by-Level ${activeSkillMeta.name} Questions`}</span>
                         </button>
                         <Link
                           to={`/admin/questions/create?skillId=${activeSkillMeta.id}`}
@@ -1313,6 +1357,28 @@ export function AdminQuestionsPage() {
           </div>
         </div>
       )}
+
+      {/* AI JSON QUESTION EXTRACTOR MODAL */}
+      <JsonQuestionExtractorModal
+        isOpen={showExtractorModal}
+        onClose={() => setShowExtractorModal(false)}
+        initialSkillId={selectedSkillId !== 'ALL' ? selectedSkillId : undefined}
+        initialSkillName={activeSkillMeta ? activeSkillMeta.name : undefined}
+        allSkills={skills.map((s) => ({
+          id: s.id,
+          name: s.name,
+          slug: s.slug,
+          category: s.category,
+        }))}
+        onImportSuccess={(count, skillName) => {
+          handleAction(`Successfully extracted and imported ${count} authentic questions into "${skillName}"!`);
+          setSearch('');
+          const nextParams = new URLSearchParams(searchParams);
+          nextParams.delete('search');
+          setSearchParams(nextParams, { replace: true });
+          fetchQuestions(selectedSkillId, '');
+        }}
+      />
     </div>
   );
 }

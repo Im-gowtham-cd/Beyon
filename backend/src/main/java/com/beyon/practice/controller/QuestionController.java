@@ -154,6 +154,129 @@ public class QuestionController {
         return ResponseEntity.ok(ApiResponse.ok(saved, "Question created successfully"));
     }
 
+    @PostMapping("/batch")
+    public ResponseEntity<ApiResponse<java.util.Map<String, Object>>> createQuestionsBatch(@RequestBody Object payload) {
+        String defaultSkillIdStr = null;
+        java.util.List<java.util.Map<String, Object>> rawQuestions = new java.util.ArrayList<>();
+
+        if (payload instanceof java.util.Map<?, ?> mapPayload) {
+            if (mapPayload.get("skillId") != null) {
+                defaultSkillIdStr = mapPayload.get("skillId").toString();
+            }
+            Object qList = mapPayload.get("questions");
+            if (qList instanceof java.util.List<?> list) {
+                for (Object item : list) {
+                    if (item instanceof java.util.Map<?, ?> m) {
+                        rawQuestions.add((java.util.Map<String, Object>) m);
+                    }
+                }
+            }
+        } else if (payload instanceof java.util.List<?> list) {
+            for (Object item : list) {
+                if (item instanceof java.util.Map<?, ?> m) {
+                    rawQuestions.add((java.util.Map<String, Object>) m);
+                }
+            }
+        }
+
+        if (rawQuestions.isEmpty()) {
+            return ResponseEntity.badRequest().body(ApiResponse.error("Questions array cannot be empty"));
+        }
+
+        UUID defaultSkillId = (defaultSkillIdStr != null && !defaultSkillIdStr.isBlank()) ? UUID.fromString(defaultSkillIdStr) : null;
+
+        String creatorEmail = "skillcontent@beyon.io";
+        UUID creatorId = null;
+        try {
+            org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+            if (auth != null && auth.getPrincipal() instanceof com.beyon.identity.security.JwtUserDetails userDetails) {
+                if (userDetails.getEmail() != null) {
+                    creatorEmail = userDetails.getEmail();
+                }
+                if (userDetails.getUserId() != null) {
+                    creatorId = UUID.fromString(userDetails.getUserId());
+                }
+            }
+        } catch (Exception ignored) {}
+
+        java.util.List<Question> savedQuestions = new java.util.ArrayList<>();
+        int successCount = 0;
+
+        for (java.util.Map<String, Object> qMap : rawQuestions) {
+            try {
+                Question q = new Question();
+                if (qMap.get("skillId") != null && !qMap.get("skillId").toString().isBlank()) {
+                    q.setSkillId(UUID.fromString(qMap.get("skillId").toString()));
+                } else if (defaultSkillId != null) {
+                    q.setSkillId(defaultSkillId);
+                }
+
+                if (qMap.get("topicId") != null && !qMap.get("topicId").toString().isBlank()) {
+                    q.setTopicId(UUID.fromString(qMap.get("topicId").toString()));
+                }
+
+                q.setTitle((String) qMap.getOrDefault("title", "Untitled Question"));
+                q.setDescription((String) qMap.getOrDefault("description", ""));
+
+                String qType = (String) qMap.getOrDefault("questionType", "SINGLE_CHOICE");
+                q.setQuestionType(qType);
+                q.setDifficulty((String) qMap.getOrDefault("difficulty", "MEDIUM"));
+                q.setExplanation((String) qMap.get("explanation"));
+                q.setExpectedOutput((String) qMap.get("expectedOutput"));
+                q.setCodeTemplate((String) qMap.get("codeTemplate"));
+                q.setStatus("ACTIVE");
+                q.setEvaluationMethod("EXACT_MATCH");
+
+                if (creatorId != null) {
+                    q.setCreatedBy(creatorId);
+                }
+
+                java.util.List<QuestionOption> options = new java.util.ArrayList<>();
+                Object rawOptionsObj = qMap.get("options");
+                if (rawOptionsObj == null) {
+                    rawOptionsObj = qMap.get("choices");
+                }
+                if (rawOptionsObj instanceof java.util.List<?> rawOptionsList) {
+                    int order = 1;
+                    for (Object optObj : rawOptionsList) {
+                        if (optObj instanceof java.util.Map<?, ?> ro) {
+                            QuestionOption opt = new QuestionOption();
+                            String text = ro.get("optionText") != null ? ro.get("optionText").toString() : (ro.get("text") != null ? ro.get("text").toString() : "");
+                            opt.setOptionText(text);
+                            boolean isCorrect = Boolean.TRUE.equals(ro.get("isCorrect")) || Boolean.TRUE.equals(ro.get("correct"));
+                            opt.setCorrect(isCorrect);
+                            opt.setDisplayOrder(order++);
+                            if (ro.get("explanation") != null) opt.setExplanation(ro.get("explanation").toString());
+                            options.add(opt);
+                        }
+                    }
+                }
+
+                Question saved = questionBankService.createFullQuestion(q, options, null);
+                savedQuestions.add(saved);
+                successCount++;
+            } catch (Exception ignored) {}
+        }
+
+        // Record governance audit log
+        try {
+            jdbcTemplate.update(
+                "INSERT INTO admin_audit_log (id, admin_id, action, target_type, target_id, details, ip_address, created_at) " +
+                "VALUES (UUID(), ?, 'QUESTION_BATCH_IMPORT', 'QUESTION_BATCH', ?, ?, '127.0.0.1', NOW())",
+                creatorEmail,
+                defaultSkillId != null ? defaultSkillId.toString() : "GLOBAL",
+                "{\"importedCount\":" + successCount + ",\"totalSubmitted\":" + rawQuestions.size() + "}"
+            );
+        } catch (Exception ignored) {}
+
+        java.util.Map<String, Object> result = new java.util.HashMap<>();
+        result.put("importedCount", successCount);
+        result.put("totalSubmitted", rawQuestions.size());
+        result.put("questions", savedQuestions);
+
+        return ResponseEntity.ok(ApiResponse.ok(result, "Successfully imported " + successCount + " questions"));
+    }
+
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<Question>> updateQuestion(
             @PathVariable UUID id,
