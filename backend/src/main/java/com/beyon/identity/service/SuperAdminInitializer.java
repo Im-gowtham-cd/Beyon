@@ -10,6 +10,8 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+
 @Component
 public class SuperAdminInitializer implements CommandLineRunner {
 
@@ -23,34 +25,52 @@ public class SuperAdminInitializer implements CommandLineRunner {
         this.passwordEncoder = passwordEncoder;
     }
 
+    private static class AdminSeed {
+        final String email;
+        final String password;
+        final String displayName;
+        final UserRole role;
+
+        AdminSeed(String email, String password, String displayName, UserRole role) {
+            this.email = email;
+            this.password = password;
+            this.displayName = displayName;
+            this.role = role;
+        }
+    }
+
     @Override
     public void run(String... args) {
-        String superAdminEmail = "superadmin@beyon.io";
-        String defaultPassword = "Password123";
+        List<AdminSeed> adminAccounts = List.of(
+            new AdminSeed("superadmin@beyon.io", "Superadmin@2026", "Platform Administrator", UserRole.PLATFORM_ADMIN),
+            new AdminSeed("verifier@beyon.io", "Verifier@2026", "Verification Administrator", UserRole.VERIFICATION_ADMIN),
+            new AdminSeed("skillcontent@beyon.io", "Skillcontent@2026", "Content & Skill Administrator", UserRole.CONTENT_ADMIN),
+            new AdminSeed("questionsetter@beyon.io", "Questionsetter@2026", "Question Setter", UserRole.QUESTION_SETTER),
+            new AdminSeed("supportadmin@beyon.io", "Supportadmin@2026", "Support & Moderation Administrator", UserRole.MODERATION_ADMIN),
+            new AdminSeed("analytics@beyon.io", "Analytics@2026", "Analytics Administrator", UserRole.ANALYTICS_ADMIN)
+        );
 
-        User superAdmin = userRepository.findByEmail(superAdminEmail)
-                .orElseGet(() -> {
-                    User u = new User();
-                    u.setEmail(superAdminEmail);
-                    u.setDisplayName("Super Administrator");
-                    u.setRole(UserRole.SUPER_ADMIN);
-                    u.setStatus(AccountStatus.ACTIVE);
-                    u.setProfileStatus(AccountStatus.COMPLETED);
-                    u.setEmailVerified(true);
-                    return u;
-                });
+        for (AdminSeed seed : adminAccounts) {
+            try {
+                User user = userRepository.findByEmail(seed.email)
+                        .orElseGet(() -> {
+                            User u = new User();
+                            u.setEmail(seed.email);
+                            return u;
+                        });
 
-        if (superAdmin.getPasswordHash() == null || superAdmin.getPasswordHash().isBlank()) {
-            superAdmin.setPasswordHash(passwordEncoder.encode(defaultPassword));
+                user.setDisplayName(seed.displayName);
+                user.setRole(seed.role);
+                user.setStatus(AccountStatus.ACTIVE);
+                user.setProfileStatus(AccountStatus.COMPLETED);
+                user.setEmailVerified(true);
+                user.setPasswordHash(passwordEncoder.encode(seed.password));
+
+                userRepository.save(user);
+                log.info("Admin account seeded & verified: {} ({})", seed.email, seed.role);
+            } catch (Exception e) {
+                log.error("Failed to seed admin account {}: {}", seed.email, e.getMessage());
+            }
         }
-        superAdmin.setStatus(AccountStatus.ACTIVE);
-        superAdmin.setProfileStatus(AccountStatus.COMPLETED);
-        superAdmin.setEmailVerified(true);
-        superAdmin.setRole(UserRole.SUPER_ADMIN);
-        superAdmin.setDisplayName("Super Administrator");
-
-        userRepository.save(superAdmin);
-        log.info("Super Admin account verified & initialized: {}", superAdminEmail);
     }
 }
-
