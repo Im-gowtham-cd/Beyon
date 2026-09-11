@@ -15,8 +15,11 @@ import {
   Sparkles,
   CheckCircle2,
   SlidersHorizontal,
+  Compass,
+  LayoutGrid,
 } from 'lucide-react';
 import styles from './AdminHome.module.css';
+import { SkillGraphCanvas } from './SkillGraphCanvas';
 
 interface SkillCategory {
   id: string;
@@ -41,6 +44,7 @@ export function AdminSkillGraphPage() {
   const [loading, setLoading] = useState(true);
 
   const [selectedCluster, setSelectedCluster] = useState<string>('ALL');
+  const [viewMode, setViewMode] = useState<'CANVAS' | 'MATRIX'>('CANVAS');
   const [search, setSearch] = useState('');
   const [sortBy, setSortBy] = useState<'NAME' | 'TOPICS' | 'DOMAIN'>('NAME');
 
@@ -329,16 +333,50 @@ export function AdminSkillGraphPage() {
         </div>
       </div>
 
-      {/* Domain Cluster Tab Bar */}
-      <div className={styles.tabBar}>
+      {/* Primary Graph Mode Switcher */}
+      <div className={styles.tabBar} style={{ marginBottom: '14px' }}>
         <button
           type="button"
-          className={`${styles.tabBtn} ${selectedCluster === 'ALL' ? styles.tabBtnActive : ''}`}
-          onClick={() => setSelectedCluster('ALL')}
+          className={`${styles.tabBtn} ${viewMode === 'CANVAS' ? styles.tabBtnActive : ''}`}
+          onClick={() => setViewMode('CANVAS')}
         >
-          <Network size={15} />
-          <span>All Competencies ({skills.length || 109})</span>
+          <Compass size={15} />
+          <span>Interactive Graph Canvas &amp; Node Connections ({skills.length || 109})</span>
         </button>
+        <button
+          type="button"
+          className={`${styles.tabBtn} ${viewMode === 'MATRIX' ? styles.tabBtnActive : ''}`}
+          onClick={() => setViewMode('MATRIX')}
+        >
+          <LayoutGrid size={15} />
+          <span>Competency Matrix Cards &amp; Telemetry</span>
+        </button>
+      </div>
+
+      {viewMode === 'CANVAS' ? (
+        <div style={{ marginTop: '2px', marginBottom: '20px' }}>
+          <SkillGraphCanvas
+            skills={skills}
+            categories={categories}
+            onInspectSkill={(skill) => {
+              const catName = skill.categoryId ? categoryMap.get(skill.categoryId) || 'Core' : skill.category || 'Core';
+              setInspectNode({ skill, domainName: catName });
+            }}
+            height="760px"
+          />
+        </div>
+      ) : (
+        <>
+          {/* Domain Cluster Tab Bar */}
+          <div className={styles.tabBar}>
+            <button
+              type="button"
+              className={`${styles.tabBtn} ${selectedCluster === 'ALL' ? styles.tabBtnActive : ''}`}
+              onClick={() => setSelectedCluster('ALL')}
+            >
+              <Network size={15} />
+              <span>All Competencies ({skills.length || 109})</span>
+            </button>
         {categories.slice(0, 10).map((cat) => (
           <button
             key={cat.id}
@@ -714,6 +752,8 @@ export function AdminSkillGraphPage() {
           </tbody>
         </table>
       </div>
+    </>
+  )}
 
       {/* Node Inspection Modal matching AdminQuestionsPage audit overlay */}
       {inspectNode && (

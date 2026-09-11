@@ -27,9 +27,11 @@ import {
   ChevronRight,
   Wand2,
   FileText,
+  Network,
 } from 'lucide-react';
 import styles from './AdminHome.module.css';
 import { JsonQuestionExtractorModal } from './JsonQuestionExtractorModal';
+import { SkillGraphCanvas } from './SkillGraphCanvas';
 
 interface SkillCategory {
   id: string;
@@ -85,7 +87,7 @@ export function AdminSkillTaxonomyPage() {
 
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
-  const [viewMode, setViewMode] = useState<'EXPLORER' | 'REGISTRY'>('EXPLORER');
+  const [viewMode, setViewMode] = useState<'EXPLORER' | 'REGISTRY' | 'GRAPH'>('EXPLORER');
   const [activeDrilldownDomain, setActiveDrilldownDomain] = useState<SkillCategory | null>(null);
 
   // Modal States
@@ -1564,6 +1566,17 @@ export function AdminSkillTaxonomyPage() {
           <ListFilter size={15} />
           <span>Full Competency Registry ({skills.length || 109})</span>
         </button>
+        <button
+          type="button"
+          className={`${styles.tabBtn} ${viewMode === 'GRAPH' ? styles.tabBtnActive : ''}`}
+          onClick={() => {
+            setViewMode('GRAPH');
+            setActiveDrilldownDomain(null);
+          }}
+        >
+          <Network size={15} />
+          <span>Graph Node Connections ({skills.length || 109})</span>
+        </button>
       </div>
 
       {/* Filter and Search Bar */}
@@ -1650,7 +1663,9 @@ export function AdminSkillTaxonomyPage() {
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.8rem', color: '#64748b' }}>
           <span>Displaying</span>
           <strong style={{ color: '#1c2d81' }}>
-            {viewMode === 'EXPLORER'
+            {viewMode === 'GRAPH'
+              ? `${skills.length} Competency Nodes & Clustered Networks`
+              : viewMode === 'EXPLORER'
               ? activeDrilldownDomain
                 ? `${skillsInActiveDomain.length} skills in ${activeDrilldownDomain.name}`
                 : `${filteredCategories.length} Domains`
@@ -1660,7 +1675,27 @@ export function AdminSkillTaxonomyPage() {
       </div>
 
       {/* Main View Area */}
-      {viewMode === 'EXPLORER' ? (
+      {viewMode === 'GRAPH' ? (
+        <div style={{ marginTop: '6px' }}>
+          <SkillGraphCanvas
+            skills={skills}
+            categories={categories}
+            onOpenExtractor={(skillId) => {
+              const sk = skills.find((s) => s.id === skillId);
+              openJsonExtractorModal(sk || undefined);
+            }}
+            onInspectSkill={(skill) => {
+              const cat = categories.find((c) => c.id === skill.categoryId);
+              setInspectNode({
+                type: 'SKILL',
+                item: skill,
+                domainName: cat ? cat.name : skill.category,
+              });
+            }}
+            height="720px"
+          />
+        </div>
+      ) : viewMode === 'EXPLORER' ? (
         activeDrilldownDomain ? (
           /* Domain Drilldown View */
           <div>

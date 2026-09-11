@@ -23,12 +23,21 @@ export interface ExtractedQuestion {
   id?: string;
   title: string;
   description: string;
-  difficulty: 'EASY' | 'MEDIUM' | 'HARD';
+  difficulty: 'BEGINNER' | 'EASY' | 'MEDIUM' | 'HARD' | 'ADVANCED' | 'EXPERT';
   questionType: string;
   codeTemplate?: string;
   explanation?: string;
   options: ExtractedOption[];
 }
+
+export const LEVEL_CONFIG: Record<string, { bg: string; border: string; text: string; label: string; dot: string }> = {
+  BEGINNER: { bg: '#e0f2fe', border: '#bae6fd', text: '#0369a1', label: 'Level 1: Beginner', dot: '#0ea5e9' },
+  EASY: { bg: '#dcfce7', border: '#bbf7d0', text: '#15803d', label: 'Level 2: Easy', dot: '#10b981' },
+  MEDIUM: { bg: '#fef3c7', border: '#fde68a', text: '#b45309', label: 'Level 3: Medium', dot: '#f59e0b' },
+  HARD: { bg: '#fee2e2', border: '#fecaca', text: '#b91c1c', label: 'Level 4: Hard', dot: '#f43f5e' },
+  ADVANCED: { bg: '#f3e8ff', border: '#e9d5ff', text: '#7e22ce', label: 'Level 5: Advanced', dot: '#8b5cf6' },
+  EXPERT: { bg: '#e0e7ff', border: '#c7d2fe', text: '#4338ca', label: 'Level 6: Expert', dot: '#6366f1' },
+};
 
 export interface SkillOption {
   id: string;
@@ -50,7 +59,7 @@ const SAMPLE_AI_JSON = `[
   {
     "title": "Level 1: Pointer Dereferencing Syntax & Value Access",
     "description": "Examine the following C snippet. What is printed to standard output upon successful execution?",
-    "difficulty": "EASY",
+    "difficulty": "BEGINNER",
     "questionType": "SINGLE_CHOICE",
     "codeTemplate": "#include <stdio.h>\\n\\nint main(void) {\\n    int value = 42;\\n    int *ptr = &value;\\n    printf(\\"%d\\\\n\\", *ptr);\\n    return 0;\\n}",
     "explanation": "The asterisk * before a pointer variable in an expression dereferences the pointer, fetching the integer value 42 stored at address &value.",
@@ -64,7 +73,7 @@ const SAMPLE_AI_JSON = `[
   {
     "title": "Level 2: Pointer Arithmetic & Array Index Invariants",
     "description": "What values are printed when the code below is compiled with GCC and executed?",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "questionType": "SINGLE_CHOICE",
     "codeTemplate": "#include <stdio.h>\\n\\nint main(void) {\\n    int arr[] = {10, 20, 30, 40, 50};\\n    int *ptr = arr + 3;\\n    printf(\\"%d %d\\\\n\\", *(ptr - 1), ptr[-2]);\\n    return 0;\\n}",
     "explanation": "ptr points to arr[3] (value 40). *(ptr - 1) accesses arr[2] (value 30). In C, ptr[-2] is identical to *(ptr - 2), which accesses arr[1] (value 20).",
@@ -78,7 +87,7 @@ const SAMPLE_AI_JSON = `[
   {
     "title": "Level 3: Struct Memory Padding & Alignment Invariants",
     "description": "On a standard 64-bit LP64 architecture (e.g. Linux x86_64), what will sizeof(struct Packet) evaluate to?",
-    "difficulty": "HARD",
+    "difficulty": "MEDIUM",
     "questionType": "SINGLE_CHOICE",
     "codeTemplate": "#include <stdio.h>\\n\\nstruct Packet {\\n    char flag;      // 1 byte\\n    int sequence;   // 4 bytes\\n    short checksum; // 2 bytes\\n};\\n\\nint main(void) {\\n    printf(\\"%zu\\\\n\\", sizeof(struct Packet));\\n    return 0;\\n}",
     "explanation": "char flag takes 1 byte + 3 padding bytes to align sequence on a 4-byte boundary. short checksum takes 2 bytes + 2 trailing padding bytes to make the total struct size a multiple of its largest member alignment (4 bytes). Total: 4 + 4 + 4 = 12 bytes.",
@@ -125,13 +134,16 @@ export function JsonQuestionExtractorModal({
 
   // Generate standardized prompt for external AI
   const promptTemplate = useMemo(() => {
-    return `Generate 5 authentic, compiler-tested technical assessment questions for the skill "${activeSkillName}".
+    return `Generate 6 authentic, compiler-tested technical assessment questions for the skill "${activeSkillName}".
 
 REQUIREMENTS:
-1. Provide a realistic mix of proficiency levels:
-   - Level 1: Beginner (Syntax, fundamentals, basic types)
-   - Level 2: Intermediate (Memory layout, algorithms, pointer arithmetic, object lifecycle)
-   - Level 3: Advanced (Internals, concurrency, low-level architecture, performance invariants)
+1. Provide questions across the 6 proficiency tiers:
+   - Level 1: BEGINNER (Syntax, core primitives, foundational definitions)
+   - Level 2: EASY (Control flow, standard libraries, basic operations)
+   - Level 3: MEDIUM (Algorithms, memory layout, data structures, state lifecycles)
+   - Level 4: HARD (Concurrency, optimization, error recovery, complex patterns)
+   - Level 5: ADVANCED (Low-level architecture, internals, distributed systems, cache coherency)
+   - Level 6: EXPERT (Kernel-level invariants, compiler optimizations, edge-case failure modes)
 2. Include realistic code snippets in "codeTemplate" where relevant.
 3. Every question must have exactly 4 options with clear explanations.
 4. Mark the single correct option with "isCorrect": true.
@@ -139,9 +151,9 @@ REQUIREMENTS:
 Return ONLY a valid JSON array matching this exact schema (no conversational pleasantries or markdown wrapper):
 [
   {
-    "title": "Level 1/2/3: Descriptive Concept Title",
+    "title": "Level X: Descriptive Concept Title",
     "description": "The exact problem statement or question prompt",
-    "difficulty": "EASY", // Exactly one of: EASY (Level 1), MEDIUM (Level 2), HARD (Level 3)
+    "difficulty": "BEGINNER", // Exactly one of: BEGINNER, EASY, MEDIUM, HARD, ADVANCED, EXPERT
     "questionType": "SINGLE_CHOICE", // Exactly one of: SINGLE_CHOICE, MULTI_CHOICE, SQL, CODING
     "codeTemplate": "// Optional authentic code snippet\\nint x = 42;",
     "explanation": "Comprehensive explanation of why the correct answer is valid.",
@@ -208,13 +220,21 @@ Return ONLY a valid JSON array matching this exact schema (no conversational ple
       }
 
       const normalized: ExtractedQuestion[] = list.map((item, idx) => {
-        // Normalize difficulty
-        let diff: 'EASY' | 'MEDIUM' | 'HARD' = 'MEDIUM';
+        // Normalize difficulty across all 6 tiers
+        let diff: 'BEGINNER' | 'EASY' | 'MEDIUM' | 'HARD' | 'ADVANCED' | 'EXPERT' = 'MEDIUM';
         const rawDiff = String(item.difficulty || item.level || '').toUpperCase();
-        if (rawDiff.includes('EASY') || rawDiff.includes('BEGINNER') || rawDiff.includes('L1') || rawDiff.includes('LEVEL 1')) {
+        if (rawDiff.includes('BEGINNER') || rawDiff === 'L1' || rawDiff.includes('LEVEL 1')) {
+          diff = 'BEGINNER';
+        } else if (rawDiff.includes('EASY') || rawDiff === 'L2' || rawDiff.includes('LEVEL 2')) {
           diff = 'EASY';
-        } else if (rawDiff.includes('HARD') || rawDiff.includes('ADVANCED') || rawDiff.includes('SENIOR') || rawDiff.includes('L3') || rawDiff.includes('LEVEL 3')) {
+        } else if (rawDiff.includes('MEDIUM') || rawDiff.includes('INTERMEDIATE') || rawDiff === 'L3' || rawDiff.includes('LEVEL 3')) {
+          diff = 'MEDIUM';
+        } else if (rawDiff.includes('HARD') || rawDiff === 'L4' || rawDiff.includes('LEVEL 4')) {
           diff = 'HARD';
+        } else if (rawDiff.includes('ADVANCED') || rawDiff === 'L5' || rawDiff.includes('LEVEL 5')) {
+          diff = 'ADVANCED';
+        } else if (rawDiff.includes('EXPERT') || rawDiff.includes('MASTER') || rawDiff === 'L6' || rawDiff.includes('LEVEL 6')) {
+          diff = 'EXPERT';
         } else {
           diff = 'MEDIUM';
         }
@@ -562,9 +582,9 @@ Return ONLY a valid JSON array matching this exact schema (no conversational ple
                 <div style={{ color: '#94a3b8', marginBottom: '6px', fontWeight: 600 }}>// Expected JSON Output Structure:</div>
                 <pre style={{ margin: 0, color: '#38bdf8' }}>{`[
   {
-    "title": "Level 1/2/3: Title of Question",
+    "title": "Level 1..6: Title of Question",
     "description": "Problem statement and question prompt",
-    "difficulty": "EASY" | "MEDIUM" | "HARD",
+    "difficulty": "BEGINNER" | "EASY" | "MEDIUM" | "HARD" | "ADVANCED" | "EXPERT",
     "questionType": "SINGLE_CHOICE" | "MULTI_CHOICE" | "SQL" | "CODING",
     "codeTemplate": "// optional code snippet",
     "explanation": "Why correct answer is right",
@@ -692,13 +712,7 @@ Return ONLY a valid JSON array matching this exact schema (no conversational ple
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                 {extractedQuestions.map((q, idx) => {
-                  const levelColor =
-                    q.difficulty === 'EASY'
-                      ? { bg: '#dcfce7', border: '#bbf7d0', text: '#15803d', label: 'Level 1: Beginner', dot: '#10b981' }
-                      : q.difficulty === 'HARD'
-                      ? { bg: '#fee2e2', border: '#fecaca', text: '#b91c1c', label: 'Level 3: Advanced', dot: '#ef4444' }
-                      : { bg: '#fef3c7', border: '#fde68a', text: '#b45309', label: 'Level 2: Intermediate', dot: '#f59e0b' };
-
+                  const levelColor = LEVEL_CONFIG[q.difficulty] || LEVEL_CONFIG.MEDIUM;
                   const hasCorrect = q.options.some((o) => o.isCorrect);
 
                   return (
@@ -707,7 +721,7 @@ Return ONLY a valid JSON array matching this exact schema (no conversational ple
                       style={{
                         background: '#ffffff',
                         border: '1px solid #e2e8f0',
-                        borderLeft: `4px solid ${q.difficulty === 'EASY' ? '#10b981' : q.difficulty === 'HARD' ? '#ef4444' : '#f59e0b'}`,
+                        borderLeft: `4px solid ${levelColor.dot}`,
                         padding: '16px 18px',
                       }}
                     >

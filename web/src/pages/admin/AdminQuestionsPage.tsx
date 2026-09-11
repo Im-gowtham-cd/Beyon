@@ -104,7 +104,7 @@ export function AdminQuestionsPage() {
       const token = localStorage.getItem('beyon_token') || localStorage.getItem('beyon_access_token');
 
       const params = new URLSearchParams();
-      params.set('size', '100');
+      params.set('size', '500');
       if (activeSkill && activeSkill !== 'ALL') {
         params.set('skillId', activeSkill);
       }
@@ -273,9 +273,32 @@ export function AdminQuestionsPage() {
   }, [scopedQuestions, difficulty]);
 
   const allCount = scopedQuestions.length;
-  const level1Count = scopedQuestions.filter((q) => q.difficulty === 'EASY').length;
-  const level2Count = scopedQuestions.filter((q) => q.difficulty === 'MEDIUM').length;
-  const level3Count = scopedQuestions.filter((q) => q.difficulty === 'HARD').length;
+  const beginnerCount = scopedQuestions.filter((q) => q.difficulty === 'BEGINNER').length;
+  const easyCount = scopedQuestions.filter((q) => q.difficulty === 'EASY').length;
+  const mediumCount = scopedQuestions.filter((q) => q.difficulty === 'MEDIUM').length;
+  const hardCount = scopedQuestions.filter((q) => q.difficulty === 'HARD').length;
+  const advancedCount = scopedQuestions.filter((q) => q.difficulty === 'ADVANCED').length;
+  const expertCount = scopedQuestions.filter((q) => q.difficulty === 'EXPERT').length;
+
+  const getDifficultyMeta = (diff?: string) => {
+    const d = (diff || '').toUpperCase();
+    switch (d) {
+      case 'BEGINNER':
+        return { label: 'Level 1 • Beginner', dot: '#0ea5e9', bg: '#f0f9ff', text: '#0369a1', border: '#bae6fd' };
+      case 'EASY':
+        return { label: 'Level 2 • Easy', dot: '#10b981', bg: '#ecfdf5', text: '#065f46', border: '#a7f3d0' };
+      case 'MEDIUM':
+        return { label: 'Level 3 • Medium', dot: '#f59e0b', bg: '#fffbeb', text: '#92400e', border: '#fde68a' };
+      case 'HARD':
+        return { label: 'Level 4 • Hard', dot: '#f43f5e', bg: '#fff1f2', text: '#be123c', border: '#fecdd3' };
+      case 'ADVANCED':
+        return { label: 'Level 5 • Advanced', dot: '#8b5cf6', bg: '#f5f3ff', text: '#6d28d9', border: '#ddd6fe' };
+      case 'EXPERT':
+        return { label: 'Level 6 • Expert', dot: '#6366f1', bg: '#eef2ff', text: '#4338ca', border: '#c7d2fe' };
+      default:
+        return { label: d || 'Standard', dot: '#64748b', bg: '#f8fafc', text: '#475569', border: '#cbd5e1' };
+    }
+  };
 
   const getOptionLetter = (idx: number) => String.fromCharCode(65 + idx);
 
@@ -325,7 +348,7 @@ export function AdminQuestionsPage() {
                   borderRadius: '4px',
                   boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.15)',
                   zIndex: 100,
-                  minWidth: '240px',
+                  minWidth: '260px',
                   overflow: 'hidden',
                 }}>
                   <div style={{ padding: '8px 12px', fontSize: '0.72rem', fontWeight: 800, textTransform: 'uppercase', color: '#64748b', background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
@@ -333,39 +356,66 @@ export function AdminQuestionsPage() {
                   </div>
                   <button
                     onClick={() => handleRecommendSkillQuestions(activeSkillMeta.id, 'ALL')}
-                    style={{ width: '100%', padding: '10px 14px', textAlign: 'left', background: 'none', border: 'none', fontSize: '0.82rem', fontWeight: 700, color: '#0f172a', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
+                    style={{ width: '100%', padding: '9px 14px', textAlign: 'left', background: 'none', border: 'none', fontSize: '0.82rem', fontWeight: 700, color: '#0f172a', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
                     onMouseEnter={(e) => (e.currentTarget.style.background = '#f1f5f9')}
                     onMouseLeave={(e) => (e.currentTarget.style.background = 'none')}
                   >
                     <Layers size={14} color="#1c2d81" />
-                    <span>All Levels (Balanced Level 1 - 3)</span>
+                    <span>All Levels (Balanced 6 Tiers)</span>
+                  </button>
+                  <button
+                    onClick={() => handleRecommendSkillQuestions(activeSkillMeta.id, 'BEGINNER')}
+                    style={{ width: '100%', padding: '9px 14px', textAlign: 'left', background: 'none', border: 'none', fontSize: '0.82rem', fontWeight: 700, color: '#0369a1', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = '#f0f9ff')}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = 'none')}
+                  >
+                    <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#0ea5e9' }} />
+                    <span>Level 1: Beginner (Syntax &amp; Fundamentals)</span>
                   </button>
                   <button
                     onClick={() => handleRecommendSkillQuestions(activeSkillMeta.id, 'EASY')}
-                    style={{ width: '100%', padding: '10px 14px', textAlign: 'left', background: 'none', border: 'none', fontSize: '0.82rem', fontWeight: 700, color: '#065f46', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
+                    style={{ width: '100%', padding: '9px 14px', textAlign: 'left', background: 'none', border: 'none', fontSize: '0.82rem', fontWeight: 700, color: '#065f46', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
                     onMouseEnter={(e) => (e.currentTarget.style.background = '#ecfdf5')}
                     onMouseLeave={(e) => (e.currentTarget.style.background = 'none')}
                   >
                     <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981' }} />
-                    <span>Level 1: Beginner (Syntax &amp; Fundamentals)</span>
+                    <span>Level 2: Easy (APIs &amp; Core Idioms)</span>
                   </button>
                   <button
                     onClick={() => handleRecommendSkillQuestions(activeSkillMeta.id, 'MEDIUM')}
-                    style={{ width: '100%', padding: '10px 14px', textAlign: 'left', background: 'none', border: 'none', fontSize: '0.82rem', fontWeight: 700, color: '#92400e', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
+                    style={{ width: '100%', padding: '9px 14px', textAlign: 'left', background: 'none', border: 'none', fontSize: '0.82rem', fontWeight: 700, color: '#92400e', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
                     onMouseEnter={(e) => (e.currentTarget.style.background = '#fffbeb')}
                     onMouseLeave={(e) => (e.currentTarget.style.background = 'none')}
                   >
                     <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#f59e0b' }} />
-                    <span>Level 2: Intermediate (Core Concepts &amp; Usage)</span>
+                    <span>Level 3: Medium (Patterns &amp; State Control)</span>
                   </button>
                   <button
                     onClick={() => handleRecommendSkillQuestions(activeSkillMeta.id, 'HARD')}
-                    style={{ width: '100%', padding: '10px 14px', textAlign: 'left', background: 'none', border: 'none', fontSize: '0.82rem', fontWeight: 700, color: '#991b1b', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = '#fef2f2')}
+                    style={{ width: '100%', padding: '9px 14px', textAlign: 'left', background: 'none', border: 'none', fontSize: '0.82rem', fontWeight: 700, color: '#be123c', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = '#fff1f2')}
                     onMouseLeave={(e) => (e.currentTarget.style.background = 'none')}
                   >
-                    <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#ef4444' }} />
-                    <span>Level 3: Advanced (Architecture &amp; Internals)</span>
+                    <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#f43f5e' }} />
+                    <span>Level 4: Hard (Edge Cases &amp; Memory)</span>
+                  </button>
+                  <button
+                    onClick={() => handleRecommendSkillQuestions(activeSkillMeta.id, 'ADVANCED')}
+                    style={{ width: '100%', padding: '9px 14px', textAlign: 'left', background: 'none', border: 'none', fontSize: '0.82rem', fontWeight: 700, color: '#6d28d9', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = '#f5f3ff')}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = 'none')}
+                  >
+                    <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#8b5cf6' }} />
+                    <span>Level 5: Advanced (Architecture &amp; Internals)</span>
+                  </button>
+                  <button
+                    onClick={() => handleRecommendSkillQuestions(activeSkillMeta.id, 'EXPERT')}
+                    style={{ width: '100%', padding: '9px 14px', textAlign: 'left', background: 'none', border: 'none', fontSize: '0.82rem', fontWeight: 700, color: '#4338ca', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = '#eef2ff')}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = 'none')}
+                  >
+                    <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#6366f1' }} />
+                    <span>Level 6: Expert (Kernel &amp; High-Throughput)</span>
                   </button>
                 </div>
               )}
@@ -488,18 +538,30 @@ export function AdminQuestionsPage() {
               </h2>
 
               {/* Level-by-Level Distribution Badges */}
-              <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginTop: '8px', flexWrap: 'wrap' }}>
-                <span style={{ fontSize: '0.72rem', padding: '3px 8px', background: 'rgba(16, 185, 129, 0.25)', border: '1px solid rgba(16, 185, 129, 0.6)', color: '#a7f3d0', borderRadius: '3px', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+              <div style={{ display: 'flex', gap: '6px', alignItems: 'center', marginTop: '8px', flexWrap: 'wrap' }}>
+                <span style={{ fontSize: '0.7rem', padding: '2px 7px', background: 'rgba(14, 165, 233, 0.25)', border: '1px solid rgba(14, 165, 233, 0.6)', color: '#bae6fd', borderRadius: '3px', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                  <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#0ea5e9' }} />
+                  Beginner: {beginnerCount}
+                </span>
+                <span style={{ fontSize: '0.7rem', padding: '2px 7px', background: 'rgba(16, 185, 129, 0.25)', border: '1px solid rgba(16, 185, 129, 0.6)', color: '#a7f3d0', borderRadius: '3px', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                   <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981' }} />
-                  Level 1 (Beginner): {level1Count} Qs
+                  Easy: {easyCount}
                 </span>
-                <span style={{ fontSize: '0.72rem', padding: '3px 8px', background: 'rgba(245, 158, 11, 0.25)', border: '1px solid rgba(245, 158, 11, 0.6)', color: '#fde68a', borderRadius: '3px', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                <span style={{ fontSize: '0.7rem', padding: '2px 7px', background: 'rgba(245, 158, 11, 0.25)', border: '1px solid rgba(245, 158, 11, 0.6)', color: '#fde68a', borderRadius: '3px', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                   <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#f59e0b' }} />
-                  Level 2 (Intermediate): {level2Count} Qs
+                  Medium: {mediumCount}
                 </span>
-                <span style={{ fontSize: '0.72rem', padding: '3px 8px', background: 'rgba(239, 68, 68, 0.25)', border: '1px solid rgba(239, 68, 68, 0.6)', color: '#fecaca', borderRadius: '3px', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
-                  <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#ef4444' }} />
-                  Level 3 (Advanced): {level3Count} Qs
+                <span style={{ fontSize: '0.7rem', padding: '2px 7px', background: 'rgba(244, 63, 94, 0.25)', border: '1px solid rgba(244, 63, 94, 0.6)', color: '#fecdd3', borderRadius: '3px', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                  <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#f43f5e' }} />
+                  Hard: {hardCount}
+                </span>
+                <span style={{ fontSize: '0.7rem', padding: '2px 7px', background: 'rgba(139, 92, 246, 0.25)', border: '1px solid rgba(139, 92, 246, 0.6)', color: '#ddd6fe', borderRadius: '3px', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                  <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#8b5cf6' }} />
+                  Advanced: {advancedCount}
+                </span>
+                <span style={{ fontSize: '0.7rem', padding: '2px 7px', background: 'rgba(99, 102, 241, 0.25)', border: '1px solid rgba(99, 102, 241, 0.6)', color: '#c7d2fe', borderRadius: '3px', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                  <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#6366f1' }} />
+                  Expert: {expertCount}
                 </span>
               </div>
             </div>
@@ -614,9 +676,12 @@ export function AdminQuestionsPage() {
         </span>
         {[
           { id: 'ALL', label: 'All Levels', count: allCount },
-          { id: 'EASY', label: 'Level 1 • Beginner', color: '#10b981', bg: '#ecfdf5', border: '#a7f3d0', text: '#065f46', count: level1Count },
-          { id: 'MEDIUM', label: 'Level 2 • Intermediate', color: '#f59e0b', bg: '#fffbeb', border: '#fde68a', text: '#92400e', count: level2Count },
-          { id: 'HARD', label: 'Level 3 • Advanced', color: '#ef4444', bg: '#fef2f2', border: '#fecaca', text: '#991b1b', count: level3Count },
+          { id: 'BEGINNER', label: 'Level 1 • Beginner', color: '#0ea5e9', bg: '#f0f9ff', border: '#bae6fd', text: '#0369a1', count: beginnerCount },
+          { id: 'EASY', label: 'Level 2 • Easy', color: '#10b981', bg: '#ecfdf5', border: '#a7f3d0', text: '#065f46', count: easyCount },
+          { id: 'MEDIUM', label: 'Level 3 • Medium', color: '#f59e0b', bg: '#fffbeb', border: '#fde68a', text: '#92400e', count: mediumCount },
+          { id: 'HARD', label: 'Level 4 • Hard', color: '#f43f5e', bg: '#fff1f2', border: '#fecdd3', text: '#be123c', count: hardCount },
+          { id: 'ADVANCED', label: 'Level 5 • Advanced', color: '#8b5cf6', bg: '#f5f3ff', border: '#ddd6fe', text: '#6d28d9', count: advancedCount },
+          { id: 'EXPERT', label: 'Level 6 • Expert', color: '#6366f1', bg: '#eef2ff', border: '#c7d2fe', text: '#4338ca', count: expertCount },
         ].map((lvl) => {
           const isSelected = difficulty === lvl.id;
           return (
@@ -783,9 +848,7 @@ export function AdminQuestionsPage() {
                   (q.title && q.description && q.title.toLowerCase().startsWith(q.description.toLowerCase().slice(0, 30)));
 
                 const qSkill = q.skillId ? skillsMap.get(q.skillId) : null;
-                const isEasy = q.difficulty === 'EASY';
-                const isHard = q.difficulty === 'HARD';
-                const isMed = !isEasy && !isHard;
+                const diffMeta = getDifficultyMeta(q.difficulty);
 
                 return (
                   <tr key={q.id || idx}>
@@ -898,13 +961,13 @@ export function AdminQuestionsPage() {
                           fontWeight: 800,
                           padding: '4px 9px',
                           borderRadius: '4px',
-                          background: isHard ? '#fef2f2' : isMed ? '#fffbeb' : '#ecfdf5',
-                          color: isHard ? '#991b1b' : isMed ? '#92400e' : '#065f46',
-                          border: isHard ? '1px solid #fecaca' : isMed ? '1px solid #fde68a' : '1px solid #a7f3d0',
+                          background: diffMeta.bg,
+                          color: diffMeta.text,
+                          border: `1px solid ${diffMeta.border}`,
                         }}
                       >
-                        <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: isHard ? '#ef4444' : isMed ? '#f59e0b' : '#10b981' }} />
-                        <span>{isHard ? 'Level 3 • Advanced' : isMed ? 'Level 2 • Intermediate' : 'Level 1 • Beginner'}</span>
+                        <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: diffMeta.dot }} />
+                        <span>{diffMeta.label}</span>
                       </span>
                     </td>
 
@@ -1030,17 +1093,26 @@ export function AdminQuestionsPage() {
                   <span style={{ fontSize: '0.72rem', fontWeight: 800, padding: '2px 8px', background: '#eff6ff', color: '#1d4ed8', borderRadius: '3px' }}>
                     {selectedQuestion.questionType || 'MCQ'}
                   </span>
-                  <span style={{
-                    fontSize: '0.72rem',
-                    fontWeight: 800,
-                    padding: '2px 8px',
-                    borderRadius: '3px',
-                    background: selectedQuestion.difficulty === 'HARD' ? '#fef2f2' : selectedQuestion.difficulty === 'MEDIUM' ? '#fffbeb' : '#ecfdf5',
-                    color: selectedQuestion.difficulty === 'HARD' ? '#991b1b' : selectedQuestion.difficulty === 'MEDIUM' ? '#92400e' : '#065f46',
-                    border: selectedQuestion.difficulty === 'HARD' ? '1px solid #fecaca' : selectedQuestion.difficulty === 'MEDIUM' ? '1px solid #fde68a' : '1px solid #a7f3d0'
-                  }}>
-                    {selectedQuestion.difficulty === 'HARD' ? 'Level 3 • Advanced' : selectedQuestion.difficulty === 'MEDIUM' ? 'Level 2 • Intermediate' : 'Level 1 • Beginner'}
-                  </span>
+                  {(() => {
+                    const modalDiff = getDifficultyMeta(selectedQuestion.difficulty);
+                    return (
+                      <span style={{
+                        fontSize: '0.72rem',
+                        fontWeight: 800,
+                        padding: '2px 8px',
+                        borderRadius: '3px',
+                        background: modalDiff.bg,
+                        color: modalDiff.text,
+                        border: `1px solid ${modalDiff.border}`,
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '5px',
+                      }}>
+                        <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: modalDiff.dot }} />
+                        <span>{modalDiff.label}</span>
+                      </span>
+                    );
+                  })()}
                   <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#d97706' }}>
                     +50 Coins
                   </span>

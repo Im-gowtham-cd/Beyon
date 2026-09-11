@@ -68,6 +68,11 @@ public class TaxonomyController {
         return ResponseEntity.ok(ApiResponse.ok(taxonomyService.getSubtopicsForTopic(topic.getId())));
     }
 
+    @GetMapping("/relationships")
+    public ResponseEntity<ApiResponse<List<SkillRelationship>>> getAllRelationships() {
+        return ResponseEntity.ok(ApiResponse.ok(taxonomyService.getAllRelationships()));
+    }
+
     @GetMapping("/skills/{slug}/related")
     public ResponseEntity<ApiResponse<List<SkillRelationship>>> getRelatedSkills(@PathVariable String slug) {
         Skill skill = taxonomyService.getSkillBySlug(slug);

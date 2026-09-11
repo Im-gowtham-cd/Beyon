@@ -116,6 +116,10 @@ public class TaxonomyService {
         return skillRelationshipRepository.findBySourceSkillId(skillId);
     }
 
+    public List<SkillRelationship> getAllRelationships() {
+        return skillRelationshipRepository.findAll();
+    }
+
     public int getTopicCountForSkill(UUID skillId) {
         return skillTopicRepository.findBySkillIdAndActiveTrueOrderByDisplayOrder(skillId).size();
     }
