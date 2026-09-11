@@ -28,8 +28,17 @@ public class User {
     private String displayName;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
+    @Column(nullable = false, length = 50)
     private UserRole role;
+
+    @Column(columnDefinition = "varchar(36)")
+    private UUID institutionId;
+
+    @Column(columnDefinition = "varchar(36)")
+    private UUID companyId;
+
+    @Column(length = 100)
+    private String departmentId;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 64)
@@ -65,6 +74,12 @@ public class User {
     public void setDisplayName(String displayName) { this.displayName = displayName; }
     public UserRole getRole() { return role; }
     public void setRole(UserRole role) { this.role = role; }
+    public UUID getInstitutionId() { return institutionId; }
+    public void setInstitutionId(UUID institutionId) { this.institutionId = institutionId; }
+    public UUID getCompanyId() { return companyId; }
+    public void setCompanyId(UUID companyId) { this.companyId = companyId; }
+    public String getDepartmentId() { return departmentId; }
+    public void setDepartmentId(String departmentId) { this.departmentId = departmentId; }
     public AccountStatus getStatus() { return status; }
     public void setStatus(AccountStatus status) { this.status = status; }
     public AccountStatus getProfileStatus() { return profileStatus; }

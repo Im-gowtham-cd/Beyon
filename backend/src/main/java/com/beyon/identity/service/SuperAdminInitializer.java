@@ -33,7 +33,7 @@ public class SuperAdminInitializer implements CommandLineRunner {
                     User u = new User();
                     u.setEmail(superAdminEmail);
                     u.setDisplayName("Super Administrator");
-                    u.setRole(UserRole.ADMIN);
+                    u.setRole(UserRole.SUPER_ADMIN);
                     u.setStatus(AccountStatus.ACTIVE);
                     u.setProfileStatus(AccountStatus.COMPLETED);
                     u.setEmailVerified(true);
@@ -46,7 +46,7 @@ public class SuperAdminInitializer implements CommandLineRunner {
         superAdmin.setStatus(AccountStatus.ACTIVE);
         superAdmin.setProfileStatus(AccountStatus.COMPLETED);
         superAdmin.setEmailVerified(true);
-        superAdmin.setRole(UserRole.ADMIN);
+        superAdmin.setRole(UserRole.SUPER_ADMIN);
         superAdmin.setDisplayName("Super Administrator");
 
         userRepository.save(superAdmin);

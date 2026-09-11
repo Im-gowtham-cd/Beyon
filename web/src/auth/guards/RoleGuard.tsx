@@ -7,6 +7,33 @@ interface Props {
   requireProfile?: boolean;
 }
 
+function roleMatches(userRole: UserRole, allowedRoles: UserRole[]): boolean {
+  if (allowedRoles.includes(userRole)) return true;
+
+  // Platform Admin subroles satisfy ADMIN / SUPER_ADMIN
+  const isPlatformSubrole =
+    userRole === 'PLATFORM_ADMIN' ||
+    userRole === 'VERIFICATION_ADMIN' ||
+    userRole === 'CONTENT_ADMIN' ||
+    userRole === 'QUESTION_SETTER' ||
+    userRole === 'MODERATION_ADMIN' ||
+    userRole === 'ANALYTICS_ADMIN' ||
+    userRole === 'SUPER_ADMIN' ||
+    userRole === 'ADMIN';
+
+  if (isPlatformSubrole && (allowedRoles.includes('ADMIN') || allowedRoles.includes('SUPER_ADMIN'))) {
+    return true;
+  }
+
+  // Institution sub-roles satisfy INSTITUTION
+  if (allowedRoles.includes('INSTITUTION') && userRole.startsWith('INSTITUTION')) return true;
+
+  // Company sub-roles satisfy COMPANY
+  if (allowedRoles.includes('COMPANY') && userRole.startsWith('COMPANY')) return true;
+
+  return false;
+}
+
 export function RoleGuard({ allowedRoles, requireProfile = false }: Props) {
   const { user, loading, authenticated, profileCompleted } = useAuth();
 
@@ -23,13 +50,16 @@ export function RoleGuard({ allowedRoles, requireProfile = false }: Props) {
     return <Navigate to="/login" replace />;
   }
 
-  if (!allowedRoles.includes(user.role)) {
+  if (!roleMatches(user.role, allowedRoles)) {
     return <Navigate to="/unauthorized" replace />;
   }
 
   if (requireProfile && !profileCompleted) {
-    const role = user.role.toLowerCase();
-    return <Navigate to={`/onboarding/${role}`} replace />;
+    const tier = user.tier?.toLowerCase() ||
+      (user.role.startsWith('INSTITUTION') ? 'institution' :
+       user.role.startsWith('COMPANY') ? 'company' :
+       user.role === 'SUPER_ADMIN' || user.role === 'ADMIN' ? 'admin' : 'student');
+    return <Navigate to={`/onboarding/${tier}`} replace />;
   }
 
   return <Outlet />;

@@ -23,6 +23,10 @@ public class AuthResponse {
         private String email;
         private String name;
         private UserRole role;
+        private String tier;
+        private UUID institutionId;
+        private UUID companyId;
+        private String departmentId;
         private AccountStatus status;
         private AccountStatus profileStatus;
         private boolean emailVerified;
@@ -32,10 +36,18 @@ public class AuthResponse {
         }
 
         public UserInfo(UUID id, String email, String name, UserRole role, AccountStatus status, AccountStatus profileStatus, boolean emailVerified) {
+            this(id, email, name, role, null, null, null, status, profileStatus, emailVerified);
+        }
+
+        public UserInfo(UUID id, String email, String name, UserRole role, UUID institutionId, UUID companyId, String departmentId, AccountStatus status, AccountStatus profileStatus, boolean emailVerified) {
             this.id = id;
             this.email = email;
             this.name = name;
             this.role = role;
+            this.tier = role != null ? role.getTier() : "STUDENT";
+            this.institutionId = institutionId;
+            this.companyId = companyId;
+            this.departmentId = departmentId;
             this.status = status;
             this.profileStatus = profileStatus;
             this.emailVerified = emailVerified;
@@ -45,6 +57,10 @@ public class AuthResponse {
         public String getEmail() { return email; }
         public String getName() { return name; }
         public UserRole getRole() { return role; }
+        public String getTier() { return tier; }
+        public UUID getInstitutionId() { return institutionId; }
+        public UUID getCompanyId() { return companyId; }
+        public String getDepartmentId() { return departmentId; }
         public AccountStatus getStatus() { return status; }
         public AccountStatus getProfileStatus() { return profileStatus; }
         public boolean isEmailVerified() { return emailVerified; }

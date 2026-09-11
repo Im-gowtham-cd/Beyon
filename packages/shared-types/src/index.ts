@@ -16,7 +16,13 @@ export interface ApiError {
   traceId?: string;
 }
 
-export type UserRole = 'STUDENT' | 'COMPANY' | 'INSTITUTION' | 'ADMIN';
+export type UserRole =
+  | 'PLATFORM_ADMIN' | 'VERIFICATION_ADMIN' | 'CONTENT_ADMIN' | 'QUESTION_SETTER' | 'MODERATION_ADMIN' | 'ANALYTICS_ADMIN' | 'SUPER_ADMIN' | 'ADMIN'
+  | 'INSTITUTION_ADMIN' | 'INSTITUTION_PLACEMENT_OFFICER' | 'INSTITUTION_FACULTY' | 'INSTITUTION_COORDINATOR' | 'INSTITUTION_VIEWER' | 'INSTITUTION'
+  | 'COMPANY_ADMIN' | 'COMPANY_RECRUITER' | 'COMPANY_HR' | 'COMPANY_HIRING_MANAGER' | 'COMPANY_INTERVIEWER' | 'COMPANY_LEARNING_MANAGER' | 'COMPANY'
+  | 'STUDENT';
+
+export type RoleTier = 'SUPER_ADMIN' | 'INSTITUTION' | 'COMPANY' | 'STUDENT';
 
 export type AccountStatus = 'PENDING_VERIFICATION' | 'ACTIVE' | 'SUSPENDED' | 'DEACTIVATED' | 'INCOMPLETE' | 'COMPLETED' | 'PENDING_INSTITUTION_VERIFICATION' | 'PENDING_COMPANY_VERIFICATION' | 'REJECTED';
 
@@ -25,6 +31,10 @@ export interface UserInfo {
   email: string;
   name: string;
   role: UserRole;
+  tier?: RoleTier;
+  institutionId?: string;
+  companyId?: string;
+  departmentId?: string;
   status: AccountStatus;
   profileStatus: AccountStatus;
   emailVerified: boolean;

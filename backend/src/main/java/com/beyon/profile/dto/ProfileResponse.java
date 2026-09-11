@@ -26,6 +26,10 @@ public class ProfileResponse {
         private String email;
         private String name;
         private UserRole role;
+        private String tier;
+        private String institutionId;
+        private String companyId;
+        private String departmentId;
         private String status;
         private String profileStatus;
         private boolean emailVerified;
@@ -36,6 +40,10 @@ public class ProfileResponse {
             this.email = user.getEmail();
             this.name = user.getDisplayName();
             this.role = user.getRole();
+            this.tier = user.getRole() != null ? user.getRole().getTier() : "STUDENT";
+            this.institutionId = user.getInstitutionId() != null ? user.getInstitutionId().toString() : null;
+            this.companyId = user.getCompanyId() != null ? user.getCompanyId().toString() : null;
+            this.departmentId = user.getDepartmentId();
             this.status = user.getStatus().name();
             this.profileStatus = user.getProfileStatus() != null ? user.getProfileStatus().name() : null;
             this.emailVerified = user.isEmailVerified();
@@ -46,6 +54,10 @@ public class ProfileResponse {
         public String getEmail() { return email; }
         public String getName() { return name; }
         public UserRole getRole() { return role; }
+        public String getTier() { return tier; }
+        public String getInstitutionId() { return institutionId; }
+        public String getCompanyId() { return companyId; }
+        public String getDepartmentId() { return departmentId; }
         public String getStatus() { return status; }
         public String getProfileStatus() { return profileStatus; }
         public boolean isEmailVerified() { return emailVerified; }

@@ -80,7 +80,7 @@ public class AuthService {
 
     @Transactional
     public AuthResponse.UserInfo register(RegisterRequest request) {
-        if (request.getRole() == UserRole.ADMIN) {
+        if (request.getRole() != null && request.getRole().isSuperAdmin()) {
             throw new ForbiddenException("Admin registration is not allowed");
         }
 
@@ -105,7 +105,7 @@ public class AuthService {
         user.setEmailVerified(true);
         User savedUser = userRepository.save(user);
 
-        if (request.getRole() == UserRole.STUDENT) {
+        if (request.getRole() != null && request.getRole().isStudentTier()) {
             StudentProfile profile = new StudentProfile();
             profile.setUserId(savedUser.getId());
             profile.setCountry("India");
@@ -121,13 +121,13 @@ public class AuthService {
                 coinService.getOrCreateWallet(savedUser.getId());
                 coinService.earnCoins(savedUser.getId(), "WELCOME_BONUS", "REGISTRATION", savedUser.getId());
             } catch (Exception ignored) {}
-        } else if (request.getRole() == UserRole.COMPANY) {
+        } else if (request.getRole() != null && request.getRole().isCompanyTier()) {
             CompanyProfile profile = new CompanyProfile();
             profile.setUserId(savedUser.getId());
             profile.setCompanyName(request.getName());
             profile.setCountry("India");
             companyProfileRepository.save(profile);
-        } else if (request.getRole() == UserRole.INSTITUTION) {
+        } else if (request.getRole() != null && request.getRole().isInstitutionTier()) {
             InstitutionProfile profile = new InstitutionProfile();
             profile.setUserId(savedUser.getId());
             profile.setInstitutionName(request.getName());
@@ -187,7 +187,13 @@ public class AuthService {
         user.setLastLoginAt(Instant.now());
         userRepository.save(user);
 
-        String token = jwtUtil.generateAccessToken(user.getId(), user.getEmail(), user.getRole().name());
+        String token = jwtUtil.generateAccessToken(
+                user.getId(),
+                user.getEmail(),
+                user.getRole().name(),
+                user.getInstitutionId(),
+                user.getCompanyId(),
+                user.getDepartmentId());
 
         auditService.log(AuditEventType.LOGIN_SUCCESS, user.getEmail(), ipAddress, userAgent);
 
@@ -339,7 +345,8 @@ public class AuthService {
     private AuthResponse.UserInfo buildUserInfo(User user) {
         return new AuthResponse.UserInfo(
                 user.getId(), user.getEmail(), user.getDisplayName(),
-                user.getRole(), user.getStatus(), user.getProfileStatus(),
+                user.getRole(), user.getInstitutionId(), user.getCompanyId(), user.getDepartmentId(),
+                user.getStatus(), user.getProfileStatus(),
                 user.isEmailVerified());
     }
 

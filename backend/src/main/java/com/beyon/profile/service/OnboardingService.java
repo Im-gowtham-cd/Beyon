@@ -69,7 +69,7 @@ public class OnboardingService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-        if (user.getRole() != UserRole.STUDENT) {
+        if (user.getRole() == null || !user.getRole().isStudentTier()) {
             throw new ConflictException("User is not a student");
         }
 
@@ -183,7 +183,7 @@ public class OnboardingService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-        if (user.getRole() != UserRole.INSTITUTION) {
+        if (user.getRole() == null || !user.getRole().isInstitutionTier()) {
             throw new ConflictException("User is not an institution");
         }
 
@@ -254,7 +254,7 @@ public class OnboardingService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-        if (user.getRole() != UserRole.COMPANY) {
+        if (user.getRole() == null || !user.getRole().isCompanyTier()) {
             throw new ConflictException("User is not a company");
         }
 

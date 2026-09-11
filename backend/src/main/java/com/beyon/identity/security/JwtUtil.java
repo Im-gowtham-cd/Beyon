@@ -25,17 +25,32 @@ public class JwtUtil {
     }
 
     public String generateAccessToken(UUID userId, String email, String role) {
+        return generateAccessToken(userId, email, role, null, null, null);
+    }
+
+    public String generateAccessToken(UUID userId, String email, String role, UUID institutionId, UUID companyId, String departmentId) {
         Date now = new Date();
         Date expiry = new Date(now.getTime() + accessTokenExpirationMs);
 
-        return Jwts.builder()
+        var builder = Jwts.builder()
                 .subject(userId.toString())
                 .claim("email", email)
                 .claim("role", role)
                 .issuedAt(now)
                 .expiration(expiry)
-                .signWith(signingKey)
-                .compact();
+                .signWith(signingKey);
+
+        if (institutionId != null) {
+            builder.claim("institutionId", institutionId.toString());
+        }
+        if (companyId != null) {
+            builder.claim("companyId", companyId.toString());
+        }
+        if (departmentId != null) {
+            builder.claim("departmentId", departmentId);
+        }
+
+        return builder.compact();
     }
 
     public Claims parseToken(String token) {
@@ -65,6 +80,20 @@ public class JwtUtil {
 
     public String getRole(String token) {
         return parseToken(token).get("role", String.class);
+    }
+
+    public UUID getInstitutionId(String token) {
+        String id = parseToken(token).get("institutionId", String.class);
+        return id != null ? UUID.fromString(id) : null;
+    }
+
+    public UUID getCompanyId(String token) {
+        String id = parseToken(token).get("companyId", String.class);
+        return id != null ? UUID.fromString(id) : null;
+    }
+
+    public String getDepartmentId(String token) {
+        return parseToken(token).get("departmentId", String.class);
     }
 }
 

@@ -35,11 +35,37 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 String userId = jwtUtil.getUserId(token).toString();
                 String email = jwtUtil.getEmail(token);
                 String role = jwtUtil.getRole(token);
+                var instId = jwtUtil.getInstitutionId(token);
+                var compId = jwtUtil.getCompanyId(token);
+                String deptId = jwtUtil.getDepartmentId(token);
 
-                var authorities = List.of(new SimpleGrantedAuthority("ROLE_" + role));
+                var authorities = new java.util.ArrayList<SimpleGrantedAuthority>();
+                if (role != null) {
+                    authorities.add(new SimpleGrantedAuthority("ROLE_" + role));
+                    if (role.startsWith("INSTITUTION_")) {
+                        authorities.add(new SimpleGrantedAuthority("ROLE_INSTITUTION"));
+                    } else if (role.startsWith("COMPANY_")) {
+                        authorities.add(new SimpleGrantedAuthority("ROLE_COMPANY"));
+                    } else if ("SUPER_ADMIN".equalsIgnoreCase(role) ||
+                               "PLATFORM_ADMIN".equalsIgnoreCase(role) ||
+                               "VERIFICATION_ADMIN".equalsIgnoreCase(role) ||
+                               "CONTENT_ADMIN".equalsIgnoreCase(role) ||
+                               "QUESTION_SETTER".equalsIgnoreCase(role) ||
+                               "MODERATION_ADMIN".equalsIgnoreCase(role) ||
+                               "ANALYTICS_ADMIN".equalsIgnoreCase(role)) {
+                        authorities.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
+                    }
+                }
+
                 var auth = new UsernamePasswordAuthenticationToken(userId, null, authorities);
-
-                var details = new JwtUserDetails(userId, email, role);
+                var details = new JwtUserDetails(
+                    userId,
+                    email,
+                    role,
+                    instId != null ? instId.toString() : null,
+                    compId != null ? compId.toString() : null,
+                    deptId
+                );
                 auth.setDetails(details);
 
                 SecurityContextHolder.getContext().setAuthentication(auth);

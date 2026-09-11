@@ -139,7 +139,7 @@ gitGraph
 ## 6. Backend Tier: Spring Boot 3.4 Orchestration & Event Bus
 
 ### Architecture & Service Design
-- **API Gateway & Routing**: Handles JWT authentication, rate limiting, and RBAC (`STUDENT`, `COMPANY`, `INSTITUTION`, `ADMIN`).
+- **API Gateway & Routing**: Handles JWT authentication, rate limiting, and **4-Tier Scoped RBAC** (`SUPER_ADMIN`, `INSTITUTION_*`, `COMPANY_*`, `STUDENT`) with strict domain isolation and organization scoping (`institution_id`, `company_id`, `department_id`). (See [BEYON_4TIER_RBAC_SPECIFICATION.md](file:///d:/SIH/26044/docs/BEYON_4TIER_RBAC_SPECIFICATION.md) for full matrix).
 - **Strike & Warning Engine (`RuleEngine`)**:
   - **Mobile Phone Detected**: 0 Warnings $ightarrow$ Instant Disqualification.
   - **Second Person Present**: 1 Warning $ightarrow$ Disqualifies on 2nd offense.

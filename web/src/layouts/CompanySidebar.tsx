@@ -71,41 +71,135 @@ export function CompanySidebar({
     loadCompanyData();
   }, []);
 
-  const navSections = [
-    {
-      title: 'Recruitment Command',
-      items: [
-        { to: '/company/home', icon: LayoutDashboard, label: 'Executive Dashboard' },
-        { to: '/company/opportunities', icon: Briefcase, label: 'Job & Campus Drives', badge: activeJobsCount ? `${activeJobsCount} Active` : undefined, badgeType: 'primary' },
-        { to: '/company/opportunities/create', icon: PlusCircle, label: 'Post New Drive / Job' },
-      ],
-    },
-    {
-      title: 'Talent & AI Screening',
-      items: [
-        { to: '/company/candidates', icon: UserCheck, label: 'AI Candidate Discovery', badge: candidatesCount > 0 ? `${candidatesCount} Verified` : undefined, badgeType: 'gold' },
-        { to: '/company/pipeline', icon: GitCommit, label: 'Recruitment Pipeline' },
-        { to: '/company/candidate-intelligence', icon: Brain, label: 'Candidate Intelligence' },
-      ],
-    },
-    {
-      title: 'Assessments & Interviews',
-      items: [
-        { to: '/company/assessments', icon: ShieldCheck, label: 'Benchmark Tests' },
-        { to: '/company/assessment-builder', icon: FileEdit, label: 'Assessment Builder' },
-        { to: '/company/interview-management', icon: Video, label: 'Interview Scheduler' },
-      ],
-    },
-    {
-      title: 'Analytics & Settings',
-      items: [
-        { to: '/company/analytics', icon: LineChart, label: 'Hiring Analytics' },
-        { to: '/company/notifications', icon: Bell, label: 'Notifications' },
-        { to: '/company/profile', icon: Building2, label: 'Company Profile' },
-        { to: '/company/messages', icon: MessageSquare, label: 'Direct Messaging' },
-      ],
-    },
-  ];
+  const userRole = user?.role || 'COMPANY_ADMIN';
+
+  const getCompanyNavSections = () => {
+    if (userRole === 'COMPANY_INTERVIEWER') {
+      return [
+        {
+          title: 'Interview Workspace',
+          items: [
+            { to: '/company/interview-management', icon: Video, label: 'Assigned Interviews' },
+            { to: '/company/candidates', icon: UserCheck, label: 'Candidate Profiles' },
+            { to: '/company/assessments', icon: ShieldCheck, label: 'Evaluation Workspace' },
+            { to: '/company/messages', icon: MessageSquare, label: 'Candidate Notes' },
+          ],
+        },
+      ];
+    }
+
+    if (userRole === 'COMPANY_HIRING_MANAGER') {
+      return [
+        {
+          title: 'Hiring Command',
+          items: [
+            { to: '/company/home', icon: LayoutDashboard, label: 'Hiring Dashboard' },
+            { to: '/company/opportunities', icon: Briefcase, label: 'My Open Positions', badge: activeJobsCount ? `${activeJobsCount} Active` : undefined, badgeType: 'primary' },
+            { to: '/company/candidates', icon: UserCheck, label: 'Recommended Candidates' },
+            { to: '/company/pipeline', icon: GitCommit, label: 'Shortlisted & Reviews' },
+          ],
+        },
+        {
+          title: 'Evaluation & Decisions',
+          items: [
+            { to: '/company/assessments', icon: ShieldCheck, label: 'Assessment Results' },
+            { to: '/company/interview-management', icon: Video, label: 'Interviews & Feedback' },
+            { to: '/company/candidate-intelligence', icon: Brain, label: 'Decision Intelligence' },
+          ],
+        },
+      ];
+    }
+
+    if (userRole === 'COMPANY_HR') {
+      return [
+        {
+          title: 'People & Applications',
+          items: [
+            { to: '/company/home', icon: LayoutDashboard, label: 'HR Dashboard' },
+            { to: '/company/pipeline', icon: GitCommit, label: 'Candidate Applications' },
+            { to: '/company/interview-management', icon: Video, label: 'Interview Logistics' },
+          ],
+        },
+        {
+          title: 'Outreach & Reports',
+          items: [
+            { to: '/company/candidates', icon: UserCheck, label: 'Candidate Verification' },
+            { to: '/company/analytics', icon: LineChart, label: 'Recruitment Reports' },
+            { to: '/company/messages', icon: MessageSquare, label: 'Candidate Communication' },
+            { to: '/company/notifications', icon: Bell, label: 'Notifications' },
+          ],
+        },
+      ];
+    }
+
+    if (userRole === 'COMPANY_RECRUITER') {
+      return [
+        {
+          title: 'Recruitment Ops',
+          items: [
+            { to: '/company/home', icon: LayoutDashboard, label: 'Recruiter Dashboard' },
+            { to: '/company/opportunities', icon: Briefcase, label: 'Jobs & Internships', badge: activeJobsCount ? `${activeJobsCount} Active` : undefined, badgeType: 'primary' },
+            { to: '/company/opportunities/create', icon: PlusCircle, label: 'Post New Job' },
+          ],
+        },
+        {
+          title: 'Talent Sourcing',
+          items: [
+            { to: '/company/candidates', icon: UserCheck, label: 'Candidate Pool', badge: candidatesCount > 0 ? `${candidatesCount} Verified` : undefined, badgeType: 'gold' },
+            { to: '/company/pipeline', icon: GitCommit, label: 'Shortlist & Pipeline' },
+            { to: '/company/candidate-intelligence', icon: Brain, label: 'Candidate Intelligence' },
+          ],
+        },
+        {
+          title: 'Interviews & Tests',
+          items: [
+            { to: '/company/assessments', icon: ShieldCheck, label: 'Assessments' },
+            { to: '/company/assessment-builder', icon: FileEdit, label: 'Assessment Builder' },
+            { to: '/company/interview-management', icon: Video, label: 'Interview Scheduler' },
+          ],
+        },
+      ];
+    }
+
+    // Default: COMPANY_ADMIN / COMPANY (Full enterprise portal)
+    return [
+      {
+        title: 'Recruitment Command',
+        items: [
+          { to: '/company/home', icon: LayoutDashboard, label: 'Executive Dashboard' },
+          { to: '/company/opportunities', icon: Briefcase, label: 'Job & Campus Drives', badge: activeJobsCount ? `${activeJobsCount} Active` : undefined, badgeType: 'primary' },
+          { to: '/company/opportunities/create', icon: PlusCircle, label: 'Post New Drive / Job' },
+        ],
+      },
+      {
+        title: 'Talent & AI Screening',
+        items: [
+          { to: '/company/candidates', icon: UserCheck, label: 'AI Candidate Discovery', badge: candidatesCount > 0 ? `${candidatesCount} Verified` : undefined, badgeType: 'gold' },
+          { to: '/company/pipeline', icon: GitCommit, label: 'Recruitment Pipeline' },
+          { to: '/company/candidate-intelligence', icon: Brain, label: 'Candidate Intelligence' },
+        ],
+      },
+      {
+        title: 'Assessments & Interviews',
+        items: [
+          { to: '/company/assessments', icon: ShieldCheck, label: 'Benchmark Tests' },
+          { to: '/company/assessment-builder', icon: FileEdit, label: 'Assessment Builder' },
+          { to: '/company/interview-management', icon: Video, label: 'Interview Scheduler' },
+        ],
+      },
+      {
+        title: 'Analytics & Settings',
+        items: [
+          { to: '/company/analytics', icon: LineChart, label: 'Hiring Analytics' },
+          { to: '/company/notifications', icon: Bell, label: 'Notifications' },
+          { to: '/company/profile', icon: Building2, label: 'Company Profile & Settings' },
+          { to: '/company/messages', icon: MessageSquare, label: 'Direct Messaging' },
+        ],
+      },
+    ];
+  };
+
+  const navSections = getCompanyNavSections();
 
   const companyName = profileData?.companyName || user?.name || 'Enterprise Recruiter';
   const initials = companyName

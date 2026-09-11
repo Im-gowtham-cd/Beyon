@@ -71,15 +71,15 @@ public class ProfileService {
         ProfileResponse response = new ProfileResponse();
         boolean profileCompleted = false;
 
-        if (user.getRole() == com.beyon.identity.enums.UserRole.STUDENT) {
+        if (user.getRole() != null && user.getRole().isStudentTier()) {
             var studentProfile = studentProfileRepository.findByUserId(userId);
             profileCompleted = studentProfile.isPresent() && studentProfile.get().getCompletionPct() >= 80;
             response.setStudentProfile(loadStudentData(userId));
-        } else if (user.getRole() == com.beyon.identity.enums.UserRole.INSTITUTION) {
+        } else if (user.getRole() != null && user.getRole().isInstitutionTier()) {
             var instProfile = institutionProfileRepository.findByUserId(userId);
             profileCompleted = instProfile.isPresent() && instProfile.get().getCompletionPct() >= 80;
             response.setInstitutionProfile(loadInstitutionData(userId));
-        } else if (user.getRole() == com.beyon.identity.enums.UserRole.COMPANY) {
+        } else if (user.getRole() != null && user.getRole().isCompanyTier()) {
             var compProfile = companyProfileRepository.findByUserId(userId);
             profileCompleted = compProfile.isPresent() && compProfile.get().getCompletionPct() >= 80;
             response.setCompanyProfile(loadCompanyData(userId));

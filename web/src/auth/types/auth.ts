@@ -1,4 +1,12 @@
-export type UserRole = 'STUDENT' | 'INSTITUTION' | 'COMPANY' | 'ADMIN';
+export type UserRole =
+  | 'PLATFORM_ADMIN' | 'VERIFICATION_ADMIN' | 'CONTENT_ADMIN' | 'QUESTION_SETTER' | 'MODERATION_ADMIN' | 'ANALYTICS_ADMIN' | 'SUPER_ADMIN' | 'ADMIN'
+  | 'INSTITUTION_ADMIN' | 'INSTITUTION_PLACEMENT_OFFICER' | 'INSTITUTION_FACULTY' | 'INSTITUTION_COORDINATOR' | 'INSTITUTION_VIEWER' | 'INSTITUTION'
+  | 'COMPANY_ADMIN' | 'COMPANY_RECRUITER' | 'COMPANY_HR' | 'COMPANY_HIRING_MANAGER' | 'COMPANY_INTERVIEWER' | 'COMPANY_LEARNING_MANAGER' | 'COMPANY'
+  | 'STUDENT';
+
+export type RoleTier = 'SUPER_ADMIN' | 'INSTITUTION' | 'COMPANY' | 'STUDENT';
+
+export type OnboardingRole = 'STUDENT' | 'INSTITUTION' | 'COMPANY';
 
 export type AccountStatus = 'PENDING_VERIFICATION' | 'PENDING_SUPER_ADMIN_VERIFICATION' | 'PENDING' | 'APPROVED' | 'ACTIVE' | 'SUSPENDED' | 'DEACTIVATED' | 'INCOMPLETE' | 'COMPLETED' | 'PENDING_INSTITUTION_VERIFICATION' | 'PENDING_COMPANY_VERIFICATION' | 'REJECTED';
 
@@ -7,6 +15,10 @@ export interface UserInfo {
   email: string;
   name: string;
   role: UserRole;
+  tier?: RoleTier;
+  institutionId?: string;
+  companyId?: string;
+  departmentId?: string;
   status: AccountStatus;
   profileStatus: AccountStatus;
   emailVerified: boolean;
@@ -29,7 +41,7 @@ export interface RegisterPayload {
   email: string;
   password: string;
   confirmPassword: string;
-  role: Exclude<UserRole, 'ADMIN'>;
+  role: OnboardingRole;
 }
 
 export interface AuthResponse {

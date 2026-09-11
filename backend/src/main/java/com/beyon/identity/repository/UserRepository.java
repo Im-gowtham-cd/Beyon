@@ -11,5 +11,9 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     boolean existsByEmail(String email);
     java.util.List<User> findByRoleAndStatus(com.beyon.identity.enums.UserRole role, com.beyon.identity.enums.AccountStatus status);
     java.util.List<User> findByRole(com.beyon.identity.enums.UserRole role);
+    java.util.List<User> findByRoleIn(java.util.Collection<com.beyon.identity.enums.UserRole> roles);
+    java.util.List<User> findByRoleInAndStatus(java.util.Collection<com.beyon.identity.enums.UserRole> roles, com.beyon.identity.enums.AccountStatus status);
+    java.util.List<User> findByInstitutionId(UUID institutionId);
+    java.util.List<User> findByCompanyId(UUID companyId);
 }
 
