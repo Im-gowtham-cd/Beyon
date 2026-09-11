@@ -31,6 +31,13 @@ export function getRoleTier(role?: UserRole | string): RoleTier {
 }
 
 export function getRoleDashboardPath(role?: UserRole | string, tier?: RoleTier): string {
+  const r = (role || '').toUpperCase();
+  if (r === 'CONTENT_ADMIN') return '/admin/questions';
+  if (r === 'QUESTION_SETTER') return '/admin/questions';
+  if (r === 'VERIFICATION_ADMIN') return '/admin/institutions';
+  if (r === 'MODERATION_ADMIN') return '/admin/moderation';
+  if (r === 'ANALYTICS_ADMIN') return '/admin/reports';
+
   const effectiveTier = tier || getRoleTier(role);
   switch (effectiveTier) {
     case 'SUPER_ADMIN':

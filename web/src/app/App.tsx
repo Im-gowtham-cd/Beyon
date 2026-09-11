@@ -72,6 +72,8 @@ import { ProfessionalProfilePage } from '../profile/pages/ProfessionalProfilePag
 import { CredentialVerificationPage } from '../profile/pages/CredentialVerificationPage';
 import { TeamFormationPage } from '../community/pages/TeamFormationPage';
 import { AdminDashboardPage } from '../pages/admin/AdminDashboardPage';
+import { AdminSkillTaxonomyPage } from '../pages/admin/AdminSkillTaxonomyPage';
+import { AdminSkillGraphPage } from '../pages/admin/AdminSkillGraphPage';
 import { ReportsPage } from '../pages/admin/ReportsPage';
 import { SocialFeedPage } from '../community/pages/SocialFeedPage';
 import { DiscussionsPage } from '../community/pages/DiscussionsPage';
@@ -248,6 +250,10 @@ export function App() {
             <Route path="/admin/questions/edit/:id" element={<CreateQuestionPage />} />
             <Route path="/practice/create" element={<CreateQuestionPage />} />
             <Route path="/practice/edit/:id" element={<CreateQuestionPage />} />
+            <Route path="/admin/skills" element={<AdminSkillTaxonomyPage />} />
+            <Route path="/admin/skills/graph" element={<AdminSkillGraphPage />} />
+            <Route path="/admin/skill-taxonomy" element={<AdminSkillTaxonomyPage />} />
+            <Route path="/admin/skill-graph" element={<AdminSkillGraphPage />} />
             <Route path="/admin/economy" element={<AdminEconomyPage />} />
             <Route path="/admin/moderation" element={<AdminModerationPage />} />
             <Route path="/admin/feedback" element={<AdminFeedbackPage />} />

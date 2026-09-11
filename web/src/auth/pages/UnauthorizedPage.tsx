@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { OnboardingLayout } from '../../onboarding/components/OnboardingLayout';
@@ -6,6 +7,13 @@ import { getRoleTier, getRoleDashboardPath } from '../types/auth';
 export function UnauthorizedPage() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (user) {
+      const target = getRoleDashboardPath(user.role, user.tier);
+      navigate(target, { replace: true });
+    }
+  }, [user, navigate]);
 
   const roleLabels: Record<string, string> = {
     STUDENT: 'Student Workspace (/student/home)',

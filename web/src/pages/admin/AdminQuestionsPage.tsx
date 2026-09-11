@@ -210,146 +210,175 @@ export function AdminQuestionsPage() {
         <table className={styles.adminTable}>
           <thead>
             <tr>
-              <th>Question Prompt &amp; Title</th>
-              <th>Question Type</th>
-              <th>Difficulty</th>
-              <th>Coin Reward</th>
-              <th>Actions &amp; Options</th>
+              <th style={{ width: '44%', paddingLeft: '20px' }}>Question Prompt &amp; Title</th>
+              <th style={{ width: '15%', textAlign: 'center' }}>Question Type</th>
+              <th style={{ width: '12%', textAlign: 'center' }}>Difficulty</th>
+              <th style={{ width: '12%', textAlign: 'center' }}>Coin Reward</th>
+              <th style={{ width: '17%', textAlign: 'center', paddingRight: '20px' }}>Actions &amp; Options</th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={5} style={{ textAlign: 'center', padding: '32px', color: '#64748b' }}>
+                <td colSpan={5} style={{ textAlign: 'center', padding: '36px', color: '#64748b' }}>
                   Loading verified technical questions from database...
                 </td>
               </tr>
             ) : filtered.length === 0 ? (
               <tr>
-                <td colSpan={5} style={{ textAlign: 'center', padding: '32px', color: '#64748b' }}>
+                <td colSpan={5} style={{ textAlign: 'center', padding: '36px', color: '#64748b' }}>
                   No questions match your filter criteria.
                 </td>
               </tr>
             ) : (
-              filtered.map((q, idx) => (
-                <tr key={q.id || idx}>
-                  <td style={{ maxWidth: '420px', cursor: 'pointer' }} onClick={() => openQuestionAudit(q)}>
-                    <div style={{ fontWeight: 700, color: '#0f172a', lineHeight: 1.4 }}>
-                      {q.title || `Question #${idx + 1}`}
-                    </div>
-                    {q.description && (
-                      <div style={{ fontSize: '0.76rem', color: '#64748b', marginTop: '3px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                        {q.description}
+              filtered.map((q, idx) => {
+                const rawType = (q.questionType || '').toUpperCase();
+                const isMulti = rawType === 'MULTI_CHOICE' || rawType === 'MULTIPLE_SELECT' || rawType === 'MCQ_MULTIPLE';
+                const isSingle = rawType === 'SINGLE_CHOICE' || rawType === 'MCQ' || rawType === 'MCQ_SINGLE';
+                const isSql = rawType === 'SQL';
+                const isCoding = rawType === 'CODING';
+
+                const typeLabel = isMulti
+                  ? 'MULTI-CHOICE'
+                  : isSingle
+                  ? 'SINGLE CHOICE'
+                  : isSql
+                  ? 'SQL QUERY'
+                  : isCoding
+                  ? 'CODING'
+                  : q.questionType || 'MCQ';
+
+                const isDuplicateDesc =
+                  !q.description ||
+                  q.description.trim() === q.title?.trim() ||
+                  (q.title && q.description && q.title.toLowerCase().startsWith(q.description.toLowerCase().slice(0, 30)));
+
+                return (
+                  <tr key={q.id || idx}>
+                    <td style={{ paddingLeft: '20px', cursor: 'pointer' }} onClick={() => openQuestionAudit(q)}>
+                      <div style={{ fontWeight: 700, color: '#0f172a', lineHeight: 1.45, fontSize: '0.88rem' }}>
+                        {q.title || `Question #${idx + 1}`}
                       </div>
-                    )}
-                  </td>
-                  <td>
-                    <span
-                      style={{
-                        fontSize: '0.72rem',
-                        fontWeight: 800,
-                        padding: '2px 8px',
-                        background:
-                          q.questionType === 'MULTI_CHOICE' || q.questionType === 'MULTIPLE_SELECT'
-                            ? '#fdf4ff'
-                            : q.questionType === 'SINGLE_CHOICE' || q.questionType === 'MCQ'
-                            ? '#eff6ff'
-                            : '#f8fafc',
-                        color:
-                          q.questionType === 'MULTI_CHOICE' || q.questionType === 'MULTIPLE_SELECT'
-                            ? '#86198f'
-                            : q.questionType === 'SINGLE_CHOICE' || q.questionType === 'MCQ'
-                            ? '#1d4ed8'
-                            : '#0f172a',
-                        border:
-                          q.questionType === 'MULTI_CHOICE' || q.questionType === 'MULTIPLE_SELECT'
-                            ? '1px solid #f5d0fe'
-                            : q.questionType === 'SINGLE_CHOICE' || q.questionType === 'MCQ'
-                            ? '1px solid #bfdbfe'
-                            : '1px solid #cbd5e1',
-                      }}
-                    >
-                      {q.questionType === 'MULTI_CHOICE' || q.questionType === 'MULTIPLE_SELECT'
-                        ? 'MULTI-CHOICE'
-                        : q.questionType === 'SINGLE_CHOICE'
-                        ? 'SINGLE CHOICE'
-                        : q.questionType || 'MCQ'}
-                    </span>
-                  </td>
-                  <td>
-                    <span style={{ fontSize: '0.72rem', fontWeight: 800, padding: '2px 7px', background: q.difficulty === 'HARD' ? '#fee2e2' : q.difficulty === 'MEDIUM' ? '#fef3c7' : '#dcfce7', color: q.difficulty === 'HARD' ? '#b91c1c' : q.difficulty === 'MEDIUM' ? '#b45309' : '#15803d' }}>
-                      {q.difficulty || 'MEDIUM'}
-                    </span>
-                  </td>
-                  <td>
-                    <strong style={{ color: '#d97706', fontSize: '0.84rem' }}>+50 Coins</strong>
-                  </td>
-                  <td>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <button
-                        onClick={() => openQuestionAudit(q)}
-                        title="Inspect question details and answer keys"
+                      {q.description && !isDuplicateDesc && (
+                        <div style={{ fontSize: '0.76rem', color: '#64748b', marginTop: '4px', lineHeight: 1.35 }}>
+                          {q.description}
+                        </div>
+                      )}
+                    </td>
+                    <td style={{ textAlign: 'center', whiteSpace: 'nowrap' }}>
+                      <span
                         style={{
-                          padding: '5px 10px',
-                          background: '#1c2d81',
-                          color: '#ffffff',
-                          border: 'none',
-                          fontSize: '0.75rem',
-                          fontWeight: 700,
-                          cursor: 'pointer',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '4px',
+                          display: 'inline-block',
+                          fontSize: '0.72rem',
+                          fontWeight: 800,
+                          padding: '4px 10px',
+                          borderRadius: '3px',
+                          background: isMulti ? '#fdf4ff' : isSingle ? '#eff6ff' : isSql ? '#f0fdfa' : '#fffbeb',
+                          color: isMulti ? '#86198f' : isSingle ? '#1d4ed8' : isSql ? '#0f766e' : '#b45309',
+                          border: isMulti ? '1px solid #f5d0fe' : isSingle ? '1px solid #bfdbfe' : isSql ? '1px solid #99f6e4' : '1px solid #fde68a',
+                          letterSpacing: '0.02em',
                         }}
                       >
-                        <Eye size={13} />
-                        <span>Inspect</span>
-                      </button>
+                        {typeLabel}
+                      </span>
+                    </td>
+                    <td style={{ textAlign: 'center', whiteSpace: 'nowrap' }}>
+                      <span
+                        style={{
+                          display: 'inline-block',
+                          minWidth: '70px',
+                          textAlign: 'center',
+                          fontSize: '0.72rem',
+                          fontWeight: 800,
+                          padding: '4px 8px',
+                          borderRadius: '3px',
+                          background: q.difficulty === 'HARD' ? '#fee2e2' : q.difficulty === 'MEDIUM' ? '#fef3c7' : '#dcfce7',
+                          color: q.difficulty === 'HARD' ? '#b91c1c' : q.difficulty === 'MEDIUM' ? '#b45309' : '#15803d',
+                          border: q.difficulty === 'HARD' ? '1px solid #fecaca' : q.difficulty === 'MEDIUM' ? '1px solid #fde68a' : '1px solid #bbf7d0',
+                        }}
+                      >
+                        {q.difficulty || 'MEDIUM'}
+                      </span>
+                    </td>
+                    <td style={{ textAlign: 'center', whiteSpace: 'nowrap' }}>
+                      <strong style={{ color: '#d97706', fontSize: '0.84rem' }}>+50 Coins</strong>
+                    </td>
+                    <td style={{ textAlign: 'center', paddingRight: '20px', whiteSpace: 'nowrap' }}>
+                      <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                        <button
+                          onClick={() => openQuestionAudit(q)}
+                          title="Inspect question details and answer keys"
+                          style={{
+                            height: '28px',
+                            padding: '0 10px',
+                            background: '#1c2d81',
+                            color: '#ffffff',
+                            border: '1px solid #1c2d81',
+                            borderRadius: '3px',
+                            fontSize: '0.74rem',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            boxSizing: 'border-box',
+                          }}
+                        >
+                          <Eye size={13} />
+                          <span>Inspect</span>
+                        </button>
 
-                      <Link
-                        to={`/admin/questions/edit/${q.id}`}
-                        title="Edit question prompt, options, and difficulty"
-                        style={{
-                          padding: '5px 10px',
-                          background: '#eff6ff',
-                          color: '#1d4ed8',
-                          border: '1px solid #bfdbfe',
-                          fontSize: '0.75rem',
-                          fontWeight: 700,
-                          textDecoration: 'none',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '4px',
-                          cursor: 'pointer',
-                        }}
-                      >
-                        <Edit2 size={13} />
-                        <span>Edit</span>
-                      </Link>
+                        <Link
+                          to={`/admin/questions/edit/${q.id}`}
+                          title="Edit question prompt, options, and difficulty"
+                          style={{
+                            height: '28px',
+                            padding: '0 10px',
+                            background: '#eff6ff',
+                            color: '#1d4ed8',
+                            border: '1px solid #bfdbfe',
+                            borderRadius: '3px',
+                            fontSize: '0.74rem',
+                            fontWeight: 700,
+                            textDecoration: 'none',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            boxSizing: 'border-box',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          <Edit2 size={13} />
+                          <span>Edit</span>
+                        </Link>
 
-                      <button
-                        onClick={() => setQuestionToDelete(q)}
-                        title="Delete question permanently"
-                        style={{
-                          padding: '5px 10px',
-                          background: '#fef2f2',
-                          color: '#b91c1c',
-                          border: '1px solid #fecaca',
-                          fontSize: '0.75rem',
-                          fontWeight: 700,
-                          cursor: 'pointer',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '4px',
-                        }}
-                      >
-                        <Trash2 size={13} />
-                        <span>Delete</span>
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))
+                        <button
+                          onClick={() => setQuestionToDelete(q)}
+                          title="Delete question permanently"
+                          style={{
+                            height: '28px',
+                            padding: '0 10px',
+                            background: '#fef2f2',
+                            color: '#b91c1c',
+                            border: '1px solid #fecaca',
+                            borderRadius: '3px',
+                            fontSize: '0.74rem',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            boxSizing: 'border-box',
+                          }}
+                        >
+                          <Trash2 size={13} />
+                          <span>Delete</span>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })
             )}
           </tbody>
         </table>

@@ -53,6 +53,7 @@ export function AdminSidebar({
           items: [
             { to: '/admin/questions', icon: HelpCircle, label: 'Question Bank' },
             { to: '/admin/questions/create', icon: Sparkles, label: 'Post / Create Question' },
+            { to: '/admin/skills', icon: Activity, label: 'Skill Taxonomy' },
             { to: '/admin/home', icon: LayoutDashboard, label: 'Command Center' },
           ],
         },
@@ -98,8 +99,8 @@ export function AdminSidebar({
         {
           title: 'Skill Taxonomy & Mapping',
           items: [
-            { to: '/skill-taxonomy', icon: Activity, label: 'Skill Taxonomy' },
-            { to: '/skill-graph', icon: FileText, label: 'Skill Graph' },
+            { to: '/admin/skills', icon: Activity, label: 'Skill Taxonomy' },
+            { to: '/admin/skills/graph', icon: FileText, label: 'Skill Graph' },
           ],
         },
       ];
@@ -122,6 +123,8 @@ export function AdminSidebar({
           { to: '/admin/companies', icon: Briefcase, label: 'Corporate Approvals' },
           { to: '/admin/questions', icon: HelpCircle, label: 'Question Bank' },
           { to: '/admin/questions/create', icon: Sparkles, label: 'Post / Create Question' },
+          { to: '/admin/skills', icon: Activity, label: 'Skill Taxonomy' },
+          { to: '/admin/skills/graph', icon: FileText, label: 'Skill Graph' },
         ],
       },
       {

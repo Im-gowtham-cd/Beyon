@@ -1,4 +1,4 @@
-﻿.page {
+.page {
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -237,11 +237,17 @@
   text-transform: uppercase;
   font-size: 0.74rem;
   letter-spacing: 0.04em;
+  vertical-align: middle;
 }
 
 .adminTable td {
   padding: 14px 16px;
   border-bottom: 1px solid #f1f5f9;
+  vertical-align: middle;
+}
+
+.adminTable tbody tr:hover {
+  background: #fbfcfe;
 }
 
 .roleBadge {

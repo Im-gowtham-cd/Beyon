@@ -1,6 +1,6 @@
 import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { getRoleTier, type UserRole } from '../types/auth';
+import { getRoleTier, getRoleDashboardPath, type UserRole } from '../types/auth';
 
 interface Props {
   allowedRoles: UserRole[];
@@ -51,7 +51,31 @@ export function RoleGuard({ allowedRoles, requireProfile = false }: Props) {
   }
 
   if (!roleMatches(user.role, allowedRoles)) {
-    return <Navigate to="/unauthorized" replace />;
+    const isPlatformSubrole =
+      user.role === 'PLATFORM_ADMIN' ||
+      user.role === 'VERIFICATION_ADMIN' ||
+      user.role === 'CONTENT_ADMIN' ||
+      user.role === 'QUESTION_SETTER' ||
+      user.role === 'MODERATION_ADMIN' ||
+      user.role === 'ANALYTICS_ADMIN' ||
+      user.role === 'SUPER_ADMIN' ||
+      user.role === 'ADMIN';
+
+    if (isPlatformSubrole) {
+      const pathname = window.location.pathname;
+      if (pathname === '/skill-graph' || pathname.startsWith('/skill-graph')) {
+        return <Navigate to="/admin/skills/graph" replace />;
+      }
+      if (pathname === '/skill-taxonomy' || pathname.startsWith('/skill-taxonomy') || pathname.startsWith('/student/skills')) {
+        return <Navigate to="/admin/skills" replace />;
+      }
+      if (pathname === '/practice' || pathname.startsWith('/practice')) {
+        return <Navigate to="/admin/questions" replace />;
+      }
+    }
+
+    const dashboardPath = getRoleDashboardPath(user.role, user.tier);
+    return <Navigate to={dashboardPath} replace />;
   }
 
   if (requireProfile && !profileCompleted) {
