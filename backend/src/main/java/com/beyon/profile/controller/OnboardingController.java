@@ -263,7 +263,9 @@ public class OnboardingController {
         long currentBalance = 100;
         try {
             coinService.getOrCreateWallet(userId);
-            coinService.earnCoins(userId, "ONBOARDING_COMPLETED", "ONBOARDING", userId);
+            if (!coinService.hasEarned(userId, "ONBOARDING_COMPLETED")) {
+                coinService.earnCoins(userId, "ONBOARDING_COMPLETED", "ONBOARDING", userId);
+            }
             currentBalance = coinService.getBalance(userId);
         } catch (Exception ignored) {}
 

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { api } from '../services/api/client';
 import styles from './HomePage.module.css';
 
 interface RealStats {
@@ -168,16 +169,22 @@ export function HomePage() {
   });
 
   useEffect(() => {
-    fetch('/api/v1/public/landing-data')
-      .then((res) => res.json())
-      .then((json) => {
-        if (json.success && json.data) {
-          setData(json.data);
+    let mounted = true;
+    async function loadLandingData() {
+      try {
+        const json = await api.get<any>('/public/landing-data');
+        if (!mounted) return;
+        if (json) {
+          setData(json.data || json);
         }
-      })
-      .catch((err) => {
+      } catch (err) {
         console.warn('Real DB landing data fetch fallback:', err);
-      });
+      }
+    }
+    loadLandingData();
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   const missionCards = [

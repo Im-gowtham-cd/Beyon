@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../auth/context/AuthContext';
+import { api } from '../../services/api/client';
 import { LearningWidget } from '../../student/components/LearningWidget';
 import {
   UserCheck,
@@ -30,44 +31,44 @@ export function StudentHome() {
   const [stats, setStats] = useState<any>(null);
 
   useEffect(() => {
+    let mounted = true;
     async function loadData() {
       try {
-        const token = localStorage.getItem('beyon_token') || localStorage.getItem('beyon_access_token');
-        if (token) {
-          const [profRes, chalRes, coinRes, streakRes, statsRes] = await Promise.all([
-            fetch('/api/v1/student/profile', { headers: { Authorization: `Bearer ${token}` } }).catch(() => null),
-            fetch('/api/v1/daily-challenge/today', { headers: { Authorization: `Bearer ${token}` } }).catch(() => null),
-            fetch('/api/v1/coins/balance', { headers: { Authorization: `Bearer ${token}` } }).catch(() => null),
-            fetch('/api/v1/gamification/streak', { headers: { Authorization: `Bearer ${token}` } }).catch(() => null),
-            fetch('/api/v1/practice/stats', { headers: { Authorization: `Bearer ${token}` } }).catch(() => null),
-          ]);
-          if (profRes && profRes.ok) {
-            const data = await profRes.json();
-            setProfileData(data.data || null);
-          }
-          if (chalRes && chalRes.ok) {
-            const data = await chalRes.json();
-            setDailyChallenge(data.data || null);
-          }
-          if (coinRes && coinRes.ok) {
-            const data = await coinRes.json();
-            setCoins(data.data ?? 0);
-          }
-          if (streakRes && streakRes.ok) {
-            const data = await streakRes.json();
-            setStreak(data.data?.currentStreak ?? 0);
-          }
-          if (statsRes && statsRes.ok) {
-            const data = await statsRes.json();
-            setStats(data.data || null);
-          }
+        const [profRes, chalRes, coinRes, streakRes, statsRes] = await Promise.all([
+          api.get<any>('/student/profile').catch(() => null),
+          api.get<any>('/daily-challenge/today').catch(() => null),
+          api.get<any>('/coins/balance').catch(() => null),
+          api.get<any>('/gamification/streak').catch(() => null),
+          api.get<any>('/practice/stats').catch(() => null),
+        ]);
+        if (!mounted) return;
+        if (profRes) setProfileData(profRes.data || profRes);
+        if (chalRes) setDailyChallenge(chalRes.data || chalRes);
+        if (typeof coinRes === 'number') {
+          setCoins(coinRes);
+        } else if (coinRes?.data !== undefined) {
+          setCoins(typeof coinRes.data === 'number' ? coinRes.data : 0);
         }
-      } catch {
-
+        if (typeof streakRes?.currentStreak === 'number') {
+          setStreak(streakRes.currentStreak);
+        } else if (typeof streakRes?.data?.currentStreak === 'number') {
+          setStreak(streakRes.data.currentStreak);
+        }
+        if (statsRes) setStats(statsRes.data || statsRes);
+      } catch (err) {
+        console.error('Failed to load student home stats:', err);
       }
     }
     loadData();
-  }, []);
+
+    window.addEventListener('beyon-stats-refresh', loadData);
+    window.addEventListener('focus', loadData);
+    return () => {
+      mounted = false;
+      window.removeEventListener('beyon-stats-refresh', loadData);
+      window.removeEventListener('focus', loadData);
+    };
+  }, [user?.id]);
 
   const displayName = profileData?.fullName || user?.name || 'Candidate';
   const firstName = displayName.split(' ')[0];

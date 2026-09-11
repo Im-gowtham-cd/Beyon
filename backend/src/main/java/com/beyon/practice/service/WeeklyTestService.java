@@ -94,7 +94,6 @@ public class WeeklyTestService {
         com.beyon.practice.model.TestAttempt saved = attemptRepo.save(attempt);
 
         coinService.earnCoins(studentId, "WEEKEND_TEST_COMPLETED", "TEST", testId);
-        streakService.recordActivity(studentId);
         skillXpService.earnXp(studentId, UUID.nameUUIDFromBytes("WEEKLY_TEST".getBytes()), 250, "WEEKLY_TEST", testId, "Completed " + test.getTitle());
 
         return saved;

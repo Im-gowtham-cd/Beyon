@@ -121,6 +121,7 @@ export function DailyChallengePage() {
       if (isCorrect) {
         setSessionXP(prev => prev + (res?.xpEarned || 25));
         setSessionCoins(prev => prev + (res?.coinsEarned || 10));
+        window.dispatchEvent(new Event('beyon-stats-refresh'));
       }
     } catch {
       const correctOptObj = currentQuestion.options.find(o => o.isCorrect);
@@ -136,6 +137,7 @@ export function DailyChallengePage() {
       }));
       setSessionXP(prev => prev + 25);
       setSessionCoins(prev => prev + 10);
+      window.dispatchEvent(new Event('beyon-stats-refresh'));
     } finally {
       setSubmitting(false);
     }
@@ -177,6 +179,7 @@ export function DailyChallengePage() {
         setClaimedBonus(prev => ({ ...prev, [activeTab]: true }));
         setSessionCoins(prev => prev + 100);
         setClaimMessage('100 Beyon Coins successfully claimed & credited to your wallet!');
+        window.dispatchEvent(new Event('beyon-stats-refresh'));
       } else {
         setClaimMessage(res?.message || 'Unable to claim bonus');
       }
@@ -184,6 +187,7 @@ export function DailyChallengePage() {
       setClaimedBonus(prev => ({ ...prev, [activeTab]: true }));
       setSessionCoins(prev => prev + 100);
       setClaimMessage('100 Beyon Coins successfully claimed & credited to your wallet!');
+      window.dispatchEvent(new Event('beyon-stats-refresh'));
     } finally {
       setClaiming(false);
     }

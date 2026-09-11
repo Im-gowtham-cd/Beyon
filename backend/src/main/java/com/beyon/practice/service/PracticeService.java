@@ -131,8 +131,6 @@ public class PracticeService {
             if (question.getSkillId() != null) {
                 skillXpService.earnXp(studentId, question.getSkillId(), xpAmount, "PRACTICE", saved.getId(), "Solved " + question.getDifficulty() + " question");
             }
-
-            streakService.recordActivity(studentId);
         }
 
         return saved;

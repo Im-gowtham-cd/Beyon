@@ -130,4 +130,9 @@ sql-server.info
 .freebuff
 presentation/
 
+# ─── Local Services & Emulators ───────────────────────────────
+floci-data/
+dolt-data/
+
 backend\uploads\evidence
+

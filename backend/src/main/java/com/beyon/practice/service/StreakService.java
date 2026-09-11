@@ -71,8 +71,24 @@ public class StreakService {
         }
     }
 
+    @Transactional
     public StudentStreak getStreak(UUID studentId) {
-        return streakRepository.findByStudentId(studentId).orElse(null);
+        return streakRepository.findByStudentId(studentId).map(streak -> {
+            LocalDate today = LocalDate.now();
+            if (streak.getLastActivityDate() != null && streak.getLastActivityDate().isBefore(today.minusDays(1))) {
+                if (streak.getCurrentStreak() != 0) {
+                    streak.setCurrentStreak(0);
+                    streakRepository.save(streak);
+                }
+            }
+            return streak;
+        }).orElseGet(() -> {
+            StudentStreak s = new StudentStreak();
+            s.setStudentId(studentId);
+            s.setCurrentStreak(0);
+            s.setLongestStreak(0);
+            return s;
+        });
     }
 
     public List<StudentAchievementBadge> getBadges(UUID studentId) {

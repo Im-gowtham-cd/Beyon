@@ -272,7 +272,6 @@ public class DailyChallengeService {
 
         if (correct) {
             coinService.earnCoins(studentId, "DAILY_SPRINT_QUESTION_CORRECT", "DAILY_SPRINT", questionId);
-            streakService.recordActivity(studentId);
             questionRepository.findById(questionId).ifPresent(q -> {
                 practiceService.updateStats(studentId, q, true, timeSpent != null ? timeSpent : 30);
                 if (q.getSkillId() != null) {

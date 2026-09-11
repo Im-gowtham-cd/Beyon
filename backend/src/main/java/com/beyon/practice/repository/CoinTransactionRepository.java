@@ -16,5 +16,7 @@ public interface CoinTransactionRepository extends JpaRepository<CoinTransaction
 
     @Query("SELECT COUNT(ct) FROM CoinTransaction ct WHERE ct.studentId = :studentId AND ct.reason = :reason AND ct.createdAt >= :since")
     long countSinceByStudentAndReason(@Param("studentId") UUID studentId, @Param("reason") String reason, @Param("since") Instant since);
+
+    boolean existsByStudentIdAndReason(UUID studentId, String reason);
 }
 

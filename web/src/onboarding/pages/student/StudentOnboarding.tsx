@@ -358,6 +358,7 @@ export function StudentOnboarding() {
       }).catch(() => {});
 
       await refreshProfileStatus().catch(() => {});
+      window.dispatchEvent(new Event('beyon-stats-refresh'));
 
       navigate('/onboarding/complete');
     } catch (err: any) {

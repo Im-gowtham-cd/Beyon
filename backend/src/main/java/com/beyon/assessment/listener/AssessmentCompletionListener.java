@@ -72,8 +72,6 @@ public class AssessmentCompletionListener {
 
         coinService.earnCoins(studentId, "ASSESSMENT_COMPLETED", "ASSESSMENT", event.sessionId());
 
-        streakService.recordActivity(studentId);
-
         UUID skillId = UUID.nameUUIDFromBytes("TECHNICAL_ASSESSMENT".getBytes());
         skillXpService.earnXp(studentId, skillId, 100, "ASSESSMENT", event.sessionId(), "Completed assessment with score " + score + "%");
 

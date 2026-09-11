@@ -120,7 +120,6 @@ public class AuthService {
             try {
                 coinService.getOrCreateWallet(savedUser.getId());
                 coinService.earnCoins(savedUser.getId(), "WELCOME_BONUS", "REGISTRATION", savedUser.getId());
-                streakService.recordActivity(savedUser.getId());
             } catch (Exception ignored) {}
         } else if (request.getRole() == UserRole.COMPANY) {
             CompanyProfile profile = new CompanyProfile();
