@@ -8,14 +8,24 @@ import org.springframework.context.annotation.Configuration;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.comprehend.ComprehendClient;
+import software.amazon.awssdk.services.comprehend.ComprehendClientBuilder;
+import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
+import software.amazon.awssdk.services.dynamodb.DynamoDbClientBuilder;
 import software.amazon.awssdk.services.eventbridge.EventBridgeClient;
 import software.amazon.awssdk.services.eventbridge.EventBridgeClientBuilder;
+import software.amazon.awssdk.services.kms.KmsClient;
+import software.amazon.awssdk.services.kms.KmsClientBuilder;
+import software.amazon.awssdk.services.rekognition.RekognitionClient;
+import software.amazon.awssdk.services.rekognition.RekognitionClientBuilder;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.S3ClientBuilder;
 import software.amazon.awssdk.services.sns.SnsClient;
 import software.amazon.awssdk.services.sns.SnsClientBuilder;
 import software.amazon.awssdk.services.sqs.SqsClient;
 import software.amazon.awssdk.services.sqs.SqsClientBuilder;
+import software.amazon.awssdk.services.transcribe.TranscribeClient;
+import software.amazon.awssdk.services.transcribe.TranscribeClientBuilder;
 
 import java.net.URI;
 
@@ -93,6 +103,76 @@ public class AwsClientConfig {
 
         if (endpointUrl != null && !endpointUrl.isBlank()) {
             log.info("Configuring EventBridgeClient with custom endpoint: {}", endpointUrl);
+            builder.endpointOverride(URI.create(endpointUrl));
+        }
+
+        return builder.build();
+    }
+
+    @Bean
+    public RekognitionClient rekognitionClient() {
+        RekognitionClientBuilder builder = RekognitionClient.builder()
+                .region(Region.of(region))
+                .credentialsProvider(credentialsProvider());
+
+        if (endpointUrl != null && !endpointUrl.isBlank()) {
+            log.info("Configuring RekognitionClient with custom endpoint: {}", endpointUrl);
+            builder.endpointOverride(URI.create(endpointUrl));
+        }
+
+        return builder.build();
+    }
+
+    @Bean
+    public TranscribeClient transcribeClient() {
+        TranscribeClientBuilder builder = TranscribeClient.builder()
+                .region(Region.of(region))
+                .credentialsProvider(credentialsProvider());
+
+        if (endpointUrl != null && !endpointUrl.isBlank()) {
+            log.info("Configuring TranscribeClient with custom endpoint: {}", endpointUrl);
+            builder.endpointOverride(URI.create(endpointUrl));
+        }
+
+        return builder.build();
+    }
+
+    @Bean
+    public ComprehendClient comprehendClient() {
+        ComprehendClientBuilder builder = ComprehendClient.builder()
+                .region(Region.of(region))
+                .credentialsProvider(credentialsProvider());
+
+        if (endpointUrl != null && !endpointUrl.isBlank()) {
+            log.info("Configuring ComprehendClient with custom endpoint: {}", endpointUrl);
+            builder.endpointOverride(URI.create(endpointUrl));
+        }
+
+        return builder.build();
+    }
+
+    @Bean
+    public DynamoDbClient dynamoDbClient() {
+        DynamoDbClientBuilder builder = DynamoDbClient.builder()
+                .region(Region.of(region))
+                .credentialsProvider(credentialsProvider());
+
+        if (endpointUrl != null && !endpointUrl.isBlank()) {
+            log.info("Configuring DynamoDbClient with custom endpoint: {}", endpointUrl);
+            builder.endpointOverride(URI.create(endpointUrl));
+        }
+
+        return builder.build();
+    }
+
+    @Bean
+    public KmsClient kmsClient() {
+        KmsClientBuilder builder = KmsClient.builder()
+                .region(Region.of(region))
+                .credentialsProvider(credentialsProvider());
+
+        if (endpointUrl != null && !endpointUrl.isBlank()) {
+            log.info("Configuring KmsClient with custom endpoint: {}", endpointUrl);
             builder.endpointOverride(URI.create(endpointUrl));
         }
 

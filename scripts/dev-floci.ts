@@ -123,6 +123,13 @@ async function provisionAwsResources() {
     // verified
   }
 
+  try {
+    run(`aws --endpoint-url=${endpoint} dynamodb create-table --table-name BeyonProctorIncidents --attribute-definitions AttributeName=sessionId,AttributeType=S AttributeName=timestamp,AttributeType=N --key-schema AttributeName=sessionId,KeyType=HASH AttributeName=timestamp,KeyType=RANGE --billing-mode PAY_PER_REQUEST`, true);
+    console.log('  ✓ DynamoDB Table: BeyonProctorIncidents');
+  } catch {
+    console.log('  ✓ DynamoDB Table: BeyonProctorIncidents (verified)');
+  }
+
   console.log('\n======================================================');
   console.log('🎉 BEYON FLOCI AWS EMULATOR READY & PROVISIONED');
   console.log('Endpoint: http://localhost:4566');

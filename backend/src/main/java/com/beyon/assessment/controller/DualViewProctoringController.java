@@ -27,6 +27,7 @@ public class DualViewProctoringController {
     private final ProctoringEvidenceRepository evidenceRepo;
     private final AssessmentSessionRepository assessmentSessionRepo;
     private final JwtUtil jwtUtil;
+    private final FlociProctoringAiService flociAiService;
     private final java.net.http.HttpClient httpClient = java.net.http.HttpClient.newBuilder()
             .version(java.net.http.HttpClient.Version.HTTP_1_1)
             .connectTimeout(java.time.Duration.ofMillis(2000))
@@ -47,7 +48,8 @@ public class DualViewProctoringController {
             ProctoringIncidentRepository incidentRepo,
             ProctoringEvidenceRepository evidenceRepo,
             AssessmentSessionRepository assessmentSessionRepo,
-            JwtUtil jwtUtil) {
+            JwtUtil jwtUtil,
+            FlociProctoringAiService flociAiService) {
         this.dvService = dvService;
         this.correlationEngine = correlationEngine;
         this.riskScoringService = riskScoringService;
@@ -59,6 +61,7 @@ public class DualViewProctoringController {
         this.evidenceRepo = evidenceRepo;
         this.assessmentSessionRepo = assessmentSessionRepo;
         this.jwtUtil = jwtUtil;
+        this.flociAiService = flociAiService;
     }
 
     @PostMapping("/initiate")
@@ -191,6 +194,19 @@ public class DualViewProctoringController {
         return ResponseEntity.ok(Map.of("ok", true));
     }
 
+    private byte[] decodeBase64Image(String frameData) {
+        if (frameData == null || frameData.isEmpty()) return null;
+        String b64 = frameData;
+        if (b64.contains(",")) {
+            b64 = b64.substring(b64.indexOf(",") + 1);
+        }
+        try {
+            return Base64.getDecoder().decode(b64);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
     @PostMapping("/{id}/mobile-frame")
     public ResponseEntity<?> mobileFrame(@PathVariable UUID id, @RequestBody Map<String, Object> body) {
         DualViewSession session = dvSessionRepo.findById(id).orElse(null);
@@ -203,105 +219,30 @@ public class DualViewProctoringController {
             dvSessionRepo.save(session);
         }
 
-        boolean secondPersonDetected = false;
-        boolean phoneDetected = false;
+        String frameData = (String) body.get("frameData");
+        byte[] frameBytes = decodeBase64Image(frameData);
+
+        // Run local Floci AWS Rekognition, S3, and DynamoDB pipeline
+        FlociProctoringAiService.FrameAnalysisResult flociResult = null;
+        if (frameBytes != null) {
+            flociResult = flociAiService.analyzeFrame(id, frameBytes, "MOBILE");
+        }
+
+        boolean secondPersonDetected = flociResult != null && flociResult.multipleFaces;
+        boolean phoneDetected = flociResult != null && flociResult.phoneDetected;
+        boolean candidateAbsent = flociResult != null && flociResult.candidateAbsent;
         boolean cameraObstructed = false;
-        boolean candidateAbsent = false;
         String warningMessage = null;
 
-        try {
-            String frameData = (String) body.get("frameData");
-            if (frameData != null && !frameData.isEmpty()) {
-                Map<String, Object> aiReq = Map.of(
-                    "procSessionId", id.toString(),
-                    "frameData", frameData,
-                    "timestamp", System.currentTimeMillis()
-                );
-                String reqJson = objectMapper.writeValueAsString(aiReq);
-                var httpRequest = java.net.http.HttpRequest.newBuilder()
-                    .uri(java.net.URI.create("http://localhost:8000/analyze/mobile-frame"))
-                    .header("Content-Type", "application/json")
-                    .timeout(java.time.Duration.ofMillis(1800))
-                    .POST(java.net.http.HttpRequest.BodyPublishers.ofString(reqJson))
-                    .build();
-
-                var httpResponse = httpClient.send(httpRequest, java.net.http.HttpResponse.BodyHandlers.ofString());
-                if (httpResponse.statusCode() == 200) {
-                    var aiResp = objectMapper.readValue(httpResponse.body(), Map.class);
-                    int personCount = aiResp.get("personCount") instanceof Number ? ((Number) aiResp.get("personCount")).intValue() : 1;
-                    Boolean secondaryDevice = (Boolean) aiResp.get("secondaryDeviceDetected");
-                    Boolean obstructed = (Boolean) aiResp.get("cameraObstructed");
-                    Boolean absent = (Boolean) aiResp.get("candidateAbsent");
-
-                    List<?> eventsList = (List<?>) aiResp.get("events");
-                    if (eventsList != null) {
-                        for (Object evtObj : eventsList) {
-                            if (evtObj instanceof Map<?, ?> evtMap) {
-                                String evType = (String) evtMap.get("eventType");
-                                if ("CAMERA_OBSTRUCTION".equals(evType)) {
-                                    obstructed = true;
-                                } else if ("NO_PERSON_DETECTED".equals(evType)) {
-                                    absent = true;
-                                }
-                            }
-                        }
-                    }
-
-                    long now = System.currentTimeMillis();
-                    long lastInc = lastIncidentTimeMap.getOrDefault(id, 0L);
-
-                    if (Boolean.TRUE.equals(obstructed)) {
-                        cameraObstructed = true;
-                        correlationEngine.recordSignal(id.toString(), "CAMERA_COVERED", "MOBILE_CAMERA", 0.96, null);
-                        if (now - lastInc > 6000) {
-                            lastIncidentTimeMap.put(id, now);
-                            incidentService.createIncident(id, "CAMERA_TAMPERING", "CRITICAL", 0.96, 30, null, List.of("MOBILE_CAMERA"), 1);
-                        }
-                        warningMessage = "WARNING: Camera lens covered or obstructed! Uncover lens immediately!";
-                    } else if (Boolean.TRUE.equals(absent) || personCount == 0) {
-                        int streak = absentStreakMap.merge(id, 1, Integer::sum);
-                        if (streak >= 3) {
-                            candidateAbsent = true;
-                            correlationEngine.recordSignal(id.toString(), "FACE_MISSING", "MOBILE_CAMERA", 0.95, null);
-                            if (now - lastInc > 8000) {
-                                lastIncidentTimeMap.put(id, now);
-                                incidentService.createIncident(id, "CANDIDATE_ABSENT", "HIGH", 0.95, 20, null, List.of("MOBILE_CAMERA"), 1);
-                            }
-                            warningMessage = "WARNING: Candidate not visible in workspace view! Return immediately!";
-                        }
-                    } else {
-                        absentStreakMap.put(id, 0);
-                    }
-
-                    if (personCount > 1) {
-                        int pStreak = secondPersonStreakMap.merge(id, 1, Integer::sum);
-                        if (pStreak >= 3) {
-                            secondPersonDetected = true;
-                            correlationEngine.recordSignal(id.toString(), "SECOND_PERSON", "MOBILE_CAMERA", 0.92, null);
-                            if (now - lastInc > 8000) {
-                                lastIncidentTimeMap.put(id, now);
-                                incidentService.createIncident(id, "SECOND_PERSON", "HIGH", 0.92, 25, null, List.of("MOBILE_CAMERA"), 1);
-                            }
-                            warningMessage = "WARNING: Additional person detected in secondary camera view";
-                        }
-                    } else {
-                        secondPersonStreakMap.put(id, 0);
-                    }
-
-                    if (Boolean.TRUE.equals(secondaryDevice)) {
-                        phoneDetected = true;
-                        correlationEngine.recordSignal(id.toString(), "PHONE_DETECTED", "MOBILE_CAMERA", 0.98, null);
-                        if (now - lastInc > 6000) {
-                            lastIncidentTimeMap.put(id, now);
-                            incidentService.createIncident(id, "PHONE_DETECTED", "CRITICAL", 0.98, 50, null, List.of("MOBILE_CAMERA"), 1);
-                        }
-                        warningMessage = "CRITICAL VIOLATION: Mobile phone detected! Test terminating!";
-                    }
-                }
-            }
-        } catch (Exception e) {
-            System.err.println("[DualViewProctoringController] AI service call error: " + e.getMessage());
+        if (phoneDetected) {
+            warningMessage = "CRITICAL VIOLATION: Mobile phone detected! Strike recorded.";
+        } else if (secondPersonDetected) {
+            warningMessage = "WARNING: Additional person detected in camera view.";
+        } else if (candidateAbsent) {
+            warningMessage = "WARNING: Candidate not visible in workspace view!";
         }
+
+        int strikes = flociAiService.getStrikes(id);
 
         Map<String, Object> resp = new HashMap<>();
         resp.put("ok", true);
@@ -309,16 +250,62 @@ public class DualViewProctoringController {
         resp.put("phoneDetected", phoneDetected);
         resp.put("cameraObstructed", cameraObstructed);
         resp.put("candidateAbsent", candidateAbsent);
+        resp.put("strikes", strikes);
+        if (flociResult != null) {
+            resp.put("evidenceS3Key", flociResult.evidenceS3Key);
+            resp.put("riskDelta", flociResult.calculatedRiskDelta);
+            resp.put("primaryViolation", flociResult.primaryViolation);
+            resp.put("detectedLabels", flociResult.detectedLabels);
+        }
         if (warningMessage != null) {
             resp.put("warningMessage", warningMessage);
         }
         return ResponseEntity.ok(resp);
     }
 
+    @PostMapping("/{id}/laptop-frame")
+    public ResponseEntity<?> laptopFrame(@PathVariable UUID id, @RequestBody Map<String, Object> body) {
+        String frameData = (String) body.get("frameData");
+        byte[] frameBytes = decodeBase64Image(frameData);
+
+        FlociProctoringAiService.FrameAnalysisResult flociResult = null;
+        if (frameBytes != null) {
+            flociResult = flociAiService.analyzeFrame(id, frameBytes, "LAPTOP");
+        }
+
+        int strikes = flociAiService.getStrikes(id);
+        Map<String, Object> resp = new HashMap<>();
+        resp.put("ok", true);
+        resp.put("strikes", strikes);
+        if (flociResult != null) {
+            resp.put("evidenceS3Key", flociResult.evidenceS3Key);
+            resp.put("riskDelta", flociResult.calculatedRiskDelta);
+            resp.put("primaryViolation", flociResult.primaryViolation);
+            resp.put("detectedLabels", flociResult.detectedLabels);
+        }
+        return ResponseEntity.ok(resp);
+    }
+
     @PostMapping("/{id}/mobile-audio")
     public ResponseEntity<?> mobileAudio(@PathVariable UUID id, @RequestBody Map<String, Object> body) {
+        String audioData = (String) body.get("audioData");
+        byte[] audioBytes = decodeBase64Image(audioData);
+        boolean flagged = flociAiService.analyzeAudioChunk(id, audioBytes);
+        return ResponseEntity.ok(Map.of("ok", true, "flagged", flagged, "strikes", flociAiService.getStrikes(id)));
+    }
 
-        return ResponseEntity.ok(Map.of("ok", true));
+    @PostMapping("/{id}/telemetry")
+    public ResponseEntity<?> telemetryEvent(@PathVariable UUID id, @RequestBody Map<String, Object> body) {
+        String eventType = (String) body.getOrDefault("eventType", "TAB_SWITCH");
+        String metadata = (String) body.get("metadata");
+        flociAiService.recordTelemetryIncident(id, eventType, metadata);
+        return ResponseEntity.ok(Map.of("ok", true, "strikes", flociAiService.getStrikes(id)));
+    }
+
+    @GetMapping("/{id}/dynamo-incidents")
+    public ResponseEntity<?> getDynamoIncidents(@PathVariable UUID id) {
+        List<Map<String, Object>> incidents = flociAiService.getIncidentsFromDynamoDb(id);
+        return ResponseEntity.ok(Map.of("success", true, "data", incidents, "strikes", flociAiService.getStrikes(id)));
     }
 
     @PostMapping("/{id}/mobile-disconnect")
