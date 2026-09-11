@@ -18,6 +18,8 @@ public interface QuestionRepository extends JpaRepository<Question, UUID> {
     @Query("SELECT q FROM Question q WHERE (q.status = 'PUBLISHED' OR q.status = 'ACTIVE') AND q.skillId = :skillId ORDER BY q.createdAt DESC")
     List<Question> findBySkillIdPublished(@Param("skillId") UUID skillId, Pageable pageable);
 
+    List<Question> findBySkillId(UUID skillId);
+
     @Query("SELECT q FROM Question q WHERE (q.status = 'PUBLISHED' OR q.status = 'ACTIVE') AND q.topicId = :topicId ORDER BY q.createdAt DESC")
     List<Question> findByTopicIdPublished(@Param("topicId") UUID topicId, Pageable pageable);
 

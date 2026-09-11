@@ -1,6 +1,10 @@
-import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { Search, CheckCircle2, RefreshCw, Eye, X, Code, Check, Plus, Edit2, Trash2, AlertTriangle, AlertCircle } from 'lucide-react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
+import {
+  Search, CheckCircle2, RefreshCw, Eye, X, Code, Check, Plus,
+  Edit2, Trash2, AlertTriangle, AlertCircle, Sparkles, Filter, Layers,
+  ChevronDown
+} from 'lucide-react';
 import styles from './AdminHome.module.css';
 
 interface QuestionItem {
@@ -26,11 +30,26 @@ interface QuestionOption {
   explanation?: string;
 }
 
+interface SkillMeta {
+  id: string;
+  name: string;
+  category?: string;
+  slug?: string;
+}
+
 export function AdminQuestionsPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const urlSkillId = searchParams.get('skillId') || 'ALL';
+  const urlSearch = searchParams.get('search') || '';
+
+  const [skills, setSkills] = useState<SkillMeta[]>([]);
+  const [selectedSkillId, setSelectedSkillId] = useState<string>(urlSkillId);
+  const [search, setSearch] = useState(urlSearch);
+  const [difficulty, setDifficulty] = useState('ALL');
+
   const [questions, setQuestions] = useState<QuestionItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
-  const [difficulty, setDifficulty] = useState('ALL');
+  const [recommending, setRecommending] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
 
   const [selectedQuestion, setSelectedQuestion] = useState<QuestionItem | null>(null);
@@ -39,28 +58,97 @@ export function AdminQuestionsPage() {
 
   const [questionToDelete, setQuestionToDelete] = useState<QuestionItem | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [recommendLevelMenuOpen, setRecommendLevelMenuOpen] = useState(false);
 
-  const fetchQuestions = async () => {
+  // Fetch taxonomy skills for dropdown and mapping labels
+  useEffect(() => {
+    async function loadTaxonomySkills() {
+      try {
+        const token = localStorage.getItem('beyon_token') || localStorage.getItem('beyon_access_token');
+        const res = await fetch('/api/v1/taxonomy/skills', {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+        if (res.ok) {
+          const data = await res.json();
+          const list = Array.isArray(data.data) ? data.data : (Array.isArray(data) ? data : []);
+          setSkills(list);
+        }
+      } catch {
+        // Silently handle
+      }
+    }
+    loadTaxonomySkills();
+  }, []);
+
+  const skillsMap = useMemo(() => {
+    const map = new Map<string, SkillMeta>();
+    for (const s of skills) {
+      map.set(s.id, s);
+    }
+    return map;
+  }, [skills]);
+
+  const activeSkillMeta = useMemo(() => {
+    if (!selectedSkillId || selectedSkillId === 'ALL') return null;
+    return skillsMap.get(selectedSkillId) || skills.find((s) => s.id === selectedSkillId) || null;
+  }, [selectedSkillId, skillsMap, skills]);
+
+  // Fetch questions from backend with skill and search scoping
+  const fetchQuestions = useCallback(async (targetSkillId?: string, targetSearch?: string) => {
     setLoading(true);
     try {
+      const activeSkill = targetSkillId !== undefined ? targetSkillId : selectedSkillId;
+      const activeSearch = targetSearch !== undefined ? targetSearch : search;
       const token = localStorage.getItem('beyon_token') || localStorage.getItem('beyon_access_token');
-      const res = await fetch('/api/v1/questions?size=100', {
+
+      const params = new URLSearchParams();
+      params.set('size', '100');
+      if (activeSkill && activeSkill !== 'ALL') {
+        params.set('skillId', activeSkill);
+      }
+      if (activeSearch && activeSearch.trim()) {
+        params.set('search', activeSearch.trim());
+      }
+
+      const res = await fetch(`/api/v1/questions?${params.toString()}`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       if (res.ok) {
         const data = await res.json();
         setQuestions(data.data || []);
+      } else {
+        setQuestions([]);
       }
     } catch {
       setQuestions([]);
     } finally {
       setLoading(false);
     }
+  }, [selectedSkillId, search]);
+
+  // Sync state when URL search params change
+  useEffect(() => {
+    const pSkillId = searchParams.get('skillId') || 'ALL';
+    const pSearch = searchParams.get('search') || '';
+    setSelectedSkillId(pSkillId);
+    setSearch(pSearch);
+    fetchQuestions(pSkillId, pSearch);
+  }, [searchParams, fetchQuestions]);
+
+  const handleSelectSkill = (newSkillId: string) => {
+    setSelectedSkillId(newSkillId);
+    const nextParams = new URLSearchParams();
+    if (newSkillId && newSkillId !== 'ALL') nextParams.set('skillId', newSkillId);
+    if (search.trim()) nextParams.set('search', search.trim());
+    setSearchParams(nextParams);
   };
 
-  useEffect(() => {
-    fetchQuestions();
-  }, []);
+  const handleClearSkillFilter = () => {
+    setSelectedSkillId('ALL');
+    const nextParams = new URLSearchParams();
+    if (search.trim()) nextParams.set('search', search.trim());
+    setSearchParams(nextParams);
+  };
 
   const openQuestionAudit = async (q: QuestionItem) => {
     setSelectedQuestion(q);
@@ -84,7 +172,51 @@ export function AdminQuestionsPage() {
 
   const handleAction = (text: string) => {
     setMsg(text);
-    setTimeout(() => setMsg(null), 4000);
+    setTimeout(() => setMsg(null), 5000);
+  };
+
+  const handleRecommendSkillQuestions = async (targetSkillId?: string, targetLevel: string = 'ALL') => {
+    const skId = targetSkillId || selectedSkillId;
+    if (!skId || skId === 'ALL') {
+      handleAction('Please select a specific skill from the dropdown to recommend targeted questions.');
+      return;
+    }
+    const targetSkill = skillsMap.get(skId) || skills.find((s) => s.id === skId);
+    const skillName = targetSkill ? targetSkill.name : 'Selected Skill';
+
+    setRecommending(true);
+    setRecommendLevelMenuOpen(false);
+    try {
+      const token = localStorage.getItem('beyon_token') || localStorage.getItem('beyon_access_token');
+      const res = await fetch('/api/v1/questions/recommend-for-skill', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          skillId: skId,
+          skillName: skillName,
+          level: targetLevel,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || 'Failed to recommend questions for skill');
+      }
+      const data = await res.json();
+      const count = (data.data && Array.isArray(data.data)) ? data.data.length : 0;
+      if (count === 0) {
+        handleAction(`All authentic ${targetLevel === 'ALL' ? 'Level 1-3' : targetLevel} questions for ${skillName} are already in your bank!`);
+      } else {
+        handleAction(`⚡ Successfully recommended & seeded ${count} authentic ${targetLevel === 'ALL' ? 'Level-by-Level' : targetLevel} questions for ${skillName}!`);
+      }
+      await fetchQuestions(skId, search);
+    } catch (err: any) {
+      handleAction(err.message || 'Error generating questions. Please try again.');
+    } finally {
+      setRecommending(false);
+    }
   };
 
   const handleDeleteQuestion = async () => {
@@ -118,8 +250,13 @@ export function AdminQuestionsPage() {
     const s = search.toLowerCase();
     const matchesSearch = !search || title.includes(s);
     const matchesDiff = difficulty === 'ALL' || q.difficulty === difficulty;
-    return matchesSearch && matchesDiff;
+    const matchesSkill = selectedSkillId === 'ALL' || q.skillId === selectedSkillId;
+    return matchesSearch && matchesDiff && matchesSkill;
   });
+
+  const level1Count = questions.filter((q) => (selectedSkillId === 'ALL' || q.skillId === selectedSkillId) && q.difficulty === 'EASY').length;
+  const level2Count = questions.filter((q) => (selectedSkillId === 'ALL' || q.skillId === selectedSkillId) && q.difficulty === 'MEDIUM').length;
+  const level3Count = questions.filter((q) => (selectedSkillId === 'ALL' || q.skillId === selectedSkillId) && q.difficulty === 'HARD').length;
 
   const getOptionLetter = (idx: number) => String.fromCharCode(65 + idx);
 
@@ -128,15 +265,96 @@ export function AdminQuestionsPage() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px', marginBottom: '20px' }}>
         <div>
           <h1 style={{ fontSize: '1.6rem', fontWeight: 800, color: '#1c2d81', margin: '0 0 4px', letterSpacing: '-0.02em' }}>
-            Technical Question Bank &amp; Taxonomy ({questions.length} Verified)
+            Technical Question Bank &amp; Taxonomy ({questions.length} Questions)
           </h1>
           <p style={{ fontSize: '0.86rem', color: '#64748b', margin: 0 }}>
-            Curate Single Choice MCQs, Multi-Select questions, coding challenges, and system design benchmarks.
+            Curate verified Single Choice MCQs, Multi-Select questions, coding challenges, and syllabus-aligned benchmarks.
           </p>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          {activeSkillMeta && (
+            <div style={{ position: 'relative' }}>
+              <button
+                onClick={() => setRecommendLevelMenuOpen((prev) => !prev)}
+                disabled={recommending}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  background: '#fed601',
+                  color: '#1c2d81',
+                  border: '1px solid #fed601',
+                  padding: '8px 16px',
+                  fontSize: '0.84rem',
+                  fontWeight: 800,
+                  cursor: recommending ? 'not-allowed' : 'pointer',
+                }}
+              >
+                <Sparkles size={15} className={recommending ? 'spin' : ''} />
+                <span>{recommending ? 'Generating...' : `⚡ Recommend ${activeSkillMeta.name} Questions`}</span>
+                <ChevronDown size={14} />
+              </button>
+
+              {recommendLevelMenuOpen && (
+                <div style={{
+                  position: 'absolute',
+                  top: '100%',
+                  right: 0,
+                  marginTop: '6px',
+                  background: '#ffffff',
+                  border: '1px solid #cbd5e1',
+                  borderRadius: '4px',
+                  boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.15)',
+                  zIndex: 100,
+                  minWidth: '240px',
+                  overflow: 'hidden',
+                }}>
+                  <div style={{ padding: '8px 12px', fontSize: '0.72rem', fontWeight: 800, textTransform: 'uppercase', color: '#64748b', background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+                    Select Proficiency Level
+                  </div>
+                  <button
+                    onClick={() => handleRecommendSkillQuestions(activeSkillMeta.id, 'ALL')}
+                    style={{ width: '100%', padding: '10px 14px', textAlign: 'left', background: 'none', border: 'none', fontSize: '0.82rem', fontWeight: 700, color: '#0f172a', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = '#f1f5f9')}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = 'none')}
+                  >
+                    <Layers size={14} color="#1c2d81" />
+                    <span>All Levels (Balanced Level 1 - 3)</span>
+                  </button>
+                  <button
+                    onClick={() => handleRecommendSkillQuestions(activeSkillMeta.id, 'EASY')}
+                    style={{ width: '100%', padding: '10px 14px', textAlign: 'left', background: 'none', border: 'none', fontSize: '0.82rem', fontWeight: 700, color: '#065f46', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = '#ecfdf5')}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = 'none')}
+                  >
+                    <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981' }} />
+                    <span>🟢 Level 1: Beginner (Syntax &amp; Types)</span>
+                  </button>
+                  <button
+                    onClick={() => handleRecommendSkillQuestions(activeSkillMeta.id, 'MEDIUM')}
+                    style={{ width: '100%', padding: '10px 14px', textAlign: 'left', background: 'none', border: 'none', fontSize: '0.82rem', fontWeight: 700, color: '#92400e', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = '#fffbeb')}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = 'none')}
+                  >
+                    <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#f59e0b' }} />
+                    <span>🟡 Level 2: Intermediate (Memory &amp; Pointers)</span>
+                  </button>
+                  <button
+                    onClick={() => handleRecommendSkillQuestions(activeSkillMeta.id, 'HARD')}
+                    style={{ width: '100%', padding: '10px 14px', textAlign: 'left', background: 'none', border: 'none', fontSize: '0.82rem', fontWeight: 700, color: '#991b1b', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = '#fef2f2')}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = 'none')}
+                  >
+                    <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#ef4444' }} />
+                    <span>🔴 Level 3: Advanced (Internals &amp; UB)</span>
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
           <button
-            onClick={fetchQuestions}
+            onClick={() => fetchQuestions()}
             style={{
               display: 'inline-flex',
               alignItems: 'center',
@@ -154,7 +372,7 @@ export function AdminQuestionsPage() {
           </button>
 
           <Link
-            to="/admin/questions/create"
+            to={selectedSkillId !== 'ALL' ? `/admin/questions/create?skillId=${selectedSkillId}` : '/admin/questions/create'}
             style={{
               display: 'inline-flex',
               alignItems: 'center',
@@ -182,52 +400,319 @@ export function AdminQuestionsPage() {
         </div>
       )}
 
-      <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center', marginBottom: '16px' }}>
+      {/* Active Skill Focus Banner with Level Breakdown */}
+      {activeSkillMeta && (
+        <div style={{
+          background: 'linear-gradient(135deg, #1c2d81 0%, #1e3a8a 100%)',
+          color: '#ffffff',
+          padding: '16px 20px',
+          borderRadius: '6px',
+          marginBottom: '16px',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: '14px',
+          boxShadow: '0 4px 14px rgba(28, 45, 129, 0.16)',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+            <div style={{
+              width: '46px',
+              height: '46px',
+              background: 'rgba(254, 214, 1, 0.2)',
+              border: '1.5px solid #fed601',
+              borderRadius: '6px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#fed601',
+              fontWeight: 900,
+              fontSize: '1.25rem',
+            }}>
+              {activeSkillMeta.name.charAt(0).toUpperCase()}
+            </div>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '0.72rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#fed601' }}>
+                  Active Skill Focus
+                </span>
+                {activeSkillMeta.category && (
+                  <span style={{ fontSize: '0.7rem', padding: '1px 7px', background: 'rgba(255, 255, 255, 0.15)', borderRadius: '3px', color: '#e2e8f0', fontWeight: 600 }}>
+                    {activeSkillMeta.category}
+                  </span>
+                )}
+              </div>
+              <h2 style={{ margin: '2px 0 0', fontSize: '1.2rem', fontWeight: 800, color: '#ffffff', letterSpacing: '-0.01em' }}>
+                {activeSkillMeta.name} — Technical Curriculum ({filtered.length} Questions Active)
+              </h2>
+
+              {/* Level-by-Level Distribution Badges */}
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginTop: '8px', flexWrap: 'wrap' }}>
+                <span style={{ fontSize: '0.72rem', padding: '2px 8px', background: 'rgba(16, 185, 129, 0.25)', border: '1px solid rgba(16, 185, 129, 0.6)', color: '#a7f3d0', borderRadius: '3px', fontWeight: 700 }}>
+                  🟢 Level 1 (Beginner): {level1Count} Qs
+                </span>
+                <span style={{ fontSize: '0.72rem', padding: '2px 8px', background: 'rgba(245, 158, 11, 0.25)', border: '1px solid rgba(245, 158, 11, 0.6)', color: '#fde68a', borderRadius: '3px', fontWeight: 700 }}>
+                  🟡 Level 2 (Intermediate): {level2Count} Qs
+                </span>
+                <span style={{ fontSize: '0.72rem', padding: '2px 8px', background: 'rgba(239, 68, 68, 0.25)', border: '1px solid rgba(239, 68, 68, 0.6)', color: '#fecaca', borderRadius: '3px', fontWeight: 700 }}>
+                  🔴 Level 3 (Advanced): {level3Count} Qs
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <button
+              onClick={() => handleRecommendSkillQuestions(activeSkillMeta.id, 'ALL')}
+              disabled={recommending}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                background: '#fed601',
+                color: '#1c2d81',
+                border: 'none',
+                padding: '8px 16px',
+                fontSize: '0.84rem',
+                fontWeight: 800,
+                cursor: recommending ? 'not-allowed' : 'pointer',
+                borderRadius: '3px',
+              }}
+            >
+              <Sparkles size={15} className={recommending ? 'spin' : ''} />
+              <span>{recommending ? 'Generating...' : '⚡ Recommend Level Questions'}</span>
+            </button>
+
+            <Link
+              to={`/admin/questions/create?skillId=${activeSkillMeta.id}`}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                background: 'rgba(255, 255, 255, 0.12)',
+                color: '#ffffff',
+                border: '1px solid rgba(255, 255, 255, 0.25)',
+                padding: '8px 14px',
+                fontSize: '0.82rem',
+                fontWeight: 700,
+                textDecoration: 'none',
+                borderRadius: '3px',
+              }}
+            >
+              <Plus size={14} />
+              <span>Post for {activeSkillMeta.name}</span>
+            </Link>
+
+            <button
+              onClick={handleClearSkillFilter}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '5px',
+                background: 'transparent',
+                color: '#cbd5e1',
+                border: 'none',
+                padding: '8px 10px',
+                fontSize: '0.82rem',
+                cursor: 'pointer',
+                textDecoration: 'underline',
+              }}
+            >
+              <X size={14} />
+              <span>Clear Filter</span>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Filter and Search Bar */}
+      <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center', marginBottom: '14px' }}>
         <div style={{ position: 'relative', flex: '1', minWidth: '260px' }}>
           <Search size={15} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
           <input
             type="text"
-            placeholder="Search by prompt, skill, or framework..."
+            placeholder="Search by prompt, code snippet, or technical concept..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => {
+              const val = e.target.value;
+              setSearch(val);
+              const nextParams = new URLSearchParams();
+              if (selectedSkillId && selectedSkillId !== 'ALL') nextParams.set('skillId', selectedSkillId);
+              if (val.trim()) nextParams.set('search', val.trim());
+              setSearchParams(nextParams);
+            }}
             style={{ width: '100%', padding: '10px 14px 10px 36px', border: '1px solid #cbd5e1', fontSize: '0.85rem', background: '#ffffff' }}
           />
         </div>
 
-        <select
-          value={difficulty}
-          onChange={(e) => setDifficulty(e.target.value)}
-          style={{ padding: '10px 14px', border: '1px solid #cbd5e1', fontSize: '0.85rem', background: '#ffffff', fontWeight: 600 }}
-        >
-          <option value="ALL">All Difficulties</option>
-          <option value="EASY">Easy</option>
-          <option value="MEDIUM">Medium</option>
-          <option value="HARD">Hard</option>
-        </select>
+        {/* Skill Taxonomy Filter Dropdown */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <Filter size={15} style={{ color: '#64748b' }} />
+          <select
+            value={selectedSkillId}
+            onChange={(e) => handleSelectSkill(e.target.value)}
+            style={{ padding: '10px 14px', border: '1px solid #cbd5e1', fontSize: '0.85rem', background: '#ffffff', fontWeight: 600, minWidth: '220px', color: '#1e293b' }}
+          >
+            <option value="ALL">All Skills ({skills.length} Available)</option>
+            {skills.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.name} {s.category ? `(${s.category})` : ''}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {/* Proficiency Level-by-Level Filter Pills */}
+      <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap' }}>
+        <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+          Proficiency Level:
+        </span>
+        {[
+          { id: 'ALL', label: 'All Levels', count: filtered.length },
+          { id: 'EASY', label: 'Level 1 • Beginner', color: '#10b981', bg: '#ecfdf5', border: '#a7f3d0', text: '#065f46', count: level1Count },
+          { id: 'MEDIUM', label: 'Level 2 • Intermediate', color: '#f59e0b', bg: '#fffbeb', border: '#fde68a', text: '#92400e', count: level2Count },
+          { id: 'HARD', label: 'Level 3 • Advanced', color: '#ef4444', bg: '#fef2f2', border: '#fecaca', text: '#991b1b', count: level3Count },
+        ].map((lvl) => {
+          const isSelected = difficulty === lvl.id;
+          return (
+            <button
+              key={lvl.id}
+              onClick={() => setDifficulty(lvl.id)}
+              style={{
+                padding: '6px 14px',
+                borderRadius: '20px',
+                border: isSelected ? '2px solid #1c2d81' : (lvl.border ? `1px solid ${lvl.border}` : '1px solid #cbd5e1'),
+                background: isSelected ? '#1c2d81' : (lvl.bg || '#ffffff'),
+                color: isSelected ? '#ffffff' : (lvl.text || '#334155'),
+                fontWeight: isSelected ? 800 : 700,
+                fontSize: '0.78rem',
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              {lvl.color && <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: isSelected ? '#ffffff' : lvl.color }} />}
+              <span>{lvl.label}</span>
+              <span style={{
+                padding: '1px 6px',
+                borderRadius: '10px',
+                fontSize: '0.7rem',
+                background: isSelected ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.06)',
+                color: isSelected ? '#ffffff' : '#64748b'
+              }}>
+                {lvl.count}
+              </span>
+            </button>
+          );
+        })}
       </div>
 
       <div className={styles.tableCard}>
         <table className={styles.adminTable}>
           <thead>
             <tr>
-              <th style={{ width: '44%', paddingLeft: '20px' }}>Question Prompt &amp; Title</th>
-              <th style={{ width: '15%', textAlign: 'center' }}>Question Type</th>
-              <th style={{ width: '12%', textAlign: 'center' }}>Difficulty</th>
-              <th style={{ width: '12%', textAlign: 'center' }}>Coin Reward</th>
-              <th style={{ width: '17%', textAlign: 'center', paddingRight: '20px' }}>Actions &amp; Options</th>
+              <th style={{ width: '40%', paddingLeft: '20px' }}>Question Prompt &amp; Code Snippet</th>
+              <th style={{ width: '13%', textAlign: 'center' }}>Skill Taxonomy</th>
+              <th style={{ width: '13%', textAlign: 'center' }}>Question Type</th>
+              <th style={{ width: '13%', textAlign: 'center' }}>Proficiency Level</th>
+              <th style={{ width: '8%', textAlign: 'center' }}>Reward</th>
+              <th style={{ width: '13%', textAlign: 'center', paddingRight: '20px' }}>Actions</th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={5} style={{ textAlign: 'center', padding: '36px', color: '#64748b' }}>
+                <td colSpan={6} style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>
                   Loading verified technical questions from database...
                 </td>
               </tr>
             ) : filtered.length === 0 ? (
               <tr>
-                <td colSpan={5} style={{ textAlign: 'center', padding: '36px', color: '#64748b' }}>
-                  No questions match your filter criteria.
+                <td colSpan={6} style={{ padding: 0 }}>
+                  {activeSkillMeta ? (
+                    <div style={{ textAlign: 'center', padding: '48px 24px', background: '#f8fafc' }}>
+                      <div style={{
+                        width: '56px',
+                        height: '56px',
+                        borderRadius: '50%',
+                        background: '#fef3c7',
+                        color: '#d97706',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        margin: '0 auto 16px',
+                      }}>
+                        <Sparkles size={28} />
+                      </div>
+                      <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#0f172a', margin: '0 0 6px' }}>
+                        No {difficulty !== 'ALL' ? difficulty : ''} Questions Found for {activeSkillMeta.name}
+                      </h3>
+                      <p style={{ fontSize: '0.88rem', color: '#64748b', maxWidth: '540px', margin: '0 auto 20px', lineHeight: 1.5 }}>
+                        There are currently no verified questions for <strong>{activeSkillMeta.name}</strong> at this level.
+                        Seed authentic, syllabus-aligned questions across Level 1 (Beginner), Level 2 (Intermediate), and Level 3 (Advanced).
+                      </p>
+                      <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
+                        <button
+                          onClick={() => handleRecommendSkillQuestions(activeSkillMeta.id, 'ALL')}
+                          disabled={recommending}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            background: '#1c2d81',
+                            color: '#fed601',
+                            border: 'none',
+                            padding: '10px 22px',
+                            fontWeight: 800,
+                            fontSize: '0.86rem',
+                            cursor: recommending ? 'not-allowed' : 'pointer',
+                          }}
+                        >
+                          <Sparkles size={16} className={recommending ? 'spin' : ''} />
+                          <span>{recommending ? `Generating ${activeSkillMeta.name} Questions...` : `⚡ Seed Level-by-Level ${activeSkillMeta.name} Questions`}</span>
+                        </button>
+                        <Link
+                          to={`/admin/questions/create?skillId=${activeSkillMeta.id}`}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            background: '#ffffff',
+                            color: '#1c2d81',
+                            border: '1px solid #1c2d81',
+                            padding: '10px 18px',
+                            fontWeight: 700,
+                            fontSize: '0.86rem',
+                            textDecoration: 'none',
+                          }}
+                        >
+                          <Plus size={15} />
+                          <span>Post Custom Question</span>
+                        </Link>
+                        <button
+                          onClick={handleClearSkillFilter}
+                          style={{
+                            padding: '10px 18px',
+                            background: '#ffffff',
+                            border: '1px solid #cbd5e1',
+                            fontSize: '0.86rem',
+                            fontWeight: 600,
+                            color: '#475569',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          Show All Questions
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>
+                      No questions match your filter criteria.
+                    </div>
+                  )}
                 </td>
               </tr>
             ) : (
@@ -253,18 +738,93 @@ export function AdminQuestionsPage() {
                   q.description.trim() === q.title?.trim() ||
                   (q.title && q.description && q.title.toLowerCase().startsWith(q.description.toLowerCase().slice(0, 30)));
 
+                const qSkill = q.skillId ? skillsMap.get(q.skillId) : null;
+                const isEasy = q.difficulty === 'EASY';
+                const isHard = q.difficulty === 'HARD';
+                const isMed = !isEasy && !isHard;
+
                 return (
                   <tr key={q.id || idx}>
                     <td style={{ paddingLeft: '20px', cursor: 'pointer' }} onClick={() => openQuestionAudit(q)}>
-                      <div style={{ fontWeight: 700, color: '#0f172a', lineHeight: 1.45, fontSize: '0.88rem' }}>
-                        {q.title || `Question #${idx + 1}`}
+                      <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '6px' }}>
+                        <span style={{ fontWeight: 700, color: '#0f172a', lineHeight: 1.45, fontSize: '0.88rem' }}>
+                          {q.title || `Question #${idx + 1}`}
+                        </span>
+                        {q.codeTemplate && (
+                          <span style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '3px',
+                            background: '#0f172a',
+                            color: '#38bdf8',
+                            padding: '1px 6px',
+                            borderRadius: '3px',
+                            fontSize: '0.68rem',
+                            fontFamily: 'monospace',
+                            fontWeight: 700,
+                          }}>
+                            <Code size={11} /> Code
+                          </span>
+                        )}
                       </div>
+
                       {q.description && !isDuplicateDesc && (
                         <div style={{ fontSize: '0.76rem', color: '#64748b', marginTop: '4px', lineHeight: 1.35 }}>
                           {q.description}
                         </div>
                       )}
+
+                      {/* Code Snippet Quick Preview in Table */}
+                      {q.codeTemplate && (
+                        <pre style={{
+                          background: '#0f172a',
+                          color: '#94a3b8',
+                          padding: '6px 10px',
+                          borderRadius: '4px',
+                          fontSize: '0.72rem',
+                          fontFamily: 'monospace',
+                          margin: '6px 0 0',
+                          maxHeight: '44px',
+                          overflow: 'hidden',
+                          lineHeight: 1.35,
+                          maxWidth: '480px',
+                        }}>
+                          {q.codeTemplate.split('\n').slice(0, 2).join('\n')}
+                        </pre>
+                      )}
                     </td>
+
+                    {/* Skill Pill Column */}
+                    <td style={{ textAlign: 'center', whiteSpace: 'nowrap' }}>
+                      {qSkill ? (
+                        <button
+                          onClick={() => handleSelectSkill(q.skillId!)}
+                          title={`Filter questions for ${qSkill.name}`}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            fontSize: '0.72rem',
+                            fontWeight: 800,
+                            padding: '3px 8px',
+                            borderRadius: '3px',
+                            background: '#eff6ff',
+                            color: '#1d4ed8',
+                            border: '1px solid #bfdbfe',
+                            cursor: 'pointer',
+                            letterSpacing: '0.01em',
+                          }}
+                        >
+                          <Layers size={11} />
+                          <span>{qSkill.name}</span>
+                        </button>
+                      ) : (
+                        <span style={{ fontSize: '0.72rem', color: '#94a3b8', fontStyle: 'italic' }}>
+                          General
+                        </span>
+                      )}
+                    </td>
+
                     <td style={{ textAlign: 'center', whiteSpace: 'nowrap' }}>
                       <span
                         style={{
@@ -282,27 +842,32 @@ export function AdminQuestionsPage() {
                         {typeLabel}
                       </span>
                     </td>
+
+                    {/* Level-by-Level Proficiency Badge */}
                     <td style={{ textAlign: 'center', whiteSpace: 'nowrap' }}>
                       <span
                         style={{
-                          display: 'inline-block',
-                          minWidth: '70px',
-                          textAlign: 'center',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '5px',
                           fontSize: '0.72rem',
                           fontWeight: 800,
-                          padding: '4px 8px',
-                          borderRadius: '3px',
-                          background: q.difficulty === 'HARD' ? '#fee2e2' : q.difficulty === 'MEDIUM' ? '#fef3c7' : '#dcfce7',
-                          color: q.difficulty === 'HARD' ? '#b91c1c' : q.difficulty === 'MEDIUM' ? '#b45309' : '#15803d',
-                          border: q.difficulty === 'HARD' ? '1px solid #fecaca' : q.difficulty === 'MEDIUM' ? '1px solid #fde68a' : '1px solid #bbf7d0',
+                          padding: '4px 9px',
+                          borderRadius: '4px',
+                          background: isHard ? '#fef2f2' : isMed ? '#fffbeb' : '#ecfdf5',
+                          color: isHard ? '#991b1b' : isMed ? '#92400e' : '#065f46',
+                          border: isHard ? '1px solid #fecaca' : isMed ? '1px solid #fde68a' : '1px solid #a7f3d0',
                         }}
                       >
-                        {q.difficulty || 'MEDIUM'}
+                        <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: isHard ? '#ef4444' : isMed ? '#f59e0b' : '#10b981' }} />
+                        <span>{isHard ? 'Level 3 • Advanced' : isMed ? 'Level 2 • Intermediate' : 'Level 1 • Beginner'}</span>
                       </span>
                     </td>
+
                     <td style={{ textAlign: 'center', whiteSpace: 'nowrap' }}>
                       <strong style={{ color: '#d97706', fontSize: '0.84rem' }}>+50 Coins</strong>
                     </td>
+
                     <td style={{ textAlign: 'center', paddingRight: '20px', whiteSpace: 'nowrap' }}>
                       <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
                         <button
@@ -410,15 +975,27 @@ export function AdminQuestionsPage() {
             }}
             onClick={(e) => e.stopPropagation()}
           >
-
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid #e2e8f0', paddingBottom: '14px', marginBottom: '16px' }}>
               <div>
-                <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '6px' }}>
-                  <span style={{ fontSize: '0.72rem', fontWeight: 800, padding: '2px 8px', background: '#eff6ff', color: '#1d4ed8' }}>
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '6px', flexWrap: 'wrap' }}>
+                  {selectedQuestion.skillId && skillsMap.get(selectedQuestion.skillId) && (
+                    <span style={{ fontSize: '0.72rem', fontWeight: 800, padding: '2px 8px', background: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe', borderRadius: '3px' }}>
+                      {skillsMap.get(selectedQuestion.skillId)?.name}
+                    </span>
+                  )}
+                  <span style={{ fontSize: '0.72rem', fontWeight: 800, padding: '2px 8px', background: '#eff6ff', color: '#1d4ed8', borderRadius: '3px' }}>
                     {selectedQuestion.questionType || 'MCQ'}
                   </span>
-                  <span style={{ fontSize: '0.72rem', fontWeight: 800, padding: '2px 8px', background: selectedQuestion.difficulty === 'HARD' ? '#fee2e2' : selectedQuestion.difficulty === 'MEDIUM' ? '#fef3c7' : '#dcfce7', color: selectedQuestion.difficulty === 'HARD' ? '#b91c1c' : selectedQuestion.difficulty === 'MEDIUM' ? '#b45309' : '#15803d' }}>
-                    {selectedQuestion.difficulty || 'MEDIUM'}
+                  <span style={{
+                    fontSize: '0.72rem',
+                    fontWeight: 800,
+                    padding: '2px 8px',
+                    borderRadius: '3px',
+                    background: selectedQuestion.difficulty === 'HARD' ? '#fef2f2' : selectedQuestion.difficulty === 'MEDIUM' ? '#fffbeb' : '#ecfdf5',
+                    color: selectedQuestion.difficulty === 'HARD' ? '#991b1b' : selectedQuestion.difficulty === 'MEDIUM' ? '#92400e' : '#065f46',
+                    border: selectedQuestion.difficulty === 'HARD' ? '1px solid #fecaca' : selectedQuestion.difficulty === 'MEDIUM' ? '1px solid #fde68a' : '1px solid #a7f3d0'
+                  }}>
+                    {selectedQuestion.difficulty === 'HARD' ? 'Level 3 • Advanced' : selectedQuestion.difficulty === 'MEDIUM' ? 'Level 2 • Intermediate' : 'Level 1 • Beginner'}
                   </span>
                   <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#d97706' }}>
                     +50 Coins
@@ -445,10 +1022,10 @@ export function AdminQuestionsPage() {
 
             {selectedQuestion.codeTemplate && (
               <div style={{ marginBottom: '16px' }}>
-                <strong style={{ fontSize: '0.82rem', color: '#475569', display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '4px' }}>
-                  <Code size={14} /> Code Template:
+                <strong style={{ fontSize: '0.82rem', color: '#475569', display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '6px' }}>
+                  <Code size={14} /> Code Snippet / Benchmark:
                 </strong>
-                <pre style={{ background: '#0f172a', color: '#e2e8f0', padding: '12px', fontSize: '0.78rem', overflowX: 'auto' }}>
+                <pre style={{ background: '#0f172a', color: '#e2e8f0', padding: '14px', fontSize: '0.8rem', overflowX: 'auto', borderRadius: '4px', lineHeight: 1.45 }}>
                   {selectedQuestion.codeTemplate}
                 </pre>
               </div>
@@ -739,4 +1316,3 @@ export function AdminQuestionsPage() {
     </div>
   );
 }
-

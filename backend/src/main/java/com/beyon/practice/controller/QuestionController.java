@@ -30,12 +30,12 @@ public class QuestionController {
             @RequestParam(required = false) String difficulty,
             @RequestParam(required = false) String search,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
+            @RequestParam(defaultValue = "100") int size) {
+        if (skillId != null) {
+            return ResponseEntity.ok(ApiResponse.ok(questionBankService.getQuestionsBySkillFiltered(skillId, search, difficulty, size)));
+        }
         if (search != null && !search.isBlank()) {
             return ResponseEntity.ok(ApiResponse.ok(questionBankService.searchQuestions(search, size)));
-        }
-        if (skillId != null) {
-            return ResponseEntity.ok(ApiResponse.ok(questionBankService.getQuestionsBySkill(skillId, size)));
         }
         if (topicId != null) {
             return ResponseEntity.ok(ApiResponse.ok(questionBankService.getQuestionsByTopic(topicId, size)));
@@ -44,6 +44,19 @@ public class QuestionController {
             return ResponseEntity.ok(ApiResponse.ok(questionBankService.getQuestionsByDifficulty(difficulty, size)));
         }
         return ResponseEntity.ok(ApiResponse.ok(questionBankService.getPublishedQuestions(page, size)));
+    }
+
+    @PostMapping("/recommend-for-skill")
+    public ResponseEntity<ApiResponse<List<Question>>> recommendForSkill(@RequestBody java.util.Map<String, String> body) {
+        String skillIdStr = body.get("skillId");
+        String skillName = body.get("skillName");
+        String level = body.get("level");
+        if (skillIdStr == null || skillIdStr.isBlank()) {
+            return ResponseEntity.badRequest().body(ApiResponse.error("skillId is required"));
+        }
+        UUID skillId = UUID.fromString(skillIdStr);
+        List<Question> questions = questionBankService.recommendAndSeedQuestionsForSkill(skillId, skillName, level);
+        return ResponseEntity.ok(ApiResponse.ok(questions));
     }
 
     @GetMapping("/{id}")

@@ -322,7 +322,7 @@ export function SkillGraphPage() {
                     {s.topicCount ? `${s.topicCount} subtopics mapped` : 'Active Competency'}
                   </div>
                   <Link
-                    to={`/admin/questions?search=${encodeURIComponent(s.name)}`}
+                    to={`/admin/questions?skillId=${s.id}&search=${encodeURIComponent(s.name)}`}
                     style={{ fontSize: '0.75rem', fontWeight: 600, color: '#1c2d81', textDecoration: 'none' }}
                   >
                     View Questions →

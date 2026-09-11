@@ -556,7 +556,7 @@ export function AdminSkillGraphPage() {
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <span style={{ color: '#64748b' }}>Salary Benchmark:</span>
-                    <strong style={{ color: '#15803d' }}>$85k - $150k / yr</strong>
+                    <strong style={{ color: '#15803d' }}>₹9.5 - 24.0 LPA</strong>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <span style={{ color: '#64748b' }}>Industry Velocity:</span>
@@ -591,7 +591,7 @@ export function AdminSkillGraphPage() {
                     <span>Inspect</span>
                   </button>
                   <Link
-                    to={`/admin/questions?search=${encodeURIComponent(skill.name)}`}
+                    to={`/admin/questions?skillId=${skill.id}&search=${encodeURIComponent(skill.name)}`}
                     style={{
                       flex: 1,
                       height: '34px',
@@ -686,7 +686,7 @@ export function AdminSkillGraphPage() {
                     </span>
                   </td>
                   <td style={{ textAlign: 'center', fontWeight: 600, color: '#334155' }}>
-                    $95,000 - $165,000
+                    ₹10.5 - 26.0 LPA
                   </td>
                   <td style={{ textAlign: 'center' }}>
                     <button
@@ -821,6 +821,12 @@ export function AdminSkillGraphPage() {
                     HIGH (+24% YoY)
                   </div>
                 </div>
+                <div>
+                  <div style={{ fontSize: '0.7rem', fontWeight: 700, color: '#64748b' }}>SALARY BENCHMARK (INR)</div>
+                  <div style={{ fontSize: '0.84rem', fontWeight: 800, color: '#15803d', marginTop: '2px' }}>
+                    ₹9.5 - 24.0 LPA
+                  </div>
+                </div>
               </div>
 
               <div>
@@ -857,7 +863,7 @@ export function AdminSkillGraphPage() {
                   Close
                 </button>
                 <Link
-                  to={`/admin/questions?search=${encodeURIComponent(inspectNode.skill.name)}`}
+                  to={`/admin/questions?skillId=${inspectNode.skill.id}&search=${encodeURIComponent(inspectNode.skill.name)}`}
                   style={{
                     background: '#1c2d81',
                     border: '1px solid #1c2d81',

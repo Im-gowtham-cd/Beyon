@@ -1,5 +1,5 @@
 import { useState, useEffect, type FormEvent } from 'react';
-import { useNavigate, Link, useParams } from 'react-router-dom';
+import { useNavigate, Link, useParams, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../auth/context/AuthContext';
 import { getRoleTier } from '../../auth/types/auth';
 import styles from './CreateQuestionPage.module.css';
@@ -19,8 +19,11 @@ export function CreateQuestionPage() {
   const { user } = useAuth();
   const isAdminTier = getRoleTier(user?.role || '') === 'SUPER_ADMIN';
 
+  const [searchParams] = useSearchParams();
+  const preselectedSkillId = searchParams.get('skillId');
+
   const [skills, setSkills] = useState<SkillOption[]>([]);
-  const [skillId, setSkillId] = useState('');
+  const [skillId, setSkillId] = useState(preselectedSkillId || '');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [questionFormat, setQuestionFormat] = useState<QuestionFormat>('SINGLE_CHOICE');
@@ -49,16 +52,22 @@ export function CreateQuestionPage() {
         });
         if (res.ok) {
           const data = await res.json();
-          const list = Array.isArray(data.data) ? data.data : (Array.isArray(data) ? data : []);
+          const list: SkillOption[] = Array.isArray(data.data) ? data.data : (Array.isArray(data) ? data : []);
           setSkills(list);
-          if (list.length > 0 && !editQuestionId) setSkillId(list[0].id);
+          if (list.length > 0 && !editQuestionId) {
+            if (preselectedSkillId && list.some((s: SkillOption) => s.id === preselectedSkillId)) {
+              setSkillId(preselectedSkillId);
+            } else if (!skillId) {
+              setSkillId(list[0].id);
+            }
+          }
         }
       } catch {
 
       }
     }
     loadSkills();
-  }, [editQuestionId]);
+  }, [editQuestionId, preselectedSkillId]);
 
   useEffect(() => {
     if (!editQuestionId) return;
@@ -324,7 +333,7 @@ export function CreateQuestionPage() {
               <button
                 type="button"
                 className={styles.btnPrimary}
-                onClick={() => navigate('/admin/questions')}
+                onClick={() => navigate(skillId ? `/admin/questions?skillId=${skillId}` : '/admin/questions')}
               >
                 <i className="bx bx-list-ul" /> View in Question Bank
               </button>
@@ -634,7 +643,7 @@ export function CreateQuestionPage() {
             <button
               type="button"
               className={styles.btnSecondary}
-              onClick={() => navigate(isAdminTier ? '/admin/questions' : '/practice')}
+              onClick={() => navigate(isAdminTier ? (skillId ? `/admin/questions?skillId=${skillId}` : '/admin/questions') : '/practice')}
             >
               Cancel
             </button>
