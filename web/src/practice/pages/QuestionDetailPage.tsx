@@ -9,6 +9,7 @@ export function QuestionDetailPage() {
   const [question, setQuestion] = useState<Question | null>(null);
   const [options, setOptions] = useState<QuestionOption[]>([]);
   const [selectedAnswer, setSelectedAnswer] = useState('');
+  const [selectedAnswers, setSelectedAnswers] = useState<string[]>([]);
   const [codeAnswer, setCodeAnswer] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -29,7 +30,7 @@ export function QuestionDetailPage() {
         const opts = await questionApi.getOptions(id);
         if (opts && opts.length > 0) {
           setOptions(opts);
-        } else if (q.questionType === 'MCQ' || q.questionType === 'TRUE_FALSE') {
+        } else if (['MCQ', 'SINGLE_CHOICE', 'MULTI_CHOICE', 'TRUE_FALSE'].includes(q.questionType)) {
 
           const fallbackOpts: QuestionOption[] = q.questionType === 'TRUE_FALSE'
             ? [
@@ -45,7 +46,7 @@ export function QuestionDetailPage() {
           setOptions(fallbackOpts);
         }
       } catch {
-        if (q.questionType === 'MCQ') {
+        if (['MCQ', 'SINGLE_CHOICE', 'MULTI_CHOICE', 'TRUE_FALSE'].includes(q.questionType)) {
           setOptions([
             { id: `${id}-opt-1`, questionId: id, optionText: 'Option A: Verified architecture solution', correct: true, displayOrder: 1 },
             { id: `${id}-opt-2`, questionId: id, optionText: 'Option B: Standard execution pathway', correct: false, displayOrder: 2 },
@@ -63,10 +64,30 @@ export function QuestionDetailPage() {
 
   useEffect(() => { load(); }, [load]);
 
+  const isMultiSelect = question?.questionType === 'MULTI_CHOICE' || question?.questionType === 'MULTIPLE_SELECT';
+  const isOptionBased = ['MCQ', 'SINGLE_CHOICE', 'MULTI_CHOICE', 'MULTIPLE_SELECT', 'TRUE_FALSE'].includes(question?.questionType || '');
+
+  const toggleMultiOption = (val: string) => {
+    if (submitted) return;
+    setSelectedAnswers(prev =>
+      prev.includes(val) ? prev.filter(x => x !== val) : [...prev, val]
+    );
+  };
+
+  const selectSingleOption = (val: string) => {
+    if (submitted) return;
+    setSelectedAnswer(val);
+    setSelectedAnswers([val]);
+  };
+
   async function handleSubmit() {
-    if (!id || (!selectedAnswer && !codeAnswer)) return;
-    const answer = question?.questionType === 'MCQ' || question?.questionType === 'TRUE_FALSE'
-      ? selectedAnswer : codeAnswer;
+    if (!id) return;
+    const hasAnswer = isOptionBased ? (isMultiSelect ? selectedAnswers.length > 0 : !!selectedAnswer) : !!codeAnswer;
+    if (!hasAnswer) return;
+
+    const answer = isOptionBased
+      ? (isMultiSelect ? selectedAnswers.slice().sort().join(', ') : selectedAnswer)
+      : codeAnswer;
     const timeSpent = Math.floor((Date.now() - startTime) / 1000);
     setSubmitting(true);
     try {
@@ -106,7 +127,6 @@ export function QuestionDetailPage() {
     );
   }
 
-  const isMCQ = ['MCQ', 'MULTIPLE_SELECT', 'TRUE_FALSE'].includes(question.questionType);
   const diffColor = question.difficulty === 'EASY' ? '#019fdb' : question.difficulty === 'MEDIUM' ? '#e6a800' : '#e03131';
 
   return (
@@ -127,30 +147,51 @@ export function QuestionDetailPage() {
               <span className={styles.diffBadge} style={{ background: `${diffColor}18`, color: diffColor, border: `1px solid ${diffColor}44` }}>
                 {question.difficulty}
               </span>
-              <span className={styles.typeBadge}>{question.questionType.replace('_', ' ')}</span>
+              <span className={styles.typeBadge}>
+                {question.questionType === 'MULTI_CHOICE'
+                  ? 'Multi-Select Multiple Choice'
+                  : question.questionType === 'SINGLE_CHOICE'
+                  ? 'Single Choice MCQ'
+                  : question.questionType.replace('_', ' ')}
+              </span>
             </div>
           </div>
         </div>
 
         <div className={styles.questionDesc}>{question.description}</div>
 
-        {isMCQ ? (
-          <div className={styles.optionsList}>
-            {options.map((opt, i) => {
-              const isSelected = selectedAnswer === opt.optionText;
-              return (
-                <button
-                  key={opt.id || i}
-                  type="button"
-                  className={`${styles.optionBtn} ${isSelected ? styles.optionSelected : ''} ${submitted && opt.correct ? styles.optionCorrect : ''} ${submitted && isSelected && !opt.correct ? styles.optionIncorrect : ''}`}
-                  onClick={() => !submitted && setSelectedAnswer(opt.optionText)}
-                  disabled={submitted}
-                >
-                  <span className={styles.optionLetter}>{String.fromCharCode(65 + i)}</span>
-                  <span style={{ fontWeight: isSelected ? 600 : 400 }}>{opt.optionText}</span>
-                </button>
-              );
-            })}
+        {isOptionBased ? (
+          <div>
+            {isMultiSelect && (
+              <p style={{ fontSize: '0.8rem', color: '#86198f', fontWeight: 700, marginBottom: '8px' }}>
+                <i className="bx bx-check-square" style={{ marginRight: '4px' }} />
+                Select all options that apply (Multiple correct answers allowed):
+              </p>
+            )}
+            <div className={styles.optionsList}>
+              {options.map((opt, i) => {
+                const isSelected = isMultiSelect
+                  ? selectedAnswers.includes(opt.optionText)
+                  : selectedAnswer === opt.optionText;
+                return (
+                  <button
+                    key={opt.id || i}
+                    type="button"
+                    className={`${styles.optionBtn} ${isSelected ? styles.optionSelected : ''} ${submitted && opt.correct ? styles.optionCorrect : ''} ${submitted && isSelected && !opt.correct ? styles.optionIncorrect : ''}`}
+                    onClick={() => isMultiSelect ? toggleMultiOption(opt.optionText) : selectSingleOption(opt.optionText)}
+                    disabled={submitted}
+                  >
+                    <span className={styles.optionLetter}>{String.fromCharCode(65 + i)}</span>
+                    <span style={{ fontWeight: isSelected ? 600 : 400, flex: 1, textAlign: 'left' }}>{opt.optionText}</span>
+                    {isMultiSelect && (
+                      <span style={{ fontSize: '0.9rem', color: isSelected ? '#1c2d81' : '#94a3b8' }}>
+                        {isSelected ? <i className="bx bxs-checkbox-checked" /> : <i className="bx bx-checkbox" />}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         ) : (
           <div>
@@ -165,7 +206,7 @@ export function QuestionDetailPage() {
           </div>
         )}
 
-        {question.codeTemplate && !isMCQ && (
+        {question.codeTemplate && !isOptionBased && (
           <div style={{ marginTop: 'var(--space-md)' }}>
             <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', marginBottom: 'var(--space-xs)' }}>Template / Starter:</p>
             <pre style={{ padding: 'var(--space-md)', background: 'var(--color-surface-2)', borderRadius: 'var(--radius-sm)', fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)', overflow: 'auto' }}>
@@ -184,7 +225,7 @@ export function QuestionDetailPage() {
           <button
             className={styles.submitBtn}
             onClick={handleSubmit}
-            disabled={submitting || (!selectedAnswer && !codeAnswer)}
+            disabled={submitting || (isOptionBased ? (isMultiSelect ? selectedAnswers.length === 0 : !selectedAnswer) : !codeAnswer)}
             style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}
           >
             {submitting ? 'Evaluating...' : 'Submit Answer'}

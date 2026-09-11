@@ -51,8 +51,9 @@ export function AdminSidebar({
         {
           title: 'Question Authoring',
           items: [
-            { to: '/admin/questions', icon: HelpCircle, label: 'Question Bank (357)' },
-            { to: '/admin/questions/create', icon: Sparkles, label: 'Author Question' },
+            { to: '/admin/questions', icon: HelpCircle, label: 'Question Bank' },
+            { to: '/admin/questions/create', icon: Sparkles, label: 'Post / Create Question' },
+            { to: '/admin/home', icon: LayoutDashboard, label: 'Command Center' },
           ],
         },
       ];
@@ -78,7 +79,7 @@ export function AdminSidebar({
           items: [
             { to: '/admin/home', icon: LayoutDashboard, label: 'Executive Telemetry' },
             { to: '/admin/dashboard', icon: Activity, label: 'Platform Trends' },
-            { to: '/admin/reports', icon: FileText, label: 'System Analytics' },
+            { to: '/admin/reports', icon: FileText, label: 'System Reports' },
           ],
         },
       ];
@@ -87,10 +88,18 @@ export function AdminSidebar({
     if (userRole === 'CONTENT_ADMIN') {
       return [
         {
-          title: 'Content & Skills',
+          title: 'Question & Content Authoring',
           items: [
-            { to: '/admin/questions', icon: HelpCircle, label: 'Skill Taxonomy & Questions' },
+            { to: '/admin/questions', icon: HelpCircle, label: 'Question Bank' },
+            { to: '/admin/questions/create', icon: Sparkles, label: 'Post / Create Question' },
             { to: '/admin/home', icon: LayoutDashboard, label: 'Content Overview' },
+          ],
+        },
+        {
+          title: 'Skill Taxonomy & Mapping',
+          items: [
+            { to: '/skill-taxonomy', icon: Activity, label: 'Skill Taxonomy' },
+            { to: '/skill-graph', icon: FileText, label: 'Skill Graph' },
           ],
         },
       ];
@@ -111,7 +120,8 @@ export function AdminSidebar({
           { to: '/admin/users', icon: Users, label: 'User & Role Registry' },
           { to: '/admin/institutions', icon: Building2, label: 'Accreditation Queue' },
           { to: '/admin/companies', icon: Briefcase, label: 'Corporate Approvals' },
-          { to: '/admin/questions', icon: HelpCircle, label: 'Question Bank (357)' },
+          { to: '/admin/questions', icon: HelpCircle, label: 'Question Bank' },
+          { to: '/admin/questions/create', icon: Sparkles, label: 'Post / Create Question' },
         ],
       },
       {

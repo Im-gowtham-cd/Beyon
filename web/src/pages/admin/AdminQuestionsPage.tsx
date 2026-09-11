@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Search, CheckCircle2, RefreshCw, Eye, X, Code, Check } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Search, CheckCircle2, RefreshCw, Eye, X, Code, Check, Plus, Edit2, Trash2, AlertTriangle, AlertCircle } from 'lucide-react';
 import styles from './AdminHome.module.css';
 
 interface QuestionItem {
@@ -35,6 +36,9 @@ export function AdminQuestionsPage() {
   const [selectedQuestion, setSelectedQuestion] = useState<QuestionItem | null>(null);
   const [options, setOptions] = useState<QuestionOption[]>([]);
   const [loadingOptions, setLoadingOptions] = useState(false);
+
+  const [questionToDelete, setQuestionToDelete] = useState<QuestionItem | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const fetchQuestions = async () => {
     setLoading(true);
@@ -83,6 +87,32 @@ export function AdminQuestionsPage() {
     setTimeout(() => setMsg(null), 4000);
   };
 
+  const handleDeleteQuestion = async () => {
+    if (!questionToDelete) return;
+    setDeleting(true);
+    try {
+      const token = localStorage.getItem('beyon_token') || localStorage.getItem('beyon_access_token');
+      const res = await fetch(`/api/v1/questions/${questionToDelete.id}`, {
+        method: 'DELETE',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || 'Failed to delete question');
+      }
+      setQuestions((prev) => prev.filter((q) => q.id !== questionToDelete.id));
+      if (selectedQuestion?.id === questionToDelete.id) {
+        setSelectedQuestion(null);
+      }
+      handleAction(`Question "${questionToDelete.title}" was permanently deleted from the database.`);
+      setQuestionToDelete(null);
+    } catch (err: any) {
+      handleAction(err.message || 'Error deleting question. Please check permissions and try again.');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   const filtered = questions.filter((q) => {
     const title = (q.title || q.description || '').toLowerCase();
     const s = search.toLowerCase();
@@ -101,26 +131,48 @@ export function AdminQuestionsPage() {
             Technical Question Bank &amp; Taxonomy ({questions.length} Verified)
           </h1>
           <p style={{ fontSize: '0.86rem', color: '#64748b', margin: 0 }}>
-            Curate MCQs, coding challenges, system design prompts, and assessment question banks.
+            Curate Single Choice MCQs, Multi-Select questions, coding challenges, and system design benchmarks.
           </p>
         </div>
-        <button
-          onClick={fetchQuestions}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '8px',
-            background: '#ffffff',
-            border: '1px solid #cbd5e1',
-            padding: '8px 16px',
-            fontSize: '0.84rem',
-            fontWeight: 700,
-            cursor: 'pointer',
-          }}
-        >
-          <RefreshCw size={14} className={loading ? 'spin' : ''} />
-          <span>Refresh Bank</span>
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <button
+            onClick={fetchQuestions}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              background: '#ffffff',
+              border: '1px solid #cbd5e1',
+              padding: '8px 16px',
+              fontSize: '0.84rem',
+              fontWeight: 700,
+              cursor: 'pointer',
+            }}
+          >
+            <RefreshCw size={14} className={loading ? 'spin' : ''} />
+            <span>Refresh Bank</span>
+          </button>
+
+          <Link
+            to="/admin/questions/create"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              background: '#1c2d81',
+              color: '#fed601',
+              border: '1px solid #1c2d81',
+              padding: '8px 18px',
+              fontSize: '0.84rem',
+              fontWeight: 800,
+              textDecoration: 'none',
+              cursor: 'pointer',
+            }}
+          >
+            <Plus size={15} />
+            <span>Post / Create Question</span>
+          </Link>
+        </div>
       </div>
 
       {msg && (
@@ -162,7 +214,7 @@ export function AdminQuestionsPage() {
               <th>Question Type</th>
               <th>Difficulty</th>
               <th>Coin Reward</th>
-              <th>Audit &amp; Options</th>
+              <th>Actions &amp; Options</th>
             </tr>
           </thead>
           <tbody>
@@ -192,8 +244,36 @@ export function AdminQuestionsPage() {
                     )}
                   </td>
                   <td>
-                    <span style={{ fontSize: '0.75rem', fontWeight: 700, padding: '2px 8px', background: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe' }}>
-                      {q.questionType || 'MCQ'}
+                    <span
+                      style={{
+                        fontSize: '0.72rem',
+                        fontWeight: 800,
+                        padding: '2px 8px',
+                        background:
+                          q.questionType === 'MULTI_CHOICE' || q.questionType === 'MULTIPLE_SELECT'
+                            ? '#fdf4ff'
+                            : q.questionType === 'SINGLE_CHOICE' || q.questionType === 'MCQ'
+                            ? '#eff6ff'
+                            : '#f8fafc',
+                        color:
+                          q.questionType === 'MULTI_CHOICE' || q.questionType === 'MULTIPLE_SELECT'
+                            ? '#86198f'
+                            : q.questionType === 'SINGLE_CHOICE' || q.questionType === 'MCQ'
+                            ? '#1d4ed8'
+                            : '#0f172a',
+                        border:
+                          q.questionType === 'MULTI_CHOICE' || q.questionType === 'MULTIPLE_SELECT'
+                            ? '1px solid #f5d0fe'
+                            : q.questionType === 'SINGLE_CHOICE' || q.questionType === 'MCQ'
+                            ? '1px solid #bfdbfe'
+                            : '1px solid #cbd5e1',
+                      }}
+                    >
+                      {q.questionType === 'MULTI_CHOICE' || q.questionType === 'MULTIPLE_SELECT'
+                        ? 'MULTI-CHOICE'
+                        : q.questionType === 'SINGLE_CHOICE'
+                        ? 'SINGLE CHOICE'
+                        : q.questionType || 'MCQ'}
                     </span>
                   </td>
                   <td>
@@ -205,24 +285,68 @@ export function AdminQuestionsPage() {
                     <strong style={{ color: '#d97706', fontSize: '0.84rem' }}>+50 Coins</strong>
                   </td>
                   <td>
-                    <button
-                      onClick={() => openQuestionAudit(q)}
-                      style={{
-                        padding: '5px 12px',
-                        background: '#1c2d81',
-                        color: '#ffffff',
-                        border: 'none',
-                        fontSize: '0.75rem',
-                        fontWeight: 700,
-                        cursor: 'pointer',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '5px',
-                      }}
-                    >
-                      <Eye size={13} />
-                      <span>Inspect &amp; Options</span>
-                    </button>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <button
+                        onClick={() => openQuestionAudit(q)}
+                        title="Inspect question details and answer keys"
+                        style={{
+                          padding: '5px 10px',
+                          background: '#1c2d81',
+                          color: '#ffffff',
+                          border: 'none',
+                          fontSize: '0.75rem',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                        }}
+                      >
+                        <Eye size={13} />
+                        <span>Inspect</span>
+                      </button>
+
+                      <Link
+                        to={`/admin/questions/edit/${q.id}`}
+                        title="Edit question prompt, options, and difficulty"
+                        style={{
+                          padding: '5px 10px',
+                          background: '#eff6ff',
+                          color: '#1d4ed8',
+                          border: '1px solid #bfdbfe',
+                          fontSize: '0.75rem',
+                          fontWeight: 700,
+                          textDecoration: 'none',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        <Edit2 size={13} />
+                        <span>Edit</span>
+                      </Link>
+
+                      <button
+                        onClick={() => setQuestionToDelete(q)}
+                        title="Delete question permanently"
+                        style={{
+                          padding: '5px 10px',
+                          background: '#fef2f2',
+                          color: '#b91c1c',
+                          border: '1px solid #fecaca',
+                          fontSize: '0.75rem',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                        }}
+                      >
+                        <Trash2 size={13} />
+                        <span>Delete</span>
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))
@@ -302,9 +426,27 @@ export function AdminQuestionsPage() {
             )}
 
             <div style={{ marginBottom: '18px' }}>
-              <h3 style={{ fontSize: '0.9rem', fontWeight: 800, color: '#0f172a', marginBottom: '10px' }}>
-                Answer Options &amp; Correct Key
-              </h3>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+                <h3 style={{ fontSize: '0.9rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>
+                  Answer Options &amp; Correct Key
+                </h3>
+                {options.length > 0 && (
+                  <span
+                    style={{
+                      fontSize: '0.74rem',
+                      fontWeight: 700,
+                      padding: '2px 8px',
+                      background: options.filter((o) => o.correct).length > 1 ? '#fdf4ff' : '#eff6ff',
+                      color: options.filter((o) => o.correct).length > 1 ? '#86198f' : '#1d4ed8',
+                      border: options.filter((o) => o.correct).length > 1 ? '1px solid #f5d0fe' : '1px solid #bfdbfe',
+                    }}
+                  >
+                    {options.filter((o) => o.correct).length > 1
+                      ? `Multiple Choice (${options.filter((o) => o.correct).length} Correct Keys)`
+                      : 'Single Choice (1 Correct Key)'}
+                  </span>
+                )}
+              </div>
 
               {loadingOptions ? (
                 <div style={{ padding: '20px', textAlign: 'center', color: '#64748b', fontSize: '0.84rem' }}>
@@ -378,41 +520,188 @@ export function AdminQuestionsPage() {
               </div>
             )}
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', borderTop: '1px solid #e2e8f0', paddingTop: '14px' }}>
-              <button
-                onClick={() => {
-                  handleAction(`Question "${selectedQuestion.title}" audited and verified.`);
-                  setSelectedQuestion(null);
-                }}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #e2e8f0', paddingTop: '14px', flexWrap: 'wrap', gap: '10px' }}>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <Link
+                  to={`/admin/questions/edit/${selectedQuestion.id}`}
+                  style={{
+                    padding: '8px 14px',
+                    background: '#eff6ff',
+                    color: '#1d4ed8',
+                    border: '1px solid #bfdbfe',
+                    fontSize: '0.82rem',
+                    fontWeight: 700,
+                    textDecoration: 'none',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <Edit2 size={14} />
+                  <span>Edit Question</span>
+                </Link>
+
+                <button
+                  onClick={() => setQuestionToDelete(selectedQuestion)}
+                  style={{
+                    padding: '8px 14px',
+                    background: '#fef2f2',
+                    color: '#b91c1c',
+                    border: '1px solid #fecaca',
+                    fontSize: '0.82rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                  }}
+                >
+                  <Trash2 size={14} />
+                  <span>Delete</span>
+                </button>
+              </div>
+
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button
+                  onClick={() => {
+                    handleAction(`Question "${selectedQuestion.title}" audited and verified.`);
+                    setSelectedQuestion(null);
+                  }}
+                  style={{
+                    padding: '8px 18px',
+                    background: '#1c2d81',
+                    color: '#ffffff',
+                    border: 'none',
+                    fontSize: '0.82rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                  }}
+                >
+                  <CheckCircle2 size={15} />
+                  <span>Mark as Verified</span>
+                </button>
+                <button
+                  onClick={() => setSelectedQuestion(null)}
+                  style={{
+                    padding: '8px 16px',
+                    background: '#ffffff',
+                    border: '1px solid #cbd5e1',
+                    fontSize: '0.82rem',
+                    fontWeight: 600,
+                    color: '#475569',
+                    cursor: 'pointer',
+                  }}
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {questionToDelete && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(15, 23, 42, 0.7)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 10000,
+            padding: '20px',
+          }}
+          onClick={() => !deleting && setQuestionToDelete(null)}
+        >
+          <div
+            style={{
+              background: '#ffffff',
+              maxWidth: '520px',
+              width: '100%',
+              padding: '24px',
+              border: '1px solid #e2e8f0',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+              <div
                 style={{
-                  padding: '8px 18px',
-                  background: '#1c2d81',
+                  width: '40px',
+                  height: '40px',
+                  borderRadius: '50%',
+                  background: '#fee2e2',
+                  color: '#b91c1c',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                }}
+              >
+                <AlertTriangle size={22} />
+              </div>
+              <div>
+                <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>
+                  Confirm Permanent Deletion
+                </h3>
+                <p style={{ fontSize: '0.8rem', color: '#64748b', margin: 0 }}>
+                  This action will delete the question from the database.
+                </p>
+              </div>
+            </div>
+
+            <p style={{ fontSize: '0.88rem', color: '#334155', lineHeight: 1.5, marginBottom: '16px' }}>
+              Are you sure you want to permanently delete:
+              <br />
+              <strong style={{ color: '#0f172a', display: 'block', marginTop: '6px', background: '#f8fafc', padding: '10px 12px', border: '1px solid #e2e8f0' }}>
+                {questionToDelete.title}
+              </strong>
+            </p>
+
+            <div style={{ background: '#fef2f2', border: '1px solid #fecaca', padding: '10px 14px', marginBottom: '20px', fontSize: '0.8rem', color: '#991b1b', display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <AlertCircle size={16} style={{ flexShrink: 0 }} />
+              <span>All associated option keys, explanations, and evaluation records will be permanently erased.</span>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+              <button
+                onClick={() => setQuestionToDelete(null)}
+                disabled={deleting}
+                style={{
+                  padding: '9px 18px',
+                  background: '#ffffff',
+                  border: '1px solid #cbd5e1',
+                  fontSize: '0.84rem',
+                  fontWeight: 600,
+                  color: '#475569',
+                  cursor: deleting ? 'not-allowed' : 'pointer',
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteQuestion}
+                disabled={deleting}
+                style={{
+                  padding: '9px 20px',
+                  background: '#dc2626',
                   color: '#ffffff',
                   border: 'none',
-                  fontSize: '0.82rem',
+                  fontSize: '0.84rem',
                   fontWeight: 700,
-                  cursor: 'pointer',
+                  cursor: deleting ? 'not-allowed' : 'pointer',
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: '6px',
                 }}
               >
-                <CheckCircle2 size={15} />
-                <span>Mark as Verified</span>
-              </button>
-              <button
-                onClick={() => setSelectedQuestion(null)}
-                style={{
-                  padding: '8px 16px',
-                  background: '#ffffff',
-                  border: '1px solid #cbd5e1',
-                  fontSize: '0.82rem',
-                  fontWeight: 600,
-                  color: '#475569',
-                  cursor: 'pointer',
-                }}
-              >
-                Close
+                <Trash2 size={15} />
+                <span>{deleting ? 'Deleting Question...' : 'Delete Question'}</span>
               </button>
             </div>
           </div>

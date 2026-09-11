@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
@@ -142,14 +143,60 @@ public class PracticeService {
 
         List<QuestionOption> options = optionRepository.findByQuestionIdOrderByDisplayOrder(question.getId());
         if (!options.isEmpty()) {
-            for (int i = 0; i < options.size(); i++) {
-                QuestionOption opt = options.get(i);
-                if (opt.isCorrect()) {
-                    if (trimmed.equalsIgnoreCase(opt.getId().toString())
-                            || trimmed.equalsIgnoreCase(opt.getOptionText().trim())
-                            || trimmed.equalsIgnoreCase(String.valueOf((char) ('A' + i)))
-                            || trimmed.equalsIgnoreCase(String.valueOf(i))) {
+            List<QuestionOption> correctOptions = options.stream().filter(QuestionOption::isCorrect).toList();
+            if (correctOptions.size() > 1 || "MULTI_CHOICE".equalsIgnoreCase(question.getQuestionType()) || "MULTIPLE_SELECT".equalsIgnoreCase(question.getQuestionType())) {
+                java.util.Set<String> correctLetters = new java.util.HashSet<>();
+                java.util.Set<String> correctTexts = new java.util.HashSet<>();
+                java.util.Set<String> correctIds = new java.util.HashSet<>();
+
+                for (int i = 0; i < options.size(); i++) {
+                    QuestionOption opt = options.get(i);
+                    if (opt.isCorrect()) {
+                        correctLetters.add(String.valueOf((char) ('A' + i)).toUpperCase());
+                        correctTexts.add(opt.getOptionText().trim().toLowerCase());
+                        correctIds.add(opt.getId().toString().toLowerCase());
+                    }
+                }
+
+                String[] rawTokens = trimmed.replace("[", "").replace("]", "").replace("\"", "").split("[,;\\s]+");
+                java.util.Set<String> userTokens = Arrays.stream(rawTokens)
+                        .map(String::trim)
+                        .filter(s -> !s.isEmpty())
+                        .map(String::toUpperCase)
+                        .collect(java.util.stream.Collectors.toSet());
+
+                java.util.Set<String> userTexts = Arrays.stream(trimmed.split("[,;]+"))
+                        .map(String::trim)
+                        .filter(s -> !s.isEmpty())
+                        .map(String::toLowerCase)
+                        .collect(java.util.stream.Collectors.toSet());
+
+                if (!correctLetters.isEmpty() && userTokens.equals(correctLetters)) {
+                    return true;
+                }
+                if (!correctTexts.isEmpty() && userTexts.equals(correctTexts)) {
+                    return true;
+                }
+                if (!correctIds.isEmpty()) {
+                    java.util.Set<String> userIds = Arrays.stream(rawTokens)
+                            .map(String::trim)
+                            .filter(s -> !s.isEmpty())
+                            .map(String::toLowerCase)
+                            .collect(java.util.stream.Collectors.toSet());
+                    if (userIds.equals(correctIds)) {
                         return true;
+                    }
+                }
+            } else {
+                for (int i = 0; i < options.size(); i++) {
+                    QuestionOption opt = options.get(i);
+                    if (opt.isCorrect()) {
+                        if (trimmed.equalsIgnoreCase(opt.getId().toString())
+                                || trimmed.equalsIgnoreCase(opt.getOptionText().trim())
+                                || trimmed.equalsIgnoreCase(String.valueOf((char) ('A' + i)))
+                                || trimmed.equalsIgnoreCase(String.valueOf(i))) {
+                            return true;
+                        }
                     }
                 }
             }

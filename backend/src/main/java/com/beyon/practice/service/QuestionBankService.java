@@ -17,13 +17,16 @@ public class QuestionBankService {
     private final QuestionRepository questionRepository;
     private final QuestionOptionRepository optionRepository;
     private final QuestionTestCaseRepository testCaseRepository;
+    private final org.springframework.jdbc.core.JdbcTemplate jdbcTemplate;
 
     public QuestionBankService(QuestionRepository questionRepository,
                                 QuestionOptionRepository optionRepository,
-                                QuestionTestCaseRepository testCaseRepository) {
+                                QuestionTestCaseRepository testCaseRepository,
+                                org.springframework.jdbc.core.JdbcTemplate jdbcTemplate) {
         this.questionRepository = questionRepository;
         this.optionRepository = optionRepository;
         this.testCaseRepository = testCaseRepository;
+        this.jdbcTemplate = jdbcTemplate;
     }
 
     public List<Question> getPublishedQuestions(int page, int size) {
@@ -100,8 +103,13 @@ public class QuestionBankService {
 
     @Transactional
     public Question updateQuestion(UUID id, Question update, UUID userId) {
+        return updateFullQuestion(id, update, null, null, userId, false);
+    }
+
+    @Transactional
+    public Question updateFullQuestion(UUID id, Question update, List<QuestionOption> options, List<QuestionTestCase> testCases, UUID userId, boolean isAdmin) {
         Question question = getQuestion(id);
-        if (question.getCreatedBy() != null && !question.getCreatedBy().equals(userId)) {
+        if (!isAdmin && question.getCreatedBy() != null && !question.getCreatedBy().equals(userId)) {
             throw new ForbiddenException("Cannot modify another user's question");
         }
         if (update.getTitle() != null) question.setTitle(update.getTitle());
@@ -114,8 +122,65 @@ public class QuestionBankService {
         if (update.getExplanation() != null) question.setExplanation(update.getExplanation());
         if (update.getTags() != null) question.setTags(update.getTags());
         if (update.getStatus() != null) question.setStatus(update.getStatus());
+        if (update.getSkillId() != null) question.setSkillId(update.getSkillId());
+        if (update.getTopicId() != null) question.setTopicId(update.getTopicId());
+        if (update.getEvaluationMethod() != null) question.setEvaluationMethod(update.getEvaluationMethod());
         question.setVersion(question.getVersion() + 1);
-        return questionRepository.save(question);
+        Question saved = questionRepository.save(question);
+
+        if (options != null) {
+            List<QuestionOption> existing = optionRepository.findByQuestionId(id);
+            if (!existing.isEmpty()) {
+                optionRepository.deleteAll(existing);
+                optionRepository.flush();
+            }
+            int order = 1;
+            for (QuestionOption opt : options) {
+                opt.setId(null);
+                opt.setQuestionId(saved.getId());
+                opt.setDisplayOrder(order++);
+                optionRepository.save(opt);
+            }
+        }
+
+        if (testCases != null) {
+            List<QuestionTestCase> existingTc = testCaseRepository.findByQuestionIdOrderByDisplayOrder(id);
+            if (!existingTc.isEmpty()) {
+                testCaseRepository.deleteAll(existingTc);
+                testCaseRepository.flush();
+            }
+            for (QuestionTestCase tc : testCases) {
+                tc.setId(null);
+                tc.setQuestionId(saved.getId());
+                testCaseRepository.save(tc);
+            }
+        }
+
+        return saved;
+    }
+
+    @Transactional
+    public void deleteQuestion(UUID id, UUID userId, boolean isAdmin) {
+        Question question = getQuestion(id);
+        if (!isAdmin && question.getCreatedBy() != null && !question.getCreatedBy().equals(userId)) {
+            throw new ForbiddenException("Cannot delete another user's question");
+        }
+
+        List<QuestionOption> existingOptions = optionRepository.findByQuestionId(id);
+        if (!existingOptions.isEmpty()) {
+            optionRepository.deleteAll(existingOptions);
+        }
+
+        List<QuestionTestCase> existingTc = testCaseRepository.findByQuestionIdOrderByDisplayOrder(id);
+        if (!existingTc.isEmpty()) {
+            testCaseRepository.deleteAll(existingTc);
+        }
+
+        try {
+            jdbcTemplate.update("DELETE FROM student_question_attempts WHERE question_id = ?", id.toString());
+        } catch (Exception ignored) {}
+
+        questionRepository.delete(question);
     }
 
     public long countPublished() {

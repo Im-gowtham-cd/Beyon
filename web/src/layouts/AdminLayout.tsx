@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/context/AuthContext';
 import { AdminSidebar } from './AdminSidebar';
@@ -72,14 +72,14 @@ export function AdminLayout() {
 
               <div className={styles.userBadge}>
                 <div className={styles.userAvatar}>
-                  {user?.name?.slice(0, 2).toUpperCase() || 'SA'}
+                  {user?.name?.slice(0, 2).toUpperCase() || user?.email?.slice(0, 2).toUpperCase() || 'AD'}
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
                   <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#0f172a' }}>
-                    {user?.name || 'Super Admin'}
+                    {user?.name || user?.role?.replace(/_/g, ' ') || 'Administrator'}
                   </span>
                   <span style={{ fontSize: '0.68rem', color: '#64748b' }}>
-                    superadmin@beyon.test
+                    {user?.email || 'admin@beyon.io'}
                   </span>
                 </div>
                 <button

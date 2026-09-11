@@ -245,7 +245,9 @@ export function App() {
             <Route path="/admin/companies" element={<AdminCompaniesPage />} />
             <Route path="/admin/questions" element={<AdminQuestionsPage />} />
             <Route path="/admin/questions/create" element={<CreateQuestionPage />} />
+            <Route path="/admin/questions/edit/:id" element={<CreateQuestionPage />} />
             <Route path="/practice/create" element={<CreateQuestionPage />} />
+            <Route path="/practice/edit/:id" element={<CreateQuestionPage />} />
             <Route path="/admin/economy" element={<AdminEconomyPage />} />
             <Route path="/admin/moderation" element={<AdminModerationPage />} />
             <Route path="/admin/feedback" element={<AdminFeedbackPage />} />
