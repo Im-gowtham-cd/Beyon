@@ -473,51 +473,69 @@ export function AdminSkillGraphPage() {
           </p>
         </div>
       ) : (
-        <div className={styles.powerActionGrid}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '16px' }}>
           {processedSkills.map((skill) => {
             const domainName = skill.categoryId ? categoryMap.get(skill.categoryId) || 'Core' : skill.category || 'Core';
 
             return (
-              <div key={skill.id} className={styles.powerCard} style={{ borderTop: '3px solid #1c2d81' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px' }}>
-                  <div>
+              <div
+                key={skill.id}
+                style={{
+                  background: '#ffffff',
+                  border: '1px solid #e2e8f0',
+                  borderTop: '3px solid #1c2d81',
+                  padding: '20px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  gap: '12px',
+                  borderRadius: '2px',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                }}
+              >
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px' }}>
+                    <div>
+                      <span
+                        style={{
+                          fontSize: '0.68rem',
+                          fontWeight: 800,
+                          color: '#1c2d81',
+                          background: '#eff6ff',
+                          padding: '2px 7px',
+                          border: '1px solid #bfdbfe',
+                          textTransform: 'uppercase',
+                          display: 'inline-block',
+                          borderRadius: '2px',
+                        }}
+                      >
+                        {domainName}
+                      </span>
+                      <h3 style={{ margin: '6px 0 0', fontSize: '1.08rem', fontWeight: 800, color: '#1c2d81', letterSpacing: '-0.01em' }}>
+                        {skill.name}
+                      </h3>
+                    </div>
                     <span
                       style={{
                         fontSize: '0.68rem',
                         fontWeight: 800,
-                        color: '#1c2d81',
-                        background: '#eff6ff',
-                        padding: '2px 7px',
-                        border: '1px solid #bfdbfe',
+                        background: '#dcfce7',
+                        color: '#15803d',
+                        border: '1px solid #bbf7d0',
+                        padding: '2px 6px',
                         textTransform: 'uppercase',
-                        display: 'inline-block',
+                        whiteSpace: 'nowrap',
+                        borderRadius: '2px',
                       }}
                     >
-                      {domainName}
+                      HIGH DEMAND
                     </span>
-                    <h3 className={styles.powerTitle} style={{ marginTop: '6px', fontSize: '1.05rem' }}>
-                      {skill.name}
-                    </h3>
                   </div>
-                  <span
-                    style={{
-                      fontSize: '0.68rem',
-                      fontWeight: 800,
-                      background: '#dcfce7',
-                      color: '#15803d',
-                      border: '1px solid #bbf7d0',
-                      padding: '2px 6px',
-                      textTransform: 'uppercase',
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    HIGH DEMAND
-                  </span>
-                </div>
 
-                <p className={styles.powerDesc} style={{ minHeight: '36px' }}>
-                  {skill.description || `${skill.name} competencies and systems engineering benchmarks.`}
-                </p>
+                  <p style={{ margin: '8px 0 0', fontSize: '0.82rem', color: '#475569', lineHeight: 1.45, minHeight: '36px' }}>
+                    {skill.description || `${skill.name} competencies and systems engineering benchmarks.`}
+                  </p>
+                </div>
 
                 {/* Telemetry Metric Block */}
                 <div
@@ -529,6 +547,7 @@ export function AdminSkillGraphPage() {
                     flexDirection: 'column',
                     gap: '6px',
                     fontSize: '0.76rem',
+                    borderRadius: '2px',
                   }}
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -545,21 +564,53 @@ export function AdminSkillGraphPage() {
                   </div>
                 </div>
 
-                {/* Card Action Footer */}
-                <div style={{ display: 'flex', gap: '8px', marginTop: 'auto', paddingTop: '8px' }}>
+                {/* Card Action Footer with Uniform 34px Buttons */}
+                <div style={{ display: 'flex', gap: '8px', marginTop: 'auto', paddingTop: '6px' }}>
                   <button
                     type="button"
                     onClick={() => setInspectNode({ skill, domainName })}
-                    className={`${styles.powerBtn} ${styles.powerBtnSecondary}`}
-                    style={{ flex: 1 }}
+                    style={{
+                      height: '34px',
+                      padding: '0 14px',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '6px',
+                      background: '#ffffff',
+                      border: '1px solid #cbd5e1',
+                      color: '#1c2d81',
+                      fontWeight: 700,
+                      fontSize: '0.8rem',
+                      cursor: 'pointer',
+                      borderRadius: '3px',
+                      whiteSpace: 'nowrap',
+                      boxSizing: 'border-box',
+                    }}
                   >
                     <Eye size={13} />
                     <span>Inspect</span>
                   </button>
                   <Link
                     to={`/admin/questions?search=${encodeURIComponent(skill.name)}`}
-                    className={styles.powerBtn}
-                    style={{ flex: 1.2, textDecoration: 'none' }}
+                    style={{
+                      flex: 1,
+                      height: '34px',
+                      padding: '0 14px',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '6px',
+                      background: '#1c2d81',
+                      border: '1px solid #1c2d81',
+                      color: '#fed601',
+                      fontWeight: 800,
+                      fontSize: '0.8rem',
+                      textDecoration: 'none',
+                      cursor: 'pointer',
+                      borderRadius: '3px',
+                      whiteSpace: 'nowrap',
+                      boxSizing: 'border-box',
+                    }}
                   >
                     <HelpCircle size={13} />
                     <span>Questions →</span>
