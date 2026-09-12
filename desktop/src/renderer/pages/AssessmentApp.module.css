@@ -342,6 +342,64 @@
   gap: 14px;
 }
 
+.authTabs {
+  display: flex;
+  background: #f1f5f9;
+  padding: 4px;
+  border-radius: var(--radius-xs);
+  gap: 4px;
+  margin-bottom: 0.5rem;
+  border: 1px solid var(--color-border);
+}
+
+.authTab {
+  flex: 1;
+  padding: 8px 12px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: var(--transition);
+}
+
+.authTab:hover {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.authTabActive {
+  background: #ffffff !important;
+  color: var(--color-primary) !important;
+  box-shadow: var(--shadow-sm);
+}
+
+.passcodeTextarea {
+  width: 100%;
+  padding: 8px 0;
+  border: none;
+  background: transparent;
+  outline: none;
+  font-family: monospace, var(--font-body);
+  font-size: 0.8rem;
+  color: var(--text-primary);
+  resize: vertical;
+  line-height: 1.4;
+  word-break: break-all;
+}
+
+.inputHint {
+  font-size: 0.74rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
 .inputGroup {
   display: flex;
   flex-direction: column;
@@ -609,6 +667,173 @@
   width: 100%;
   justify-content: center;
 }
+
+.networkTabs {
+  display: flex;
+  background: #e2e8f0;
+  border-radius: 8px;
+  padding: 3px;
+  gap: 4px;
+  margin-bottom: 16px;
+  width: 100%;
+  max-width: 440px;
+}
+
+.networkTab {
+  flex: 1;
+  padding: 8px 12px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  border: none;
+  background: transparent;
+  color: #475569;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.networkTab:hover {
+  color: #0f172a;
+}
+
+.networkTabActive {
+  background: #ffffff;
+  color: #1e40af;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.infoNoticeBox {
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+  border-radius: 6px;
+  padding: 10px 14px;
+  font-size: 0.78rem;
+  color: #0369a1;
+  text-align: left;
+  line-height: 1.45;
+  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.tokenDetailCard {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 10px 14px;
+  width: 100%;
+  box-sizing: border-box;
+  text-align: left;
+  margin-top: 10px;
+}
+
+.tokenDetailLabel {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 4px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.tokenDetailValueRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tokenDetailValue {
+  flex: 1;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.8rem;
+  color: #0f172a;
+  background: #f8fafc;
+  padding: 6px 10px;
+  border-radius: 4px;
+  border: 1px solid #cbd5e1;
+  word-break: break-all;
+  user-select: all;
+}
+
+.copySmallBtn {
+  padding: 6px 12px;
+  background: #2563eb;
+  color: #ffffff;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+  transition: background 0.15s ease;
+}
+
+.copySmallBtn:hover {
+  background: #1d4ed8;
+}
+
+.dualViewSecondaryRow {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  margin-top: 14px;
+}
+
+.btnBypass {
+  padding: 10px 18px;
+  font-size: 0.84rem;
+  font-weight: 600;
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  color: #475569;
+  border-radius: 6px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.btnBypass:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+  border-color: #94a3b8;
+}
+
+.btnSimulate {
+  padding: 10px 18px;
+  font-size: 0.84rem;
+  font-weight: 600;
+  border: 1px dashed #3b82f6;
+  background: #eff6ff;
+  color: #1d4ed8;
+  border-radius: 6px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.btnSimulate:hover {
+  background: #dbeafe;
+  border-color: #2563eb;
+}
+
 
 .contentCard {
   background: var(--color-surface);
@@ -2251,5 +2476,113 @@
   font-size: 0.88rem;
   font-weight: 600;
   margin: 0;
+}
+
+/* Section Navigation Tabs */
+.sectionTabBar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 8px 12px;
+  background: #f8fafc;
+  border-bottom: 2px solid #e2e8f0;
+  scrollbar-width: thin;
+}
+
+.sectionTab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  color: #475569;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.sectionTab:hover {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+  color: #0f172a;
+}
+
+.sectionTabActive {
+  background: #1c2d81 !important;
+  border-color: #1c2d81 !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 4px rgba(28, 45, 129, 0.2);
+}
+
+.sectionTabTag {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  opacity: 0.85;
+}
+
+.sectionTabName {
+  font-weight: 800;
+}
+
+.sectionTabCount {
+  font-size: 0.72rem;
+  padding: 1px 6px;
+  background: rgba(0, 0, 0, 0.08);
+  border-radius: 2px;
+}
+
+.sectionTabActive .sectionTabCount {
+  background: rgba(255, 255, 255, 0.2);
+  color: #fed601;
+}
+
+.sectionBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  color: #1e40af;
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.topicBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  color: #334155;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.remediationBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  background: #fef2f2;
+  border: 1px solid #fca5a5;
+  color: #991b1b;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.remediationCard {
+  background: #fff5f5;
+  border: 1.5px solid #fca5a5;
+  padding: 20px 24px;
+  margin-top: 16px;
 }
 

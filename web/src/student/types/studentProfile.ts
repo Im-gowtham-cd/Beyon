@@ -2,6 +2,9 @@ export interface StudentProfile {
   id: string;
   userId: string;
   username?: string;
+  firstName?: string;
+  middleName?: string;
+  lastName?: string;
   phone?: string;
   dateOfBirth?: string;
   gender?: string;
@@ -20,6 +23,9 @@ export interface StudentProfile {
   aboutMe?: string;
   resumeUrl?: string;
   profilePhotoUrl?: string;
+  studentIdCardUrl?: string;
+  hasCompletedAssessment?: boolean;
+  assessmentCompletedAt?: string;
   completionPct: number;
   createdAt: string;
   updatedAt: string;
@@ -33,6 +39,13 @@ export interface StudentSkill {
   proficiency?: string;
   source: string;
   verified: boolean;
+  score?: number;
+  questionsTested?: number;
+  questionsCorrect?: number;
+  lastAssessedAt?: string;
+  retestAvailableAt?: string;
+  rank?: number;
+  totalRanked?: number;
   createdAt: string;
 }
 

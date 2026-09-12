@@ -107,11 +107,17 @@ import { AdminEconomyPage } from '../pages/admin/AdminEconomyPage';
 import { AdminModerationPage } from '../pages/admin/AdminModerationPage';
 import { AdminLayout } from '../layouts/AdminLayout';
 import { StudentOnboarding } from '../onboarding/pages/student/StudentOnboarding';
+import { SkillValidationAssessmentPage } from '../onboarding/pages/student/SkillValidationAssessmentPage';
 import { InstitutionOnboarding } from '../onboarding/pages/institution/InstitutionOnboarding';
 import { CompanyOnboarding } from '../onboarding/pages/company/CompanyOnboarding';
 import { CompletionPage } from '../onboarding/pages/shared/CompletionPage';
 import { AccountRejectedPage } from '../auth/pages/AccountRejectedPage';
 import { MobileProctorApp } from '../proctor/MobileProctorApp';
+import { ForcePasswordChangePage } from '../auth/pages/ForcePasswordChangePage';
+import { InstitutionOnboardingPage } from '../pages/admin/InstitutionOnboardingPage';
+import { InstitutionHierarchyPage } from '../pages/institution/InstitutionHierarchyPage';
+import { AdminAuditLogsPage } from '../pages/admin/AdminAuditLogsPage';
+import { AdminInstitutionManagersPage } from '../pages/admin/AdminInstitutionManagersPage';
 
 export function App() {
   return (
@@ -128,8 +134,11 @@ export function App() {
       <Route path="/403" element={<UnauthorizedPage />} />
 
       <Route element={<ProtectedRoute />}>
+        <Route path="/auth/force-change-password" element={<ForcePasswordChangePage />} />
+        <Route path="/force-change-password" element={<ForcePasswordChangePage />} />
 
         <Route path="/onboarding/student" element={<StudentOnboarding />} />
+        <Route path="/onboarding/skill-assessment" element={<SkillValidationAssessmentPage />} />
         <Route path="/onboarding/institution" element={<InstitutionOnboarding />} />
         <Route path="/onboarding/company" element={<CompanyOnboarding />} />
         <Route path="/onboarding/complete" element={<CompletionPage />} />
@@ -172,6 +181,7 @@ export function App() {
             <Route path="/institution/home" element={<InstitutionHome />} />
             <Route path="/institution" element={<Navigate to="/institution/home" replace />} />
             <Route path="/institution/dashboard" element={<InstitutionHome />} />
+            <Route path="/institution/hierarchy" element={<InstitutionHierarchyPage />} />
             <Route path="/institution/analytics" element={<InstitutionAnalyticsPage />} />
             <Route path="/institution/drives" element={<InstitutionDrivesPage />} />
             <Route path="/institution/students" element={<InstitutionStudentsPage />} />
@@ -190,6 +200,7 @@ export function App() {
             <Route path="/student/home" element={<StudentHome />} />
             <Route path="/student/profile" element={<StudentProfilePage />} />
             <Route path="/student/profile/edit" element={<StudentProfilePage />} />
+            <Route path="/student/skill-assessment" element={<SkillValidationAssessmentPage />} />
             <Route path="/student/skills" element={<SkillExplorer />} />
             <Route path="/student/skills/:skillSlug" element={<SkillDetail />} />
             <Route path="/student/skills/:skillSlug/:topicSlug" element={<TopicDetail />} />
@@ -252,6 +263,9 @@ export function App() {
             <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
             <Route path="/admin/users" element={<AdminUsersPage />} />
             <Route path="/admin/institutions" element={<AdminInstitutionsPage />} />
+            <Route path="/admin/institution-managers" element={<AdminInstitutionManagersPage />} />
+            <Route path="/institution-manager/onboard" element={<InstitutionOnboardingPage />} />
+            <Route path="/admin/audit-logs" element={<AdminAuditLogsPage />} />
             <Route path="/admin/companies" element={<AdminCompaniesPage />} />
             <Route path="/admin/questions" element={<AdminQuestionsPage />} />
             <Route path="/admin/questions/create" element={<CreateQuestionPage />} />

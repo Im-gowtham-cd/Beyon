@@ -17,6 +17,9 @@ export const authApi = {
   changePassword: (currentPassword: string, newPassword: string, confirmPassword: string) =>
     api.post<void>('/auth/change-password', { currentPassword, newPassword, confirmPassword }),
 
+  forceChangePassword: (currentPassword: string, newPassword: string, confirmPassword: string) =>
+    api.post<UserInfo>('/auth/force-change-password', { currentPassword, newPassword, confirmPassword }),
+
   verifyEmail: (token: string) =>
     api.post<void>('/auth/verify-email', { token }),
 

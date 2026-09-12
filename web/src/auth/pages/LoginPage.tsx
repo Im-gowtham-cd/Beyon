@@ -52,6 +52,12 @@ export function LoginPage() {
       const response = await authApi.login({ email, password });
       login(response.accessToken, response.user);
 
+      if (response.user.mustChangePassword) {
+        showToast('First login detected: Mandatory password change required.');
+        navigate('/auth/force-change-password');
+        return;
+      }
+
       const profileStatus = response.user.profileStatus;
       const accountStatus = response.user.status;
 

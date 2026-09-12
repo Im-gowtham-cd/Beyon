@@ -30,16 +30,22 @@ public class AuthResponse {
         private AccountStatus status;
         private AccountStatus profileStatus;
         private boolean emailVerified;
+        private boolean mustChangePassword;
+        private boolean hasCompletedAssessment;
 
         public UserInfo(UUID id, String email, String name, UserRole role, AccountStatus status, boolean emailVerified) {
             this(id, email, name, role, status, AccountStatus.INCOMPLETE, emailVerified);
         }
 
         public UserInfo(UUID id, String email, String name, UserRole role, AccountStatus status, AccountStatus profileStatus, boolean emailVerified) {
-            this(id, email, name, role, null, null, null, status, profileStatus, emailVerified);
+            this(id, email, name, role, null, null, null, status, profileStatus, emailVerified, false);
         }
 
         public UserInfo(UUID id, String email, String name, UserRole role, UUID institutionId, UUID companyId, String departmentId, AccountStatus status, AccountStatus profileStatus, boolean emailVerified) {
+            this(id, email, name, role, institutionId, companyId, departmentId, status, profileStatus, emailVerified, false);
+        }
+
+        public UserInfo(UUID id, String email, String name, UserRole role, UUID institutionId, UUID companyId, String departmentId, AccountStatus status, AccountStatus profileStatus, boolean emailVerified, boolean mustChangePassword) {
             this.id = id;
             this.email = email;
             this.name = name;
@@ -51,6 +57,7 @@ public class AuthResponse {
             this.status = status;
             this.profileStatus = profileStatus;
             this.emailVerified = emailVerified;
+            this.mustChangePassword = mustChangePassword;
         }
 
         public UUID getId() { return id; }
@@ -64,6 +71,10 @@ public class AuthResponse {
         public AccountStatus getStatus() { return status; }
         public AccountStatus getProfileStatus() { return profileStatus; }
         public boolean isEmailVerified() { return emailVerified; }
+        public boolean isMustChangePassword() { return mustChangePassword; }
+        public boolean isHasCompletedAssessment() { return hasCompletedAssessment; }
+        public boolean getHasCompletedAssessment() { return hasCompletedAssessment; }
+        public void setHasCompletedAssessment(boolean hasCompletedAssessment) { this.hasCompletedAssessment = hasCompletedAssessment; }
     }
 }
 

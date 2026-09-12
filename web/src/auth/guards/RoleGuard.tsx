@@ -19,14 +19,23 @@ function roleMatches(userRole: UserRole, allowedRoles: UserRole[]): boolean {
     userRole === 'MODERATION_ADMIN' ||
     userRole === 'ANALYTICS_ADMIN' ||
     userRole === 'SUPER_ADMIN' ||
-    userRole === 'ADMIN';
+    userRole === 'ADMIN' ||
+    userRole === 'INSTITUTION_MANAGER';
 
   if (isPlatformSubrole && (allowedRoles.includes('ADMIN') || allowedRoles.includes('SUPER_ADMIN'))) {
     return true;
   }
 
   // Institution sub-roles satisfy INSTITUTION
-  if (allowedRoles.includes('INSTITUTION') && userRole.startsWith('INSTITUTION')) return true;
+  if (
+    allowedRoles.includes('INSTITUTION') &&
+    (userRole.startsWith('INSTITUTION') ||
+      userRole === 'PRINCIPAL' ||
+      userRole === 'PLACEMENT_COORDINATOR' ||
+      userRole === 'DEPARTMENT_PLACEMENT_INCHARGE')
+  ) {
+    return true;
+  }
 
   // Company sub-roles satisfy COMPANY
   if (allowedRoles.includes('COMPANY') && userRole.startsWith('COMPANY')) return true;
@@ -50,6 +59,10 @@ export function RoleGuard({ allowedRoles, requireProfile = false }: Props) {
     return <Navigate to="/login" replace />;
   }
 
+  if (user.mustChangePassword) {
+    return <Navigate to="/auth/force-change-password" replace />;
+  }
+
   if (!roleMatches(user.role, allowedRoles)) {
     const isPlatformSubrole =
       user.role === 'PLATFORM_ADMIN' ||
@@ -59,7 +72,8 @@ export function RoleGuard({ allowedRoles, requireProfile = false }: Props) {
       user.role === 'MODERATION_ADMIN' ||
       user.role === 'ANALYTICS_ADMIN' ||
       user.role === 'SUPER_ADMIN' ||
-      user.role === 'ADMIN';
+      user.role === 'ADMIN' ||
+      user.role === 'INSTITUTION_MANAGER';
 
     if (isPlatformSubrole) {
       const pathname = window.location.pathname;

@@ -40,6 +40,21 @@ public interface QuestionRepository extends JpaRepository<Question, UUID> {
     @Query("SELECT q FROM Question q WHERE (q.status = 'PUBLISHED' OR q.status = 'ACTIVE') AND q.id NOT IN (SELECT a.questionId FROM StudentQuestionAttempt a WHERE a.studentId = :studentId) ORDER BY FUNCTION('RAND')")
     List<Question> findUnsolvedForStudent(@Param("studentId") UUID studentId, Pageable pageable);
 
+    @Query("SELECT q FROM Question q WHERE (q.status = 'PUBLISHED' OR q.status = 'ACTIVE') AND q.skillId = :skillId AND q.id NOT IN (SELECT a.questionId FROM StudentQuestionAttempt a WHERE a.studentId = :studentId)")
+    List<Question> findUnattemptedBySkillIdForStudent(@Param("skillId") UUID skillId, @Param("studentId") UUID studentId);
+
+    @Query("SELECT q FROM Question q WHERE (q.status = 'PUBLISHED' OR q.status = 'ACTIVE') AND q.skillId = :skillId")
+    List<Question> findBySkillIdActive(@Param("skillId") UUID skillId);
+
+    @Query("SELECT q FROM Question q WHERE (q.status = 'PUBLISHED' OR q.status = 'ACTIVE') AND q.id NOT IN (SELECT a.questionId FROM StudentQuestionAttempt a WHERE a.studentId = :studentId)")
+    List<Question> findUnattemptedGeneralForStudent(@Param("studentId") UUID studentId, Pageable pageable);
+
+    @Query("SELECT q FROM Question q WHERE (q.status = 'PUBLISHED' OR q.status = 'ACTIVE') AND q.topicId = :topicId AND q.id NOT IN (SELECT a.questionId FROM StudentQuestionAttempt a WHERE a.studentId = :studentId)")
+    List<Question> findUnattemptedByTopicIdForStudent(@Param("topicId") UUID topicId, @Param("studentId") UUID studentId);
+
+    @Query("SELECT q FROM Question q WHERE (q.status = 'PUBLISHED' OR q.status = 'ACTIVE') AND q.skillId = :skillId AND (LOWER(q.tags) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(q.title) LIKE LOWER(CONCAT('%', :keyword, '%'))) AND q.id NOT IN (SELECT a.questionId FROM StudentQuestionAttempt a WHERE a.studentId = :studentId)")
+    List<Question> findUnattemptedBySkillIdAndKeywordForStudent(@Param("skillId") UUID skillId, @Param("keyword") String keyword, @Param("studentId") UUID studentId);
+
     List<Question> findByTagsContainingOrderByCreatedAtAsc(String tag);
     List<Question> findByCreatedByOrderByCreatedAtDesc(UUID createdBy);
 }

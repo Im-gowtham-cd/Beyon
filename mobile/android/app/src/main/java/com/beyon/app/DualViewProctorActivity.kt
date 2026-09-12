@@ -84,6 +84,12 @@ class DualViewProctorActivity : AppCompatActivity() {
         updateServerHostLabel()
 
         // Check if token was passed via deep link or intent
+        val hostFromIntent = intent.data?.getQueryParameter("host")
+        if (!hostFromIntent.isNullOrBlank()) {
+            BackendTunnel.baseUrl = "http://$hostFromIntent:8085/api/v1"
+            updateServerHostLabel()
+        }
+
         val tokenFromIntent = intent.data?.getQueryParameter("token") ?: intent.getStringExtra("token")
         if (!tokenFromIntent.isNullOrBlank()) {
             binding.etPairingToken.setText(tokenFromIntent)
@@ -266,14 +272,37 @@ class DualViewProctorActivity : AppCompatActivity() {
         }
     }
 
-    private fun pairWithToken(token: String) {
+    private fun pairWithToken(rawInput: String) {
+        var cleanToken = rawInput.trim()
+        try {
+            if (cleanToken.startsWith("http://") || cleanToken.startsWith("https://") || cleanToken.startsWith("beyon://")) {
+                val uri = android.net.Uri.parse(cleanToken)
+                val qToken = uri.getQueryParameter("token")
+                if (!qToken.isNullOrBlank()) {
+                    cleanToken = qToken
+                }
+                uri.host?.let { host ->
+                    if (host.matches(Regex("\\d+\\.\\d+\\.\\d+\\.\\d+"))) {
+                        BackendTunnel.baseUrl = "http://$host:8085/api/v1"
+                        updateServerHostLabel()
+                    }
+                }
+            } else if (cleanToken.contains("token=")) {
+                val match = Regex("[?&]token=([^&]+)").find(cleanToken)
+                if (match != null) {
+                    cleanToken = match.groupValues[1]
+                }
+            }
+        } catch (ignored: Exception) {}
+
+        binding.etPairingToken.setText(cleanToken)
         binding.btnConnect.isEnabled = false
         binding.btnConnect.text = "Authenticating with Desktop..."
 
         lifecycleScope.launch(Dispatchers.IO) {
             try {
                 val json = JSONObject().apply {
-                    put("token", token)
+                    put("token", cleanToken)
                     put("fingerprint", "Android Native Client")
                 }
                 val body = json.toString().toRequestBody(JSON_MEDIA_TYPE)
@@ -294,7 +323,7 @@ class DualViewProctorActivity : AppCompatActivity() {
                         withContext(Dispatchers.Main) {
                             binding.btnConnect.isEnabled = true
                             binding.btnConnect.text = "Connect"
-                            Toast.makeText(this@DualViewProctorActivity, "Pairing failed: Invalid token", Toast.LENGTH_LONG).show()
+                            Toast.makeText(this@DualViewProctorActivity, "Pairing failed (${response.code}) on ${BackendTunnel.baseUrl}", Toast.LENGTH_LONG).show()
                         }
                     }
                 }
@@ -302,7 +331,7 @@ class DualViewProctorActivity : AppCompatActivity() {
                 withContext(Dispatchers.Main) {
                     binding.btnConnect.isEnabled = true
                     binding.btnConnect.text = "Connect"
-                    Toast.makeText(this@DualViewProctorActivity, "Connection error: ${e.message}", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@DualViewProctorActivity, "Cannot reach ${BackendTunnel.baseUrl}: ${e.message}", Toast.LENGTH_LONG).show()
                 }
             }
         }

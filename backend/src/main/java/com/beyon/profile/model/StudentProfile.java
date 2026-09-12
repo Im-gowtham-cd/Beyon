@@ -2,6 +2,7 @@ package com.beyon.profile.model;
 
 import com.beyon.profile.enums.PlacementPreference;
 import com.beyon.profile.enums.WorkType;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -115,6 +116,13 @@ public class StudentProfile {
     @Column(name = "verification_status", length = 30)
     private String verificationStatus = "PENDING";
 
+    @JsonProperty("hasCompletedAssessment")
+    @Column(name = "has_completed_assessment", nullable = false)
+    private boolean hasCompletedAssessment = false;
+
+    @Column(name = "assessment_completed_at")
+    private Instant assessmentCompletedAt;
+
     @Column(nullable = false)
     private int completionPct = 0;
 
@@ -198,6 +206,11 @@ public class StudentProfile {
     public void setInternshipExperience(String internshipExperience) { this.internshipExperience = internshipExperience; }
     public String getVerificationStatus() { return verificationStatus; }
     public void setVerificationStatus(String verificationStatus) { this.verificationStatus = verificationStatus; }
+    public boolean isHasCompletedAssessment() { return hasCompletedAssessment; }
+    public boolean getHasCompletedAssessment() { return hasCompletedAssessment; }
+    public void setHasCompletedAssessment(boolean hasCompletedAssessment) { this.hasCompletedAssessment = hasCompletedAssessment; }
+    public Instant getAssessmentCompletedAt() { return assessmentCompletedAt; }
+    public void setAssessmentCompletedAt(Instant assessmentCompletedAt) { this.assessmentCompletedAt = assessmentCompletedAt; }
     public Instant getUpdatedAt() { return updatedAt; }
 }
 

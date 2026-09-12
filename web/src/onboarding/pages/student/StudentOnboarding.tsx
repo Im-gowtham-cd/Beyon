@@ -93,18 +93,122 @@ const DEPARTMENTS = [
 
 const ACADEMIC_YEARS = ['1st Year', '2nd Year', '3rd Year', '4th Year', 'Graduated / Alumni'];
 
-const POPULAR_SKILLS = [
-  { name: 'React', category: 'Frontend' },
-  { name: 'TypeScript', category: 'Languages' },
-  { name: 'Java', category: 'Languages' },
-  { name: 'Python', category: 'Languages' },
-  { name: 'Spring Boot', category: 'Backend' },
-  { name: 'Node.js', category: 'Backend' },
-  { name: 'PostgreSQL', category: 'Database' },
-  { name: 'Docker', category: 'DevOps' },
-  { name: 'AWS', category: 'Cloud' },
-  { name: 'Git', category: 'Tools' },
-];
+export interface SkillRecommendation {
+  name: string;
+  category: string;
+  reason: string;
+}
+
+export function getRecommendedSkillsForCandidate(department: string, roles: string[] = []): SkillRecommendation[] {
+  const result: SkillRecommendation[] = [];
+  const added = new Set<string>();
+
+  const add = (name: string, category: string, reason: string) => {
+    const key = name.toLowerCase().trim();
+    if (!added.has(key)) {
+      added.add(key);
+      result.push({ name, category, reason });
+    }
+  };
+
+  // 1. Role-based recommendations
+  roles.forEach(r => {
+    const role = r.toLowerCase();
+    if (role.includes('frontend') || role.includes('ui/ux')) {
+      add('React', 'Frontend', 'Frontend Role');
+      add('TypeScript', 'Languages', 'Frontend Role');
+      add('CSS', 'Frontend', 'Frontend Role');
+      add('JavaScript', 'Languages', 'Frontend Role');
+      add('HTML', 'Frontend', 'Frontend Role');
+      add('Next.js', 'Frontend', 'Frontend Role');
+    }
+    if (role.includes('backend')) {
+      add('Java', 'Languages', 'Backend Role');
+      add('Spring Boot', 'Backend', 'Backend Role');
+      add('Python', 'Languages', 'Backend Role');
+      add('PostgreSQL', 'Database', 'Backend Role');
+      add('Node.js', 'Backend', 'Backend Role');
+      add('Docker', 'DevOps', 'Backend Role');
+    }
+    if (role.includes('full stack')) {
+      add('React', 'Frontend', 'Full Stack');
+      add('TypeScript', 'Languages', 'Full Stack');
+      add('Node.js', 'Backend', 'Full Stack');
+      add('Spring Boot', 'Backend', 'Full Stack');
+      add('PostgreSQL', 'Database', 'Full Stack');
+    }
+    if (role.includes('data') || role.includes('ai') || role.includes('machine learning')) {
+      add('Python', 'Languages', 'AI/Data Role');
+      add('Machine Learning', 'AI_ML', 'AI/Data Role');
+      add('SQL', 'Database', 'AI/Data Role');
+      add('Data Analysis', 'AI_ML', 'AI/Data Role');
+      add('Pandas', 'Tools', 'AI/Data Role');
+      add('Deep Learning', 'AI_ML', 'AI/Data Role');
+    }
+    if (role.includes('cloud') || role.includes('devops')) {
+      add('Docker', 'DevOps', 'Cloud/DevOps');
+      add('Kubernetes', 'DevOps', 'Cloud/DevOps');
+      add('AWS', 'Cloud', 'Cloud/DevOps');
+      add('Linux', 'Tools', 'Cloud/DevOps');
+      add('Git', 'Tools', 'Cloud/DevOps');
+    }
+    if (role.includes('cybersecurity')) {
+      add('Network Security', 'Security', 'Security Role');
+      add('Linux', 'Tools', 'Security Role');
+      add('Cryptography', 'Security', 'Security Role');
+      add('Python', 'Languages', 'Security Role');
+    }
+    if (role.includes('mobile')) {
+      add('Flutter', 'Mobile', 'Mobile Role');
+      add('React Native', 'Mobile', 'Mobile Role');
+      add('Kotlin', 'Languages', 'Mobile Role');
+    }
+  });
+
+  // 2. Department-based recommendations
+  const dept = (department || '').toLowerCase();
+  if (dept.includes('computer science') || dept.includes('cse') || dept.includes('information tech') || dept.includes('it')) {
+    add('Data Structures & Algorithms', 'Languages', 'Department Core');
+    add('Java', 'Languages', 'Department Core');
+    add('Python', 'Languages', 'Department Core');
+    add('Database Systems', 'Database', 'Department Core');
+    add('Web Development', 'Frontend', 'Department Core');
+  } else if (dept.includes('ai') || dept.includes('data science') || dept.includes('aids')) {
+    add('Python', 'Languages', 'Department Core');
+    add('Machine Learning', 'AI_ML', 'Department Core');
+    add('Data Structures & Algorithms', 'Languages', 'Department Core');
+    add('SQL', 'Database', 'Department Core');
+    add('Deep Learning', 'AI_ML', 'Department Core');
+  } else if (dept.includes('electronic') || dept.includes('ece') || dept.includes('electrical') || dept.includes('eee')) {
+    add('C Programming', 'Languages', 'Department Core');
+    add('Embedded Systems', 'Tools', 'Department Core');
+    add('IoT', 'Tools', 'Department Core');
+    add('Digital Electronics', 'Tools', 'Department Core');
+    add('Python', 'Languages', 'Department Core');
+  } else if (dept.includes('mech')) {
+    add('CAD Modeling', 'Tools', 'Department Core');
+    add('Engineering Mechanics', 'Tools', 'Department Core');
+    add('Thermodynamics', 'Tools', 'Department Core');
+    add('Python', 'Languages', 'Department Core');
+  } else if (dept.includes('civil')) {
+    add('Structural Analysis', 'Tools', 'Department Core');
+    add('AutoCAD', 'Tools', 'Department Core');
+    add('Surveying', 'Tools', 'Department Core');
+  }
+
+  // Common modern baseline
+  add('React', 'Frontend', 'Recommended');
+  add('TypeScript', 'Languages', 'Recommended');
+  add('Java', 'Languages', 'Recommended');
+  add('Python', 'Languages', 'Recommended');
+  add('Spring Boot', 'Backend', 'Recommended');
+  add('PostgreSQL', 'Database', 'Recommended');
+  add('Docker', 'DevOps', 'Recommended');
+  add('Git', 'Tools', 'Recommended');
+
+  return result.slice(0, 12);
+}
+
 
 export function StudentOnboarding() {
   const navigate = useNavigate();
@@ -217,7 +321,28 @@ export function StudentOnboarding() {
       } catch {
         // no profile yet
       }
+
+      try {
+        const skillsRes = await api.get('/student/skills');
+        const skillsData = (skillsRes as any)?.data || skillsRes;
+        if (Array.isArray(skillsData) && skillsData.length > 0) {
+          const loadedSkills: SkillEntry[] = skillsData.map((s: any) => ({
+            skillName: s.skillName || s.name || '',
+            category: s.category || 'Technical',
+            proficiency: s.proficiency || 'INTERMEDIATE',
+          })).filter((s: SkillEntry) => Boolean(s.skillName));
+          if (loadedSkills.length > 0) {
+            setForm(prev => ({
+              ...prev,
+              skills: prev.skills.length > 0 ? prev.skills : loadedSkills,
+            }));
+          }
+        }
+      } catch {
+        // no skills yet
+      }
     }
+
     loadData();
   }, []);
 
@@ -264,19 +389,31 @@ export function StudentOnboarding() {
   });
 
   // Document Upload Helper
+  const MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024; // 50MB
+
   async function handleUploadFile(file: File, category: string): Promise<string | null> {
+    if (file.size > MAX_FILE_SIZE_BYTES) {
+      setError(`Selected file "${file.name}" exceeds the maximum 50MB limit (${(file.size / (1024 * 1024)).toFixed(1)}MB). Please select a smaller file.`);
+      return null;
+    }
+
     const data = new FormData();
     data.append('file', file);
     data.append('category', category);
 
     try {
-      const res = await api.post('/documents/upload', data);
+      const res = await api.upload<{ url?: string; success?: boolean; error?: string }>('/documents/upload', data);
       const resData = (res as any)?.data || res;
       if (resData && resData.url) {
         return resData.url;
       }
+      if (resData && resData.error) {
+        setError(resData.error);
+        return null;
+      }
       return null;
     } catch (err: any) {
+      console.error('File upload error:', err);
       setError(err?.message || 'File upload failed. Please try again.');
       return null;
     }
@@ -507,13 +644,20 @@ export function StudentOnboarding() {
       await refreshProfileStatus();
 
       const resData = (res as any)?.data || res;
-      navigate('/onboarding/complete', {
+      const chosenSkillNames = form.skills.map(s => s.skillName.trim()).filter(Boolean);
+      try {
+        localStorage.setItem('beyon_onboarding_chosen_skills', JSON.stringify(chosenSkillNames));
+      } catch {}
+
+      navigate('/onboarding/skill-assessment', {
         state: {
           role: 'STUDENT',
           coinsAwarded: resData?.coinsAwarded || 100,
           persistenceLedger: resData?.persistenceLedger,
+          chosenSkills: chosenSkillNames,
         },
       });
+
     } catch (err: any) {
       setError(err?.message || 'Failed to submit onboarding profile. Please check your data and try again.');
     } finally {
@@ -585,6 +729,10 @@ export function StudentOnboarding() {
                     {isDone ? <Check size={16} /> : <Icon size={16} />}
                   </div>
                   <div className={styles.stepNavTextGroup}>
+                    <div className={styles.stepNavHeaderRow}>
+                      <span className={styles.stepNavNum}>Step {idx + 1}</span>
+                      {isDone && <span className={styles.stepDoneBadge}>Done</span>}
+                    </div>
                     <span className={styles.stepNavLabel}>{s.label}</span>
                     <span className={styles.stepNavSub}>{s.sub}</span>
                   </div>
@@ -592,6 +740,26 @@ export function StudentOnboarding() {
               );
             })}
           </nav>
+
+          <div className={styles.asideInfoCard}>
+            <div className={styles.asideInfoHeader}>
+              <Coins size={16} color="#ca8a04" />
+              <span>Completion Bounty</span>
+            </div>
+            <p className={styles.asideInfoText}>
+              Complete all 6 steps to link with your verified campus placement cell and claim <strong>100 Welcome Coins</strong>.
+            </p>
+            <div className={styles.asideProgressTrack}>
+              <div
+                className={styles.asideProgressBar}
+                style={{ width: `${Math.round(((step + 1) / STEPS.length) * 100)}%` }}
+              />
+            </div>
+            <div className={styles.asideProgressLabel}>
+              <span>Progress</span>
+              <span>Step {step + 1} of {STEPS.length} ({Math.round(((step + 1) / STEPS.length) * 100)}%)</span>
+            </div>
+          </div>
         </aside>
 
         {/* Right Side: Form Wizard Content */}
@@ -710,11 +878,15 @@ export function StudentOnboarding() {
                     </div>
 
                     <div className={styles.instListHeader}>
-                      <span className={styles.instCountBadge}>
-                        {loadingInstitutions
-                          ? 'Loading registered institutions...'
-                          : `${filteredInstitutions.length} Approved Institution(s) Available`}
-                      </span>
+                      <div className={styles.instHeaderLeft}>
+                        <ShieldCheck size={18} color="#15803d" />
+                        <span className={styles.instCountBadge}>
+                          {loadingInstitutions
+                            ? 'Verifying approved institutions...'
+                            : `${filteredInstitutions.length} Approved Institution(s) Verified by Beyon`}
+                        </span>
+                      </div>
+                      <span className={styles.instNetworkNotice}>Official Campus Placement Network</span>
                     </div>
 
                     {filteredInstitutions.length > 0 ? (
@@ -725,34 +897,49 @@ export function StudentOnboarding() {
                             onClick={() => handleSelectInstitution(inst)}
                             className={styles.instCard}
                           >
-                            <div className={styles.instCardTop}>
-                              <h4 className={styles.instCardTitle}>{inst.name}</h4>
+                            <div className={styles.instCardHeader}>
+                              <div className={styles.instCardEmblem}>
+                                <Building2 size={20} />
+                              </div>
+                              <div className={styles.instCardHeaderContent}>
+                                <h4 className={styles.instCardTitle}>{inst.name}</h4>
+                                <span className={styles.instCardSubtitle}>
+                                  Accredited Institutional Partner &bull; Training &amp; Placement Integrated
+                                </span>
+                              </div>
                               <span className={styles.instApprovedBadge}>
-                                <Check size={12} />
+                                <ShieldCheck size={13} />
                                 Approved
                               </span>
                             </div>
 
                             <div className={styles.instCardMetaList}>
                               <div className={styles.instCardMetaRow}>
-                                <MapPin size={14} style={{ color: '#94a3b8' }} />
+                                <MapPin size={14} className={styles.instMetaIcon} />
                                 <span>{inst.city}, {inst.state}</span>
                               </div>
                               <div className={styles.instCardMetaRow}>
-                                <School size={14} style={{ color: '#94a3b8' }} />
-                                <span>{inst.type || 'Engineering Institution'}</span>
+                                <School size={14} className={styles.instMetaIcon} />
+                                <span>{inst.type || 'Autonomous Engineering Institution'}</span>
                               </div>
-                              {inst.code && (
+                              {inst.affiliatedUniversity && (
                                 <div className={styles.instCardMetaRow}>
-                                  <span>AICTE Code:</span>
-                                  <span className={styles.instCardCode}>{inst.code}</span>
+                                  <GraduationCap size={14} className={styles.instMetaIcon} />
+                                  <span>{inst.affiliatedUniversity}</span>
                                 </div>
                               )}
-                              {inst.grade && (
-                                <div className={styles.instCardMetaRow}>
-                                  <span className={styles.instCardGrade}>Grade: {inst.grade}</span>
-                                </div>
-                              )}
+                              <div className={styles.instBadgeRow}>
+                                {inst.code && (
+                                  <span className={styles.instCardCode}>
+                                    AICTE ID: {inst.code}
+                                  </span>
+                                )}
+                                {inst.grade && (
+                                  <span className={styles.instCardGrade}>
+                                    {inst.grade}
+                                  </span>
+                                )}
+                              </div>
                             </div>
 
                             <div className={styles.instSelectAction}>
@@ -765,7 +952,7 @@ export function StudentOnboarding() {
                                 className={styles.instSelectBtn}
                               >
                                 <span>Select Campus</span>
-                                <ChevronRight size={14} />
+                                <ChevronRight size={15} />
                               </button>
                             </div>
                           </div>
@@ -927,7 +1114,7 @@ export function StudentOnboarding() {
                           : 'Click or Drag & Drop Student ID Card Photo'}
                       </div>
                       <div style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '4px' }}>
-                        Supported formats: PNG, JPG, JPEG, WEBP (Max 15MB)
+                        Supported formats: PNG, JPG, JPEG, WEBP (Max 50MB)
                       </div>
                     </div>
 
@@ -1692,36 +1879,93 @@ export function StudentOnboarding() {
 
                   {/* Technical Skills */}
                   <div className={styles.fullWidth}>
-                    <label className={styles.fieldLabel}>Technical Skills</label>
-                    <div className={styles.popularSkillsRow}>
-                      <span className={styles.popularSkillsLabel}>Suggested:</span>
-                      {POPULAR_SKILLS.map(s => {
-                        const added = form.skills.some(
-                          sk => sk.skillName.toLowerCase() === s.name.toLowerCase()
-                        );
-                        return (
-                          <button
-                            key={s.name}
-                            type="button"
-                            disabled={added}
-                            onClick={() => {
-                              update('skills', [
-                                ...form.skills,
-                                {
-                                  skillName: s.name,
-                                  category: s.category,
-                                  proficiency: 'INTERMEDIATE',
-                                },
-                              ]);
-                            }}
-                            className={`${styles.skillChip} ${added ? styles.skillChipAdded : ''}`}
-                          >
-                            <span>{s.name}</span>
-                            {added ? <Check size={12} /> : <Plus size={12} />}
-                          </button>
-                        );
-                      })}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', flexWrap: 'wrap', gap: '6px' }}>
+                      <label className={styles.fieldLabel} style={{ margin: 0 }}>Technical Skills</label>
+                      <span style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 600 }}>
+                        {form.skills.length} skills chosen &middot; Will form your 50-Question Assessment Sections
+                      </span>
                     </div>
+
+                    {/* Department & Role Dynamic Recommendations */}
+                    {(() => {
+                      const dynamicSuggestions = getRecommendedSkillsForCandidate(form.department, form.preferredJobRoles);
+                      const unaddedSuggestions = dynamicSuggestions.filter(s =>
+                        !form.skills.some(sk => sk.skillName.toLowerCase() === s.name.toLowerCase())
+                      );
+
+                      return (
+                        <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '12px 14px', marginBottom: '14px' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', flexWrap: 'wrap', gap: '6px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#1c2d81', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                                Suggested for {form.department || 'Your Department'}:
+                              </span>
+                              {form.preferredJobRoles.length > 0 && (
+                                <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600 }}>
+                                  ({form.preferredJobRoles.slice(0, 2).join(', ')})
+                                </span>
+                              )}
+                            </div>
+                            {unaddedSuggestions.length > 0 && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const toAdd = unaddedSuggestions.map(s => ({
+                                    skillName: s.name,
+                                    category: s.category,
+                                    proficiency: 'INTERMEDIATE' as const,
+                                  }));
+                                  update('skills', [...form.skills, ...toAdd]);
+                                }}
+                                style={{
+                                  background: '#e0e7ff',
+                                  color: '#1c2d81',
+                                  border: 'none',
+                                  borderRadius: '6px',
+                                  padding: '4px 10px',
+                                  fontSize: '0.74rem',
+                                  fontWeight: 700,
+                                  cursor: 'pointer',
+                                }}
+                              >
+                                + Add All Suggested ({unaddedSuggestions.length})
+                              </button>
+                            )}
+                          </div>
+
+                          <div className={styles.popularSkillsRow} style={{ margin: 0 }}>
+                            {dynamicSuggestions.map(s => {
+                              const added = form.skills.some(
+                                sk => sk.skillName.toLowerCase() === s.name.toLowerCase()
+                              );
+                              return (
+                                <button
+                                  key={s.name}
+                                  type="button"
+                                  disabled={added}
+                                  onClick={() => {
+                                    update('skills', [
+                                      ...form.skills,
+                                      {
+                                        skillName: s.name,
+                                        category: s.category,
+                                        proficiency: 'INTERMEDIATE',
+                                      },
+                                    ]);
+                                  }}
+                                  className={`${styles.skillChip} ${added ? styles.skillChipAdded : ''}`}
+                                  title={s.reason}
+                                >
+                                  <span>{s.name}</span>
+                                  {added ? <Check size={12} /> : <Plus size={12} />}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })()}
+
 
                     <div className={styles.addSkillFormRow}>
                       <input

@@ -21,6 +21,13 @@ export function ProtectedRoute() {
 
   const path = location.pathname;
 
+  if (user?.mustChangePassword) {
+    if (path === '/auth/force-change-password' || path === '/force-change-password') {
+      return <Outlet />;
+    }
+    return <Navigate to="/auth/force-change-password" replace />;
+  }
+
   if (profileStatus === 'REJECTED' || user?.status === 'REJECTED') {
     if (path !== '/account-rejected') {
       return <Navigate to="/account-rejected" replace />;
@@ -35,17 +42,29 @@ export function ProtectedRoute() {
     return <Outlet />;
   }
 
-  if (path.startsWith('/onboarding/')) {
-    return <Outlet />;
-  }
+  const tier = getRoleTier(user?.role);
 
   if (profileStatus === 'INCOMPLETE') {
-    const tier = getRoleTier(user?.role);
     if (tier === 'SUPER_ADMIN') {
       return <Outlet />;
     }
     const onboardingTier = tier.toLowerCase();
-    return <Navigate to={`/onboarding/${onboardingTier}`} replace />;
+    if (path !== `/onboarding/${onboardingTier}`) {
+      return <Navigate to={`/onboarding/${onboardingTier}`} replace />;
+    }
+    return <Outlet />;
+  }
+
+  if (path === '/onboarding/complete') {
+    return <Outlet />;
+  }
+
+  // Mandatory Skill Assessment Gate for Students
+  if (tier === 'STUDENT' && !user?.hasCompletedAssessment) {
+    if (path !== '/onboarding/skill-assessment' && path !== '/student/skill-assessment') {
+      return <Navigate to="/onboarding/skill-assessment" replace />;
+    }
+    return <Outlet />;
   }
 
   if (

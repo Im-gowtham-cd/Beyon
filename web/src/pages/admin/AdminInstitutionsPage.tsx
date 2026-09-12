@@ -89,6 +89,34 @@ export function AdminInstitutionsPage() {
     }
   };
 
+  const handleToggleStatus = async (userId: string, currentStatus: string, name: string) => {
+    if (!userId) return;
+    const targetStatus = currentStatus === 'ACTIVE' ? 'DEACTIVATED' : 'ACTIVE';
+    setActionLoading(userId);
+    try {
+      const token = localStorage.getItem('beyon_token') || localStorage.getItem('beyon_access_token');
+      const res = await fetch(`/api/v1/admin/verifications/institution/${userId}/status`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ status: targetStatus, reason: `Status toggled by Super Admin` }),
+      });
+      if (res.ok) {
+        setMsg({ text: `Institution "${name}" status updated to ${targetStatus}.` });
+        await fetchInstitutions();
+      } else {
+        setMsg({ text: `Failed to update status for "${name}".`, isError: true });
+      }
+    } catch {
+      setMsg({ text: `Network error updating status for "${name}".`, isError: true });
+    } finally {
+      setActionLoading(null);
+      setTimeout(() => setMsg(null), 5000);
+    }
+  };
+
   const pendingCount = institutions.filter(
     (i) => i.status === 'PENDING_SUPER_ADMIN_VERIFICATION' || i.status === 'PENDING_VERIFICATION' || i.status === 'PENDING'
   ).length;
@@ -352,16 +380,28 @@ export function AdminInstitutionsPage() {
                             </button>
                           </>
                         ) : isActive ? (
-                          <span style={{ fontSize: '0.74rem', fontWeight: 700, color: '#15803d', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                            <ShieldCheck size={14} /> Authorized
-                          </span>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span style={{ fontSize: '0.74rem', fontWeight: 700, color: '#15803d', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                              <ShieldCheck size={14} /> Active
+                            </span>
+                            <button
+                              onClick={() => handleToggleStatus(inst.userId, inst.status, inst.name)}
+                              disabled={actionLoading === inst.userId}
+                              style={{ padding: '3px 8px', background: '#fee2e2', color: '#b91c1c', border: '1px solid #fecaca', borderRadius: '4px', fontSize: '0.72rem', fontWeight: 600, cursor: 'pointer' }}
+                            >
+                              Deactivate
+                            </button>
+                          </div>
                         ) : (
-                          <button
-                            onClick={() => handleApprove(inst.userId, inst.name)}
-                            style={{ padding: '4px 8px', background: '#ffffff', border: '1px solid #cbd5e1', fontSize: '0.72rem', cursor: 'pointer' }}
-                          >
-                            Re-verify
-                          </button>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <button
+                              onClick={() => handleToggleStatus(inst.userId, inst.status, inst.name)}
+                              disabled={actionLoading === inst.userId}
+                              style={{ padding: '4px 8px', background: '#dcfce7', color: '#15803d', border: '1px solid #bbf7d0', borderRadius: '4px', fontSize: '0.72rem', fontWeight: 600, cursor: 'pointer' }}
+                            >
+                              Activate
+                            </button>
+                          </div>
                         )}
                       </div>
                     </td>

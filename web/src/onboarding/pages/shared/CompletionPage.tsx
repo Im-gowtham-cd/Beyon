@@ -8,9 +8,9 @@ import styles from './CompletionPage.module.css';
 const ROLE_MESSAGES: Record<string, { title: string; subtitle: string; cta: string; path: string }> = {
   STUDENT: {
     title: 'Student Profile Submitted & Saved',
-    subtitle: 'Your profile has been persisted in the database and linked to your institution with verified = false. Your Training & Placement Officer (TPO) will endorse your credentials.',
-    cta: 'Go to Student Hub',
-    path: '/student/home',
+    subtitle: 'Your profile has been persisted in the database and linked to your institution. To complete validation and access your student dashboard, please complete your 50-Question Skill Validation Assessment.',
+    cta: 'Start Skill Validation Assessment',
+    path: '/onboarding/skill-assessment',
   },
   INSTITUTION: {
     title: 'Registration Submitted for Super Admin Verification',

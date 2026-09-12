@@ -24,7 +24,7 @@ public class InstitutionController {
 
     @GetMapping("/students/pending")
     public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getPendingStudents(Authentication auth) {
-        UUID instId = extractUserId(auth);
+        UUID instId = extractInstitutionId(auth);
         return ResponseEntity.ok(ApiResponse.ok(institutionService.getPendingStudentsWithDetails(instId)));
     }
 
@@ -33,7 +33,7 @@ public class InstitutionController {
             Authentication auth,
             @PathVariable UUID studentId,
             @RequestBody Map<String, Object> body) {
-        UUID instId = extractUserId(auth);
+        UUID instId = extractInstitutionId(auth);
         boolean approved = Boolean.parseBoolean(String.valueOf(body.getOrDefault("approved", true)));
         String notes = (String) body.get("notes");
         return ResponseEntity.ok(ApiResponse.ok(institutionService.verifyStudent(instId, studentId, approved, notes)));
@@ -43,7 +43,7 @@ public class InstitutionController {
     public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getStudents(
             Authentication auth,
             @RequestParam(required = false) String status) {
-        UUID instId = extractUserId(auth);
+        UUID instId = extractInstitutionId(auth);
         return ResponseEntity.ok(ApiResponse.ok(institutionService.getStudentsWithDetails(instId, status)));
     }
 
@@ -51,9 +51,24 @@ public class InstitutionController {
     public ResponseEntity<ApiResponse<InstitutionStudent>> addStudent(
             Authentication auth,
             @RequestBody Map<String, String> body) {
-        UUID instId = extractUserId(auth);
-        UUID studentId = UUID.fromString(body.get("studentId"));
+        UUID instId = extractInstitutionId(auth);
+        String rawStudentId = body.get("studentId");
+        UUID studentId;
+        try {
+            studentId = UUID.fromString(rawStudentId);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Invalid studentId UUID: " + rawStudentId + ". For bulk roster import with roll numbers, use /students/bulk-import.");
+        }
         return ResponseEntity.ok(ApiResponse.ok(institutionService.addStudent(instId, studentId, body.get("department"), body.get("batch"))));
+    }
+
+    @PostMapping("/students/bulk-import")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> bulkImportStudents(
+            Authentication auth,
+            @RequestBody List<com.beyon.institution.dto.AddStudentRequest> students) {
+        UUID instId = extractInstitutionId(auth);
+        UUID userId = extractUserId(auth);
+        return ResponseEntity.ok(ApiResponse.ok(institutionService.bulkImportStudents(userId, instId, students)));
     }
 
     @PutMapping("/students/{studentId}/status")
@@ -61,43 +76,43 @@ public class InstitutionController {
             Authentication auth,
             @PathVariable UUID studentId,
             @RequestBody Map<String, String> body) {
-        UUID instId = extractUserId(auth);
+        UUID instId = extractInstitutionId(auth);
         return ResponseEntity.ok(ApiResponse.ok(institutionService.updatePlacementStatus(instId, studentId, body.get("status"))));
     }
 
     @GetMapping("/metrics")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getMetrics(Authentication auth) {
-        UUID instId = extractUserId(auth);
+        UUID instId = extractInstitutionId(auth);
         return ResponseEntity.ok(ApiResponse.ok(institutionService.getInstitutionMetrics(instId)));
     }
 
     @PostMapping("/rating/calculate")
     public ResponseEntity<ApiResponse<InstitutionRatingSnapshot>> calculateRating(Authentication auth) {
-        UUID instId = extractUserId(auth);
+        UUID instId = extractInstitutionId(auth);
         return ResponseEntity.ok(ApiResponse.ok(institutionService.calculateAndSaveRating(instId)));
     }
 
     @GetMapping("/rating")
     public ResponseEntity<ApiResponse<InstitutionRatingSnapshot>> getRating(Authentication auth) {
-        UUID instId = extractUserId(auth);
+        UUID instId = extractInstitutionId(auth);
         return ResponseEntity.ok(ApiResponse.ok(institutionService.getLatestRating(instId)));
     }
 
     @GetMapping("/drives")
     public ResponseEntity<ApiResponse<List<PlacementDrive>>> getDrives(Authentication auth) {
-        UUID instId = extractUserId(auth);
+        UUID instId = extractInstitutionId(auth);
         return ResponseEntity.ok(ApiResponse.ok(institutionService.getDrives(instId)));
     }
 
     @PostMapping("/drives")
     public ResponseEntity<ApiResponse<PlacementDrive>> createDrive(Authentication auth, @RequestBody PlacementDrive drive) {
-        UUID instId = extractUserId(auth);
+        UUID instId = extractInstitutionId(auth);
         return ResponseEntity.ok(ApiResponse.ok(institutionService.createDrive(drive, instId)));
     }
 
     @PostMapping("/drives/{driveId}/approve")
     public ResponseEntity<ApiResponse<PlacementDrive>> approveDrive(Authentication auth, @PathVariable UUID driveId) {
-        UUID instId = extractUserId(auth);
+        UUID instId = extractInstitutionId(auth);
         return ResponseEntity.ok(ApiResponse.ok(institutionService.approveDrive(driveId, instId)));
     }
 
@@ -105,13 +120,28 @@ public class InstitutionController {
     public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getDriveApplications(
             Authentication auth,
             @PathVariable UUID driveId) {
-        UUID instId = extractUserId(auth);
+        UUID instId = extractInstitutionId(auth);
         return ResponseEntity.ok(ApiResponse.ok(institutionService.getDriveApplications(driveId, instId)));
     }
 
     private UUID extractUserId(Authentication auth) {
+        if (auth == null || auth.getDetails() == null) {
+            throw new com.beyon.common.exception.UnauthorizedException("Authentication required");
+        }
         JwtUserDetails details = (JwtUserDetails) auth.getDetails();
         return UUID.fromString(details.getUserId());
+    }
+
+    private UUID extractInstitutionId(Authentication auth) {
+        if (auth == null || auth.getDetails() == null) {
+            throw new com.beyon.common.exception.UnauthorizedException("Authentication required");
+        }
+        JwtUserDetails details = (JwtUserDetails) auth.getDetails();
+        if (details.getInstitutionId() != null && !details.getInstitutionId().isBlank()) {
+            return UUID.fromString(details.getInstitutionId());
+        }
+        UUID userId = UUID.fromString(details.getUserId());
+        return institutionService.resolveInstitutionId(userId);
     }
 }
 

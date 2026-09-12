@@ -47,11 +47,32 @@ public class JwtUserDetails {
     }
 
     public boolean isSuperAdmin() {
-        return "SUPER_ADMIN".equalsIgnoreCase(role) || "ADMIN".equalsIgnoreCase(role);
+        return "SUPER_ADMIN".equalsIgnoreCase(role) || "ADMIN".equalsIgnoreCase(role) || "PLATFORM_ADMIN".equalsIgnoreCase(role);
+    }
+
+    public boolean isInstitutionManager() {
+        return "INSTITUTION_MANAGER".equalsIgnoreCase(role);
+    }
+
+    public boolean isPrincipal() {
+        return "PRINCIPAL".equalsIgnoreCase(role);
+    }
+
+    public boolean isPlacementCoordinator() {
+        return "PLACEMENT_COORDINATOR".equalsIgnoreCase(role);
+    }
+
+    public boolean isDepartmentIncharge() {
+        return "DEPARTMENT_PLACEMENT_INCHARGE".equalsIgnoreCase(role);
     }
 
     public boolean isInstitutionTier() {
-        return role != null && role.toUpperCase().startsWith("INSTITUTION");
+        if (role == null) return false;
+        String r = role.toUpperCase();
+        return r.startsWith("INSTITUTION") ||
+               "PRINCIPAL".equals(r) ||
+               "PLACEMENT_COORDINATOR".equals(r) ||
+               "DEPARTMENT_PLACEMENT_INCHARGE".equals(r);
     }
 
     public boolean isCompanyTier() {

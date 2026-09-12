@@ -66,6 +66,19 @@ public class AuthController {
         return ResponseEntity.ok(ApiResponse.ok());
     }
 
+    @PostMapping("/force-change-password")
+    public ResponseEntity<ApiResponse<AuthResponse.UserInfo>> forceChangePassword(
+            @Valid @RequestBody ChangePasswordRequest request,
+            Authentication authentication,
+            HttpServletRequest httpRequest) {
+        JwtUserDetails details = (JwtUserDetails) authentication.getDetails();
+        UUID userId = UUID.fromString(details.getUserId());
+        String ip = httpRequest.getRemoteAddr();
+        AuthResponse.UserInfo updatedUser = authService.forceChangePassword(
+                userId, request.getCurrentPassword(), request.getNewPassword(), request.getConfirmPassword(), ip);
+        return ResponseEntity.ok(ApiResponse.ok(updatedUser));
+    }
+
     @PostMapping("/verify-email")
     public ResponseEntity<ApiResponse<Void>> verifyEmail(@Valid @RequestBody VerifyEmailRequest request) {
         authService.verifyEmail(request.getToken());

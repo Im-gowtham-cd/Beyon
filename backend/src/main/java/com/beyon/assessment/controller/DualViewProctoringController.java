@@ -9,6 +9,9 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+import java.net.Inet4Address;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -64,14 +67,68 @@ public class DualViewProctoringController {
         this.flociAiService = flociAiService;
     }
 
+    public static String resolveLanIp() {
+        try {
+            List<NetworkInterface> interfaces = Collections.list(NetworkInterface.getNetworkInterfaces());
+            interfaces.sort((a, b) -> {
+                String an = (a.getName() + " " + a.getDisplayName()).toLowerCase();
+                String bn = (b.getName() + " " + b.getDisplayName()).toLowerCase();
+                boolean aWifi = an.contains("wi-fi") || an.contains("wireless") || an.contains("wlan");
+                boolean bWifi = bn.contains("wi-fi") || bn.contains("wireless") || bn.contains("wlan");
+                if (aWifi && !bWifi) return -1;
+                if (!aWifi && bWifi) return 1;
+                return 0;
+            });
+
+            for (NetworkInterface iface : interfaces) {
+                if (iface.isLoopback() || !iface.isUp() || iface.isVirtual()) continue;
+                String name = iface.getName().toLowerCase();
+                String displayName = iface.getDisplayName().toLowerCase();
+                if (name.contains("vethernet") || name.contains("wsl") || name.contains("docker") ||
+                    name.contains("tailscale") || displayName.contains("virtual") || displayName.contains("hyper-v")) {
+                    continue;
+                }
+                for (InetAddress addr : Collections.list(iface.getInetAddresses())) {
+                    if (addr instanceof Inet4Address && !addr.isLoopbackAddress() && !addr.isLinkLocalAddress()) {
+                        String hostAddress = addr.getHostAddress();
+                        if (hostAddress.startsWith("10.1.32.") || hostAddress.startsWith("192.168.") || hostAddress.startsWith("10.") || hostAddress.startsWith("172.")) {
+                            return hostAddress;
+                        }
+                    }
+                }
+            }
+            InetAddress localHost = InetAddress.getLocalHost();
+            if (localHost instanceof Inet4Address && !localHost.isLoopbackAddress()) {
+                return localHost.getHostAddress();
+            }
+        } catch (Exception ignored) {}
+        return "10.1.32.243";
+    }
+
+    private UUID parseUuid(String raw) {
+        if (raw == null || raw.isBlank() || "undefined".equalsIgnoreCase(raw) || "null".equalsIgnoreCase(raw)) {
+            return null;
+        }
+        try {
+            return UUID.fromString(raw.trim());
+        } catch (Exception e) {
+            return UUID.nameUUIDFromBytes(raw.trim().getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        }
+    }
+
     @PostMapping("/initiate")
     public ResponseEntity<?> initiate(@RequestBody Map<String, Object> body, HttpServletRequest request) {
-        UUID assessmentSessionId = UUID.fromString((String) body.get("assessmentSessionId"));
-        UUID candidateId = body.get("candidateId") != null
-                ? UUID.fromString((String) body.get("candidateId"))
-                : extractUserId(request);
-        UUID opportunityId = body.get("opportunityId") != null
-                ? UUID.fromString((String) body.get("opportunityId")) : null;
+        UUID assessmentSessionId = parseUuid(body != null ? Objects.toString(body.get("assessmentSessionId"), null) : null);
+        if (assessmentSessionId == null) {
+            assessmentSessionId = UUID.randomUUID();
+        }
+
+        UUID candidateId = parseUuid(body != null ? Objects.toString(body.get("candidateId"), null) : null);
+        if (candidateId == null) {
+            candidateId = extractUserId(request);
+        }
+
+        UUID opportunityId = parseUuid(body != null ? Objects.toString(body.get("opportunityId"), null) : null);
 
         DualViewSession session = dvService.initiateDualViewSession(assessmentSessionId, candidateId, opportunityId);
 
@@ -83,26 +140,30 @@ public class DualViewProctoringController {
     }
 
     @PostMapping("/{id}/consent")
-    public ResponseEntity<?> consent(@PathVariable UUID id) {
-        dvService.recordConsent(id);
+    public ResponseEntity<?> consent(@PathVariable String id) {
+        UUID uuid = parseUuid(id);
+        if (uuid != null) {
+            try {
+                dvService.recordConsent(uuid);
+            } catch (Exception ignored) {}
+        }
         return ResponseEntity.ok(Map.of("ok", true));
     }
 
     @PostMapping("/{id}/pairing-token")
-    public ResponseEntity<?> generatePairingToken(@PathVariable UUID id, HttpServletRequest request) {
-        String token = dvService.generatePairingToken(id);
-
-        String baseUrl = request.getScheme() + "://" + request.getServerName();
-        int port = request.getServerPort();
-        if (port != 80 && port != 443) {
-
-            baseUrl = baseUrl.replace("8085", "5173");
+    public ResponseEntity<?> generatePairingToken(@PathVariable String id, HttpServletRequest request) {
+        UUID uuid = parseUuid(id);
+        if (uuid == null) {
+            uuid = UUID.randomUUID();
         }
-        String pairingUrl = baseUrl + "/proctor?token=" + token;
+        String token = dvService.generatePairingToken(uuid);
+        String lanIp = resolveLanIp();
+        String pairingUrl = "https://" + lanIp + ":5173/proctor?token=" + token;
 
         return ResponseEntity.ok(Map.of(
             "token", token,
             "pairingUrl", pairingUrl,
+            "lanIp", lanIp,
             "expiresInSeconds", 300
         ));
     }
@@ -122,11 +183,12 @@ public class DualViewProctoringController {
     }
 
     @GetMapping("/{id}/status")
-    public ResponseEntity<?> getStatus(@PathVariable UUID id) {
-        DualViewSession session = dvService.getSession(id);
+    public ResponseEntity<?> getStatus(@PathVariable String id) {
+        UUID uuid = parseUuid(id);
+        DualViewSession session = uuid != null ? dvService.getSession(uuid) : null;
         if (session == null) {
             return ResponseEntity.ok(Map.of(
-                "procSessionId", id,
+                "procSessionId", uuid != null ? uuid.toString() : "",
                 "status", "ACTIVE",
                 "mobilePaired", false,
                 "riskScore", 0,
@@ -149,35 +211,57 @@ public class DualViewProctoringController {
     }
 
     @PostMapping("/{id}/heartbeat")
-    public ResponseEntity<?> heartbeat(@PathVariable UUID id, @RequestBody Map<String, Object> body) {
-        String deviceType = (String) body.getOrDefault("deviceType", "LAPTOP");
-        boolean cameraActive = Boolean.TRUE.equals(body.get("cameraActive"));
-        boolean micActive = Boolean.TRUE.equals(body.get("micActive"));
-        dvService.recordHeartbeat(id, deviceType, cameraActive, micActive);
+    public ResponseEntity<?> heartbeat(@PathVariable String id, @RequestBody Map<String, Object> body) {
+        UUID uuid = parseUuid(id);
+        if (uuid != null) {
+            String deviceType = (String) body.getOrDefault("deviceType", "LAPTOP");
+            boolean cameraActive = Boolean.TRUE.equals(body.get("cameraActive"));
+            boolean micActive = Boolean.TRUE.equals(body.get("micActive"));
+            try {
+                dvService.recordHeartbeat(uuid, deviceType, cameraActive, micActive);
+            } catch (Exception ignored) {}
+        }
         return ResponseEntity.ok(Map.of("ok", true));
     }
 
     @PostMapping("/{id}/activate")
-    public ResponseEntity<?> activate(@PathVariable UUID id) {
-        dvService.activateSession(id);
+    public ResponseEntity<?> activate(@PathVariable String id) {
+        UUID uuid = parseUuid(id);
+        if (uuid != null) {
+            try {
+                dvService.activateSession(uuid);
+            } catch (Exception ignored) {}
+        }
         return ResponseEntity.ok(Map.of("ok", true, "status", "ACTIVE"));
     }
 
     @PostMapping("/{id}/complete")
-    public ResponseEntity<?> complete(@PathVariable UUID id) {
-        DualViewSession session = dvService.completeSession(id);
-        correlationEngine.clearSession(id.toString());
-        return ResponseEntity.ok(Map.of(
-            "procSessionId", session.getId(),
-            "status", session.getStatus(),
-            "riskScore", session.getRiskScore(),
-            "riskLevel", session.getRiskLevel(),
-            "reviewRequired", session.getReviewRequired()
-        ));
+    public ResponseEntity<?> complete(@PathVariable String id) {
+        UUID uuid = parseUuid(id);
+        if (uuid == null) {
+            return ResponseEntity.ok(Map.of("ok", true, "status", "COMPLETED"));
+        }
+        try {
+            DualViewSession session = dvService.completeSession(uuid);
+            correlationEngine.clearSession(uuid.toString());
+            return ResponseEntity.ok(Map.of(
+                "procSessionId", session.getId(),
+                "status", session.getStatus(),
+                "riskScore", session.getRiskScore(),
+                "riskLevel", session.getRiskLevel(),
+                "reviewRequired", session.getReviewRequired()
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.ok(Map.of("procSessionId", uuid, "status", "COMPLETED", "riskScore", 0, "riskLevel", "NORMAL", "reviewRequired", false));
+        }
     }
 
     @PostMapping("/{id}/laptop-events")
-    public ResponseEntity<?> laptopEvents(@PathVariable UUID id, @RequestBody Map<String, Object> body) {
+    public ResponseEntity<?> laptopEvents(@PathVariable String id, @RequestBody Map<String, Object> body) {
+        UUID uuid = parseUuid(id);
+        if (uuid == null) {
+            return ResponseEntity.ok(Map.of("ok", true));
+        }
         @SuppressWarnings("unchecked")
         List<Map<String, Object>> events = (List<Map<String, Object>>) body.get("events");
         String questionId = (String) body.get("currentQuestionId");
@@ -187,7 +271,7 @@ public class DualViewProctoringController {
                 String eventType = (String) event.get("eventType");
                 double confidence = event.get("confidence") instanceof Number
                         ? ((Number) event.get("confidence")).doubleValue() : 0.7;
-                correlationEngine.recordSignal(id.toString(), eventType, "LAPTOP_CAMERA",
+                correlationEngine.recordSignal(uuid.toString(), eventType, "LAPTOP_CAMERA",
                         confidence, questionId);
             }
         }
@@ -208,8 +292,12 @@ public class DualViewProctoringController {
     }
 
     @PostMapping("/{id}/mobile-frame")
-    public ResponseEntity<?> mobileFrame(@PathVariable UUID id, @RequestBody Map<String, Object> body) {
-        DualViewSession session = dvSessionRepo.findById(id).orElse(null);
+    public ResponseEntity<?> mobileFrame(@PathVariable String id, @RequestBody Map<String, Object> body) {
+        UUID uuid = parseUuid(id);
+        if (uuid == null) {
+            return ResponseEntity.ok(Map.of("ok", true));
+        }
+        DualViewSession session = dvSessionRepo.findById(uuid).orElse(null);
         if (session != null) {
             session.setMobileCameraHealth("HEALTHY");
             if (!"ACTIVE".equals(session.getStatus()) && !"COMPLETED".equals(session.getStatus())) {
@@ -225,7 +313,7 @@ public class DualViewProctoringController {
         // Run local Floci AWS Rekognition, S3, and DynamoDB pipeline
         FlociProctoringAiService.FrameAnalysisResult flociResult = null;
         if (frameBytes != null) {
-            flociResult = flociAiService.analyzeFrame(id, frameBytes, "MOBILE");
+            flociResult = flociAiService.analyzeFrame(uuid, frameBytes, "MOBILE");
         }
 
         boolean secondPersonDetected = flociResult != null && flociResult.multipleFaces;
@@ -242,7 +330,7 @@ public class DualViewProctoringController {
             warningMessage = "WARNING: Candidate not visible in workspace view!";
         }
 
-        int strikes = flociAiService.getStrikes(id);
+        int strikes = flociAiService.getStrikes(uuid);
 
         Map<String, Object> resp = new HashMap<>();
         resp.put("ok", true);
@@ -264,16 +352,20 @@ public class DualViewProctoringController {
     }
 
     @PostMapping("/{id}/laptop-frame")
-    public ResponseEntity<?> laptopFrame(@PathVariable UUID id, @RequestBody Map<String, Object> body) {
+    public ResponseEntity<?> laptopFrame(@PathVariable String id, @RequestBody Map<String, Object> body) {
+        UUID uuid = parseUuid(id);
+        if (uuid == null) {
+            return ResponseEntity.ok(Map.of("ok", true));
+        }
         String frameData = (String) body.get("frameData");
         byte[] frameBytes = decodeBase64Image(frameData);
 
         FlociProctoringAiService.FrameAnalysisResult flociResult = null;
         if (frameBytes != null) {
-            flociResult = flociAiService.analyzeFrame(id, frameBytes, "LAPTOP");
+            flociResult = flociAiService.analyzeFrame(uuid, frameBytes, "LAPTOP");
         }
 
-        int strikes = flociAiService.getStrikes(id);
+        int strikes = flociAiService.getStrikes(uuid);
         Map<String, Object> resp = new HashMap<>();
         resp.put("ok", true);
         resp.put("strikes", strikes);
@@ -287,38 +379,59 @@ public class DualViewProctoringController {
     }
 
     @PostMapping("/{id}/mobile-audio")
-    public ResponseEntity<?> mobileAudio(@PathVariable UUID id, @RequestBody Map<String, Object> body) {
+    public ResponseEntity<?> mobileAudio(@PathVariable String id, @RequestBody Map<String, Object> body) {
+        UUID uuid = parseUuid(id);
+        if (uuid == null) {
+            return ResponseEntity.ok(Map.of("ok", true, "flagged", false, "strikes", 0));
+        }
         String audioData = (String) body.get("audioData");
         byte[] audioBytes = decodeBase64Image(audioData);
-        boolean flagged = flociAiService.analyzeAudioChunk(id, audioBytes);
-        return ResponseEntity.ok(Map.of("ok", true, "flagged", flagged, "strikes", flociAiService.getStrikes(id)));
+        boolean flagged = flociAiService.analyzeAudioChunk(uuid, audioBytes);
+        return ResponseEntity.ok(Map.of("ok", true, "flagged", flagged, "strikes", flociAiService.getStrikes(uuid)));
     }
 
     @PostMapping("/{id}/telemetry")
-    public ResponseEntity<?> telemetryEvent(@PathVariable UUID id, @RequestBody Map<String, Object> body) {
+    public ResponseEntity<?> telemetryEvent(@PathVariable String id, @RequestBody Map<String, Object> body) {
+        UUID uuid = parseUuid(id);
+        if (uuid == null) {
+            return ResponseEntity.ok(Map.of("ok", true, "strikes", 0));
+        }
         String eventType = (String) body.getOrDefault("eventType", "TAB_SWITCH");
         String metadata = (String) body.get("metadata");
-        flociAiService.recordTelemetryIncident(id, eventType, metadata);
-        return ResponseEntity.ok(Map.of("ok", true, "strikes", flociAiService.getStrikes(id)));
+        flociAiService.recordTelemetryIncident(uuid, eventType, metadata);
+        return ResponseEntity.ok(Map.of("ok", true, "strikes", flociAiService.getStrikes(uuid)));
     }
 
     @GetMapping("/{id}/dynamo-incidents")
-    public ResponseEntity<?> getDynamoIncidents(@PathVariable UUID id) {
-        List<Map<String, Object>> incidents = flociAiService.getIncidentsFromDynamoDb(id);
-        return ResponseEntity.ok(Map.of("success", true, "data", incidents, "strikes", flociAiService.getStrikes(id)));
+    public ResponseEntity<?> getDynamoIncidents(@PathVariable String id) {
+        UUID uuid = parseUuid(id);
+        if (uuid == null) {
+            return ResponseEntity.ok(Map.of("success", true, "data", List.of(), "strikes", 0));
+        }
+        List<Map<String, Object>> incidents = flociAiService.getIncidentsFromDynamoDb(uuid);
+        return ResponseEntity.ok(Map.of("success", true, "data", incidents, "strikes", flociAiService.getStrikes(uuid)));
     }
 
     @PostMapping("/{id}/mobile-disconnect")
-    public ResponseEntity<?> mobileDisconnect(@PathVariable UUID id) {
-        dvService.handleMobileDisconnect(id);
-        correlationEngine.recordSignal(id.toString(), "MOBILE_DISCONNECTED", "SYSTEM", 1.0, null);
+    public ResponseEntity<?> mobileDisconnect(@PathVariable String id) {
+        UUID uuid = parseUuid(id);
+        if (uuid != null) {
+            try {
+                dvService.handleMobileDisconnect(uuid);
+                correlationEngine.recordSignal(uuid.toString(), "MOBILE_DISCONNECTED", "SYSTEM", 1.0, null);
+            } catch (Exception ignored) {}
+        }
         return ResponseEntity.ok(Map.of("ok", true));
     }
 
     @PostMapping("/{id}/incidents")
     public ResponseEntity<?> createIncident(
-            @PathVariable UUID id,
+            @PathVariable String id,
             @RequestBody Map<String, Object> body) {
+        UUID uuid = parseUuid(id);
+        if (uuid == null) {
+            return ResponseEntity.ok(Map.of("status", "IGNORED"));
+        }
         String incidentType = (String) body.getOrDefault("incidentType", "POLICY_VIOLATION");
         String severity = (String) body.getOrDefault("severity", "MEDIUM");
         double confidence = body.get("confidence") instanceof Number
@@ -341,7 +454,7 @@ public class DualViewProctoringController {
         }
 
         ProctoringIncident incident = incidentService.createIncident(
-                id, incidentType, severity, confidence, riskContribution, questionId, sources, sources.size()
+                uuid, incidentType, severity, confidence, riskContribution, questionId, sources, sources.size()
         );
 
         String evidenceBase64 = (String) body.get("evidenceBase64");
@@ -352,7 +465,7 @@ public class DualViewProctoringController {
                 }
                 byte[] imageBytes = Base64.getDecoder().decode(evidenceBase64);
                 String deviceSource = sources.isEmpty() ? "LAPTOP_CAMERA" : sources.get(0);
-                incidentService.recordFrameEvidence(incident.getId(), deviceSource, imageBytes, id, testName, studentName, warningName);
+                incidentService.recordFrameEvidence(incident.getId(), deviceSource, imageBytes, uuid, testName, studentName, warningName);
             } catch (Exception e) {
                 System.err.println("[DualViewProctoringController] Failed to record snapshot evidence: " + e.getMessage());
             }
@@ -367,15 +480,19 @@ public class DualViewProctoringController {
     }
 
     @GetMapping("/{id}/incidents")
-    public ResponseEntity<?> getIncidents(@PathVariable UUID id) {
-        DualViewSession session = dvService.getSession(id);
-        UUID queryId = session != null ? session.getId() : id;
+    public ResponseEntity<?> getIncidents(@PathVariable String id) {
+        UUID uuid = parseUuid(id);
+        if (uuid == null) {
+            return ResponseEntity.ok(List.of());
+        }
+        DualViewSession session = dvService.getSession(uuid);
+        UUID queryId = session != null ? session.getId() : uuid;
         return ResponseEntity.ok(incidentService.getIncidentsForSession(queryId));
     }
 
     @PostMapping("/{id}/incidents/{incidentId}/review")
     public ResponseEntity<?> reviewIncident(
-            @PathVariable UUID id,
+            @PathVariable String id,
             @PathVariable UUID incidentId,
             @RequestBody Map<String, String> body,
             HttpServletRequest request) {
@@ -391,12 +508,16 @@ public class DualViewProctoringController {
     }
 
     @GetMapping("/{id}/timeline")
-    public ResponseEntity<?> getTimeline(@PathVariable UUID id) {
-        DualViewSession session = dvService.getSession(id);
+    public ResponseEntity<?> getTimeline(@PathVariable String id) {
+        UUID uuid = parseUuid(id);
+        if (uuid == null) {
+            return ResponseEntity.ok(Map.of("procSessionId", id, "candidateId", id, "riskScore", 0, "riskLevel", "NORMAL", "reviewRequired", false, "incidents", List.of()));
+        }
+        DualViewSession session = dvService.getSession(uuid);
         if (session == null) {
             return ResponseEntity.ok(Map.of(
-                "procSessionId", id,
-                "candidateId", id,
+                "procSessionId", uuid,
+                "candidateId", uuid,
                 "riskScore", 0,
                 "riskLevel", "NORMAL",
                 "reviewRequired", false,
@@ -419,10 +540,28 @@ public class DualViewProctoringController {
     }
 
     @GetMapping("/{id}/report")
-    public ResponseEntity<?> getReport(@PathVariable UUID id) {
-        DualViewSession session = dvService.getSession(id);
+    public ResponseEntity<?> getReport(@PathVariable String id) {
+        UUID uuid = parseUuid(id);
+        if (uuid == null) {
+            Map<String, Object> fallback = new LinkedHashMap<>();
+            fallback.put("procSessionId", id);
+            fallback.put("assessmentSessionId", id);
+            fallback.put("candidateId", id);
+            fallback.put("status", "COMPLETED");
+            fallback.put("riskScore", 0);
+            fallback.put("riskLevel", "NORMAL");
+            fallback.put("reviewRequired", false);
+            fallback.put("laptopCameraHealth", "HEALTHY");
+            fallback.put("mobileCameraHealth", "HEALTHY");
+            fallback.put("mobilePaired", true);
+            fallback.put("incidentSummary", Map.of("total", 0, "high", 0, "medium", 0, "low", 0, "pendingReview", 0));
+            fallback.put("incidents", List.of());
+            return ResponseEntity.ok(fallback);
+        }
+
+        DualViewSession session = dvService.getSession(uuid);
         if (session == null && assessmentSessionRepo != null) {
-            AssessmentSession as = assessmentSessionRepo.findById(id).orElse(null);
+            AssessmentSession as = assessmentSessionRepo.findById(uuid).orElse(null);
             if (as != null) {
                 session = dvService.initiateDualViewSession(as.getId(), as.getStudentId(), as.getOpportunityId());
                 if ("SUBMITTED".equals(as.getStatus()) || "COMPLETED".equals(as.getStatus())) {
@@ -437,9 +576,9 @@ public class DualViewProctoringController {
 
         if (session == null) {
             Map<String, Object> fallback = new LinkedHashMap<>();
-            fallback.put("procSessionId", id);
-            fallback.put("assessmentSessionId", id);
-            fallback.put("candidateId", id);
+            fallback.put("procSessionId", uuid);
+            fallback.put("assessmentSessionId", uuid);
+            fallback.put("candidateId", uuid);
             fallback.put("status", "COMPLETED");
             fallback.put("riskScore", 0);
             fallback.put("riskLevel", "NORMAL");

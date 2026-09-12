@@ -40,6 +40,8 @@ public class SecurityConfig {
                 .requestMatchers("/api/v1/auth/reset-password").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/onboarding/institutions").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/onboarding/institutions/verify-aicte").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/institution/onboard/validate-aicte").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/v1/institution/onboard/verify-otp").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/institutions/public").permitAll()
                 .requestMatchers("/api/v1/documents/**").permitAll()
                 .requestMatchers("/api/v1/onboarding/**").authenticated()

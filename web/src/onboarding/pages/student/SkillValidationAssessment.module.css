@@ -1,0 +1,792 @@
+/* Skill Validation Assessment Styles */
+.pageContainer {
+  min-height: 100vh;
+  background: #f8fafc;
+  color: #0f172a;
+  font-family: 'ClashDisplay', 'Clash Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  display: flex;
+  flex-direction: column;
+}
+
+.topBar {
+  background: #1c2d81;
+  color: #ffffff;
+  padding: 14px 28px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 3px solid #fed601;
+}
+
+.brandGroup {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.brandBadge {
+  background: #fed601;
+  color: #1c2d81;
+  font-weight: 900;
+  font-size: 1.1rem;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.brandTitle {
+  font-size: 1.05rem;
+  font-weight: 900;
+  letter-spacing: -0.01em;
+}
+
+.brandSub {
+  font-size: 0.75rem;
+  color: #cbd5e1;
+  display: block;
+}
+
+.topBarRight {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.timerBadge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  padding: 6px 14px;
+  font-size: 0.85rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: #fed601;
+}
+
+.mainContent {
+  max-width: 1280px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 24px;
+  flex: 1;
+}
+
+/* Assessment Layout */
+.assessmentGrid {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 24px;
+  align-items: start;
+}
+
+@media (max-width: 960px) {
+  .assessmentGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.questionCard {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  padding: 32px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+}
+
+.questionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.skillPill {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  color: #1e40af;
+  font-size: 0.74rem;
+  font-weight: 800;
+  padding: 4px 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.difficultyPill {
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  color: #475569;
+  font-size: 0.74rem;
+  font-weight: 700;
+  padding: 4px 10px;
+}
+
+.questionNumber {
+  font-size: 0.82rem;
+  color: #64748b;
+  font-weight: 700;
+}
+
+.questionTitle {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1.45;
+  margin: 0 0 12px;
+}
+
+.questionDesc {
+  font-size: 0.9rem;
+  color: #475569;
+  line-height: 1.6;
+  margin: 0 0 24px;
+  background: #f8fafc;
+  border-left: 3px solid #1c2d81;
+  padding: 12px 16px;
+  font-family: inherit;
+}
+
+.optionsList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 28px;
+}
+
+.optionItem {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: #ffffff;
+  border: 2px solid #e2e8f0;
+  padding: 14px 18px;
+  cursor: pointer;
+  transition: all 0.12s ease;
+  user-select: none;
+}
+
+.optionItem:hover {
+  border-color: #94a3b8;
+  background: #f8fafc;
+}
+
+.optionSelected {
+  border-color: #1c2d81 !important;
+  background: #eff6ff !important;
+}
+
+.optionKey {
+  width: 32px;
+  height: 32px;
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  color: #1c2d81;
+  font-weight: 900;
+  font-size: 0.82rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.optionKeyActive {
+  background: #1c2d81;
+  color: #fed601;
+  border-color: #1c2d81;
+}
+
+.optionText {
+  font-size: 0.92rem;
+  color: #1e293b;
+  font-weight: 600;
+  line-height: 1.4;
+  flex: 1;
+}
+
+.navigationButtons {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid #e2e8f0;
+  padding-top: 20px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.btnSecondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 20px;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  color: #334155;
+  font-size: 0.86rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.btnSecondary:hover:not(:disabled) {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+}
+
+.btnSecondary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btnPrimary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 24px;
+  background: #1c2d81;
+  border: 1px solid #1c2d81;
+  color: #fed601;
+  font-size: 0.86rem;
+  font-weight: 900;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.btnPrimary:hover:not(:disabled) {
+  background: #152264;
+}
+
+.btnSubmit {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 24px;
+  background: #15803d;
+  border: 1px solid #15803d;
+  color: #ffffff;
+  font-size: 0.88rem;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.btnSubmit:hover {
+  background: #166534;
+}
+
+/* Sidebar Navigator */
+.sidebarCard {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  padding: 20px;
+  position: sticky;
+  top: 24px;
+}
+
+.sidebarTitle {
+  font-size: 0.86rem;
+  font-weight: 900;
+  color: #1c2d81;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin: 0 0 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.progressTrack {
+  height: 8px;
+  background: #e2e8f0;
+  border-radius: 0px;
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+
+.progressBar {
+  height: 100%;
+  background: #15803d;
+  transition: width 0.2s ease;
+}
+
+.gridJump {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+  max-height: 380px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.jumpBtn {
+  height: 34px;
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  color: #475569;
+  font-size: 0.78rem;
+  font-weight: 800;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.1s ease;
+}
+
+.jumpBtn:hover {
+  border-color: #1c2d81;
+  color: #1c2d81;
+}
+
+.jumpActive {
+  border: 2px solid #1c2d81 !important;
+  background: #fed601 !important;
+  color: #1c2d81 !important;
+}
+
+.jumpAnswered {
+  background: #dcfce7;
+  border-color: #86efac;
+  color: #166534;
+}
+
+/* Results View */
+.resultsContainer {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  padding: 36px;
+  max-width: 980px;
+  margin: 0 auto;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+}
+
+.resultsHeader {
+  text-align: center;
+  border-bottom: 2px solid #e2e8f0;
+  padding-bottom: 24px;
+  margin-bottom: 28px;
+}
+
+.resultsBadge {
+  background: #dcfce7;
+  color: #15803d;
+  border: 1px solid #86efac;
+  padding: 4px 14px;
+  font-size: 0.76rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.resultsTitle {
+  font-size: 1.75rem;
+  font-weight: 900;
+  color: #1c2d81;
+  margin: 0 0 8px;
+}
+
+.resultsSub {
+  font-size: 0.92rem;
+  color: #64748b;
+  max-width: 600px;
+  margin: 0 auto;
+  line-height: 1.5;
+}
+
+/* Skills Score Grid */
+.skillsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 18px;
+  margin-bottom: 32px;
+}
+
+.skillScoreCard {
+  background: #ffffff;
+  border: 2px solid #e2e8f0;
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: border-color 0.15s ease;
+}
+
+.skillScoreCard:hover {
+  border-color: #1c2d81;
+}
+
+.skillCardTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 14px;
+}
+
+.skillNameText {
+  font-size: 1.1rem;
+  font-weight: 900;
+  color: #0f172a;
+  margin: 0 0 4px;
+}
+
+.verifiedTag {
+  background: #dcfce7;
+  border: 1px solid #86efac;
+  color: #15803d;
+  font-size: 0.7rem;
+  font-weight: 900;
+  padding: 3px 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.unverifiedTag {
+  background: #fee2e2;
+  border: 1px solid #fca5a5;
+  color: #b91c1c;
+  font-size: 0.7rem;
+  font-weight: 900;
+  padding: 3px 8px;
+}
+
+.scorePercentageRow {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.scorePercentage {
+  font-size: 2.2rem;
+  font-weight: 900;
+  color: #1c2d81;
+}
+
+.scoreQuestionsRatio {
+  font-size: 0.84rem;
+  color: #64748b;
+  font-weight: 700;
+}
+
+.rankBadge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  padding: 8px 12px;
+  margin-top: 12px;
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: #1c2d81;
+}
+
+/* Cooldown Banner */
+.cooldownBanner {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  padding: 18px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.cooldownLeft {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.cooldownTitle {
+  font-size: 0.95rem;
+  font-weight: 900;
+  color: #1e40af;
+  margin: 0 0 4px;
+}
+
+.cooldownDesc {
+  font-size: 0.82rem;
+  color: #3b82f6;
+  margin: 0;
+}
+
+.cooldownTicker {
+  font-size: 1.15rem;
+  font-weight: 900;
+  color: #1c2d81;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  padding: 6px 14px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Actions */
+.resultsActions {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+/* Desktop Launchpad Styles */
+.launchpadContainer {
+  max-width: 980px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.launchpadHero {
+  background: #ffffff;
+  border: 2px solid #1c2d81;
+  padding: 32px;
+  box-shadow: 0 10px 25px -5px rgba(28, 45, 129, 0.08);
+}
+
+.heroTag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  color: #1e40af;
+  font-size: 0.76rem;
+  font-weight: 800;
+  padding: 4px 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 12px;
+}
+
+.launchpadTitle {
+  font-size: 1.85rem;
+  font-weight: 900;
+  color: #1c2d81;
+  margin: 0 0 10px;
+  letter-spacing: -0.02em;
+}
+
+.launchpadSub {
+  font-size: 0.92rem;
+  color: #475569;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.launchpadGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+@media (max-width: 860px) {
+  .launchpadGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.cardSection {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #f1f5f9;
+}
+
+.cardHeaderTitle {
+  font-size: 1.05rem;
+  font-weight: 900;
+  color: #0f172a;
+  margin: 0;
+}
+
+.candidateInfoList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.candidateInfoRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.86rem;
+  padding: 6px 0;
+  border-bottom: 1px dashed #e2e8f0;
+}
+
+.candidateInfoLabel {
+  color: #64748b;
+  font-weight: 600;
+}
+
+.candidateInfoValue {
+  color: #0f172a;
+  font-weight: 800;
+}
+
+.skillsSectionGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.skillSectionPill {
+  background: #f8fafc;
+  border: 1.5px solid #cbd5e1;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.skillSectionNumber {
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.skillSectionName {
+  font-size: 0.88rem;
+  font-weight: 900;
+  color: #1c2d81;
+}
+
+.skillSectionTag {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #15803d;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.remediationInfoBox {
+  background: #fefce8;
+  border: 1px solid #fde047;
+  padding: 14px 16px;
+  font-size: 0.82rem;
+  color: #854d0e;
+  line-height: 1.5;
+}
+
+.btnLaunchDesktop {
+  background: linear-gradient(135deg, #1c2d81 0%, #253cac 100%);
+  color: #ffffff;
+  border: none;
+  padding: 16px 24px;
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  box-shadow: 0 4px 14px rgba(28, 45, 129, 0.3);
+  transition: all 0.2s ease;
+  width: 100%;
+}
+
+.btnLaunchDesktop:hover {
+  background: linear-gradient(135deg, #253cac 0%, #1c2d81 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(28, 45, 129, 0.4);
+}
+
+.passcodeBox {
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.passcodeText {
+  font-family: monospace;
+  font-size: 0.82rem;
+  color: #334155;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.btnCopyPasscode {
+  background: #ffffff;
+  border: 1px solid #94a3b8;
+  color: #1e293b;
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 6px 12px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+
+.btnCopyPasscode:hover {
+  background: #f1f5f9;
+}
+
+.pollingStatusBanner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background: #f0fdf4;
+  border: 1px solid #86efac;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #15803d;
+}
+
+.pulseDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #22c55e;
+  animation: pulseDotAnim 1.5s infinite;
+  flex-shrink: 0;
+}
+
+@keyframes pulseDotAnim {
+  0% { transform: scale(0.9); opacity: 0.7; }
+  50% { transform: scale(1.3); opacity: 1; }
+  100% { transform: scale(0.9); opacity: 0.7; }
+}
+
+.remediationResultsCard {
+  background: #fff5f5;
+  border: 1.5px solid #fca5a5;
+  padding: 24px;
+  margin-bottom: 28px;
+}
+

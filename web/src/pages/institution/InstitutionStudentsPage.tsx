@@ -15,6 +15,8 @@ import {
   Download,
   AlertTriangle,
   FileText,
+  Key,
+  Copy,
 } from 'lucide-react';
 import { institutionApi } from '../../institution/services/institutionApi';
 import styles from '../../assessment/pages/AssessmentBuilderPage.module.css';
@@ -117,8 +119,8 @@ function validateStudentEntry(
     department: dept,
     batchYear: batch,
     cgpa: cgpaNum,
-    degree: (degreeVal || 'B.Tech').trim(),
-    phone: (phoneVal || '').trim(),
+    degree: (degreeVal || 'B.E').trim(),
+    phone: (phoneVal || '').replace(/^[-\s]+/, '').trim(),
     isValid: errors.length === 0,
     errors,
   };
@@ -227,6 +229,21 @@ export function InstitutionStudentsPage() {
   const [isImporting, setIsImporting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
+  // Bulk Credentials Receipt State
+  const [showCredentialsModal, setShowCredentialsModal] = useState(false);
+  const [generatedCredentials, setGeneratedCredentials] = useState<Array<{
+    userId?: string;
+    name: string;
+    email: string;
+    rollNumber: string;
+    department: string;
+    batch: string;
+    tempPassword: string;
+    status: string;
+  }>>([]);
+  const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
+  const [allCopied, setAllCopied] = useState(false);
+
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
@@ -265,30 +282,36 @@ export function InstitutionStudentsPage() {
     }
   };
 
+  const isDeptMatch = (dept: string, filter: string) => {
+    if (filter === 'ALL') return true;
+    const d = (dept || '').toLowerCase();
+    const f = filter.toLowerCase();
+    if (d.includes(f)) return true;
+    if (f.includes('computer') && (d.includes('cse') || d.includes('computer'))) return true;
+    if (f.includes('information') && (d.includes('it') || d.includes('information'))) return true;
+    if (f.includes('artificial') && (d.includes('ai') || d.includes('data science') || d.includes('aids'))) return true;
+    if (f.includes('electronic') && (d.includes('ece') || d.includes('electronic'))) return true;
+    if (f.includes('electrical') && (d.includes('eee') || d.includes('electrical'))) return true;
+    return false;
+  };
+
+  const matchesRecord = (s: any, q: string) => {
+    if (!q) return true;
+    const query = q.toLowerCase();
+    const name = (s.displayName || '').toLowerCase();
+    const email = (s.email || '').toLowerCase();
+    const regNo = (s.registrationNumber || s.rollNumber || '').toLowerCase();
+    const dept = (s.department || '').toLowerCase();
+    const studentId = (s.studentId || '').toLowerCase();
+    return name.includes(query) || email.includes(query) || regNo.includes(query) || dept.includes(query) || studentId.includes(query);
+  };
+
   const filteredPending = pendingStudents.filter((s) => {
-    const name = s.displayName || '';
-    const email = s.email || '';
-    const regNo = s.registrationNumber || '';
-    const dept = s.department || '';
-
-    const matchesSearch =
-      !searchQuery ||
-      name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      regNo.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      dept.toLowerCase().includes(searchQuery.toLowerCase());
-
-    const matchesDept = deptFilter === 'ALL' || dept.toLowerCase().includes(deptFilter.toLowerCase());
-    return matchesSearch && matchesDept;
+    return matchesRecord(s, searchQuery) && isDeptMatch(s.department, deptFilter);
   });
 
   const filteredAll = allStudents.filter((s) => {
-    const matchesSearch =
-      !searchQuery ||
-      (s.department || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (s.studentId || '').toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesDept = deptFilter === 'ALL' || (s.department || '').toLowerCase().includes(deptFilter.toLowerCase());
-    return matchesSearch && matchesDept;
+    return matchesRecord(s, searchQuery) && isDeptMatch(s.department, deptFilter);
   });
 
   const handleDownloadTemplate = () => {
@@ -328,44 +351,77 @@ export function InstitutionStudentsPage() {
 
     setIsImporting(true);
     try {
-      const newCohortRecords: StudentRecord[] = validRows.map((r) => ({
-        id: r.id,
-        studentId: r.rollNumber,
-        department: r.department,
-        batch: r.batchYear,
-        placementStatus: 'PLACEMENT_SEEKING',
-        verified: true,
-        createdAt: new Date().toISOString(),
+      const payload = validRows.map((r) => ({
+        rollNumber: r.rollNumber,
+        fullName: r.fullName,
         email: r.email,
-        displayName: r.fullName,
-        registrationNumber: r.rollNumber,
-        cgpa: r.cgpa ?? undefined,
+        department: r.department,
+        batchYear: r.batchYear,
+        cgpa: r.cgpa,
         degree: r.degree,
         phone: r.phone,
-        completionPct: 100,
       }));
 
-      setAllStudents((prev) => [...newCohortRecords, ...prev]);
+      const res = await institutionApi.bulkImportStudents(payload);
+      const data = (res as any)?.data || res;
+      const studentsList = data?.students || [];
 
-      await Promise.allSettled(
-        validRows.map((r) => institutionApi.addStudent(r.rollNumber, r.department, r.batchYear))
-      );
-
-      setActionMessage({
-        type: 'success',
-        text: `Successfully imported and verified ${validRows.length} student records into the institutional cohort.`,
-      });
       setShowImportModal(false);
       setParsedImportRows([]);
       setImportRawText('');
-    } catch {
+
+      if (studentsList.length > 0) {
+        setGeneratedCredentials(studentsList);
+        setShowCredentialsModal(true);
+      }
+
+      setActionMessage({
+        type: 'success',
+        text: data?.message || `Successfully imported and verified ${validRows.length} student records into the institutional cohort.`,
+      });
+
+      await loadData();
+    } catch (err: any) {
       setActionMessage({
         type: 'error',
-        text: 'Failed to completely save all student records to server.',
+        text: err?.message || 'Failed to completely save all student records to server.',
       });
     } finally {
       setIsImporting(false);
     }
+  };
+
+  const handleDownloadCredentialsCSV = () => {
+    if (generatedCredentials.length === 0) return;
+    const headers = 'RollNumber,FullName,Email,TemporaryPassword,Department,Batch,PlacementStatus\n';
+    const rows = generatedCredentials
+      .map(
+        (c) =>
+          `"${c.rollNumber}","${c.name}","${c.email}","${c.tempPassword}","${c.department}","${c.batch}","PLACEMENT_SEEKING"`
+      )
+      .join('\n');
+    const blob = new Blob([headers + rows], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `student_credentials_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleCopyAllCredentials = () => {
+    if (generatedCredentials.length === 0) return;
+    const text = generatedCredentials
+      .map(
+        (c) =>
+          `Name: ${c.name} | Roll: ${c.rollNumber} | Email: ${c.email} | Password: ${c.tempPassword}`
+      )
+      .join('\n');
+    navigator.clipboard.writeText(text);
+    setAllCopied(true);
+    setTimeout(() => setAllCopied(false), 2500);
   };
 
   const totalEnrolled = allStudents.length;
@@ -693,24 +749,36 @@ export function InstitutionStudentsPage() {
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.84rem' }}>
             <thead>
               <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0', textAlign: 'left' }}>
-                <th style={{ padding: '12px 16px', fontWeight: 700, color: '#334155' }}>Student UUID</th>
-                <th style={{ padding: '12px 16px', fontWeight: 700, color: '#334155' }}>Department</th>
+                <th style={{ padding: '12px 16px', fontWeight: 700, color: '#334155' }}>Roll / Reg No</th>
+                <th style={{ padding: '12px 16px', fontWeight: 700, color: '#334155' }}>Student Name &amp; Email</th>
+                <th style={{ padding: '12px 16px', fontWeight: 700, color: '#334155' }}>Department &amp; Degree</th>
                 <th style={{ padding: '12px 16px', fontWeight: 700, color: '#334155' }}>Batch</th>
+                <th style={{ padding: '12px 16px', fontWeight: 700, color: '#334155' }}>CGPA</th>
                 <th style={{ padding: '12px 16px', fontWeight: 700, color: '#334155' }}>Placement Status</th>
                 <th style={{ padding: '12px 16px', fontWeight: 700, color: '#334155' }}>Verification Status</th>
-                <th style={{ padding: '12px 16px', fontWeight: 700, color: '#334155' }}>Placement Access</th>
+                <th style={{ padding: '12px 16px', fontWeight: 700, color: '#334155', textAlign: 'center' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
               {filteredAll.map((s) => (
-                <tr key={s.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                <tr key={s.id || s.studentId} style={{ borderBottom: '1px solid #f1f5f9' }}>
                   <td style={{ padding: '12px 16px' }}>
                     <code style={{ background: '#f1f5f9', padding: '2px 6px', borderRadius: '3px', fontWeight: 600 }}>
-                      {s.studentId?.slice(0, 13)}...
+                      {s.registrationNumber || s.rollNumber || (s.studentId ? s.studentId.slice(0, 8).toUpperCase() : 'N/A')}
                     </code>
                   </td>
-                  <td style={{ padding: '12px 16px', fontWeight: 600, color: '#0f172a' }}>{s.department}</td>
-                  <td style={{ padding: '12px 16px', color: '#64748b' }}>{s.batch}</td>
+                  <td style={{ padding: '12px 16px' }}>
+                    <div style={{ fontWeight: 700, color: '#0f172a' }}>{s.displayName || 'Student Candidate'}</div>
+                    <div style={{ fontSize: '0.78rem', color: '#64748b' }}>{s.email}</div>
+                  </td>
+                  <td style={{ padding: '12px 16px' }}>
+                    <div style={{ fontWeight: 600, color: '#1c2d81' }}>{s.department || 'CSE'}</div>
+                    <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{s.degree || 'B.Tech'}</div>
+                  </td>
+                  <td style={{ padding: '12px 16px', color: '#64748b' }}>{s.batch || '2026'}</td>
+                  <td style={{ padding: '12px 16px', fontWeight: 800, color: '#0f172a' }}>
+                    {s.cgpa ? Number(s.cgpa).toFixed(2) : '-'}
+                  </td>
                   <td style={{ padding: '12px 16px' }}>
                     <select
                       value={s.placementStatus || 'UNPLACED'}
@@ -746,30 +814,45 @@ export function InstitutionStudentsPage() {
                       style={{
                         fontSize: '0.72rem',
                         fontWeight: 700,
-                        padding: '2px 8px',
+                        padding: '3px 8px',
                         borderRadius: '3px',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px',
                         background: s.verified ? '#dcfce7' : '#fef3c7',
                         color: s.verified ? '#15803d' : '#b45309',
                         border: `1px solid ${s.verified ? '#bbf7d0' : '#fde68a'}`,
                       }}
                     >
-                      {s.verified ? 'VERIFIED' : 'PENDING'}
+                      {s.verified ? <ShieldCheck size={12} /> : <Clock size={12} />}
+                      <span>{s.verified ? 'VERIFIED' : 'PENDING'}</span>
                     </span>
                   </td>
-                  <td style={{ padding: '12px 16px' }}>
-                    <span
-                      style={{
-                        fontSize: '0.72rem',
-                        fontWeight: 700,
-                        padding: '2px 8px',
-                        borderRadius: '3px',
-                        background: s.verified ? '#eff6ff' : '#f1f5f9',
-                        color: s.verified ? '#1d4ed8' : '#64748b',
-                        border: `1px solid ${s.verified ? '#bfdbfe' : '#e2e8f0'}`,
-                      }}
-                    >
-                      {s.verified ? 'Authorized for Drives' : 'Restricted'}
-                    </span>
+                  <td style={{ padding: '12px 16px', textAlign: 'center' }}>
+                    {!s.verified ? (
+                      <button
+                        disabled={verifyingId === s.studentId}
+                        onClick={() => handleVerify(s.studentId, true)}
+                        style={{
+                          padding: '5px 10px',
+                          background: '#15803d',
+                          color: '#ffffff',
+                          border: 'none',
+                          fontSize: '0.75rem',
+                          fontWeight: 700,
+                          borderRadius: '3px',
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                        }}
+                      >
+                        <Check size={12} />
+                        <span>Verify</span>
+                      </button>
+                    ) : (
+                      <span style={{ fontSize: '0.75rem', color: '#15803d', fontWeight: 600 }}>Active</span>
+                    )}
                   </td>
                 </tr>
               ))}
@@ -1120,6 +1203,267 @@ export function InstitutionStudentsPage() {
                 <span>
                   Import {parsedImportRows.filter((r) => r.isValid).length} Verified Students
                 </span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk Credentials Receipt Modal */}
+      {showCredentialsModal && generatedCredentials.length > 0 && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(15, 23, 42, 0.75)',
+            zIndex: 1001,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '24px',
+            backdropFilter: 'blur(4px)',
+          }}
+        >
+          <div
+            style={{
+              background: '#ffffff',
+              borderRadius: '8px',
+              maxWidth: '900px',
+              width: '100%',
+              maxHeight: '85vh',
+              display: 'flex',
+              flexDirection: 'column',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+              border: '1px solid #cbd5e1',
+              overflow: 'hidden',
+            }}
+          >
+            {/* Modal Header */}
+            <div
+              style={{
+                padding: '20px 24px',
+                borderBottom: '1px solid #e2e8f0',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                background: '#f8fafc',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div
+                  style={{
+                    width: '40px',
+                    height: '40px',
+                    borderRadius: '8px',
+                    background: '#f0fdf4',
+                    border: '1px solid #bbf7d0',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#15803d',
+                  }}
+                >
+                  <Key size={22} />
+                </div>
+                <div>
+                  <h2 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>
+                    Student Login Credentials Generated
+                  </h2>
+                  <p style={{ fontSize: '0.82rem', color: '#64748b', margin: '2px 0 0' }}>
+                    Successfully created and verified {generatedCredentials.length} student account{generatedCredentials.length > 1 ? 's' : ''}. Download or distribute these credentials to students.
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowCredentialsModal(false)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  color: '#64748b',
+                  padding: '6px',
+                  borderRadius: '4px',
+                }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div style={{ padding: '20px 24px', overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div
+                style={{
+                  background: '#eff6ff',
+                  border: '1px solid #bfdbfe',
+                  borderRadius: '6px',
+                  padding: '12px 16px',
+                  fontSize: '0.82rem',
+                  color: '#1e40af',
+                  lineHeight: 1.5,
+                }}
+              >
+                <strong>Initial Access Formula:</strong> Student accounts are activated with initial temporary password{' '}
+                <code>Student@&lt;RollNumber&gt;!</code> (e.g. <code>Student@23CSR117!</code>). Students can log in at{' '}
+                <a href="/login" target="_blank" rel="noreferrer" style={{ color: '#1c2d81', textDecoration: 'underline', fontWeight: 700 }}>
+                  /login
+                </a>{' '}
+                using their college email and will be prompted to set a permanent password.
+              </div>
+
+              <div style={{ border: '1px solid #e2e8f0', borderRadius: '6px', overflow: 'hidden' }}>
+                <div style={{ maxHeight: '340px', overflowY: 'auto' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem' }}>
+                    <thead>
+                      <tr style={{ background: '#f1f5f9', textAlign: 'left', color: '#475569', borderBottom: '1px solid #e2e8f0' }}>
+                        <th style={{ padding: '10px 14px' }}>Roll / Reg No</th>
+                        <th style={{ padding: '10px 14px' }}>Student Name</th>
+                        <th style={{ padding: '10px 14px' }}>Official Email</th>
+                        <th style={{ padding: '10px 14px' }}>Temporary Password</th>
+                        <th style={{ padding: '10px 14px' }}>Status</th>
+                        <th style={{ padding: '10px 14px', textAlign: 'center' }}>Copy</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {generatedCredentials.map((c, idx) => (
+                        <tr key={c.rollNumber || idx} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                          <td style={{ padding: '10px 14px' }}>
+                            <code style={{ background: '#f1f5f9', padding: '2px 6px', borderRadius: '3px', fontWeight: 700 }}>
+                              {c.rollNumber}
+                            </code>
+                          </td>
+                          <td style={{ padding: '10px 14px', fontWeight: 700, color: '#0f172a' }}>{c.name}</td>
+                          <td style={{ padding: '10px 14px', color: '#334155' }}>{c.email}</td>
+                          <td style={{ padding: '10px 14px' }}>
+                            <code
+                              style={{
+                                background: '#fef3c7',
+                                color: '#92400e',
+                                padding: '3px 8px',
+                                borderRadius: '4px',
+                                fontWeight: 700,
+                                border: '1px solid #fde68a',
+                                fontSize: '0.8rem',
+                              }}
+                            >
+                              {c.tempPassword}
+                            </code>
+                          </td>
+                          <td style={{ padding: '10px 14px' }}>
+                            <span
+                              style={{
+                                fontSize: '0.72rem',
+                                fontWeight: 700,
+                                padding: '2px 6px',
+                                borderRadius: '3px',
+                                background: '#dcfce7',
+                                color: '#15803d',
+                                border: '1px solid #bbf7d0',
+                              }}
+                            >
+                              VERIFIED &amp; ACTIVE
+                            </span>
+                          </td>
+                          <td style={{ padding: '10px 14px', textAlign: 'center' }}>
+                            <button
+                              onClick={() => {
+                                navigator.clipboard.writeText(`Email: ${c.email}\nPassword: ${c.tempPassword}`);
+                                setCopiedIndex(idx);
+                                setTimeout(() => setCopiedIndex(null), 2000);
+                              }}
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                                padding: '4px 8px',
+                                background: copiedIndex === idx ? '#dcfce7' : '#ffffff',
+                                border: `1px solid ${copiedIndex === idx ? '#86efac' : '#cbd5e1'}`,
+                                color: copiedIndex === idx ? '#15803d' : '#475569',
+                                borderRadius: '4px',
+                                fontSize: '0.75rem',
+                                cursor: 'pointer',
+                                fontWeight: 600,
+                              }}
+                            >
+                              {copiedIndex === idx ? <Check size={12} /> : <Copy size={12} />}
+                              <span>{copiedIndex === idx ? 'Copied' : 'Copy'}</span>
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div
+              style={{
+                padding: '16px 24px',
+                borderTop: '1px solid #e2e8f0',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                background: '#f8fafc',
+                flexWrap: 'wrap',
+                gap: '12px',
+              }}
+            >
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button
+                  onClick={handleDownloadCredentialsCSV}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '8px 14px',
+                    background: '#ffffff',
+                    border: '1px solid #cbd5e1',
+                    borderRadius: '4px',
+                    fontSize: '0.82rem',
+                    fontWeight: 600,
+                    color: '#1c2d81',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <Download size={14} />
+                  <span>Download Credentials (CSV)</span>
+                </button>
+                <button
+                  onClick={handleCopyAllCredentials}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '8px 14px',
+                    background: '#ffffff',
+                    border: '1px solid #cbd5e1',
+                    borderRadius: '4px',
+                    fontSize: '0.82rem',
+                    fontWeight: 600,
+                    color: allCopied ? '#15803d' : '#475569',
+                    cursor: 'pointer',
+                  }}
+                >
+                  {allCopied ? <Check size={14} /> : <Copy size={14} />}
+                  <span>{allCopied ? 'All Copied to Clipboard!' : 'Copy All'}</span>
+                </button>
+              </div>
+
+              <button
+                onClick={() => setShowCredentialsModal(false)}
+                style={{
+                  padding: '8px 20px',
+                  background: '#1c2d81',
+                  border: 'none',
+                  borderRadius: '4px',
+                  fontSize: '0.85rem',
+                  fontWeight: 700,
+                  color: '#ffffff',
+                  cursor: 'pointer',
+                }}
+              >
+                Done &amp; View Cohort
               </button>
             </div>
           </div>

@@ -11,6 +11,68 @@ let mainWindow: BrowserWindow | null = null;
 let isWindowLocked = false;
 let shortcutsDisabled = false;
 
+// Register beyon:// protocol for deep-linking from web portal
+if (process.defaultApp) {
+  if (process.argv.length >= 2) {
+    app.setAsDefaultProtocolClient('beyon', process.execPath, [path.resolve(process.argv[1])]);
+  }
+} else {
+  app.setAsDefaultProtocolClient('beyon');
+}
+
+function extractDeepLinkParams(arg: string): Record<string, string> | null {
+  if (!arg || !arg.startsWith('beyon://')) return null;
+  try {
+    const url = new URL(arg);
+    const params: Record<string, string> = {};
+    url.searchParams.forEach((v, k) => {
+      params[k] = v;
+    });
+    return params;
+  } catch {
+    const qIndex = arg.indexOf('?');
+    if (qIndex !== -1) {
+      const sp = new URLSearchParams(arg.substring(qIndex + 1));
+      const params: Record<string, string> = {};
+      sp.forEach((v, k) => {
+        params[k] = v;
+      });
+      return params;
+    }
+  }
+  return null;
+}
+
+function getDeepLinkParamsFromArgs(args: string[]): Record<string, string> | null {
+  for (const a of args) {
+    const p = extractDeepLinkParams(a);
+    if (p) return p;
+  }
+  return null;
+}
+
+function extractTokenFromArg(arg: string): string | null {
+  if (!arg) return null;
+  if (arg.startsWith('beyon://')) {
+    try {
+      const url = new URL(arg);
+      return url.searchParams.get('token');
+    } catch {
+      const match = arg.match(/token=([^&]+)/);
+      return match ? decodeURIComponent(match[1]) : null;
+    }
+  }
+  return null;
+}
+
+function getLaunchTokenFromArgs(args: string[]): string | null {
+  for (const a of args) {
+    const t = extractTokenFromArg(a);
+    if (t) return t;
+  }
+  return null;
+}
+
 function getTokenPath() {
   return path.join(app.getPath('userData'), 'beyon-auth.json');
 }
@@ -124,6 +186,40 @@ ipcMain.handle('assessment:device-info', () => {
   };
 });
 
+ipcMain.handle('assessment:local-ip', () => {
+  const nets = os.networkInterfaces();
+  let wifiIp = '';
+  let hotspotIp = '';
+  const ips: string[] = [];
+
+  for (const name of Object.keys(nets)) {
+    const lname = name.toLowerCase();
+    if (lname.includes('virtual') || lname.includes('wsl') || lname.includes('hyper-v') || lname.includes('vethernet') || lname.includes('docker') || lname.includes('tailscale')) {
+      continue;
+    }
+    for (const net of nets[name] || []) {
+      if (net.family === 'IPv4' && !net.internal) {
+        if (net.address.startsWith('10.') || net.address.startsWith('192.168.') || net.address.startsWith('172.')) {
+          ips.push(net.address);
+          if (lname.includes('wi-fi') || lname.includes('wireless') || lname.includes('wlan')) {
+            wifiIp = net.address;
+          } else if (net.address.startsWith('192.168.137.')) {
+            hotspotIp = net.address;
+          }
+        }
+      }
+    }
+  }
+
+  const primaryIp = wifiIp || (ips.length > 0 ? ips[0] : '10.1.32.243');
+  return {
+    primaryIp,
+    wifiIp: wifiIp || primaryIp,
+    hotspotIp: hotspotIp || '192.168.137.1',
+    allIps: ips.length > 0 ? ips : [primaryIp],
+  };
+});
+
 process.env['ELECTRON_DISABLE_SECURITY_WARNINGS'] = 'true';
 
 function createWindow() {
@@ -171,10 +267,24 @@ function createWindow() {
     }
   );
 
+  const initialParams = getDeepLinkParamsFromArgs(process.argv);
+  const initialToken = initialParams?.token || getLaunchTokenFromArgs(process.argv);
+  if (initialToken) {
+    writeToken(initialToken);
+  }
+
+  const queryParams = new URLSearchParams(initialParams || (initialToken ? { token: initialToken } : {}));
+
   if (process.env.VITE_DEV_SERVER_URL) {
-    mainWindow.loadURL(process.env.VITE_DEV_SERVER_URL);
+    const qs = queryParams.toString();
+    const devUrl = qs
+      ? `${process.env.VITE_DEV_SERVER_URL}?${qs}`
+      : process.env.VITE_DEV_SERVER_URL;
+    mainWindow.loadURL(devUrl);
   } else {
-    mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'));
+    mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'), {
+      query: Object.fromEntries(queryParams.entries()),
+    });
   }
 
   mainWindow.on('close', (e) => {
@@ -220,29 +330,49 @@ function createWindow() {
   });
 }
 
-app.whenReady().then(() => {
-
-  session.defaultSession.setPermissionRequestHandler(
-    (_webContents, permission, callback) => {
-      const allowed = ['media', 'camera', 'microphone', 'display-capture', 'notifications'];
-      callback(allowed.includes(permission));
+const gotTheLock = app.requestSingleInstanceLock();
+if (!gotTheLock) {
+  app.quit();
+} else {
+  app.on('second-instance', (_event, commandLine) => {
+    if (mainWindow) {
+      if (mainWindow.isMinimized()) mainWindow.restore();
+      mainWindow.focus();
+      const params = getDeepLinkParamsFromArgs(commandLine);
+      const token = params?.token || getLaunchTokenFromArgs(commandLine);
+      if (token) {
+        writeToken(token);
+        mainWindow.webContents.send('auth:launch-token', token);
+      }
+      if (params) {
+        mainWindow.webContents.send('auth:launch-params', params);
+      }
     }
-  );
-  session.defaultSession.setPermissionCheckHandler(
-    (_webContents, permission) => {
-      const allowed = ['media', 'camera', 'microphone', 'display-capture', 'notifications'];
-      return allowed.includes(permission);
-    }
-  );
+  });
 
-  createWindow();
-});
+  app.whenReady().then(() => {
+    session.defaultSession.setPermissionRequestHandler(
+      (_webContents, permission, callback) => {
+        const allowed = ['media', 'camera', 'microphone', 'display-capture', 'notifications'];
+        callback(allowed.includes(permission));
+      }
+    );
+    session.defaultSession.setPermissionCheckHandler(
+      (_webContents, permission) => {
+        const allowed = ['media', 'camera', 'microphone', 'display-capture', 'notifications'];
+        return allowed.includes(permission);
+      }
+    );
 
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') app.quit();
-});
+    createWindow();
+  });
 
-app.on('activate', () => {
-  if (BrowserWindow.getAllWindows().length === 0) createWindow();
-});
+  app.on('window-all-closed', () => {
+    if (process.platform !== 'darwin') app.quit();
+  });
+
+  app.on('activate', () => {
+    if (BrowserWindow.getAllWindows().length === 0) createWindow();
+  });
+}
 

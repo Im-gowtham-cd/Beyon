@@ -10,6 +10,7 @@ public enum UserRole {
     ANALYTICS_ADMIN,
     SUPER_ADMIN,
     ADMIN,
+    INSTITUTION_MANAGER,
 
     // 2. Institution Tier (Academia Domain)
     INSTITUTION_ADMIN,
@@ -18,6 +19,9 @@ public enum UserRole {
     INSTITUTION_COORDINATOR,
     INSTITUTION_VIEWER,
     INSTITUTION,
+    PRINCIPAL,
+    PLACEMENT_COORDINATOR,
+    DEPARTMENT_PLACEMENT_INCHARGE,
 
     // 3. Company Tier (Industry & Hiring Domain)
     COMPANY_ADMIN,
@@ -42,13 +46,32 @@ public enum UserRole {
                this == ANALYTICS_ADMIN;
     }
 
+    public boolean isInstitutionManager() {
+        return this == INSTITUTION_MANAGER;
+    }
+
+    public boolean isPrincipal() {
+        return this == PRINCIPAL;
+    }
+
+    public boolean isPlacementCoordinator() {
+        return this == PLACEMENT_COORDINATOR;
+    }
+
+    public boolean isDepartmentIncharge() {
+        return this == DEPARTMENT_PLACEMENT_INCHARGE;
+    }
+
     public boolean isInstitutionTier() {
         return this == INSTITUTION ||
                this == INSTITUTION_ADMIN ||
                this == INSTITUTION_PLACEMENT_OFFICER ||
                this == INSTITUTION_FACULTY ||
                this == INSTITUTION_COORDINATOR ||
-               this == INSTITUTION_VIEWER;
+               this == INSTITUTION_VIEWER ||
+               this == PRINCIPAL ||
+               this == PLACEMENT_COORDINATOR ||
+               this == DEPARTMENT_PLACEMENT_INCHARGE;
     }
 
     public boolean isCompanyTier() {
@@ -67,6 +90,7 @@ public enum UserRole {
 
     public String getTier() {
         if (isSuperAdmin()) return "SUPER_ADMIN";
+        if (isInstitutionManager()) return "INSTITUTION_MANAGER";
         if (isInstitutionTier()) return "INSTITUTION";
         if (isCompanyTier()) return "COMPANY";
         return "STUDENT";

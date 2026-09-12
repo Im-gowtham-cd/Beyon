@@ -6,6 +6,12 @@ spring:
   main:
     allow-bean-definition-overriding: true
 
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 50MB
+      max-request-size: 50MB
+
   datasource:
     url: ${DATABASE_URL:jdbc:mysql://127.0.0.1:3306/beyon}
     username: ${DATABASE_USERNAME:root}
@@ -52,6 +58,9 @@ spring:
 
 server:
   port: ${SERVER_PORT:8085}
+  tomcat:
+    max-swallow-size: 50MB
+    max-http-form-post-size: 50MB
   error:
     include-stacktrace: never
     include-message: never

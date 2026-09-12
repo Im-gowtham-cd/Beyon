@@ -12,6 +12,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Sparkles,
+  ShieldCheck,
 } from 'lucide-react';
 import styles from './AdminSidebar.module.css';
 
@@ -106,6 +107,18 @@ export function AdminSidebar({
       ];
     }
 
+    if (userRole === 'INSTITUTION_MANAGER') {
+      return [
+        {
+          title: 'Institution Onboarding',
+          items: [
+            { to: '/institution-manager/onboard', icon: Building2, label: 'Add College & AICTE' },
+            { to: '/admin/institutions', icon: ShieldCheck, label: 'Accredited Institutions' },
+          ],
+        },
+      ];
+    }
+
     // Default: PLATFORM_ADMIN / SUPER_ADMIN / ADMIN (Full platform governance)
     return [
       {
@@ -118,9 +131,11 @@ export function AdminSidebar({
       {
         title: 'Ecosystem & Governance',
         items: [
-          { to: '/admin/users', icon: Users, label: 'User & Role Registry' },
-          { to: '/admin/institutions', icon: Building2, label: 'Accreditation Queue' },
+          { to: '/institution-manager/onboard', icon: Building2, label: 'AICTE College Onboarding' },
+          { to: '/admin/institution-managers', icon: Users, label: 'Institution Managers' },
+          { to: '/admin/institutions', icon: Building2, label: 'Institutions Roster' },
           { to: '/admin/companies', icon: Briefcase, label: 'Corporate Approvals' },
+          { to: '/admin/users', icon: Users, label: 'User & Role Registry' },
           { to: '/admin/questions', icon: HelpCircle, label: 'Question Bank' },
           { to: '/admin/questions/create', icon: Sparkles, label: 'Post / Create Question' },
           { to: '/admin/skills', icon: Activity, label: 'Skill Taxonomy' },
@@ -128,8 +143,9 @@ export function AdminSidebar({
         ],
       },
       {
-        title: 'Integrity & Economy',
+        title: 'Integrity & Security',
         items: [
+          { to: '/admin/audit-logs', icon: ShieldCheck, label: 'Security Audit Trail' },
           { to: '/admin/economy', icon: Coins, label: 'Coin Economy Ledger' },
           { to: '/admin/moderation', icon: ShieldAlert, label: 'Content Moderation' },
           { to: '/admin/feedback', icon: FileText, label: 'Feedback & Reports' },

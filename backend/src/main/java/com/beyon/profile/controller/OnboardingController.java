@@ -84,6 +84,7 @@ public class OnboardingController {
                 "ip.website AS website " +
                 "FROM institution_profiles ip " +
                 "INNER JOIN users u ON u.id = ip.user_id " +
+                "WHERE u.status = 'ACTIVE' " +
                 "ORDER BY ip.institution_name ASC"
         );
         return ResponseEntity.ok(ApiResponse.ok(institutions));
@@ -273,6 +274,30 @@ public class OnboardingController {
             studentProfileRepository.save(profile);
 
             UUID instUserId = matched.getUserId();
+            String rawDept = profile.getDepartment() != null ? profile.getDepartment().trim() : "CSE";
+            String upperDept = rawDept.toUpperCase();
+            String deptVal = "CSE";
+            if (upperDept.contains("COMPUTER SCIENCE") || upperDept.contains("CSE")) {
+                deptVal = "CSE";
+            } else if (upperDept.contains("INFORMATION TECHNOLOGY") || upperDept.contains("IT")) {
+                deptVal = "IT";
+            } else if (upperDept.contains("ELECTRONICS") || upperDept.contains("ECE")) {
+                deptVal = "ECE";
+            } else if (upperDept.contains("MECHANICAL") || upperDept.contains("MECH")) {
+                deptVal = "MECH";
+            } else if (upperDept.contains("AI") || upperDept.contains("DATA SCIENCE") || upperDept.contains("AIDS")) {
+                deptVal = "AIDS";
+            } else {
+                deptVal = rawDept;
+            }
+
+            final String finalDept = deptVal;
+            userRepository.findById(userId).ifPresent(u -> {
+                u.setInstitutionId(instUserId);
+                u.setDepartmentId(finalDept);
+                userRepository.save(u);
+            });
+
             InstitutionStudent instStudent = institutionStudentRepository
                     .findByInstitutionIdAndStudentId(instUserId, userId)
                     .orElseGet(() -> {
@@ -281,32 +306,47 @@ public class OnboardingController {
                         is.setStudentId(userId);
                         return is;
                     });
-            instStudent.setDepartment(profile.getDepartment());
+            instStudent.setDepartment(finalDept);
             instStudent.setBatch(profile.getAcademicYear() != null ? profile.getAcademicYear() : "Current Batch");
             instStudent.setPlacementStatus("PENDING_VERIFICATION");
             instStudent.setVerified(false);
             institutionStudentRepository.save(instStudent);
         }
 
-        if (body.get("skills") instanceof List<?> skillsList) {
+        if (body.get("skills") instanceof List<?> skillsList && !skillsList.isEmpty()) {
+            List<StudentSkill> existingSkills = studentSkillRepository.findByUserId(userId);
+            for (StudentSkill existing : existingSkills) {
+                if (!existing.isVerified()) {
+                    studentSkillRepository.delete(existing);
+                }
+            }
+
+            java.util.Set<String> savedNames = new java.util.HashSet<>();
             for (Object item : skillsList) {
                 if (item instanceof Map<?, ?> smap && smap.get("skillName") != null) {
-                    String sName = smap.get("skillName").toString();
-                    if (!sName.isBlank()) {
+                    String sName = smap.get("skillName").toString().trim();
+                    if (!sName.isBlank() && !savedNames.contains(sName.toLowerCase())) {
                         StudentSkill sk = new StudentSkill();
                         sk.setUserId(userId);
                         sk.setSkillName(sName);
-                        sk.setCategory(smap.get("category") != null ? smap.get("category").toString() : "Languages");
+                        sk.setCategory(smap.get("category") != null ? smap.get("category").toString() : "Technical");
+                        sk.setSource("ONBOARDING_DECLARED");
                         try {
                             if (smap.get("proficiency") != null) {
                                 sk.setProficiency(SkillProficiency.valueOf(smap.get("proficiency").toString()));
+                            } else {
+                                sk.setProficiency(SkillProficiency.INTERMEDIATE);
                             }
-                        } catch (Exception ignored) {}
+                        } catch (Exception ignored) {
+                            sk.setProficiency(SkillProficiency.INTERMEDIATE);
+                        }
                         studentSkillRepository.save(sk);
+                        savedNames.add(sName.toLowerCase());
                     }
                 }
             }
         }
+
 
         if (body.get("projects") instanceof List<?> projList) {
             for (Object item : projList) {

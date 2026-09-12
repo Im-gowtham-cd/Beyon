@@ -101,12 +101,19 @@ public class PermissionService {
         );
         ROLE_PERMISSIONS.put("ANALYTICS_ADMIN", analyticsAdminPerms);
 
+        // 1.7 Institution Manager (Onboard Institutions & Verify AICTE / OTP)
+        Set<String> institutionManagerPerms = Set.of(
+            "VIEW_PROFILE", "EDIT_PROFILE", "institution:onboard", "institution:aicte_validate",
+            "institution:otp_initiate", "institution:verify", "institutions:manage", "institutions:read",
+            "audit:read", "analytics:platform"
+        );
+        ROLE_PERMISSIONS.put("INSTITUTION_MANAGER", institutionManagerPerms);
 
         // ==========================================
         // 2. INSTITUTION DOMAIN (ACADEMIA ECOSYSTEM)
         // ==========================================
 
-        // 2.1 Institution Admin (Highest Institution Authority)
+        // 2.1 Institution Admin / Principal (Highest Institution Authority)
         Set<String> institutionAdminPerms = Set.of(
             "VIEW_PROFILE", "EDIT_PROFILE", "MANAGE_STUDENTS", "MANAGE_PLACEMENTS",
             "VIEW_ANALYTICS", "CREATE_EVENT", "CREATE_POST", "COMMENT",
@@ -122,8 +129,9 @@ public class PermissionService {
         );
         ROLE_PERMISSIONS.put("INSTITUTION_ADMIN", institutionAdminPerms);
         ROLE_PERMISSIONS.put("INSTITUTION", institutionAdminPerms);
+        ROLE_PERMISSIONS.put("PRINCIPAL", institutionAdminPerms);
 
-        // 2.2 Placement Officer (Operational Placement & Internships)
+        // 2.2 Placement Officer / Placement Coordinator (Operational Placement & Internships)
         Set<String> placementOfficerPerms = Set.of(
             "VIEW_PROFILE", "EDIT_PROFILE", "MANAGE_STUDENTS", "MANAGE_PLACEMENTS",
             "VIEW_ANALYTICS", "CREATE_EVENT", "REPORT_CONTENT",
@@ -137,6 +145,14 @@ public class PermissionService {
             "analytics:institution"
         );
         ROLE_PERMISSIONS.put("INSTITUTION_PLACEMENT_OFFICER", placementOfficerPerms);
+        ROLE_PERMISSIONS.put("PLACEMENT_COORDINATOR", placementOfficerPerms);
+
+        // 2.3 Department Placement In-Charge (Department-Scoped Student Management)
+        Set<String> deptInchargePerms = Set.of(
+            "VIEW_PROFILE", "EDIT_PROFILE", "department_students:view", "student:read", "student:verify",
+            "student:create", "student:bulk_import", "analytics:department", "faculty:dashboard"
+        );
+        ROLE_PERMISSIONS.put("DEPARTMENT_PLACEMENT_INCHARGE", deptInchargePerms);
 
         // 2.3 Faculty / Department Coordinator (Student Skill Development)
         Set<String> facultyPerms = Set.of(

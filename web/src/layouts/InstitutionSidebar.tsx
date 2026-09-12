@@ -106,13 +106,27 @@ export function InstitutionSidebar({
       ];
     }
 
-    // Default: INSTITUTION_ADMIN / INSTITUTION
+    if (userRole === 'DEPARTMENT_PLACEMENT_INCHARGE') {
+      return [
+        {
+          title: 'Department Placement Hub',
+          items: [
+            { to: '/institution/hierarchy', icon: Users, label: 'Department Student Cohort' },
+            { to: '/institution/students', icon: GraduationCap, label: 'Candidate Directory' },
+            { to: '/institution/curriculum', icon: BookOpen, label: 'Curriculum & Skills' },
+          ],
+        },
+      ];
+    }
+
+    // Default: INSTITUTION_ADMIN / PRINCIPAL / PLACEMENT_COORDINATOR / INSTITUTION
     return [
       {
         title: 'Campus Command',
         items: [
           { to: '/institution/home', icon: LayoutDashboard, label: 'Executive Dashboard' },
-          { to: '/institution/faculty-hub', icon: GraduationCap, label: 'Academician Industry Hub (FDPs & Sabbaticals)', badge: 'New', badgeType: 'primary' },
+          { to: '/institution/hierarchy', icon: Building2, label: 'Staff & Department Hierarchy' },
+          { to: '/institution/faculty-hub', icon: GraduationCap, label: 'Academician Industry Hub', badge: 'New', badgeType: 'primary' },
           { to: '/institution/analytics', icon: LineChart, label: 'Institutional Analytics' },
           {
             to: '/institution/drives',

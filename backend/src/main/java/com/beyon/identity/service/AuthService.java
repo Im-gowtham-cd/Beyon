@@ -238,6 +238,31 @@ public class AuthService {
     }
 
     @Transactional
+    public AuthResponse.UserInfo forceChangePassword(UUID userId, String currentTempPassword, String newPassword, String confirmPassword, String ipAddress) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        if (!passwordEncoder.matches(currentTempPassword, user.getPasswordHash())) {
+            throw new UnauthorizedException("Current temporary password is incorrect");
+        }
+
+        if (!newPassword.equals(confirmPassword)) {
+            throw new IllegalArgumentException("New passwords do not match");
+        }
+
+        validatePasswordStrength(newPassword);
+
+        user.setPasswordHash(passwordEncoder.encode(newPassword));
+        user.setMustChangePassword(false);
+        user.setStatus(AccountStatus.ACTIVE);
+        userRepository.save(user);
+
+        auditService.log(AuditEventType.PASSWORD_RESET_COMPLETED, user.getEmail(), ipAddress, "Mandatory first-login password update completed. Account activated.");
+
+        return buildUserInfo(user);
+    }
+
+    @Transactional
     public void verifyEmail(String tokenValue) {
         String tokenHash = hashToken(tokenValue);
 
@@ -339,11 +364,20 @@ public class AuthService {
     }
 
     private AuthResponse.UserInfo buildUserInfo(User user) {
-        return new AuthResponse.UserInfo(
+        AuthResponse.UserInfo info = new AuthResponse.UserInfo(
                 user.getId(), user.getEmail(), user.getDisplayName(),
                 user.getRole(), user.getInstitutionId(), user.getCompanyId(), user.getDepartmentId(),
                 user.getStatus(), user.getProfileStatus(),
-                user.isEmailVerified());
+                user.isEmailVerified(),
+                user.isMustChangePassword());
+
+        if (user.getRole() == com.beyon.identity.enums.UserRole.STUDENT) {
+            try {
+                studentProfileRepository.findByUserId(user.getId())
+                        .ifPresent(p -> info.setHasCompletedAssessment(p.isHasCompletedAssessment()));
+            } catch (Exception ignored) {}
+        }
+        return info;
     }
 
     private void createEmailVerificationToken(UUID userId) {

@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import {
   FileText,
@@ -13,7 +13,10 @@ import {
   X,
   Sparkles,
   Lock,
+  ExternalLink,
+  Loader2,
 } from 'lucide-react';
+import { api } from '../../services/api/client';
 
 export type DocCategory = 'ALL' | 'RESUME' | 'ACADEMIC_RECORD' | 'INTERNSHIP_REPORT' | 'GOVERNMENT_ID';
 
@@ -28,70 +31,14 @@ export interface StudentDocument {
   issuingAuthority: string;
   semesterOrYear?: string;
   storagePath: string;
+  viewUrl?: string;
+  mimeType?: string;
 }
 
-const INITIAL_DOCS: StudentDocument[] = [
-  {
-    id: 'doc-1',
-    title: 'Verified Technical ATS Resume (Auto-Generated)',
-    category: 'RESUME',
-    fileName: 'Siddharth_Mehta_Beyon_Verified_Resume_2026.pdf',
-    fileSize: '480 KB',
-    uploadDate: '2026-09-02',
-    status: 'VERIFIED',
-    issuingAuthority: 'Beyon Career Intelligence Engine',
-    storagePath: 's3://beyon-resumes/student-1031/resume_v4.pdf',
-  },
-  {
-    id: 'doc-2',
-    title: 'Official Semester VI Marksheet & Cumulative Grade Card',
-    category: 'ACADEMIC_RECORD',
-    fileName: 'SRM_Semester_6_Official_GradeCard_Signed.pdf',
-    fileSize: '1.4 MB',
-    uploadDate: '2026-08-15',
-    status: 'VERIFIED',
-    issuingAuthority: 'SRM Institute of Science & Technology (Office of Controller of Examinations)',
-    semesterOrYear: 'Semester 6',
-    storagePath: 's3://beyon-documents/student-1031/sem6_marksheet.pdf',
-  },
-  {
-    id: 'doc-3',
-    title: 'Atlassian Cloud Systems Internship Completion Letter & Sign-Off',
-    category: 'INTERNSHIP_REPORT',
-    fileName: 'Atlassian_Internship_Completion_Report_Verified.pdf',
-    fileSize: '890 KB',
-    uploadDate: '2026-08-22',
-    status: 'VERIFIED',
-    issuingAuthority: 'Atlassian People Operations & Engineering Directorate',
-    storagePath: 's3://beyon-documents/student-1031/atlassian_internship_cert.pdf',
-  },
-  {
-    id: 'doc-4',
-    title: 'Semester V Consolidated Marksheet & Grade Transcript',
-    category: 'ACADEMIC_RECORD',
-    fileName: 'SRM_Semester_5_Transcript.pdf',
-    fileSize: '1.2 MB',
-    uploadDate: '2026-02-10',
-    status: 'VERIFIED',
-    issuingAuthority: 'SRM Institute of Science & Technology',
-    semesterOrYear: 'Semester 5',
-    storagePath: 's3://beyon-documents/student-1031/sem5_transcript.pdf',
-  },
-  {
-    id: 'doc-5',
-    title: 'Government Identity & University Student ID Card',
-    category: 'GOVERNMENT_ID',
-    fileName: 'Student_ID_Card_Official_Scan.pdf',
-    fileSize: '620 KB',
-    uploadDate: '2026-01-14',
-    status: 'VERIFIED',
-    issuingAuthority: 'Registrar & Ministry of Education Identification',
-    storagePath: 's3://beyon-documents/student-1031/id_card.pdf',
-  },
-];
 
 export function StudentDocumentsPage() {
-  const [documents, setDocuments] = useState<StudentDocument[]>(INITIAL_DOCS);
+  const [documents, setDocuments] = useState<StudentDocument[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<DocCategory>('ALL');
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [previewDoc, setPreviewDoc] = useState<StudentDocument | null>(null);
@@ -106,6 +53,28 @@ export function StudentDocumentsPage() {
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const loadDocuments = useCallback(async () => {
+    try {
+      setLoading(true);
+      const res = await api.get('/documents/my-documents');
+      const data = (res as any)?.data || res;
+      if (Array.isArray(data) && data.length > 0) {
+        setDocuments(data);
+      } else {
+        setDocuments([]);
+      }
+    } catch (err) {
+      console.error('Failed to load documents', err);
+      setDocuments([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadDocuments();
+  }, [loadDocuments]);
+
   const filteredDocs = documents.filter((d) => selectedCategory === 'ALL' || d.category === selectedCategory);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -118,35 +87,44 @@ export function StudentDocumentsPage() {
     }
   };
 
-  const handleUploadSubmit = (e: React.FormEvent) => {
+  const handleUploadSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!docTitle.trim() || !selectedFileName) return;
+    const file = fileInputRef.current?.files?.[0];
+    if (!file) return;
 
     setUploading(true);
-    setTimeout(() => {
-      const newDoc: StudentDocument = {
-        id: `doc-${Date.now()}`,
-        title: docTitle,
-        category: docCategory,
-        fileName: selectedFileName,
-        fileSize: '1.2 MB',
-        uploadDate: new Date().toISOString().split('T')[0],
-        status: 'VERIFIED',
-        issuingAuthority: issuingOrg || 'Academic University / Corporate Partner',
-        semesterOrYear: semYear || undefined,
-        storagePath: `s3://beyon-documents/student-1031/${selectedFileName}`,
-      };
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('category', docCategory);
 
-      setDocuments((prev) => [newDoc, ...prev]);
-      setUploading(false);
+      const token = localStorage.getItem('beyon_access_token') || localStorage.getItem('beyon_token');
+      const res = await fetch('/api/v1/documents/upload', {
+        method: 'POST',
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => ({}));
+        throw new Error(errJson.error || 'Failed to upload document');
+      }
+
+      await loadDocuments();
       setIsUploadModalOpen(false);
       setDocTitle('');
       setSelectedFileName('');
       setIssuingOrg('');
       setSemYear('');
-      setToastMessage(`Document "${newDoc.title}" uploaded to encrypted storage.`);
+      setToastMessage(`Document "${file.name}" uploaded to your encrypted vault.`);
       setTimeout(() => setToastMessage(null), 4000);
-    }, 600);
+    } catch (err: any) {
+      alert(err.message || 'File upload failed');
+    } finally {
+      setUploading(false);
+    }
   };
 
   const handleDeleteDoc = (id: string, title: string) => {
@@ -303,11 +281,16 @@ export function StudentDocumentsPage() {
       </div>
 
       {/* Documents Grid */}
-      {filteredDocs.length === 0 ? (
+      {loading ? (
+        <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', padding: '48px 24px', textAlign: 'center', color: '#1c2d81' }}>
+          <Loader2 size={32} style={{ margin: '0 auto 12px', animation: 'spin 1s linear infinite' }} />
+          <p style={{ margin: 0, fontSize: '0.9rem', fontWeight: 700 }}>Decrypting and loading documents from your vault...</p>
+        </div>
+      ) : filteredDocs.length === 0 ? (
         <div style={{ background: '#ffffff', border: '1px dashed #cbd5e1', padding: '48px 24px', textAlign: 'center', color: '#64748b' }}>
           <FolderLock size={36} color="#94a3b8" style={{ marginBottom: '10px' }} />
           <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: '#1c2d81' }}>No documents in this category</h3>
-          <p style={{ margin: '6px 0 0', fontSize: '0.84rem' }}>Upload mark sheets or generate your resume to populate your vault.</p>
+          <p style={{ margin: '6px 0 0', fontSize: '0.84rem' }}>Upload mark sheets or attach your ID card to populate your vault.</p>
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -406,9 +389,11 @@ export function StudentDocumentsPage() {
                     <span>Preview</span>
                   </button>
 
-                  <button
-                    type="button"
-                    onClick={() => setToastMessage(`Downloading "${doc.fileName}"...`)}
+                  <a
+                    href={doc.viewUrl || '#'}
+                    download={doc.fileName}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     style={{
                       padding: '7px 12px',
                       background: '#f8fafc',
@@ -420,11 +405,12 @@ export function StudentDocumentsPage() {
                       display: 'inline-flex',
                       alignItems: 'center',
                       gap: '5px',
+                      textDecoration: 'none',
                     }}
                   >
                     <Download size={14} />
                     <span>Download</span>
-                  </button>
+                  </a>
 
                   <button
                     type="button"
@@ -606,10 +592,10 @@ export function StudentDocumentsPage() {
             padding: '20px',
           }}
         >
-          <div style={{ background: '#ffffff', border: '2px solid #1c2d81', maxWidth: '650px', width: '100%', padding: '24px', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)' }}>
+          <div style={{ background: '#ffffff', border: '2px solid #1c2d81', maxWidth: '880px', width: '100%', padding: '24px', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e2e8f0', paddingBottom: '12px', marginBottom: '16px' }}>
               <div>
-                <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#1c2d81', textTransform: 'uppercase' }}>Encrypted Document Preview</span>
+                <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#1c2d81', textTransform: 'uppercase' }}>Encrypted Document Content</span>
                 <h3 style={{ margin: '2px 0 0', fontSize: '1.1rem', fontWeight: 900, color: '#0f172a' }}>{previewDoc.title}</h3>
               </div>
               <button type="button" onClick={() => setPreviewDoc(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }}>
@@ -617,47 +603,96 @@ export function StudentDocumentsPage() {
               </button>
             </div>
 
-            <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', padding: '28px', textAlign: 'center', marginBottom: '20px' }}>
-              <FileCheck size={48} color="#16a34a" style={{ marginBottom: '10px' }} />
-              <div style={{ fontSize: '0.95rem', fontWeight: 800, color: '#0f172a' }}>{previewDoc.fileName}</div>
-              <div style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '4px' }}>
-                Verified by: {previewDoc.issuingAuthority}
-              </div>
-              <div style={{ fontSize: '0.76rem', color: '#16a34a', fontWeight: 800, marginTop: '8px', display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
-                <ShieldCheck size={15} /> Validated Against Institution Registrar Records
-              </div>
+            {/* Real File Content Preview */}
+            <div style={{ background: '#0f172a', border: '1px solid #334155', borderRadius: '6px', padding: '10px', textAlign: 'center', marginBottom: '18px', minHeight: '380px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+              {previewDoc.viewUrl && (previewDoc.mimeType?.startsWith('image/') || /\.(png|jpe?g|webp|gif|bmp)$/i.test(previewDoc.fileName)) ? (
+                <img
+                  src={previewDoc.viewUrl}
+                  alt={previewDoc.title}
+                  style={{ maxWidth: '100%', maxHeight: '62vh', objectFit: 'contain', borderRadius: '4px' }}
+                />
+              ) : previewDoc.viewUrl && (previewDoc.mimeType === 'application/pdf' || /\.pdf$/i.test(previewDoc.fileName)) ? (
+                <iframe
+                  src={previewDoc.viewUrl}
+                  title={previewDoc.title}
+                  style={{ width: '100%', height: '62vh', border: 'none', background: '#ffffff', borderRadius: '4px' }}
+                />
+              ) : (
+                <div style={{ padding: '36px', textAlign: 'center', color: '#f8fafc' }}>
+                  <FileCheck size={52} color="#22c55e" style={{ marginBottom: '12px' }} />
+                  <div style={{ fontSize: '1rem', fontWeight: 800 }}>{previewDoc.fileName}</div>
+                  <div style={{ fontSize: '0.82rem', color: '#94a3b8', marginTop: '6px' }}>
+                    Verified by: {previewDoc.issuingAuthority}
+                  </div>
+                  {previewDoc.viewUrl && (
+                    <a
+                      href={previewDoc.viewUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ marginTop: '14px', display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#fed601', color: '#1c2d81', padding: '8px 16px', fontWeight: 800, textDecoration: 'none', fontSize: '0.82rem' }}
+                    >
+                      <ExternalLink size={14} /> Open Document in Browser
+                    </a>
+                  )}
+                </div>
+              )}
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
-              <button
-                type="button"
-                onClick={() => setPreviewDoc(null)}
-                style={{ padding: '8px 16px', background: '#ffffff', border: '1px solid #cbd5e1', fontSize: '0.84rem', fontWeight: 700, color: '#475569', cursor: 'pointer' }}
-              >
-                Close Preview
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setToastMessage(`Downloading "${previewDoc.fileName}"...`);
-                  setPreviewDoc(null);
-                }}
-                style={{
-                  padding: '8px 20px',
-                  background: '#1c2d81',
-                  color: '#fed601',
-                  border: 'none',
-                  fontSize: '0.84rem',
-                  fontWeight: 900,
-                  cursor: 'pointer',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                }}
-              >
-                <Download size={14} />
-                <span>Download File</span>
-              </button>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+              <div style={{ fontSize: '0.78rem', color: '#16a34a', fontWeight: 800, display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                <ShieldCheck size={16} /> Validated Against Institution Registrar Records
+              </div>
+
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button
+                  type="button"
+                  onClick={() => setPreviewDoc(null)}
+                  style={{ padding: '8px 16px', background: '#ffffff', border: '1px solid #cbd5e1', fontSize: '0.84rem', fontWeight: 700, color: '#475569', cursor: 'pointer' }}
+                >
+                  Close
+                </button>
+                {previewDoc.viewUrl && (
+                  <a
+                    href={previewDoc.viewUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      padding: '8px 16px',
+                      background: '#f1f5f9',
+                      color: '#1c2d81',
+                      border: '1px solid #cbd5e1',
+                      fontSize: '0.84rem',
+                      fontWeight: 800,
+                      textDecoration: 'none',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '5px',
+                    }}
+                  >
+                    <ExternalLink size={14} />
+                    <span>New Tab</span>
+                  </a>
+                )}
+                <a
+                  href={previewDoc.viewUrl || '#'}
+                  download={previewDoc.fileName}
+                  style={{
+                    padding: '8px 20px',
+                    background: '#1c2d81',
+                    color: '#fed601',
+                    border: 'none',
+                    fontSize: '0.84rem',
+                    fontWeight: 900,
+                    textDecoration: 'none',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                  }}
+                >
+                  <Download size={14} />
+                  <span>Download File</span>
+                </a>
+              </div>
             </div>
           </div>
         </div>

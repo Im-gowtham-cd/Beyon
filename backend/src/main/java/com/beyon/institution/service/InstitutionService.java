@@ -31,6 +31,9 @@ public class InstitutionService {
     private final com.beyon.profile.repository.CompanyProfileRepository companyProfileRepository;
     private final com.beyon.recruitment.repository.RecruitmentApplicationRepository recruitmentApplicationRepository;
     private final com.beyon.recruitment.repository.PlacementRecordRepository recruitmentPlacementRecordRepository;
+    private final com.beyon.profile.repository.InstitutionProfileRepository institutionProfileRepository;
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
 
     public InstitutionService(InstitutionStudentRepository institutionStudentRepository,
                               InstitutionPlacementRecordRepository placementRecordRepository,
@@ -42,6 +45,25 @@ public class InstitutionService {
                               com.beyon.profile.repository.CompanyProfileRepository companyProfileRepository,
                               com.beyon.recruitment.repository.RecruitmentApplicationRepository recruitmentApplicationRepository,
                               com.beyon.recruitment.repository.PlacementRecordRepository recruitmentPlacementRecordRepository) {
+        this(institutionStudentRepository, placementRecordRepository, ratingRepository,
+                placementDriveRepository, userRepository, studentProfileRepository,
+                opportunityRepository, companyProfileRepository, recruitmentApplicationRepository,
+                recruitmentPlacementRecordRepository, null);
+    }
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public InstitutionService(InstitutionStudentRepository institutionStudentRepository,
+                              InstitutionPlacementRecordRepository placementRecordRepository,
+                              InstitutionRatingSnapshotRepository ratingRepository,
+                              PlacementDriveRepository placementDriveRepository,
+                              UserRepository userRepository,
+                              StudentProfileRepository studentProfileRepository,
+                              com.beyon.practice.repository.CompanyOpportunityRepository opportunityRepository,
+                              com.beyon.profile.repository.CompanyProfileRepository companyProfileRepository,
+                              com.beyon.recruitment.repository.RecruitmentApplicationRepository recruitmentApplicationRepository,
+                              com.beyon.recruitment.repository.PlacementRecordRepository recruitmentPlacementRecordRepository,
+                              @org.springframework.beans.factory.annotation.Autowired(required = false)
+                              com.beyon.profile.repository.InstitutionProfileRepository institutionProfileRepository) {
         this.institutionStudentRepository = institutionStudentRepository;
         this.placementRecordRepository = placementRecordRepository;
         this.ratingRepository = ratingRepository;
@@ -52,6 +74,46 @@ public class InstitutionService {
         this.companyProfileRepository = companyProfileRepository;
         this.recruitmentApplicationRepository = recruitmentApplicationRepository;
         this.recruitmentPlacementRecordRepository = recruitmentPlacementRecordRepository;
+        this.institutionProfileRepository = institutionProfileRepository;
+    }
+
+    public UUID resolveInstitutionId(UUID userId) {
+        if (userId == null) return null;
+        User user = userRepository.findById(userId).orElse(null);
+        if (user != null && user.getInstitutionId() != null) {
+            return user.getInstitutionId();
+        }
+        if (institutionProfileRepository != null) {
+            if (institutionProfileRepository.findByUserId(userId).isPresent()) {
+                return userId;
+            }
+            if (user != null && user.getDisplayName() != null) {
+                String instName = user.getDisplayName().trim();
+                List<com.beyon.profile.model.InstitutionProfile> profiles = institutionProfileRepository.findAll();
+                for (com.beyon.profile.model.InstitutionProfile ip : profiles) {
+                    if (ip.getInstitutionName() != null &&
+                        (ip.getInstitutionName().equalsIgnoreCase(instName) ||
+                         ip.getInstitutionName().toLowerCase().contains(instName.toLowerCase()) ||
+                         instName.toLowerCase().contains(ip.getInstitutionName().toLowerCase()))) {
+                        return ip.getUserId();
+                    }
+                }
+            }
+            Optional<StudentProfile> sp = studentProfileRepository.findByUserId(userId);
+            if (sp.isPresent() && sp.get().getInstitution() != null) {
+                String instName = sp.get().getInstitution().trim();
+                List<com.beyon.profile.model.InstitutionProfile> profiles = institutionProfileRepository.findAll();
+                for (com.beyon.profile.model.InstitutionProfile ip : profiles) {
+                    if (ip.getInstitutionName() != null &&
+                        (ip.getInstitutionName().equalsIgnoreCase(instName) ||
+                         ip.getInstitutionName().toLowerCase().contains(instName.toLowerCase()) ||
+                         instName.toLowerCase().contains(ip.getInstitutionName().toLowerCase()))) {
+                        return ip.getUserId();
+                    }
+                }
+            }
+        }
+        return userId;
     }
 
     public List<InstitutionStudent> getStudents(UUID institutionId) {
@@ -63,9 +125,66 @@ public class InstitutionService {
     }
 
     public List<Map<String, Object>> getStudentsWithDetails(UUID institutionId, String status) {
-        List<InstitutionStudent> list = (status != null && !status.isBlank())
+        List<InstitutionStudent> list = (status != null && !status.isBlank() && !"ALL".equalsIgnoreCase(status))
                 ? institutionStudentRepository.findByInstitutionIdAndPlacementStatus(institutionId, status)
                 : institutionStudentRepository.findByInstitutionId(institutionId);
+
+        // Auto-reconcile any students linked to this institution in users or student_profiles
+        Set<UUID> existingIds = list.stream().map(InstitutionStudent::getStudentId).collect(Collectors.toSet());
+        List<User> instStudents = userRepository.findByInstitutionIdAndRole(institutionId, com.beyon.identity.enums.UserRole.STUDENT);
+        for (User u : instStudents) {
+            if (!existingIds.contains(u.getId())) {
+                InstitutionStudent is = new InstitutionStudent();
+                is.setInstitutionId(institutionId);
+                is.setStudentId(u.getId());
+                is.setDepartment(u.getDepartmentId() != null ? u.getDepartmentId() : "CSE");
+                is.setBatch("2026");
+                is.setPlacementStatus("PENDING_VERIFICATION");
+                is.setVerified(false);
+                try {
+                    is = institutionStudentRepository.save(is);
+                    list.add(is);
+                    existingIds.add(u.getId());
+                } catch (Exception ignored) {}
+            }
+        }
+
+        // Reconcile by matching institution name from profile or user
+        String currentInstName = null;
+        if (institutionProfileRepository != null) {
+            var optIp = institutionProfileRepository.findByUserId(institutionId);
+            if (optIp.isPresent()) currentInstName = optIp.get().getInstitutionName();
+        }
+        if (currentInstName == null) {
+            User instUser = userRepository.findById(institutionId).orElse(null);
+            if (instUser != null) currentInstName = instUser.getDisplayName();
+        }
+        if (currentInstName != null && !currentInstName.isBlank()) {
+            final String finalInstName = currentInstName.trim();
+            List<StudentProfile> allSp = studentProfileRepository.findAll();
+            for (StudentProfile sp : allSp) {
+                if (sp.getInstitution() != null &&
+                        (sp.getInstitution().equalsIgnoreCase(finalInstName) ||
+                         sp.getInstitution().toLowerCase().contains(finalInstName.toLowerCase()) ||
+                         finalInstName.toLowerCase().contains(sp.getInstitution().toLowerCase()))) {
+                    if (!existingIds.contains(sp.getUserId())) {
+                        InstitutionStudent is = new InstitutionStudent();
+                        is.setInstitutionId(institutionId);
+                        is.setStudentId(sp.getUserId());
+                        is.setDepartment(sp.getDepartment() != null ? sp.getDepartment() : "CSE");
+                        is.setBatch(sp.getAcademicYear() != null ? sp.getAcademicYear() : "2026");
+                        boolean isVerified = "VERIFIED".equalsIgnoreCase(sp.getVerificationStatus());
+                        is.setPlacementStatus(isVerified ? "PLACEMENT_SEEKING" : "PENDING_VERIFICATION");
+                        is.setVerified(isVerified);
+                        try {
+                            is = institutionStudentRepository.save(is);
+                            list.add(is);
+                            existingIds.add(sp.getUserId());
+                        } catch (Exception ignored) {}
+                    }
+                }
+            }
+        }
 
         List<Map<String, Object>> results = new ArrayList<>();
         for (InstitutionStudent is : list) {
@@ -84,6 +203,9 @@ public class InstitutionService {
                 map.put("email", u.getEmail());
                 map.put("displayName", u.getDisplayName());
                 map.put("profileStatus", u.getProfileStatus() != null ? u.getProfileStatus().name() : "INCOMPLETE");
+                if (map.get("department") == null && u.getDepartmentId() != null) {
+                    map.put("department", u.getDepartmentId());
+                }
             });
 
             studentProfileRepository.findByUserId(is.getStudentId()).ifPresent(sp -> {
@@ -92,6 +214,12 @@ public class InstitutionService {
                 map.put("degree", sp.getDegree());
                 map.put("phone", sp.getPhone());
                 map.put("completionPct", sp.getCompletionPct());
+                if (map.get("department") == null && sp.getDepartment() != null) {
+                    map.put("department", sp.getDepartment());
+                }
+                if (map.get("batch") == null && sp.getAcademicYear() != null) {
+                    map.put("batch", sp.getAcademicYear());
+                }
             });
 
             results.add(map);
@@ -113,12 +241,74 @@ public class InstitutionService {
     }
 
     public List<Map<String, Object>> getPendingStudentsWithDetails(UUID institutionId) {
-        List<InstitutionStudent> pending = institutionStudentRepository.findByInstitutionIdAndPlacementStatus(institutionId, "PENDING_VERIFICATION");
-        if (pending.isEmpty()) {
-            pending = institutionStudentRepository.findByInstitutionId(institutionId).stream()
-                    .filter(s -> !s.isVerified())
-                    .collect(Collectors.toList());
+        List<InstitutionStudent> allList = institutionStudentRepository.findByInstitutionId(institutionId);
+        List<InstitutionStudent> pending = allList.stream()
+                .filter(s -> !s.isVerified() || "PENDING_VERIFICATION".equalsIgnoreCase(s.getPlacementStatus()))
+                .collect(Collectors.toList());
+
+        // Also check if any unlinked user with institution_id is not yet verified
+        Set<UUID> pendingIds = pending.stream().map(InstitutionStudent::getStudentId).collect(Collectors.toSet());
+        List<User> instStudents = userRepository.findByInstitutionIdAndRole(institutionId, com.beyon.identity.enums.UserRole.STUDENT);
+        for (User u : instStudents) {
+            if (!pendingIds.contains(u.getId())) {
+                Optional<InstitutionStudent> opt = institutionStudentRepository.findByInstitutionIdAndStudentId(institutionId, u.getId());
+                if (opt.isEmpty()) {
+                    InstitutionStudent is = new InstitutionStudent();
+                    is.setInstitutionId(institutionId);
+                    is.setStudentId(u.getId());
+                    is.setDepartment(u.getDepartmentId() != null ? u.getDepartmentId() : "CSE");
+                    is.setBatch("2026");
+                    is.setPlacementStatus("PENDING_VERIFICATION");
+                    is.setVerified(false);
+                    try {
+                        is = institutionStudentRepository.save(is);
+                        pending.add(is);
+                        pendingIds.add(u.getId());
+                    } catch (Exception ignored) {}
+                } else if (!opt.get().isVerified() || "PENDING_VERIFICATION".equalsIgnoreCase(opt.get().getPlacementStatus())) {
+                    pending.add(opt.get());
+                    pendingIds.add(u.getId());
+                }
+            }
         }
+
+        // Also reconcile by matching institution name
+        String currentInstName = null;
+        if (institutionProfileRepository != null) {
+            var optIp = institutionProfileRepository.findByUserId(institutionId);
+            if (optIp.isPresent()) currentInstName = optIp.get().getInstitutionName();
+        }
+        if (currentInstName == null) {
+            User instUser = userRepository.findById(institutionId).orElse(null);
+            if (instUser != null) currentInstName = instUser.getDisplayName();
+        }
+        if (currentInstName != null && !currentInstName.isBlank()) {
+            final String finalInstName = currentInstName.trim();
+            List<StudentProfile> allSp = studentProfileRepository.findAll();
+            for (StudentProfile sp : allSp) {
+                if (sp.getInstitution() != null &&
+                        (sp.getInstitution().equalsIgnoreCase(finalInstName) ||
+                         sp.getInstitution().toLowerCase().contains(finalInstName.toLowerCase()) ||
+                         finalInstName.toLowerCase().contains(sp.getInstitution().toLowerCase()))) {
+                    boolean isVerified = "VERIFIED".equalsIgnoreCase(sp.getVerificationStatus());
+                    if (!isVerified && !pendingIds.contains(sp.getUserId())) {
+                        InstitutionStudent is = new InstitutionStudent();
+                        is.setInstitutionId(institutionId);
+                        is.setStudentId(sp.getUserId());
+                        is.setDepartment(sp.getDepartment() != null ? sp.getDepartment() : "CSE");
+                        is.setBatch(sp.getAcademicYear() != null ? sp.getAcademicYear() : "2026");
+                        is.setPlacementStatus("PENDING_VERIFICATION");
+                        is.setVerified(false);
+                        try {
+                            is = institutionStudentRepository.save(is);
+                            pending.add(is);
+                            pendingIds.add(sp.getUserId());
+                        } catch (Exception ignored) {}
+                    }
+                }
+            }
+        }
+
         List<Map<String, Object>> results = new ArrayList<>();
         for (InstitutionStudent is : pending) {
             Map<String, Object> map = new HashMap<>();
@@ -134,6 +324,9 @@ public class InstitutionService {
                 map.put("email", u.getEmail());
                 map.put("displayName", u.getDisplayName());
                 map.put("profileStatus", u.getProfileStatus() != null ? u.getProfileStatus().name() : "INCOMPLETE");
+                if (map.get("department") == null && u.getDepartmentId() != null) {
+                    map.put("department", u.getDepartmentId());
+                }
             });
 
             studentProfileRepository.findByUserId(is.getStudentId()).ifPresent(sp -> {
@@ -142,6 +335,12 @@ public class InstitutionService {
                 map.put("degree", sp.getDegree());
                 map.put("phone", sp.getPhone());
                 map.put("completionPct", sp.getCompletionPct());
+                if (map.get("department") == null && sp.getDepartment() != null) {
+                    map.put("department", sp.getDepartment());
+                }
+                if (map.get("batch") == null && sp.getAcademicYear() != null) {
+                    map.put("batch", sp.getAcademicYear());
+                }
             });
 
             results.add(map);
@@ -194,6 +393,10 @@ public class InstitutionService {
                 u.setProfileStatus(com.beyon.identity.enums.AccountStatus.COMPLETED);
                 userRepository.save(u);
             });
+            studentProfileRepository.findByUserId(studentId).ifPresent(sp -> {
+                sp.setVerificationStatus("VERIFIED");
+                studentProfileRepository.save(sp);
+            });
         } else {
             student.setVerified(false);
             student.setPlacementStatus("REJECTED");
@@ -201,11 +404,18 @@ public class InstitutionService {
                 u.setProfileStatus(com.beyon.identity.enums.AccountStatus.REJECTED);
                 userRepository.save(u);
             });
+            studentProfileRepository.findByUserId(studentId).ifPresent(sp -> {
+                sp.setVerificationStatus("REJECTED");
+                studentProfileRepository.save(sp);
+            });
         }
         return institutionStudentRepository.save(student);
     }
 
     public Map<String, Object> getInstitutionMetrics(UUID institutionId) {
+        if (institutionStudentRepository.countByInstitutionId(institutionId) == 0) {
+            getStudentsWithDetails(institutionId, null);
+        }
         Map<String, Object> metrics = new HashMap<>();
         long totalStudents = institutionStudentRepository.countByInstitutionId(institutionId);
         long placed = institutionStudentRepository.countByInstitutionIdAndPlacementStatus(institutionId, "PLACED");
@@ -470,6 +680,148 @@ public class InstitutionService {
         }
         drive.setStatus("APPROVED");
         return placementDriveRepository.save(drive);
+    }
+
+    @Transactional
+    public Map<String, Object> bulkImportStudents(UUID requesterId, UUID institutionId, List<com.beyon.institution.dto.AddStudentRequest> students) {
+        if (institutionId == null) {
+            institutionId = requesterId;
+        }
+        UUID resolvedInstId = resolveInstitutionId(institutionId);
+        if (resolvedInstId != null) {
+            institutionId = resolvedInstId;
+        }
+
+        String instName = "Kongu Engineering College";
+        if (institutionProfileRepository != null) {
+            var optIp = institutionProfileRepository.findByUserId(institutionId);
+            if (optIp.isPresent() && optIp.get().getInstitutionName() != null) {
+                instName = optIp.get().getInstitutionName();
+            }
+        }
+        if (instName == null || instName.isBlank()) {
+            User instUser = userRepository.findById(institutionId).orElse(null);
+            if (instUser != null && instUser.getDisplayName() != null) {
+                instName = instUser.getDisplayName();
+            }
+        }
+
+        List<Map<String, Object>> createdCohort = new ArrayList<>();
+
+        if (students != null) {
+            for (com.beyon.institution.dto.AddStudentRequest req : students) {
+                if (req.getEmail() == null || req.getEmail().isBlank()) continue;
+                String email = req.getEmail().trim().toLowerCase();
+                String rollNumber = req.getRollNumber() != null ? req.getRollNumber().trim() : "";
+                String dept = req.getDepartment() != null && !req.getDepartment().isBlank() ? req.getDepartment().trim() : "Computer Science and Engineering";
+                String batch = req.getBatchYear() != null && !req.getBatchYear().isBlank() ? req.getBatchYear().trim() : "2027";
+                String fullName = req.getFullName() != null && !req.getFullName().isBlank() ? req.getFullName().trim() : "Student Candidate";
+
+                String tempPassword = req.getTempPassword();
+                if (tempPassword == null || tempPassword.isBlank()) {
+                    if (!rollNumber.isBlank()) {
+                        tempPassword = "Student@" + rollNumber + "!";
+                    } else {
+                        tempPassword = "Student@2026!";
+                    }
+                }
+
+                String phone = req.getPhone();
+                if (phone != null) {
+                    phone = phone.replaceAll("^[-\\s]+", "").trim();
+                }
+
+                String encodedHash = passwordEncoder != null ? passwordEncoder.encode(tempPassword) : tempPassword;
+
+                User user = userRepository.findByEmail(email).orElse(null);
+                if (user == null) {
+                    user = new User();
+                    user.setEmail(email);
+                    user.setDisplayName(fullName);
+                    user.setPasswordHash(encodedHash);
+                    user.setRole(com.beyon.identity.enums.UserRole.STUDENT);
+                    user.setInstitutionId(institutionId);
+                    user.setDepartmentId(dept);
+                    user.setStatus(com.beyon.identity.enums.AccountStatus.ACTIVE);
+                    user.setEmailVerified(true);
+                    user.setMustChangePassword(true);
+                    user = userRepository.save(user);
+                } else {
+                    user.setDisplayName(fullName);
+                    user.setInstitutionId(institutionId);
+                    user.setDepartmentId(dept);
+                    user.setPasswordHash(encodedHash);
+                    user.setMustChangePassword(true);
+                    user.setStatus(com.beyon.identity.enums.AccountStatus.ACTIVE);
+                    user = userRepository.save(user);
+                }
+
+                UUID studentId = user.getId();
+
+                InstitutionStudent isRecord = institutionStudentRepository.findByInstitutionIdAndStudentId(institutionId, studentId)
+                        .orElse(new InstitutionStudent());
+                isRecord.setInstitutionId(institutionId);
+                isRecord.setStudentId(studentId);
+                isRecord.setDepartment(dept);
+                isRecord.setBatch(batch);
+                isRecord.setPlacementStatus("PLACEMENT_SEEKING");
+                isRecord.setVerified(true);
+                institutionStudentRepository.save(isRecord);
+
+                if (requesterId != null && !requesterId.equals(institutionId)) {
+                    InstitutionStudent isReq = institutionStudentRepository.findByInstitutionIdAndStudentId(requesterId, studentId)
+                            .orElse(new InstitutionStudent());
+                    isReq.setInstitutionId(requesterId);
+                    isReq.setStudentId(studentId);
+                    isReq.setDepartment(dept);
+                    isReq.setBatch(batch);
+                    isReq.setPlacementStatus("PLACEMENT_SEEKING");
+                    isReq.setVerified(true);
+                    try {
+                        institutionStudentRepository.save(isReq);
+                    } catch (Exception ignored) {}
+                }
+
+                StudentProfile profile = studentProfileRepository.findByUserId(studentId)
+                        .orElse(new StudentProfile());
+                profile.setUserId(studentId);
+                profile.setRegistrationNumber(rollNumber);
+                profile.setInstitution(instName);
+                profile.setDepartment(dept);
+                profile.setDegree(req.getDegree() != null && !req.getDegree().isBlank() ? req.getDegree().trim() : "B.E");
+                profile.setAcademicYear(batch);
+                if (req.getCgpa() != null) {
+                    profile.setCgpa(java.math.BigDecimal.valueOf(req.getCgpa()));
+                }
+                if (phone != null && !phone.isBlank()) {
+                    profile.setPhone(phone);
+                }
+                profile.setVerificationStatus("VERIFIED");
+                profile.setCompletionPct(100);
+                studentProfileRepository.save(profile);
+
+                Map<String, Object> studentEntry = new LinkedHashMap<>();
+                studentEntry.put("userId", studentId);
+                studentEntry.put("name", user.getDisplayName());
+                studentEntry.put("email", user.getEmail());
+                studentEntry.put("rollNumber", rollNumber);
+                studentEntry.put("department", dept);
+                studentEntry.put("batch", batch);
+                studentEntry.put("tempPassword", tempPassword);
+                studentEntry.put("mustChangePassword", true);
+                studentEntry.put("status", "ACTIVE");
+                studentEntry.put("verified", true);
+                studentEntry.put("placementStatus", "PLACEMENT_SEEKING");
+                createdCohort.add(studentEntry);
+            }
+        }
+
+        Map<String, Object> resp = new LinkedHashMap<>();
+        resp.put("success", true);
+        resp.put("count", createdCohort.size());
+        resp.put("students", createdCohort);
+        resp.put("message", "Successfully onboarded and verified " + createdCohort.size() + " student records with login credentials.");
+        return resp;
     }
 }
 
