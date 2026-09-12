@@ -260,17 +260,11 @@ public class DocumentUploadController {
             String cleanName = originalFilename != null ? originalFilename.replaceAll("[^a-zA-Z0-9._-]", "_") : "doc";
             String uniqueName = UUID.randomUUID().toString().substring(0, 8) + "_" + cleanName;
             String cleanCategory = category.replaceAll("[^a-zA-Z0-9_-]", "");
-            
-            Path categoryDirPath = Paths.get(storageDir, cleanCategory);
-            Files.createDirectories(categoryDirPath);
-            Path targetPath = categoryDirPath.resolve(uniqueName);
             byte[] bytes = file.getBytes();
-            Files.write(targetPath, bytes);
 
             String contentType = file.getContentType();
             if (contentType == null || contentType.isBlank()) {
-                contentType = Files.probeContentType(targetPath);
-                if (contentType == null) contentType = "application/octet-stream";
+                contentType = guessMime(originalFilename);
             }
 
             String s3Key = "documents/" + cleanCategory + "/" + uniqueName;
@@ -278,8 +272,9 @@ public class DocumentUploadController {
             try {
                 s3StorageService.ensureBucketExists(documentsBucket);
                 s3Url = s3StorageService.uploadFile(documentsBucket, s3Key, bytes, contentType);
+                log.info("Stored document in S3 bucket {}: key {}", documentsBucket, s3Key);
             } catch (Exception s3Ex) {
-                log.warn("Direct S3 upload fallback to local storage: {}", s3Ex.getMessage());
+                log.error("Failed to store document in S3: {}", s3Ex.getMessage());
                 s3Url = "s3://" + documentsBucket + "/" + s3Key;
             }
 
@@ -308,7 +303,7 @@ public class DocumentUploadController {
 
             return ResponseEntity.ok(response);
         } catch (IOException ex) {
-            log.error("Failed to store document", ex);
+            log.error("Failed to process document upload", ex);
             response.put("success", false);
             response.put("error", "Failed to upload document: " + ex.getMessage());
             return ResponseEntity.internalServerError().body(response);
@@ -323,24 +318,42 @@ public class DocumentUploadController {
         if (idx == -1) {
             return ResponseEntity.notFound().build();
         }
-        String relativePath = uri.substring(idx + prefix.length());
+        String relativePath = uri.substring(idx + prefix.length()).replace('\\', '/');
 
-        File file = Paths.get(storageDir, relativePath).toFile();
-        if (!file.exists() || file.isDirectory()) {
+        byte[] data = null;
+        String s3Key = "documents/" + relativePath;
+
+        try {
+            if (s3StorageService.doesObjectExist(documentsBucket, s3Key)) {
+                data = s3StorageService.downloadFile(documentsBucket, s3Key);
+            } else if (s3StorageService.doesObjectExist(documentsBucket, relativePath)) {
+                data = s3StorageService.downloadFile(documentsBucket, relativePath);
+            }
+        } catch (Exception s3Ex) {
+            log.warn("S3 download fallback for document {}: {}", relativePath, s3Ex.getMessage());
+        }
+
+        // Fallback for legacy files
+        if (data == null) {
+            File file = Paths.get(storageDir, relativePath).toFile();
+            if (file.exists() && file.isFile()) {
+                try {
+                    data = Files.readAllBytes(file.toPath());
+                } catch (Exception ignored) {}
+            }
+        }
+
+        if (data == null) {
             return ResponseEntity.notFound().build();
         }
 
-        try {
-            String contentType = Files.probeContentType(file.toPath());
-            if (contentType == null) contentType = "application/octet-stream";
+        String fileName = relativePath.contains("/") ? relativePath.substring(relativePath.lastIndexOf('/') + 1) : "document";
+        String contentType = guessMime(fileName);
 
-            return ResponseEntity.ok()
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + file.getName() + "\"")
-                    .header(HttpHeaders.CACHE_CONTROL, "max-age=86400")
-                    .contentType(MediaType.parseMediaType(contentType))
-                    .body(new FileSystemResource(file));
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().build();
-        }
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + fileName + "\"")
+                .header(HttpHeaders.CACHE_CONTROL, "max-age=86400")
+                .contentType(MediaType.parseMediaType(contentType))
+                .body(new org.springframework.core.io.ByteArrayResource(data));
     }
 }

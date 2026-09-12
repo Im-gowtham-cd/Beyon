@@ -49,23 +49,18 @@ public class EvidenceController {
             }
         }
 
-        File file = evidenceStorageService.resolveStoragePath(relativeSubpath);
-
-        if (!file.exists()) {
+        byte[] imageBytes = evidenceStorageService.getEvidenceBytes(relativeSubpath);
+        if (imageBytes == null || imageBytes.length == 0) {
             return ResponseEntity.notFound().build();
         }
 
-        try {
-            String contentType = Files.probeContentType(file.toPath());
-            if (contentType == null) contentType = "image/jpeg";
+        String filename = relativeSubpath.contains("/") ? relativeSubpath.substring(relativeSubpath.lastIndexOf('/') + 1) : "evidence.jpg";
 
-            return ResponseEntity.ok()
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + file.getName() + "\"")
-                    .contentType(MediaType.parseMediaType(contentType))
-                    .body(new FileSystemResource(file));
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().build();
-        }
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + filename + "\"")
+                .header(HttpHeaders.CACHE_CONTROL, "max-age=86400")
+                .contentType(MediaType.IMAGE_JPEG)
+                .body(new org.springframework.core.io.ByteArrayResource(imageBytes));
     }
 }
 

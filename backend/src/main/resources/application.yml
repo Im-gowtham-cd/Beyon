@@ -78,6 +78,11 @@ management:
       enabled: false
     mongo:
       enabled: false
+aws:
+  endpoint-url: ${AWS_ENDPOINT_URL:http://localhost:4566}
+  region: ${AWS_REGION:us-east-1}
+  access-key-id: ${AWS_ACCESS_KEY_ID:test}
+  secret-access-key: ${AWS_SECRET_ACCESS_KEY:test}
 
 beyon:
   cors:
@@ -89,6 +94,13 @@ beyon:
   jwt:
     secret: ${JWT_SECRET:beyon-dev-secret-key-change-in-production-minimum-32-chars}
     access-token-expiration: ${JWT_ACCESS_TOKEN_EXPIRATION:86400000}
+  s3:
+    default-bucket: ${S3_DEFAULT_BUCKET:beyon-documents}
+    documents-bucket: ${S3_DOCUMENTS_BUCKET:beyon-documents}
+    evidence-bucket: ${S3_EVIDENCE_BUCKET:beyon-evidence}
+  documents:
+    storage-dir: ${DOCUMENTS_STORAGE_DIR:uploads/documents}
   proctoring:
     evidence-base-path: ${EVIDENCE_BASE_PATH:uploads/evidence}
     evidence-base-url: ${EVIDENCE_BASE_URL:http://localhost:8085/api/v1/evidence}
+    evidence-bucket: ${S3_EVIDENCE_BUCKET:beyon-evidence}

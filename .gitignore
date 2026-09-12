@@ -133,6 +133,14 @@ presentation/
 # ─── Local Services & Emulators ───────────────────────────────
 floci-data/
 dolt-data/
+# ─── Uploads & Cloud Storage Artifacts ─────────────────────────
+uploads/
+**/uploads/
+**/uploads/**
+backend/uploads/
 
-backend\uploads\evidence
-
+# ─── Machine Learning Model Weights ─────────────────────────────
+*.pt
+*.pth
+*.onnx
+*.bin
