@@ -7,19 +7,93 @@ export interface OnboardingState {
   completed: boolean;
 }
 
+export interface Education10th {
+  schoolName: string;
+  board: string;
+  passingYear: string;
+  percentageOrCgpa: string;
+}
+
+export interface Education12th {
+  schoolOrCollegeName: string;
+  board: string;
+  stream: string;
+  passingYear: string;
+  percentageOrCgpa: string;
+}
+
+export interface EducationDiploma {
+  instituteName: string;
+  branch: string;
+  passingYear: string;
+  percentageOrCgpa: string;
+}
+
+export interface InternshipEntry {
+  companyName: string;
+  role: string;
+  description: string;
+  duration: string;
+  stipend: string;
+  workType: 'REMOTE' | 'ONSITE' | 'HYBRID';
+  status: 'COMPLETED' | 'ONGOING';
+  certificateProofUrl?: string;
+}
+
+export interface InstitutionOption {
+  id: string;
+  userId: string;
+  name: string;
+  code: string;
+  type: string;
+  city: string;
+  state: string;
+  grade?: string;
+  accreditations?: string;
+  affiliatedUniversity?: string;
+  logoUrl?: string;
+  website?: string;
+}
+
+export interface AicteInstitutionInfo {
+  aicteId: string;
+  instituteName: string;
+  region: string;
+  state: string;
+  district: string;
+  city: string;
+  userGroup?: string;
+}
+
 export interface StudentFormData {
+  institutionId: string;
+  institution: string;
+  aicteCode: string;
+  institutionVerified: boolean;
+  selectedInstitutionDetails: InstitutionOption | null;
+  institutionDetails?: AicteInstitutionInfo | null;
+  firstName: string;
+  middleName: string;
+  lastName: string;
   phone: string;
   dateOfBirth: string;
   gender: string;
   country: string;
   state: string;
   city: string;
-  institution: string;
   registrationNumber: string;
+  studentIdCardUrl: string;
   degree: string;
   department: string;
   academicYear: string;
   cgpa: string;
+  education10th: Education10th;
+  has12th: boolean;
+  education12th: Education12th;
+  hasDiploma: boolean;
+  educationDiploma: EducationDiploma;
+  hasInternship: boolean;
+  internships: InternshipEntry[];
   placementPreference: 'PLACEMENT_WILLING' | 'PLACEMENT_NOT_WILLING' | '';
   preferredJobRoles: string[];
   preferredIndustries: string[];
@@ -151,11 +225,44 @@ export interface CompanyRepresentativeEntry {
 }
 
 export const EMPTY_STUDENT_FORM: StudentFormData = {
-  phone: '', dateOfBirth: '', gender: '', country: '', state: '', city: '',
-  institution: '', registrationNumber: '', degree: '', department: '',
-  academicYear: '', cgpa: '', placementPreference: '', preferredJobRoles: [],
-  preferredIndustries: [], preferredWorkType: '', aboutMe: '', profilePhotoUrl: '',
-  resumeUrl: '', skills: [], certifications: [], projects: [], links: [],
+  institutionId: '',
+  institution: '',
+  aicteCode: '',
+  institutionVerified: false,
+  selectedInstitutionDetails: null,
+  firstName: '',
+  middleName: '',
+  lastName: '',
+  phone: '',
+  dateOfBirth: '',
+  gender: '',
+  country: 'India',
+  state: '',
+  city: '',
+  registrationNumber: '',
+  studentIdCardUrl: '',
+  degree: 'B.Tech',
+  department: 'Computer Science and Engineering',
+  academicYear: '3rd Year',
+  cgpa: '',
+  education10th: { schoolName: '', board: 'CBSE', passingYear: '2020', percentageOrCgpa: '' },
+  has12th: true,
+  education12th: { schoolOrCollegeName: '', board: 'CBSE', stream: 'Science (PCM)', passingYear: '2022', percentageOrCgpa: '' },
+  hasDiploma: false,
+  educationDiploma: { instituteName: '', branch: '', passingYear: '', percentageOrCgpa: '' },
+  hasInternship: false,
+  internships: [],
+  placementPreference: 'PLACEMENT_WILLING',
+  preferredJobRoles: ['Software Engineer', 'Full Stack Developer'],
+  preferredIndustries: ['Information Technology', 'Software Development'],
+  preferredWorkType: 'HYBRID',
+  aboutMe: '',
+  profilePhotoUrl: '',
+  resumeUrl: '',
+  skills: [],
+  certifications: [],
+  projects: [],
+  links: [],
 };
 
 export const EMPTY_INSTITUTION_FORM: InstitutionFormData = {

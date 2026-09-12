@@ -17,7 +17,7 @@
     "start:web": "bun run dev:web",
     "start:backend": "bun run scripts/run-backend.ts",
     "start:all": "bun run scripts/dev-all.ts",
-    "dev:dolt": "dolt sql-server --host=127.0.0.1 --port=3306",
+    "dev:dolt": "dolt sql-server --host=127.0.0.1 --port=3306 --loglevel=warning",
     "dev:ai": "cd ai-service && python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000",
     "dev:all": "bun run scripts/dev-all.ts",
     "test:web": "bun run --filter @beyon/web test",

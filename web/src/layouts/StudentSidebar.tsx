@@ -22,6 +22,8 @@ import {
   Coins,
   ChevronLeft,
   ChevronRight,
+  FolderLock,
+  FileCheck,
 } from 'lucide-react';
 import styles from './StudentSidebar.module.css';
 
@@ -83,6 +85,7 @@ export function StudentSidebar({
       items: [
         { to: '/student/home', icon: LayoutDashboard, label: 'Dashboard' },
         { to: '/student/profile', icon: User, label: 'Portfolio & Profile' },
+        { to: '/student/documents', icon: FolderLock, label: 'Document Vault', badge: '5 Files', badgeType: 'primary' },
         { to: '/student/skills', icon: Cpu, label: 'Skill Taxonomy', badge: '109', badgeType: 'primary' },
       ],
     },
@@ -100,6 +103,7 @@ export function StudentSidebar({
       items: [
         { to: '/opportunities', icon: Briefcase, label: 'Opportunities & Drives', badge: '35 Open', badgeType: 'primary' },
         { to: '/my-applications', icon: FileText, label: 'My Applications' },
+        { to: '/student/internship-tracking', icon: FileCheck, label: 'Internship Logbook', badge: 'Active', badgeType: 'gold' },
         { to: '/placement', icon: LineChart, label: 'Placement Intel' },
       ],
     },

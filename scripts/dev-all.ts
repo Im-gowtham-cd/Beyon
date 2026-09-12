@@ -68,14 +68,31 @@ function logService(name: string, line: string, isError = false) {
   }
 }
 
+function shouldFilterDoltLog(line: string): boolean {
+  return (
+    line.includes('ConnectionClosed') ||
+    line.includes('NewConnection') ||
+    line.includes('level=info') ||
+    line.includes('Cannot read client handshake response') ||
+    line.includes('io.ReadFull(header size) failed') ||
+    line.includes('wsarecv:')
+  );
+}
+
 function pipeOutput(name: string, child: ChildProcess) {
   if (child.stdout) {
     const rl = readline.createInterface({ input: child.stdout });
-    rl.on('line', (line) => logService(name, line));
+    rl.on('line', (line) => {
+      if (name === 'dolt' && shouldFilterDoltLog(line)) return;
+      logService(name, line);
+    });
   }
   if (child.stderr) {
     const rl = readline.createInterface({ input: child.stderr });
-    rl.on('line', (line) => logService(name, line, true));
+    rl.on('line', (line) => {
+      if (name === 'dolt' && shouldFilterDoltLog(line)) return;
+      logService(name, line, true);
+    });
   }
 }
 
@@ -133,34 +150,34 @@ process.on('SIGTERM', shutdown);
 
 async function main() {
   console.log(`${COLORS.bold}======================================================${COLORS.reset}`);
-  console.log(`${COLORS.bold}BEYON UNIFIED MULTI-SERVICE DEV RUNNER${COLORS.reset}`);
-  console.log(`${COLORS.dim}Services: Dolt DB (3306) | Floci AWS (4566) | Backend (8085) | AI (8000) | Web (5173)${COLORS.reset}`);
+  console.log(`${COLORS.bold}BEYON UNIFIED SEQUENTIAL SERVICE DEV RUNNER${COLORS.reset}`);
+  console.log(`${COLORS.dim}Pipeline: Dolt (3306) -> Floci (4566) -> AI (8000) -> Backend (8085) -> Web (5173)${COLORS.reset}`);
   console.log(`${COLORS.bold}======================================================${COLORS.reset}\n`);
 
-  // 1. Check or Start Dolt Database
+  // 1. Step 1/5: Check or Start Dolt Database
+  logService('dolt', '[1/5] Checking / Starting Dolt Database on 127.0.0.1:3306...');
   const doltAlreadyRunning = await checkPort(3306);
   if (doltAlreadyRunning) {
     logService('dolt', 'Dolt SQL server is already running on 127.0.0.1:3306');
   } else {
-    logService('dolt', 'Starting Dolt SQL server on 127.0.0.1:3306...');
     startService({
       name: 'dolt',
       color: 'dolt',
       cwd: rootDir,
       command: 'dolt',
-      args: ['sql-server', '--host=127.0.0.1', '--port=3306'],
+      args: ['sql-server', '--host=127.0.0.1', '--port=3306', '--loglevel=warning'],
     });
 
     logService('dolt', 'Waiting for Dolt SQL server to become ready on port 3306...');
-    const doltReady = await waitForPort(3306, 15000);
-    if (doltReady) {
-      logService('dolt', 'Dolt SQL server is ready on 127.0.0.1:3306');
-    } else {
-      logService('dolt', 'Warning: Dolt SQL server took longer than expected to bind port 3306.', true);
+    const doltReady = await waitForPort(3306, 20000);
+    if (!doltReady) {
+      throw new Error('Dolt SQL server failed to bind port 3306 within 20s');
     }
   }
+  logService('dolt', `${COLORS.bold}[SUCCESS] Step 1/5 Complete: Dolt Database is ONLINE.${COLORS.reset}\n`);
 
-  // 2. Start Floci Local AWS Services
+  // 2. Step 2/5: Start Floci Local AWS Services
+  logService('floci', '[2/5] Starting Floci AWS Services on http://localhost:4566...');
   startService({
     name: 'floci',
     color: 'floci',
@@ -168,17 +185,14 @@ async function main() {
     command: 'bun',
     args: ['run', 'scripts/dev-floci.ts'],
   });
+  const flociReady = await waitForPort(4566, 30000);
+  if (!flociReady) {
+    throw new Error('Floci AWS emulator failed to become ready on port 4566 within 30s');
+  }
+  logService('floci', `${COLORS.bold}[SUCCESS] Step 2/5 Complete: Floci AWS Services are ONLINE.${COLORS.reset}\n`);
 
-  // 3. Start Spring Boot Backend
-  startService({
-    name: 'backend',
-    color: 'backend',
-    cwd: rootDir,
-    command: 'bun',
-    args: ['run', 'scripts/run-backend.ts'],
-  });
-
-  // 4. Start FastAPI AI Service
+  // 3. Step 3/5: Start FastAPI AI Service
+  logService('ai', '[3/5] Starting FastAPI AI Service on http://0.0.0.0:8000...');
   startService({
     name: 'ai',
     color: 'ai',
@@ -186,8 +200,29 @@ async function main() {
     command: 'python',
     args: ['-m', 'uvicorn', 'app.main:app', '--reload', '--host', '0.0.0.0', '--port', '8000'],
   });
+  const aiReady = await waitForPort(8000, 25000);
+  if (!aiReady) {
+    throw new Error('FastAPI AI Service failed to become ready on port 8000 within 25s');
+  }
+  logService('ai', `${COLORS.bold}[SUCCESS] Step 3/5 Complete: AI Service is ONLINE.${COLORS.reset}\n`);
 
-  // 5. Start Vite Frontend Web App
+  // 4. Step 4/5: Start Spring Boot Backend
+  logService('backend', '[4/5] Starting Spring Boot Backend on port 8085...');
+  startService({
+    name: 'backend',
+    color: 'backend',
+    cwd: rootDir,
+    command: 'bun',
+    args: ['run', 'scripts/run-backend.ts'],
+  });
+  const backendReady = await waitForPort(8085, 90000);
+  if (!backendReady) {
+    throw new Error('Spring Boot Backend failed to become ready on port 8085 within 90s');
+  }
+  logService('backend', `${COLORS.bold}[SUCCESS] Step 4/5 Complete: Backend Service is ONLINE.${COLORS.reset}\n`);
+
+  // 5. Step 5/5: Start Vite Frontend Web App
+  logService('web', '[5/5] Starting Vite Web Frontend on https://localhost:5173/...');
   startService({
     name: 'web',
     color: 'web',
@@ -195,6 +230,20 @@ async function main() {
     command: 'bun',
     args: ['run', '--filter', '@beyon/web', 'dev'],
   });
+  const webReady = await waitForPort(5173, 20000);
+  if (!webReady) {
+    throw new Error('Vite Web Frontend failed to become ready on port 5173 within 20s');
+  }
+  logService('web', `${COLORS.bold}[SUCCESS] Step 5/5 Complete: Web Frontend is ONLINE.${COLORS.reset}\n`);
+
+  console.log(`${COLORS.bold}======================================================${COLORS.reset}`);
+  console.log(`${COLORS.bold}ALL 5 BEYON SERVICES OPERATIONAL AND READY${COLORS.reset}`);
+  console.log(`Web App:     https://localhost:5173/`);
+  console.log(`Backend API: http://localhost:8085/api/v1`);
+  console.log(`AI Engine:   http://localhost:8000`);
+  console.log(`AWS Floci:   http://localhost:4566`);
+  console.log(`Dolt DB:     127.0.0.1:3306 (beyon)`);
+  console.log(`${COLORS.bold}======================================================${COLORS.reset}\n`);
 }
 
 main().catch((err) => {

@@ -75,6 +75,7 @@ export function InstitutionSidebar({
           title: 'Department Academic Hub',
           items: [
             { to: '/institution/home', icon: LayoutDashboard, label: 'Faculty Dashboard' },
+            { to: '/institution/faculty-hub', icon: GraduationCap, label: 'Academician Industry Hub (FDP & Sabbaticals)', badge: '6 Open', badgeType: 'primary' },
             { to: '/institution/students', icon: Users, label: 'Department Students', badge: enrolledCount > 0 ? `${enrolledCount}` : undefined, badgeType: 'gold' },
             { to: '/institution/curriculum', icon: BookOpen, label: 'Curriculum & Skill Gaps' },
             { to: '/institution/analytics', icon: LineChart, label: 'Academic Performance' },
@@ -97,6 +98,7 @@ export function InstitutionSidebar({
         {
           title: 'Industry Outreach',
           items: [
+            { to: '/institution/faculty-hub', icon: GraduationCap, label: 'Faculty Industry Hub' },
             { to: '/institution/analytics', icon: LineChart, label: 'Placement Analytics' },
             { to: '/institution/messages', icon: MessageSquare, label: 'Corporate Connections' },
           ],
@@ -110,6 +112,7 @@ export function InstitutionSidebar({
         title: 'Campus Command',
         items: [
           { to: '/institution/home', icon: LayoutDashboard, label: 'Executive Dashboard' },
+          { to: '/institution/faculty-hub', icon: GraduationCap, label: 'Academician Industry Hub (FDPs & Sabbaticals)', badge: 'New', badgeType: 'primary' },
           { to: '/institution/analytics', icon: LineChart, label: 'Institutional Analytics' },
           {
             to: '/institution/drives',

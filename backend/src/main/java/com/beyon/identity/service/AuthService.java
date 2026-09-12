@@ -102,19 +102,15 @@ public class AuthService {
 
         user.setStatus(AccountStatus.PENDING_VERIFICATION);
         user.setProfileStatus(AccountStatus.INCOMPLETE);
-        user.setEmailVerified(true);
+        user.setEmailVerified(false);
         User savedUser = userRepository.save(user);
 
         if (request.getRole() != null && request.getRole().isStudentTier()) {
             StudentProfile profile = new StudentProfile();
             profile.setUserId(savedUser.getId());
             profile.setCountry("India");
-            profile.setDegree("B.Tech");
-            profile.setDepartment("Computer Science and Engineering");
-            profile.setAcademicYear("3rd Year");
-            profile.setPlacementPreference(com.beyon.profile.enums.PlacementPreference.PLACEMENT_WILLING);
-            profile.setPreferredWorkType(com.beyon.profile.enums.WorkType.ANY);
-            profile.setCompletionPct(60);
+            profile.setVerificationStatus("PENDING");
+            profile.setCompletionPct(0);
             studentProfileRepository.save(profile);
 
             try {

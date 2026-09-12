@@ -90,6 +90,9 @@ import { InstitutionDrivesPage } from '../pages/institution/InstitutionDrivesPag
 import { InstitutionPlacementsPage } from '../pages/institution/InstitutionPlacementsPage';
 import { InstitutionCurriculumPage } from '../pages/institution/InstitutionCurriculumPage';
 import { InstitutionProfilePage } from '../pages/institution/InstitutionProfilePage';
+import { AcademicianPortalPage } from '../pages/institution/AcademicianPortalPage';
+import { InternshipTrackingPage } from '../recruitment/pages/InternshipTrackingPage';
+import { StudentDocumentsPage } from '../profile/pages/StudentDocumentsPage';
 import { CompanyHome } from '../pages/company/CompanyHome';
 import { CompanyLayout } from '../layouts/CompanyLayout';
 import { CompanyOpportunitiesPage } from '../pages/company/CompanyOpportunitiesPage';
@@ -174,6 +177,7 @@ export function App() {
             <Route path="/institution/students" element={<InstitutionStudentsPage />} />
             <Route path="/institution/placements" element={<InstitutionPlacementsPage />} />
             <Route path="/institution/curriculum" element={<InstitutionCurriculumPage />} />
+            <Route path="/institution/faculty-hub" element={<AcademicianPortalPage />} />
             <Route path="/institution/profile" element={<InstitutionProfilePage />} />
             <Route path="/institution/profile/edit" element={<InstitutionProfilePage />} />
             <Route path="/institution/messages" element={<MessagingPage />} />
@@ -233,6 +237,10 @@ export function App() {
             <Route path="/career-intelligence" element={<CareerIntelligenceDashboard />} />
             <Route path="/placement" element={<PlacementDashboardPage />} />
             <Route path="/placement-intelligence" element={<PlacementIntelligencePage />} />
+            <Route path="/student/internship-tracking" element={<InternshipTrackingPage />} />
+            <Route path="/internship-tracking" element={<InternshipTrackingPage />} />
+            <Route path="/student/documents" element={<StudentDocumentsPage />} />
+            <Route path="/documents" element={<StudentDocumentsPage />} />
             <Route path="/professional-profile" element={<ProfessionalProfilePage />} />
           </Route>
         </Route>

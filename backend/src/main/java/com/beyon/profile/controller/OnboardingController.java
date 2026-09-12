@@ -14,14 +14,19 @@ import com.beyon.profile.enums.SkillProficiency;
 import com.beyon.profile.enums.WorkType;
 import com.beyon.profile.model.*;
 import com.beyon.profile.repository.*;
+import com.beyon.profile.repository.AicteInstitutionRepository;
+import com.beyon.profile.model.AicteInstitution;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 @RestController
@@ -37,7 +42,9 @@ public class OnboardingController {
     private final StudentCertificationRepository studentCertificationRepository;
     private final StudentLinkRepository studentLinkRepository;
     private final InstitutionStudentRepository institutionStudentRepository;
+    private final AicteInstitutionRepository aicteInstitutionRepository;
     private final CoinService coinService;
+    private final ObjectMapper objectMapper;
     private final org.springframework.jdbc.core.JdbcTemplate jdbcTemplate;
 
     public OnboardingController(UserRepository userRepository,
@@ -49,7 +56,9 @@ public class OnboardingController {
                                 StudentCertificationRepository studentCertificationRepository,
                                 StudentLinkRepository studentLinkRepository,
                                 InstitutionStudentRepository institutionStudentRepository,
+                                AicteInstitutionRepository aicteInstitutionRepository,
                                 CoinService coinService,
+                                ObjectMapper objectMapper,
                                 org.springframework.jdbc.core.JdbcTemplate jdbcTemplate) {
         this.userRepository = userRepository;
         this.studentProfileRepository = studentProfileRepository;
@@ -60,7 +69,9 @@ public class OnboardingController {
         this.studentCertificationRepository = studentCertificationRepository;
         this.studentLinkRepository = studentLinkRepository;
         this.institutionStudentRepository = institutionStudentRepository;
+        this.aicteInstitutionRepository = aicteInstitutionRepository;
         this.coinService = coinService;
+        this.objectMapper = objectMapper;
         this.jdbcTemplate = jdbcTemplate;
     }
 
@@ -68,13 +79,55 @@ public class OnboardingController {
     public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getRegisteredInstitutions() {
         List<Map<String, Object>> institutions = jdbcTemplate.queryForList(
                 "SELECT ip.id, ip.user_id AS userId, ip.institution_name AS name, ip.institution_code AS code, " +
-                "ip.institution_type AS type, ip.city, ip.state, ip.accreditation_grade AS grade, " +
-                "ip.accreditations AS accreditations " +
+                "ip.institution_type AS type, ip.city, ip.state, ip.affiliated_university AS affiliatedUniversity, " +
+                "ip.accreditation_grade AS grade, ip.accreditations AS accreditations, ip.logo_url AS logoUrl, " +
+                "ip.website AS website " +
                 "FROM institution_profiles ip " +
                 "INNER JOIN users u ON u.id = ip.user_id " +
                 "ORDER BY ip.institution_name ASC"
         );
         return ResponseEntity.ok(ApiResponse.ok(institutions));
+    }
+
+    @GetMapping("/institutions/verify-aicte")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> verifyAicteCode(@RequestParam("code") String code) {
+        String cleanCode = code != null ? code.trim() : "";
+        if (cleanCode.isBlank()) {
+            return ResponseEntity.badRequest().body(ApiResponse.error("AICTE code cannot be empty"));
+        }
+        Optional<AicteInstitution> opt = aicteInstitutionRepository.findByAicteIdIgnoreCase(cleanCode);
+        if (opt.isPresent()) {
+            AicteInstitution inst = opt.get();
+            Map<String, Object> data = new HashMap<>();
+            data.put("verified", true);
+            data.put("aicteId", inst.getAicteId());
+            data.put("instituteName", inst.getInstituteName());
+            data.put("region", inst.getRegion());
+            data.put("state", inst.getState());
+            data.put("district", inst.getDistrict());
+            data.put("city", inst.getCity());
+            data.put("userGroup", inst.getUserGroup());
+            return ResponseEntity.ok(ApiResponse.ok(data));
+        }
+        List<InstitutionProfile> profiles = institutionProfileRepository.findAll();
+        for (InstitutionProfile ip : profiles) {
+            if (ip.getInstitutionCode() != null && cleanCode.equalsIgnoreCase(ip.getInstitutionCode().trim())) {
+                Map<String, Object> data = new HashMap<>();
+                data.put("verified", true);
+                data.put("aicteId", ip.getInstitutionCode());
+                data.put("instituteName", ip.getInstitutionName());
+                data.put("region", "National");
+                data.put("state", ip.getState());
+                data.put("district", ip.getCity());
+                data.put("city", ip.getCity());
+                data.put("userGroup", "Accredited");
+                return ResponseEntity.ok(ApiResponse.ok(data));
+            }
+        }
+        Map<String, Object> notFound = new HashMap<>();
+        notFound.put("verified", false);
+        notFound.put("message", "AICTE Permanent ID " + cleanCode + " not found in accredited institution records");
+        return ResponseEntity.ok(ApiResponse.ok(notFound));
     }
 
     @PostMapping("/student")
@@ -150,36 +203,89 @@ public class OnboardingController {
             profile.setPreferredLocations(body.get("preferredLocations").toString());
         }
 
+        if (body.get("firstName") != null) profile.setFirstName(body.get("firstName").toString());
+        if (body.get("middleName") != null) profile.setMiddleName(body.get("middleName").toString());
+        if (body.get("lastName") != null) profile.setLastName(body.get("lastName").toString());
+        if (body.get("aicteCode") != null) profile.setAicteCode(body.get("aicteCode").toString());
+        if (body.get("studentIdCardUrl") != null) profile.setStudentIdCardUrl(body.get("studentIdCardUrl").toString());
+
+        try {
+            if (body.get("education10th") != null) {
+                profile.setEducation10th(objectMapper.writeValueAsString(body.get("education10th")));
+            }
+            if (body.get("education12th") != null) {
+                profile.setEducation12th(objectMapper.writeValueAsString(body.get("education12th")));
+            }
+            if (body.get("educationDiploma") != null) {
+                profile.setEducationDiploma(objectMapper.writeValueAsString(body.get("educationDiploma")));
+            }
+            if (body.get("internships") != null) {
+                profile.setInternshipExperience(objectMapper.writeValueAsString(body.get("internships")));
+            }
+        } catch (Exception ignored) {}
+
+        profile.setVerificationStatus("PENDING");
         profile.setCompletionPct(100);
         studentProfileRepository.save(profile);
 
+        String fName = profile.getFirstName();
+        String lName = profile.getLastName();
+        if (fName != null && !fName.isBlank()) {
+            String mName = profile.getMiddleName();
+            String fullName = (fName + (mName != null && !mName.isBlank() ? " " + mName : "") + (lName != null && !lName.isBlank() ? " " + lName : "")).trim();
+            userRepository.findById(userId).ifPresent(u -> {
+                u.setDisplayName(fullName);
+                userRepository.save(u);
+            });
+        }
+
         String targetInst = profile.getInstitution();
-        if (targetInst != null && !targetInst.isBlank()) {
+        Object instIdObj = body.get("institutionId");
+        InstitutionProfile matched = null;
+
+        if (instIdObj != null && !instIdObj.toString().isBlank()) {
+            String instIdStr = instIdObj.toString().trim();
+            try {
+                UUID parsedId = UUID.fromString(instIdStr);
+                matched = institutionProfileRepository.findById(parsedId).orElse(null);
+                if (matched == null) {
+                    matched = institutionProfileRepository.findByUserId(parsedId).orElse(null);
+                }
+            } catch (Exception ignored) {}
+        }
+
+        if (matched == null && targetInst != null && !targetInst.isBlank()) {
             List<InstitutionProfile> matchingInstitutions = institutionProfileRepository.findAll();
-            InstitutionProfile matched = matchingInstitutions.stream()
+            matched = matchingInstitutions.stream()
                     .filter(ip -> ip.getInstitutionName() != null &&
                             (ip.getInstitutionName().equalsIgnoreCase(targetInst) ||
                              targetInst.toLowerCase().contains(ip.getInstitutionName().toLowerCase()) ||
                              ip.getInstitutionName().toLowerCase().contains(targetInst.toLowerCase())))
                     .findFirst()
                     .orElse(null);
+        }
 
-            if (matched != null) {
-                UUID instUserId = matched.getUserId();
-                InstitutionStudent instStudent = institutionStudentRepository
-                        .findByInstitutionIdAndStudentId(instUserId, userId)
-                        .orElseGet(() -> {
-                            InstitutionStudent is = new InstitutionStudent();
-                            is.setInstitutionId(instUserId);
-                            is.setStudentId(userId);
-                            return is;
-                        });
-                instStudent.setDepartment(profile.getDepartment());
-                instStudent.setBatch(profile.getAcademicYear() != null ? profile.getAcademicYear() : "Current Batch");
-                instStudent.setPlacementStatus("PENDING_VERIFICATION");
-                instStudent.setVerified(false);
-                institutionStudentRepository.save(instStudent);
+        if (matched != null) {
+            profile.setInstitution(matched.getInstitutionName());
+            if (matched.getInstitutionCode() != null && !matched.getInstitutionCode().isBlank()) {
+                profile.setAicteCode(matched.getInstitutionCode());
             }
+            studentProfileRepository.save(profile);
+
+            UUID instUserId = matched.getUserId();
+            InstitutionStudent instStudent = institutionStudentRepository
+                    .findByInstitutionIdAndStudentId(instUserId, userId)
+                    .orElseGet(() -> {
+                        InstitutionStudent is = new InstitutionStudent();
+                        is.setInstitutionId(instUserId);
+                        is.setStudentId(userId);
+                        return is;
+                    });
+            instStudent.setDepartment(profile.getDepartment());
+            instStudent.setBatch(profile.getAcademicYear() != null ? profile.getAcademicYear() : "Current Batch");
+            instStudent.setPlacementStatus("PENDING_VERIFICATION");
+            instStudent.setVerified(false);
+            institutionStudentRepository.save(instStudent);
         }
 
         if (body.get("skills") instanceof List<?> skillsList) {
@@ -269,12 +375,36 @@ public class OnboardingController {
             currentBalance = coinService.getBalance(userId);
         } catch (Exception ignored) {}
 
-        return ResponseEntity.ok(ApiResponse.ok(Map.of(
-                "status", "COMPLETED",
-                "message", "Student profile created and activated successfully! 100 Welcome Coins awarded.",
-                "coinsAwarded", 100,
-                "balance", currentBalance
-        )));
+        Map<String, Object> ledger = new HashMap<>();
+        ledger.put("users", Map.of(
+            "table", "users",
+            "destination", "Identity Service (MySQL / Dolt)",
+            "fields", List.of("id", "email", "display_name", "role = STUDENT", "status = ACTIVE", "email_verified = false")
+        ));
+        ledger.put("student_profiles", Map.of(
+            "table", "student_profiles",
+            "destination", "Core Profile Service (MySQL / Dolt)",
+            "fields", List.of("user_id", "first_name", "middle_name", "last_name", "aicte_code", "institution", "student_id_card_url", "education_10th", "education_12th", "education_diploma", "internship_experience", "verification_status = PENDING")
+        ));
+        ledger.put("institution_students", Map.of(
+            "table", "institution_students",
+            "destination", "Institutional Roster (MySQL / Dolt)",
+            "fields", List.of("institution_id", "student_id", "department", "batch", "placement_status = PENDING_VERIFICATION", "verified = false (Pending Institutional Endorsement)")
+        ));
+        ledger.put("s3_documents", Map.of(
+            "bucket", "s3://beyon-documents",
+            "destination", "Amazon S3 Document Lake",
+            "objects", List.of("student_id_cards/*", "internship_certificates/*", "resumes/*")
+        ));
+
+        Map<String, Object> responseData = new HashMap<>();
+        responseData.put("status", "COMPLETED");
+        responseData.put("message", "Student profile created and saved successfully! 100 Welcome Coins awarded.");
+        responseData.put("coinsAwarded", 100);
+        responseData.put("balance", currentBalance);
+        responseData.put("persistenceLedger", ledger);
+
+        return ResponseEntity.ok(ApiResponse.ok(responseData));
     }
 
     @PostMapping("/company")
