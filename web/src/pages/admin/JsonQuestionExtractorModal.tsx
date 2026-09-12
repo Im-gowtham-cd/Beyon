@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import {
   Sparkles,
   Copy,
@@ -10,7 +10,8 @@ import {
   Trash2,
   Download,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Search,
 } from 'lucide-react';
 
 export interface ExtractedOption {
@@ -117,6 +118,12 @@ export function JsonQuestionExtractorModal({
   const [importing, setImporting] = useState(false);
   const [importSuccessMsg, setImportSuccessMsg] = useState<string | null>(null);
 
+  // Custom Dropdown State for Competency Selection
+  const [isSkillDropdownOpen, setIsSkillDropdownOpen] = useState(false);
+  const [skillSearchQuery, setSkillSearchQuery] = useState('');
+  const skillDropdownRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
   // Sync initial skill on open
   useEffect(() => {
     if (initialSkillId) {
@@ -131,6 +138,43 @@ export function JsonQuestionExtractorModal({
   }, [allSkills, selectedSkillId]);
 
   const activeSkillName = activeSkill ? activeSkill.name : (initialSkillName || 'Selected Competency');
+
+  // Filter skills for quick search
+  const filteredSkills = useMemo(() => {
+    if (!skillSearchQuery.trim()) return allSkills;
+    const q = skillSearchQuery.toLowerCase().trim();
+    return allSkills.filter(
+      (s) =>
+        s.name.toLowerCase().includes(q) ||
+        (s.category && s.category.toLowerCase().includes(q))
+    );
+  }, [allSkills, skillSearchQuery]);
+
+  // Handle outside clicks and Esc key for custom dropdown
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (skillDropdownRef.current && !skillDropdownRef.current.contains(e.target as Node)) {
+        setIsSkillDropdownOpen(false);
+      }
+    };
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsSkillDropdownOpen(false);
+      }
+    };
+
+    if (isSkillDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      window.addEventListener('keydown', handleKeyDown);
+      setTimeout(() => {
+        searchInputRef.current?.focus();
+      }, 50);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isSkillDropdownOpen]);
 
   // Generate standardized prompt for external AI
   const promptTemplate = useMemo(() => {
@@ -647,29 +691,228 @@ Return ONLY a valid JSON array matching this exact schema (no conversational ple
           <div style={{ borderTop: '2px solid #e2e8f0', paddingTop: '16px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '14px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#1c2d81', textTransform: 'uppercase' }}>
-                  Target Competency:
-                </span>
-                <select
-                  value={selectedSkillId}
-                  onChange={(e) => setSelectedSkillId(e.target.value)}
+                <span
                   style={{
-                    padding: '8px 14px',
-                    border: '1px solid #cbd5e1',
-                    background: '#ffffff',
-                    fontSize: '0.84rem',
-                    fontWeight: 700,
+                    fontSize: '0.82rem',
+                    fontWeight: 800,
                     color: '#1c2d81',
-                    borderRadius: '3px',
-                    minWidth: '220px',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.04em',
+                    fontFamily: "'ClashDisplay', 'Clash Display', 'Montserrat', sans-serif !important",
                   }}
                 >
-                  {allSkills.map((sk) => (
-                    <option key={sk.id} value={sk.id}>
-                      {sk.name} {sk.category ? `(${sk.category})` : ''}
-                    </option>
-                  ))}
-                </select>
+                  Target Competency:
+                </span>
+
+                {/* Custom Dropdown with Guaranteed ClashDisplay Typography */}
+                <div ref={skillDropdownRef} style={{ position: 'relative' }}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsSkillDropdownOpen((prev) => !prev);
+                      setSkillSearchQuery('');
+                    }}
+                    aria-haspopup="listbox"
+                    aria-expanded={isSkillDropdownOpen}
+                    style={{
+                      padding: '8px 14px',
+                      border: isSkillDropdownOpen ? '2px solid #1c2d81' : '1px solid #cbd5e1',
+                      background: '#ffffff',
+                      fontSize: '0.86rem',
+                      fontWeight: 700,
+                      color: '#1c2d81',
+                      fontFamily: "'ClashDisplay', 'Clash Display', 'Montserrat', sans-serif !important",
+                      borderRadius: '0px',
+                      minWidth: '260px',
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: '12px',
+                      outline: 'none',
+                      boxShadow: isSkillDropdownOpen ? '0 0 0 3px rgba(28, 45, 129, 0.12)' : 'none',
+                      transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontFamily: "'ClashDisplay', 'Clash Display', 'Montserrat', sans-serif !important",
+                        letterSpacing: '-0.01em',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {activeSkill ? `${activeSkill.name}${activeSkill.category ? ` (${activeSkill.category})` : ''}` : 'Select Competency...'}
+                    </span>
+                    <ChevronDown
+                      size={15}
+                      color="#1c2d81"
+                      style={{
+                        transform: isSkillDropdownOpen ? 'rotate(180deg)' : 'none',
+                        transition: 'transform 0.2s ease',
+                        flexShrink: 0,
+                      }}
+                    />
+                  </button>
+
+                  {/* Dropdown Menu Popover */}
+                  {isSkillDropdownOpen && (
+                    <div
+                      role="listbox"
+                      style={{
+                        position: 'absolute',
+                        top: 'calc(100% + 4px)',
+                        left: 0,
+                        zIndex: 9999,
+                        background: '#ffffff',
+                        border: '2px solid #1c2d81',
+                        borderRadius: '0px',
+                        boxShadow: '0 16px 36px -6px rgba(28, 45, 129, 0.22), 0 6px 16px rgba(0, 0, 0, 0.08)',
+                        minWidth: '320px',
+                        maxWidth: '420px',
+                        width: 'max-content',
+                        fontFamily: "'ClashDisplay', 'Clash Display', 'Montserrat', sans-serif !important",
+                        overflow: 'hidden',
+                      }}
+                    >
+                      {/* Search & Filter Header */}
+                      <div
+                        style={{
+                          padding: '8px 12px',
+                          borderBottom: '1px solid #e2e8f0',
+                          background: '#f8fafc',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                        }}
+                      >
+                        <Search size={14} color="#64748b" />
+                        <input
+                          ref={searchInputRef}
+                          type="text"
+                          value={skillSearchQuery}
+                          onChange={(e) => setSkillSearchQuery(e.target.value)}
+                          placeholder="Search competencies (110 total)..."
+                          style={{
+                            width: '100%',
+                            border: 'none',
+                            outline: 'none',
+                            background: 'transparent',
+                            fontSize: '0.82rem',
+                            fontWeight: 600,
+                            color: '#0f172a',
+                            fontFamily: "'ClashDisplay', 'Clash Display', 'Montserrat', sans-serif !important",
+                          }}
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                        {skillSearchQuery && (
+                          <button
+                            type="button"
+                            onClick={() => setSkillSearchQuery('')}
+                            style={{
+                              background: 'none',
+                              border: 'none',
+                              cursor: 'pointer',
+                              padding: '2px',
+                              color: '#94a3b8',
+                              display: 'flex',
+                              alignItems: 'center',
+                            }}
+                          >
+                            <X size={13} />
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Dropdown Options List */}
+                      <div style={{ maxHeight: '280px', overflowY: 'auto' }}>
+                        {filteredSkills.length === 0 ? (
+                          <div
+                            style={{
+                              padding: '16px 14px',
+                              textAlign: 'center',
+                              color: '#64748b',
+                              fontSize: '0.82rem',
+                              fontFamily: "'ClashDisplay', 'Clash Display', 'Montserrat', sans-serif !important",
+                            }}
+                          >
+                            No competencies found matching "{skillSearchQuery}".
+                          </div>
+                        ) : (
+                          filteredSkills.map((sk) => {
+                            const isSelected = sk.id === selectedSkillId;
+                            return (
+                              <div
+                                key={sk.id}
+                                role="option"
+                                aria-selected={isSelected}
+                                onClick={() => {
+                                  setSelectedSkillId(sk.id);
+                                  setIsSkillDropdownOpen(false);
+                                }}
+                                style={{
+                                  padding: '9px 14px',
+                                  cursor: 'pointer',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'space-between',
+                                  gap: '12px',
+                                  background: isSelected ? '#eff6ff' : '#ffffff',
+                                  borderLeft: isSelected ? '4px solid #1c2d81' : '4px solid transparent',
+                                  transition: 'background 0.1s ease',
+                                  fontFamily: "'ClashDisplay', 'Clash Display', 'Montserrat', sans-serif !important",
+                                }}
+                                onMouseEnter={(e) => {
+                                  if (!isSelected) {
+                                    e.currentTarget.style.background = '#f8fafc';
+                                  }
+                                }}
+                                onMouseLeave={(e) => {
+                                  if (!isSelected) {
+                                    e.currentTarget.style.background = '#ffffff';
+                                  }
+                                }}
+                              >
+                                <span
+                                  style={{
+                                    fontSize: '0.84rem',
+                                    fontWeight: isSelected ? 800 : 700,
+                                    color: isSelected ? '#1c2d81' : '#1e293b',
+                                    fontFamily: "'ClashDisplay', 'Clash Display', 'Montserrat', sans-serif !important",
+                                    letterSpacing: '-0.01em',
+                                  }}
+                                >
+                                  {sk.name}
+                                </span>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                  {sk.category && (
+                                    <span
+                                      style={{
+                                        fontSize: '0.68rem',
+                                        fontWeight: 800,
+                                        padding: '2px 7px',
+                                        background: isSelected ? '#dbeafe' : '#f1f5f9',
+                                        color: isSelected ? '#1e40af' : '#475569',
+                                        border: isSelected ? '1px solid #bfdbfe' : '1px solid #e2e8f0',
+                                        textTransform: 'uppercase',
+                                        fontFamily: "'ClashDisplay', 'Clash Display', 'Montserrat', sans-serif !important",
+                                        borderRadius: '0px',
+                                      }}
+                                    >
+                                      {sk.category}
+                                    </span>
+                                  )}
+                                  {isSelected && <Check size={14} color="#1c2d81" style={{ flexShrink: 0 }} />}
+                                </div>
+                              </div>
+                            );
+                          })
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
 
               {extractedQuestions.length > 0 && (
