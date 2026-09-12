@@ -119,6 +119,7 @@ export function AssessmentApp() {
   const [skillBreakdownResult, setSkillBreakdownResult] = useState<Record<string, any> | null>(null);
   const [topicBreakdownResult, setTopicBreakdownResult] = useState<Record<string, any> | null>(null);
   const [skillAssessmentStatus, setSkillAssessmentStatus] = useState<any>(null);
+  const [desktopCooldownSeconds, setDesktopCooldownSeconds] = useState<number>(0);
   const [selectedModuleModal, setSelectedModuleModal] = useState<string | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [currentQuestion, setCurrentQuestion] = useState(0);
@@ -502,7 +503,11 @@ export function AssessmentApp() {
 
       if (skillStatRes && skillStatRes.ok) {
         const d = await skillStatRes.json();
-        setSkillAssessmentStatus(d.data || d || null);
+        const statData = d.data || d || null;
+        setSkillAssessmentStatus(statData);
+        if (statData?.cooldownRemainingSeconds !== undefined) {
+          setDesktopCooldownSeconds(Number(statData.cooldownRemainingSeconds) || 0);
+        }
       }
 
       if (profRes && profRes.ok) {
@@ -1131,20 +1136,73 @@ export function AssessmentApp() {
     };
   }, [step, session, procSessionId]);
 
+  // 1-second interval effect for assessment retest cooldown
+  useEffect(() => {
+    if (desktopCooldownSeconds <= 0) return;
+    const interval = setInterval(() => {
+      setDesktopCooldownSeconds(s => Math.max(0, s - 1));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [desktopCooldownSeconds]);
+
+  const formatCooldown = (totalSeconds: number) => {
+    if (totalSeconds <= 0) return 'Cooldown Expired — Retest Available Now';
+    const days = Math.floor(totalSeconds / 86400);
+    const hours = Math.floor((totalSeconds % 86400) / 3600);
+    const mins = Math.floor((totalSeconds % 3600) / 60);
+    const secs = totalSeconds % 60;
+    return `${days}d ${hours}h ${mins}m ${secs}s`;
+  };
+
   const fetchTime = useCallback(async () => {
     if (!session?.sessionId) return;
+    if (session.sessionId.startsWith('0000') || session.sessionId.startsWith('1000')) return;
     try {
       const time: TimeInfo = await apiFetch(`/assessment/session/${session.sessionId}/time`);
-      setTimeInfo(time);
-      if (time.expired) handleSubmit();
+      if (time && typeof time.remainingSeconds === 'number') {
+        setTimeInfo(prev => ({
+          remainingSeconds: time.remainingSeconds,
+          expired: time.expired || time.remainingSeconds <= 0,
+          serverTime: time.serverTime || new Date().toISOString(),
+        }));
+        if (time.expired || time.remainingSeconds <= 0) {
+          if (handleSubmitRef.current) handleSubmitRef.current();
+        }
+      }
     } catch {}
   }, [session]);
 
   const startTimer = useCallback(() => {
-    timerRef.current = setInterval(fetchTime, 10000);
+    const totalSecs = (session?.durationMinutes && session.durationMinutes > 0 ? session.durationMinutes : 60) * 60;
+    setTimeInfo({
+      remainingSeconds: totalSecs,
+      expired: false,
+      serverTime: new Date().toISOString(),
+    });
+
+    if (timerRef.current) clearInterval(timerRef.current);
+    // Continuous 1-second local countdown
+    timerRef.current = setInterval(() => {
+      setTimeInfo(prev => {
+        if (!prev) {
+          return { remainingSeconds: totalSecs - 1, expired: false, serverTime: new Date().toISOString() };
+        }
+        if (prev.remainingSeconds <= 1) {
+          if (timerRef.current) clearInterval(timerRef.current);
+          if (handleSubmitRef.current) handleSubmitRef.current();
+          return { ...prev, remainingSeconds: 0, expired: true };
+        }
+        return { ...prev, remainingSeconds: prev.remainingSeconds - 1 };
+      });
+    }, 1000);
+
+    if (heartbeatRef.current) clearInterval(heartbeatRef.current);
     heartbeatRef.current = setInterval(() => {
       if (session?.sessionId) {
-        apiFetch(`/assessment/session/${session.sessionId}/heartbeat`).catch(() => {});
+        if (!session.sessionId.startsWith('0000') && !session.sessionId.startsWith('1000')) {
+          fetchTime();
+          apiFetch(`/assessment/session/${session.sessionId}/heartbeat`).catch(() => {});
+        }
       }
     }, 30000);
   }, [fetchTime, session]);
@@ -2133,6 +2191,26 @@ export function AssessmentApp() {
                       <><i className="bx bx-play-circle" /> Start 50-Question Assessment</>
                     )}
                   </button>
+                )}
+                {skillAssessmentStatus?.hasCompletedAssessment && !skillAssessmentStatus?.canRetest && (
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '6px 10px',
+                    background: '#fffbeb',
+                    border: '1px solid #fcd34d',
+                    color: '#92400e',
+                    fontSize: '0.74rem',
+                    fontWeight: 700,
+                    borderRadius: '2px',
+                    marginTop: '4px',
+                    textAlign: 'center',
+                    justifyContent: 'center'
+                  }}>
+                    <i className="bx bx-time" style={{ fontSize: '0.9rem', color: '#b45309' }} />
+                    <span>Cooldown: Retest in {formatCooldown(desktopCooldownSeconds)}</span>
+                  </div>
                 )}
                 <span className={styles.assessmentFootnote}>
                   Strict Lockdown &middot; Mobile Dual-Cam Required
@@ -3372,6 +3450,23 @@ export function AssessmentApp() {
                       No lagging topics identified across your selected profile skills. You have demonstrated &gt;= 50% accuracy across all tested topics.
                     </span>
                   </div>
+                </div>
+              )}
+            </div>
+
+            {/* Evaluation Cooldown Notice */}
+            <div style={{ marginTop: '16px', padding: '16px 20px', background: '#f8fafc', border: '1px solid #cbd5e1', lineHeight: 1.6 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+                <i className="bx bx-calendar-check" style={{ fontSize: '1.25rem', color: '#1c2d81' }} />
+                <strong style={{ color: '#0f172a', fontSize: '0.95rem' }}>Evaluation Cooldown Period (7 Days)</strong>
+              </div>
+              <p style={{ margin: 0, fontSize: '0.84rem', color: '#475569' }}>
+                Students are permitted to rewrite the 50-question skill assessment once every 7 days to demonstrate improved mastery. Future tests automatically exclude previously seen questions and prioritize identified weak topics.
+              </p>
+              {desktopCooldownSeconds > 0 && (
+                <div style={{ marginTop: '10px', display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '5px 12px', background: '#eff6ff', border: '1px solid #bfdbfe', color: '#1d4ed8', fontSize: '0.78rem', fontWeight: 800 }}>
+                  <i className="bx bx-time" />
+                  <span>Next Attempt Unlocks In: {formatCooldown(desktopCooldownSeconds)}</span>
                 </div>
               )}
             </div>

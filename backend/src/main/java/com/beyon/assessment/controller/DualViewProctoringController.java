@@ -310,24 +310,60 @@ public class DualViewProctoringController {
         String frameData = (String) body.get("frameData");
         byte[] frameBytes = decodeBase64Image(frameData);
 
+        // Call FastAPI AI Service on port 8000
+        int aiPersonCount = 1;
+        boolean aiSecondaryDevice = false;
+        boolean aiCameraObstructed = false;
+        boolean aiCandidateAbsent = false;
+
+        if (frameData != null && !frameData.isEmpty()) {
+            try {
+                Map<String, Object> aiReq = Map.of("frameData", frameData);
+                String aiJson = objectMapper.writeValueAsString(aiReq);
+                java.net.http.HttpRequest request = java.net.http.HttpRequest.newBuilder()
+                        .uri(java.net.URI.create("http://localhost:8000/analyze/mobile-frame"))
+                        .header("Content-Type", "application/json")
+                        .timeout(java.time.Duration.ofMillis(1500))
+                        .POST(java.net.http.HttpRequest.BodyPublishers.ofString(aiJson))
+                        .build();
+
+                java.net.http.HttpResponse<String> response = httpClient.send(request, java.net.http.HttpResponse.BodyHandlers.ofString());
+                if (response.statusCode() == 200) {
+                    Map<String, Object> aiResp = objectMapper.readValue(response.body(), Map.class);
+                    if (aiResp.get("personCount") instanceof Number) {
+                        aiPersonCount = ((Number) aiResp.get("personCount")).intValue();
+                    }
+                    aiSecondaryDevice = Boolean.TRUE.equals(aiResp.get("secondaryDeviceDetected"));
+                    aiCameraObstructed = Boolean.TRUE.equals(aiResp.get("cameraObstructed"));
+                    aiCandidateAbsent = Boolean.TRUE.equals(aiResp.get("candidateAbsent"));
+                }
+            } catch (Exception ignored) {}
+        }
+
         // Run local Floci AWS Rekognition, S3, and DynamoDB pipeline
         FlociProctoringAiService.FrameAnalysisResult flociResult = null;
         if (frameBytes != null) {
             flociResult = flociAiService.analyzeFrame(uuid, frameBytes, "MOBILE");
         }
 
-        boolean secondPersonDetected = flociResult != null && flociResult.multipleFaces;
-        boolean phoneDetected = flociResult != null && flociResult.phoneDetected;
-        boolean candidateAbsent = flociResult != null && flociResult.candidateAbsent;
-        boolean cameraObstructed = false;
+        boolean secondPersonDetected = (aiPersonCount >= 2) || (flociResult != null && flociResult.multipleFaces);
+        boolean phoneDetected = aiSecondaryDevice || (flociResult != null && flociResult.phoneDetected);
+        boolean candidateAbsent = (aiCandidateAbsent && aiPersonCount == 0) || (flociResult != null && flociResult.candidateAbsent);
+        boolean cameraObstructed = aiCameraObstructed;
         String warningMessage = null;
 
         if (phoneDetected) {
             warningMessage = "CRITICAL VIOLATION: Mobile phone detected! Strike recorded.";
+            correlationEngine.recordSignal(uuid.toString(), "PHONE_DETECTED", "MOBILE_CAMERA", 0.95, null);
         } else if (secondPersonDetected) {
             warningMessage = "WARNING: Additional person detected in camera view.";
+            correlationEngine.recordSignal(uuid.toString(), "SECOND_PERSON_DETECTED", "MOBILE_CAMERA", 0.92, null);
+        } else if (cameraObstructed) {
+            warningMessage = "CRITICAL WARNING: Camera lens covered or obstructed! Uncover immediately!";
+            correlationEngine.recordSignal(uuid.toString(), "CAMERA_OBSTRUCTION", "MOBILE_CAMERA", 0.95, null);
         } else if (candidateAbsent) {
             warningMessage = "WARNING: Candidate not visible in workspace view!";
+            correlationEngine.recordSignal(uuid.toString(), "CANDIDATE_ABSENT", "MOBILE_CAMERA", 0.90, null);
         }
 
         int strikes = flociAiService.getStrikes(uuid);

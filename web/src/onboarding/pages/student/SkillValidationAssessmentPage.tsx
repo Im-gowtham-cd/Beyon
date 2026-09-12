@@ -24,9 +24,12 @@ import styles from './SkillValidationAssessment.module.css';
 
 interface SkillScoreResult {
   skillName: string;
-  totalQuestions: number;
-  correctQuestions: number;
-  percentage: number;
+  totalQuestions?: number;
+  questionsTested?: number;
+  correctQuestions?: number;
+  questionsCorrect?: number;
+  percentage?: number;
+  score?: number;
   verified: boolean;
   rank: number;
   totalRanked: number;
@@ -46,6 +49,10 @@ interface AssessmentStatusResponse {
   canRetest: boolean;
   retestAvailableAt?: string;
   cooldownRemainingSeconds: number;
+  overallScore?: number;
+  overallPercentage?: number;
+  totalQuestions?: number;
+  totalCorrect?: number;
   skills: SkillScoreResult[];
   laggedTopics?: LaggedTopicItem[];
 }
@@ -238,12 +245,32 @@ export function SkillValidationAssessmentPage() {
   // RENDER: RESULTS & REMEDIATION VIEW
   // ----------------------------------------------------
   if (mode === 'RESULTS') {
-    const skillsList: SkillScoreResult[] = statusData?.skills || [];
-    const overallPct = skillsList.length > 0
-      ? Math.round((skillsList.reduce((acc, s) => acc + (s.percentage || 0), 0) / skillsList.length) * 10) / 10
-      : 0;
-    const totalCorrect = skillsList.reduce((acc, s) => acc + (s.correctQuestions || 0), 0);
-    const totalQuestions = skillsList.reduce((acc, s) => acc + (s.totalQuestions || 0), 0) || 50;
+    const rawSkillsList: SkillScoreResult[] = statusData?.skills || [];
+    const skillsList = rawSkillsList.map(s => {
+      const pct = s.percentage !== undefined && s.percentage !== null
+        ? Number(s.percentage)
+        : (s.score !== undefined && s.score !== null ? Number(s.score) : 0);
+      const tot = s.totalQuestions || s.questionsTested || 0;
+      const cor = s.correctQuestions || s.questionsCorrect || 0;
+      const isVerified = Boolean(s.verified) || pct >= 50.0;
+      return {
+        ...s,
+        percentage: Math.round(pct * 10) / 10,
+        totalQuestions: tot,
+        correctQuestions: cor,
+        verified: isVerified,
+      };
+    });
+
+    const totalQuestions = statusData?.totalQuestions || skillsList.reduce((acc, s) => acc + (s.totalQuestions || 0), 0) || 50;
+    const totalCorrect = statusData?.totalCorrect !== undefined
+      ? statusData.totalCorrect
+      : skillsList.reduce((acc, s) => acc + (s.correctQuestions || 0), 0);
+    const overallPct = statusData?.overallPercentage !== undefined
+      ? statusData.overallPercentage
+      : (statusData?.overallScore !== undefined
+        ? statusData.overallScore
+        : (totalQuestions > 0 ? Math.round(((totalCorrect / totalQuestions) * 100) * 10) / 10 : (skillsList.length > 0 ? Math.round((skillsList.reduce((acc, s) => acc + s.percentage, 0) / skillsList.length) * 10) / 10 : 0)));
     const canRetestNow = statusData?.canRetest || cooldownSeconds <= 0;
     const laggedTopics = statusData?.laggedTopics || [];
 

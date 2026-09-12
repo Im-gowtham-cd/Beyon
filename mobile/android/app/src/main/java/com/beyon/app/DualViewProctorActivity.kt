@@ -49,6 +49,7 @@ class DualViewProctorActivity : AppCompatActivity() {
     private var localVisionJob: Job? = null
     private var localObstructedStreak = 0
     private var localAbsentStreak = 0
+    private var localMultiplePeopleStreak = 0
     private var serverViolationActive = false
     private var currentLensFacing = CameraCharacteristics.LENS_FACING_BACK
 
@@ -497,6 +498,8 @@ class DualViewProctorActivity : AppCompatActivity() {
                     var totalBlue = 0L
                     var edgeTransitions = 0
                     var skinPixels = 0
+                    var leftSkinPixels = 0
+                    var rightSkinPixels = 0
 
                     for (y in 0 until 60) {
                         for (x in 0 until 80) {
@@ -526,6 +529,8 @@ class DualViewProctorActivity : AppCompatActivity() {
                                 val Cr =  0.5 * r - 0.4187 * g - 0.0813 * b + 128
                                 if (Y in 30.0..240.0 && Cb in 75.0..135.0 && Cr in 128.0..180.0 && r > g && r > b && (r - g > 6)) {
                                     skinPixels++
+                                    if (x < 36) leftSkinPixels++
+                                    if (x > 44) rightSkinPixels++
                                 }
                             }
                         }
@@ -545,18 +550,33 @@ class DualViewProctorActivity : AppCompatActivity() {
                     // Lens is clear, but candidate skin pixels in upper frame < 20 (< 0.5% of upper frame)
                     val isCandidateAbsent = !isCameraCovered && (skinPixels < 20)
 
+                    // 3. Multi-person detection:
+                    // Two distinct separated skin clusters on left and right sides
+                    val isMultiplePeople = !isCameraCovered && (leftSkinPixels >= 20 && rightSkinPixels >= 20)
+
                     withContext(Dispatchers.Main) {
                         if (isCameraCovered) {
                             localObstructedStreak++
                             localAbsentStreak = 0
+                            localMultiplePeopleStreak = 0
                             if (localObstructedStreak >= 2) {
                                 binding.bannerWarning.visibility = View.VISIBLE
                                 binding.bannerWarning.setBackgroundColor(0xE6DC2626.toInt())
                                 binding.tvWarningText.text = "CRITICAL WARNING: Camera lens covered or obstructed! Uncover immediately!"
                             }
+                        } else if (isMultiplePeople) {
+                            localMultiplePeopleStreak++
+                            localObstructedStreak = 0
+                            localAbsentStreak = 0
+                            if (localMultiplePeopleStreak >= 2) {
+                                binding.bannerWarning.visibility = View.VISIBLE
+                                binding.bannerWarning.setBackgroundColor(0xE6D97706.toInt())
+                                binding.tvWarningText.text = "WARNING: Additional person detected in camera view"
+                            }
                         } else if (isCandidateAbsent) {
                             localAbsentStreak++
                             localObstructedStreak = 0
+                            localMultiplePeopleStreak = 0
                             if (localAbsentStreak >= 2) {
                                 binding.bannerWarning.visibility = View.VISIBLE
                                 binding.bannerWarning.setBackgroundColor(0xE6D97706.toInt())
@@ -565,6 +585,7 @@ class DualViewProctorActivity : AppCompatActivity() {
                         } else {
                             localObstructedStreak = 0
                             localAbsentStreak = 0
+                            localMultiplePeopleStreak = 0
                             if (!serverViolationActive) {
                                 binding.bannerWarning.visibility = View.GONE
                             }
@@ -680,7 +701,7 @@ class DualViewProctorActivity : AppCompatActivity() {
                                 binding.bannerWarning.visibility = View.VISIBLE
                                 binding.bannerWarning.setBackgroundColor(0xE6D97706.toInt())
                                 binding.tvWarningText.text = "WARNING: Candidate not visible in workspace view! Return immediately!"
-                            } else if (localObstructedStreak < 2 && localAbsentStreak < 2) {
+                            } else if (localObstructedStreak < 2 && localAbsentStreak < 2 && localMultiplePeopleStreak < 2) {
                                 binding.bannerWarning.visibility = View.GONE
                             }
                         }
