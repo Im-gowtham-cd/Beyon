@@ -212,7 +212,7 @@ IT2026-089,Sneha Kulkarni,sneha.kulkarni@institution.edu,Information Technology,
 CIVIL2026-022,Karthik Nair,karthik.nair@institution.edu,Civil Engineering,2026,8.10,B.Tech,+91-9876543214`;
 
 export function InstitutionStudentsPage() {
-  const [activeTab, setActiveTab] = useState<'pending' | 'all'>('pending');
+  const [activeTab, setActiveTab] = useState<'pending' | 'all'>('all');
   const [pendingStudents, setPendingStudents] = useState<StudentRecord[]>([]);
   const [allStudents, setAllStudents] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(true);

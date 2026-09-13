@@ -17,6 +17,7 @@ import com.beyon.identity.security.JwtUtil;
 import com.beyon.practice.service.CoinService;
 import com.beyon.practice.service.StreakService;
 import com.beyon.profile.repository.CompanyProfileRepository;
+import com.beyon.profile.repository.CompanyVerificationRepository;
 import com.beyon.profile.repository.InstitutionProfileRepository;
 import com.beyon.profile.repository.StudentProfileRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -43,6 +44,7 @@ class AuthServiceTest {
     private StudentProfileRepository studentProfileRepository;
     private CompanyProfileRepository companyProfileRepository;
     private InstitutionProfileRepository institutionProfileRepository;
+    private CompanyVerificationRepository companyVerificationRepository;
     private CoinService coinService;
     private StreakService streakService;
 
@@ -60,6 +62,7 @@ class AuthServiceTest {
         studentProfileRepository = mock(StudentProfileRepository.class);
         companyProfileRepository = mock(CompanyProfileRepository.class);
         institutionProfileRepository = mock(InstitutionProfileRepository.class);
+        companyVerificationRepository = mock(CompanyVerificationRepository.class);
         coinService = mock(CoinService.class);
         streakService = mock(StreakService.class);
 
@@ -74,6 +77,7 @@ class AuthServiceTest {
                 studentProfileRepository,
                 companyProfileRepository,
                 institutionProfileRepository,
+                companyVerificationRepository,
                 coinService,
                 streakService
         );

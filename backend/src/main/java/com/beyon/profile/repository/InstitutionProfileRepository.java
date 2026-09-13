@@ -9,6 +9,7 @@ public interface InstitutionProfileRepository extends JpaRepository<InstitutionP
     Optional<InstitutionProfile> findByUserId(UUID userId);
     boolean existsByUserId(UUID userId);
     Optional<InstitutionProfile> findByInstitutionCode(String institutionCode);
+    boolean existsByInstitutionCodeIgnoreCase(String institutionCode);
     Optional<InstitutionProfile> findByInstitutionNameContainingIgnoreCase(String institutionName);
 }
 

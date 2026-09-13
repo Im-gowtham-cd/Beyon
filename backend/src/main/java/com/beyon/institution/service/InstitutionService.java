@@ -139,8 +139,16 @@ public class InstitutionService {
                 is.setStudentId(u.getId());
                 is.setDepartment(u.getDepartmentId() != null ? u.getDepartmentId() : "CSE");
                 is.setBatch("2026");
-                is.setPlacementStatus("PENDING_VERIFICATION");
-                is.setVerified(false);
+                boolean isEligible = false;
+                var optSp = studentProfileRepository.findByUserId(u.getId());
+                if (optSp.isPresent()) {
+                    var sp = optSp.get();
+                    boolean profileFilled = sp.getCompletionPct() >= 80;
+                    boolean assessmentDone = sp.isHasCompletedAssessment();
+                    isEligible = profileFilled && assessmentDone;
+                }
+                is.setPlacementStatus(isEligible ? "PLACEMENT_SEEKING" : "PENDING_VERIFICATION");
+                is.setVerified(isEligible);
                 try {
                     is = institutionStudentRepository.save(is);
                     list.add(is);
@@ -173,9 +181,11 @@ public class InstitutionService {
                         is.setStudentId(sp.getUserId());
                         is.setDepartment(sp.getDepartment() != null ? sp.getDepartment() : "CSE");
                         is.setBatch(sp.getAcademicYear() != null ? sp.getAcademicYear() : "2026");
-                        boolean isVerified = "VERIFIED".equalsIgnoreCase(sp.getVerificationStatus());
-                        is.setPlacementStatus(isVerified ? "PLACEMENT_SEEKING" : "PENDING_VERIFICATION");
-                        is.setVerified(isVerified);
+                        boolean profileFilled = sp.getCompletionPct() >= 80;
+                        boolean assessmentDone = sp.isHasCompletedAssessment();
+                        boolean isEligible = profileFilled && assessmentDone;
+                        is.setPlacementStatus(isEligible ? "PLACEMENT_SEEKING" : "PENDING_VERIFICATION");
+                        is.setVerified(isEligible);
                         try {
                             is = institutionStudentRepository.save(is);
                             list.add(is);
@@ -290,7 +300,9 @@ public class InstitutionService {
                         (sp.getInstitution().equalsIgnoreCase(finalInstName) ||
                          sp.getInstitution().toLowerCase().contains(finalInstName.toLowerCase()) ||
                          finalInstName.toLowerCase().contains(sp.getInstitution().toLowerCase()))) {
-                    boolean isVerified = "VERIFIED".equalsIgnoreCase(sp.getVerificationStatus());
+                    boolean profileFilled = sp.getCompletionPct() >= 80;
+                    boolean assessmentDone = sp.isHasCompletedAssessment();
+                    boolean isVerified = "VERIFIED".equalsIgnoreCase(sp.getVerificationStatus()) && profileFilled && assessmentDone;
                     if (!isVerified && !pendingIds.contains(sp.getUserId())) {
                         InstitutionStudent is = new InstitutionStudent();
                         is.setInstitutionId(institutionId);
@@ -743,6 +755,7 @@ public class InstitutionService {
                     user.setInstitutionId(institutionId);
                     user.setDepartmentId(dept);
                     user.setStatus(com.beyon.identity.enums.AccountStatus.ACTIVE);
+                    user.setProfileStatus(com.beyon.identity.enums.AccountStatus.INCOMPLETE);
                     user.setEmailVerified(true);
                     user.setMustChangePassword(true);
                     user = userRepository.save(user);
@@ -764,8 +777,8 @@ public class InstitutionService {
                 isRecord.setStudentId(studentId);
                 isRecord.setDepartment(dept);
                 isRecord.setBatch(batch);
-                isRecord.setPlacementStatus("PLACEMENT_SEEKING");
-                isRecord.setVerified(true);
+                isRecord.setPlacementStatus("PENDING_VERIFICATION");
+                isRecord.setVerified(false);
                 institutionStudentRepository.save(isRecord);
 
                 if (requesterId != null && !requesterId.equals(institutionId)) {
@@ -775,8 +788,8 @@ public class InstitutionService {
                     isReq.setStudentId(studentId);
                     isReq.setDepartment(dept);
                     isReq.setBatch(batch);
-                    isReq.setPlacementStatus("PLACEMENT_SEEKING");
-                    isReq.setVerified(true);
+                    isReq.setPlacementStatus("PENDING_VERIFICATION");
+                    isReq.setVerified(false);
                     try {
                         institutionStudentRepository.save(isReq);
                     } catch (Exception ignored) {}
@@ -796,8 +809,9 @@ public class InstitutionService {
                 if (phone != null && !phone.isBlank()) {
                     profile.setPhone(phone);
                 }
-                profile.setVerificationStatus("VERIFIED");
-                profile.setCompletionPct(100);
+                profile.setVerificationStatus("PENDING");
+                profile.setCompletionPct(20);
+                profile.setHasCompletedAssessment(false);
                 studentProfileRepository.save(profile);
 
                 Map<String, Object> studentEntry = new LinkedHashMap<>();

@@ -600,3 +600,202 @@
   }
 }
 
+/* Registration Verification Styles */
+.roleSelectorContainer {
+  margin-bottom: 16px;
+}
+
+.roleSelectorLabel {
+  display: block;
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+
+.roleTabsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.roleTabBtn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 10px 8px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: var(--text-secondary);
+  text-align: center;
+  font-family: var(--font-body);
+}
+
+.roleTabBtn:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  background: rgba(var(--color-primary-rgb), 0.04);
+}
+
+.roleTabBtnActive {
+  border-color: var(--color-primary);
+  background: rgba(var(--color-primary-rgb), 0.08);
+  color: var(--color-primary);
+  font-weight: 600;
+  box-shadow: 0 0 0 2px rgba(var(--color-primary-rgb), 0.15);
+}
+
+.roleTabIcon {
+  font-size: 18px;
+}
+
+.roleTabTitle {
+  font-size: 0.76rem;
+  line-height: 1.2;
+}
+
+.verifyRow {
+  display: flex;
+  gap: 8px;
+}
+
+.verifyRow .inputWrapper {
+  flex: 1;
+}
+
+.verifyActionBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 16px;
+  background: var(--color-primary);
+  color: #ffffff;
+  border: none;
+  border-radius: var(--radius-xs);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.verifyActionBtn:hover:not(:disabled) {
+  background: var(--color-primary-dark);
+}
+
+.verifyActionBtn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.verifiedEntityCard {
+  background: #f0fdf4;
+  border: 1px solid #86efac;
+  border-radius: var(--radius-xs);
+  padding: 12px 14px;
+  margin-bottom: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.verifiedCardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.verifiedBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #166534;
+  letter-spacing: 0.04em;
+}
+
+.verifiedEntityName {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #14532d;
+  margin: 0;
+  line-height: 1.3;
+}
+
+.verifiedMetaGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 6px;
+  padding-top: 6px;
+  border-top: 1px solid #bbf7d0;
+  font-size: 0.75rem;
+  color: #166534;
+}
+
+.verifiedMetaItem {
+  display: flex;
+  flex-direction: column;
+}
+
+.verifiedMetaLabel {
+  font-size: 0.68rem;
+  color: #4ade80;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 700;
+}
+
+.verifiedMetaVal {
+  font-weight: 600;
+  color: #14532d;
+}
+
+.autofillBanner {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.74rem;
+  color: #047857;
+  font-weight: 500;
+  margin-top: 4px;
+}
+
+.blockedNotice {
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  color: #92400e;
+  border-radius: var(--radius-xs);
+  padding: 10px 12px;
+  font-size: 0.78rem;
+  line-height: 1.4;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.blockedNotice i {
+  font-size: 16px;
+  margin-top: 2px;
+  color: #d97706;
+  flex-shrink: 0;
+}
+
+@media (max-width: 640px) {
+  .roleTabsGrid {
+    grid-template-columns: 1fr;
+  }
+  .verifyRow {
+    flex-direction: column;
+  }
+}
+

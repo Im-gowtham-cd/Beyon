@@ -38,15 +38,18 @@ export function CompanySidebar({
   const [activeJobsCount, setActiveJobsCount] = useState<number>(0);
   const [candidatesCount, setCandidatesCount] = useState<number>(0);
 
+  const [verificationStatus, setVerificationStatus] = useState<any>(null);
+
   useEffect(() => {
     async function loadCompanyData() {
       try {
         const token = localStorage.getItem('beyon_token') || localStorage.getItem('beyon_access_token');
         if (!token) return;
-        const [profRes, oppRes, candRes] = await Promise.all([
+        const [profRes, oppRes, candRes, verifRes] = await Promise.all([
           fetch('/api/v1/profile', { headers: { Authorization: `Bearer ${token}` } }).catch(() => null),
           fetch('/api/v1/opportunities', { headers: { Authorization: `Bearer ${token}` } }).catch(() => null),
           fetch('/api/v1/recruitment/candidates', { headers: { Authorization: `Bearer ${token}` } }).catch(() => null),
+          fetch('/api/v1/company/verification/status', { headers: { Authorization: `Bearer ${token}` } }).catch(() => null),
         ]);
         if (profRes && profRes.ok) {
           const p = await profRes.json();
@@ -64,6 +67,10 @@ export function CompanySidebar({
             setCandidatesCount(c.data.length);
           }
         }
+        if (verifRes && verifRes.ok) {
+          const v = await verifRes.json();
+          setVerificationStatus(v.data || null);
+        }
       } catch {
 
       }
@@ -72,6 +79,9 @@ export function CompanySidebar({
   }, []);
 
   const userRole = user?.role || 'COMPANY_ADMIN';
+  const isVerified = verificationStatus
+    ? (verificationStatus.isVerified === true && verificationStatus.overallStatus === 'VERIFIED')
+    : (user?.status === 'ACTIVE' && profileData?.verificationStatus === 'VERIFIED');
 
   const getCompanyNavSections = () => {
     if (userRole === 'COMPANY_INTERVIEWER') {
@@ -139,13 +149,13 @@ export function CompanySidebar({
           items: [
             { to: '/company/home', icon: LayoutDashboard, label: 'Recruiter Dashboard' },
             { to: '/company/opportunities', icon: Briefcase, label: 'Jobs & Internships', badge: activeJobsCount ? `${activeJobsCount} Active` : undefined, badgeType: 'primary' },
-            { to: '/company/opportunities/create', icon: PlusCircle, label: 'Post New Job' },
+            { to: '/company/opportunities/create', icon: PlusCircle, label: 'Post New Job', badge: !isVerified ? 'Locked' : undefined, badgeType: 'gold' },
           ],
         },
         {
           title: 'Talent Sourcing',
           items: [
-            { to: '/company/candidates', icon: UserCheck, label: 'Candidate Pool', badge: candidatesCount > 0 ? `${candidatesCount} Verified` : undefined, badgeType: 'gold' },
+            { to: '/company/candidates', icon: UserCheck, label: 'Candidate Pool', badge: !isVerified ? 'Restricted' : candidatesCount > 0 ? `${candidatesCount} Verified` : undefined, badgeType: 'gold' },
             { to: '/company/pipeline', icon: GitCommit, label: 'Shortlist & Pipeline' },
             { to: '/company/candidate-intelligence', icon: Brain, label: 'Candidate Intelligence' },
           ],
@@ -154,7 +164,7 @@ export function CompanySidebar({
           title: 'Interviews & Tests',
           items: [
             { to: '/company/assessments', icon: ShieldCheck, label: 'Assessments' },
-            { to: '/company/assessment-builder', icon: FileEdit, label: 'Assessment Builder' },
+            { to: '/company/assessment-builder', icon: FileEdit, label: 'Assessment Builder', badge: !isVerified ? 'Locked' : undefined, badgeType: 'gold' },
             { to: '/company/interview-management', icon: Video, label: 'Interview Scheduler' },
           ],
         },
@@ -168,13 +178,13 @@ export function CompanySidebar({
         items: [
           { to: '/company/home', icon: LayoutDashboard, label: 'Executive Dashboard' },
           { to: '/company/opportunities', icon: Briefcase, label: 'Job & Campus Drives', badge: activeJobsCount ? `${activeJobsCount} Active` : undefined, badgeType: 'primary' },
-          { to: '/company/opportunities/create', icon: PlusCircle, label: 'Post New Drive / Job' },
+          { to: '/company/opportunities/create', icon: PlusCircle, label: 'Post New Drive / Job', badge: !isVerified ? 'Locked' : undefined, badgeType: 'gold' },
         ],
       },
       {
         title: 'Talent & AI Screening',
         items: [
-          { to: '/company/candidates', icon: UserCheck, label: 'AI Candidate Discovery', badge: candidatesCount > 0 ? `${candidatesCount} Verified` : undefined, badgeType: 'gold' },
+          { to: '/company/candidates', icon: UserCheck, label: 'AI Candidate Discovery', badge: !isVerified ? 'Restricted' : candidatesCount > 0 ? `${candidatesCount} Verified` : undefined, badgeType: 'gold' },
           { to: '/company/pipeline', icon: GitCommit, label: 'Recruitment Pipeline' },
           { to: '/company/candidate-intelligence', icon: Brain, label: 'Candidate Intelligence' },
         ],
@@ -183,7 +193,7 @@ export function CompanySidebar({
         title: 'Assessments & Interviews',
         items: [
           { to: '/company/assessments', icon: ShieldCheck, label: 'Benchmark Tests' },
-          { to: '/company/assessment-builder', icon: FileEdit, label: 'Assessment Builder' },
+          { to: '/company/assessment-builder', icon: FileEdit, label: 'Assessment Builder', badge: !isVerified ? 'Locked' : undefined, badgeType: 'gold' },
           { to: '/company/interview-management', icon: Video, label: 'Interview Scheduler' },
         ],
       },
@@ -237,8 +247,16 @@ export function CompanySidebar({
             </div>
             {!collapsed && (
               <div className={styles.userMeta}>
-                <span className={styles.userName}>{companyName}</span>
-                <span className={styles.userBadge}>Verified Enterprise</span>
+                <span
+                  className={styles.userBadge}
+                  style={{
+                    background: isVerified ? '#dcfce7' : '#fef3c7',
+                    color: isVerified ? '#15803d' : '#b45309',
+                    border: `1px solid ${isVerified ? '#bbf7d0' : '#fde68a'}`,
+                  }}
+                >
+                  {isVerified ? 'Verified Enterprise' : 'Pending Super Admin Verification'}
+                </span>
               </div>
             )}
           </div>

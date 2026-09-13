@@ -102,6 +102,13 @@ export interface RegisterPayload {
   password: string;
   confirmPassword: string;
   role: OnboardingRole;
+  cin?: string;
+  aicteCode?: string;
+  organizationName?: string;
+  website?: string;
+  representativeName?: string;
+  state?: string;
+  city?: string;
 }
 
 export interface AuthResponse {

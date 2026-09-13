@@ -73,6 +73,9 @@ export function ProtectedRoute() {
     profileStatus === 'PENDING_COMPANY_VERIFICATION' ||
     profileStatus === 'PENDING_VERIFICATION'
   ) {
+    if (tier === 'COMPANY' && (path.startsWith('/company') || path.startsWith('/onboarding/company'))) {
+      return <Outlet />;
+    }
     if (!path.startsWith('/verification-pending')) {
       return <Navigate to="/verification-pending" replace />;
     }

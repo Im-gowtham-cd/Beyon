@@ -46,6 +46,7 @@ public class OnboardingController {
     private final CoinService coinService;
     private final ObjectMapper objectMapper;
     private final org.springframework.jdbc.core.JdbcTemplate jdbcTemplate;
+    private final com.beyon.profile.service.CompanyVerificationService companyVerificationService;
 
     public OnboardingController(UserRepository userRepository,
                                 StudentProfileRepository studentProfileRepository,
@@ -59,7 +60,8 @@ public class OnboardingController {
                                 AicteInstitutionRepository aicteInstitutionRepository,
                                 CoinService coinService,
                                 ObjectMapper objectMapper,
-                                org.springframework.jdbc.core.JdbcTemplate jdbcTemplate) {
+                                org.springframework.jdbc.core.JdbcTemplate jdbcTemplate,
+                                com.beyon.profile.service.CompanyVerificationService companyVerificationService) {
         this.userRepository = userRepository;
         this.studentProfileRepository = studentProfileRepository;
         this.companyProfileRepository = companyProfileRepository;
@@ -73,6 +75,7 @@ public class OnboardingController {
         this.coinService = coinService;
         this.objectMapper = objectMapper;
         this.jdbcTemplate = jdbcTemplate;
+        this.companyVerificationService = companyVerificationService;
     }
 
     @GetMapping("/institutions")
@@ -96,11 +99,13 @@ public class OnboardingController {
         if (cleanCode.isBlank()) {
             return ResponseEntity.badRequest().body(ApiResponse.error("AICTE code cannot be empty"));
         }
+        boolean alreadyRegistered = institutionProfileRepository.existsByInstitutionCodeIgnoreCase(cleanCode);
         Optional<AicteInstitution> opt = aicteInstitutionRepository.findByAicteIdIgnoreCase(cleanCode);
         if (opt.isPresent()) {
             AicteInstitution inst = opt.get();
             Map<String, Object> data = new HashMap<>();
             data.put("verified", true);
+            data.put("alreadyRegistered", alreadyRegistered);
             data.put("aicteId", inst.getAicteId());
             data.put("instituteName", inst.getInstituteName());
             data.put("region", inst.getRegion());
@@ -115,6 +120,7 @@ public class OnboardingController {
             if (ip.getInstitutionCode() != null && cleanCode.equalsIgnoreCase(ip.getInstitutionCode().trim())) {
                 Map<String, Object> data = new HashMap<>();
                 data.put("verified", true);
+                data.put("alreadyRegistered", true);
                 data.put("aicteId", ip.getInstitutionCode());
                 data.put("instituteName", ip.getInstitutionName());
                 data.put("region", "National");
@@ -127,6 +133,7 @@ public class OnboardingController {
         }
         Map<String, Object> notFound = new HashMap<>();
         notFound.put("verified", false);
+        notFound.put("alreadyRegistered", false);
         notFound.put("message", "AICTE Permanent ID " + cleanCode + " not found in accredited institution records");
         return ResponseEntity.ok(ApiResponse.ok(notFound));
     }
@@ -225,7 +232,8 @@ public class OnboardingController {
             }
         } catch (Exception ignored) {}
 
-        profile.setVerificationStatus("PENDING");
+        boolean meetsVerification = profile.isHasCompletedAssessment();
+        profile.setVerificationStatus(meetsVerification ? "VERIFIED" : "PENDING");
         profile.setCompletionPct(100);
         studentProfileRepository.save(profile);
 
@@ -308,8 +316,8 @@ public class OnboardingController {
                     });
             instStudent.setDepartment(finalDept);
             instStudent.setBatch(profile.getAcademicYear() != null ? profile.getAcademicYear() : "Current Batch");
-            instStudent.setPlacementStatus("PENDING_VERIFICATION");
-            instStudent.setVerified(false);
+            instStudent.setPlacementStatus(meetsVerification ? "PLACEMENT_SEEKING" : "PENDING_VERIFICATION");
+            instStudent.setVerified(meetsVerification);
             institutionStudentRepository.save(instStudent);
         }
 
@@ -453,6 +461,34 @@ public class OnboardingController {
             @RequestBody Map<String, Object> body) {
         UUID userId = extractUserId(auth);
 
+        String cin = body.get("cin") != null ? body.get("cin").toString().trim() : "";
+        String website = body.get("website") != null ? body.get("website").toString().trim()
+                : (body.get("websiteUrl") != null ? body.get("websiteUrl").toString().trim() : "");
+        String officialEmail = body.get("officialEmail") != null ? body.get("officialEmail").toString().trim()
+                : (body.get("corporateEmail") != null ? body.get("corporateEmail").toString().trim()
+                : (body.get("contactEmail") != null ? body.get("contactEmail").toString().trim()
+                : (body.get("primaryRepresentativeEmail") != null ? body.get("primaryRepresentativeEmail").toString().trim() : "")));
+        String phone = body.get("phone") != null ? body.get("phone").toString().trim()
+                : (body.get("primaryRepresentativePhone") != null ? body.get("primaryRepresentativePhone").toString().trim() : "");
+        String repName = body.get("representativeName") != null ? body.get("representativeName").toString().trim()
+                : (body.get("primaryRepresentativeName") != null ? body.get("primaryRepresentativeName").toString().trim() : "");
+        String repDesig = body.get("representativeDesignation") != null ? body.get("representativeDesignation").toString().trim()
+                : (body.get("primaryRepresentativeDesignation") != null ? body.get("primaryRepresentativeDesignation").toString().trim() : "");
+
+        if (body.get("representatives") instanceof List<?> repList && !repList.isEmpty()) {
+            Object first = repList.get(0);
+            if (first instanceof Map<?, ?> rMap) {
+                if (repName.isBlank() && rMap.get("name") != null) repName = rMap.get("name").toString().trim();
+                if (repDesig.isBlank() && rMap.get("designation") != null) repDesig = rMap.get("designation").toString().trim();
+                if (officialEmail.isBlank() && rMap.get("email") != null) officialEmail = rMap.get("email").toString().trim();
+                if (phone.isBlank() && rMap.get("phone") != null) phone = rMap.get("phone").toString().trim();
+            }
+        }
+
+        if (officialEmail.isBlank()) {
+            officialEmail = userRepository.findById(userId).map(u -> u.getEmail() != null ? u.getEmail().trim() : "").orElse("");
+        }
+
         CompanyProfile profile = companyProfileRepository.findByUserId(userId)
                 .orElseGet(() -> {
                     CompanyProfile cp = new CompanyProfile();
@@ -463,9 +499,9 @@ public class OnboardingController {
         if (body.get("companyName") != null) profile.setCompanyName(body.get("companyName").toString());
         if (body.get("companyType") != null) profile.setCompanyType(body.get("companyType").toString());
         if (body.get("industry") != null) profile.setIndustry(body.get("industry").toString());
-        if (body.get("website") != null) profile.setWebsite(body.get("website").toString());
-        if (body.get("officialEmail") != null) profile.setOfficialEmail(body.get("officialEmail").toString());
-        if (body.get("phone") != null) profile.setPhone(body.get("phone").toString());
+        if (!website.isBlank()) profile.setWebsite(website);
+        if (!officialEmail.isBlank()) profile.setOfficialEmail(officialEmail);
+        if (!phone.isBlank()) profile.setPhone(phone);
         if (body.get("country") != null) profile.setCountry(body.get("country").toString());
         if (body.get("state") != null) profile.setState(body.get("state").toString());
         if (body.get("city") != null) profile.setCity(body.get("city").toString());
@@ -477,16 +513,17 @@ public class OnboardingController {
         profile.setCompletionPct(100);
         companyProfileRepository.save(profile);
 
-        userRepository.findById(userId).ifPresent(u -> {
-            u.setProfileStatus(AccountStatus.PENDING_SUPER_ADMIN_VERIFICATION);
-            u.setStatus(AccountStatus.PENDING_SUPER_ADMIN_VERIFICATION);
-            userRepository.save(u);
-        });
+        Map<String, Object> verifResult = companyVerificationService.verifyCompanyRegistration(
+                userId,
+                cin,
+                website,
+                repName,
+                repDesig,
+                officialEmail,
+                phone
+        );
 
-        return ResponseEntity.ok(ApiResponse.ok(Map.of(
-                "status", "PENDING_SUPER_ADMIN_VERIFICATION",
-                "message", "Company corporate profile submitted for Super Admin verification"
-        )));
+        return ResponseEntity.ok(ApiResponse.ok(verifResult));
     }
 
     @PostMapping("/institution")

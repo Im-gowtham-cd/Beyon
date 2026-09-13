@@ -99,6 +99,23 @@ export function InstitutionOnboarding() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [step]);
 
+  useEffect(() => {
+    api.get<any>('/profile').then((res) => {
+      const p = res?.institutionProfile?.profile;
+      if (p) {
+        setForm((prev) => ({
+          ...prev,
+          institutionName: p.institutionName || prev.institutionName,
+          institutionCode: p.institutionCode || prev.institutionCode,
+          state: p.state || prev.state,
+          city: p.city || prev.city,
+          website: p.website || prev.website,
+          officialEmail: p.officialEmail || prev.officialEmail,
+        }));
+      }
+    }).catch(() => {});
+  }, []);
+
   const update = <K extends keyof InstitutionFormData>(key: K, value: InstitutionFormData[K]) => {
     setForm((prev) => ({ ...prev, [key]: value }));
   };

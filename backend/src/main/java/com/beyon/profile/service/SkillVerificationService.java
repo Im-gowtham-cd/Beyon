@@ -21,6 +21,7 @@ import com.beyon.profile.repository.SkillRepository;
 import com.beyon.profile.repository.SkillTopicRepository;
 import com.beyon.profile.repository.StudentLearningTopicRepository;
 import com.beyon.profile.repository.StudentProfileRepository;
+import com.beyon.institution.repository.InstitutionStudentRepository;
 import com.beyon.profile.repository.StudentSkillRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,6 +53,7 @@ public class SkillVerificationService {
     private final UserRepository userRepository;
     private final SkillTopicRepository skillTopicRepository;
     private final StudentLearningTopicRepository studentLearningTopicRepository;
+    private final InstitutionStudentRepository institutionStudentRepository;
 
     public SkillVerificationService(QuestionRepository questionRepository,
                                   QuestionOptionRepository questionOptionRepository,
@@ -62,7 +64,8 @@ public class SkillVerificationService {
                                   StudentProfileRepository studentProfileRepository,
                                   UserRepository userRepository,
                                   SkillTopicRepository skillTopicRepository,
-                                  StudentLearningTopicRepository studentLearningTopicRepository) {
+                                  StudentLearningTopicRepository studentLearningTopicRepository,
+                                  InstitutionStudentRepository institutionStudentRepository) {
         this.questionRepository = questionRepository;
         this.questionOptionRepository = questionOptionRepository;
         this.skillRepository = skillRepository;
@@ -73,6 +76,7 @@ public class SkillVerificationService {
         this.userRepository = userRepository;
         this.skillTopicRepository = skillTopicRepository;
         this.studentLearningTopicRepository = studentLearningTopicRepository;
+        this.institutionStudentRepository = institutionStudentRepository;
     }
 
     /**
@@ -844,6 +848,21 @@ public class SkillVerificationService {
                     StudentProfile p = profileOpt.get();
                     p.setHasCompletedAssessment(true);
                     p.setAssessmentCompletedAt(now);
+
+                    boolean profileFilled = (p.getCompletionPct() >= 80);
+                    if (profileFilled) {
+                        p.setVerificationStatus("VERIFIED");
+                        if (institutionStudentRepository != null) {
+                            var isList = institutionStudentRepository.findByStudentId(userId);
+                            for (var is : isList) {
+                                is.setVerified(true);
+                                is.setPlacementStatus("PLACEMENT_SEEKING");
+                                institutionStudentRepository.save(is);
+                            }
+                        }
+                    } else {
+                        p.setVerificationStatus("PENDING");
+                    }
                     studentProfileRepository.save(p);
                 }
 

@@ -115,7 +115,7 @@ public class AdminDashboardService {
     public List<Map<String, Object>> getInstitutions() {
         try {
             return jdbcTemplate.queryForList(
-                "SELECT ip.id, ip.user_id AS userId, ip.institution_name AS name, ip.institution_type AS type, " +
+                "SELECT ip.id, ip.user_id AS userId, ip.institution_name AS name, ip.institution_code AS code, ip.institution_type AS type, " +
                 "ip.city, ip.state, ip.accreditations, ip.accreditation_grade AS grade, ip.total_students AS totalStudents, " +
                 "ip.placement_rate AS placementRate, ip.average_package AS avgPackage, u.status, u.profile_status AS profileStatus, " +
                 "ip.created_at AS createdAt " +
@@ -131,7 +131,7 @@ public class AdminDashboardService {
     public List<Map<String, Object>> getCompanies() {
         try {
             return jdbcTemplate.queryForList(
-                "SELECT cp.id, cp.user_id AS userId, cp.company_name AS name, cp.industry, cp.company_size AS size, " +
+                "SELECT cp.id, cp.user_id AS userId, cp.company_name AS name, cp.cin, cp.industry, cp.company_size AS size, " +
                 "cp.city, cp.state, cp.company_type AS tier, " +
                 "u.status, u.email, cp.created_at AS createdAt " +
                 "FROM company_profiles cp " +

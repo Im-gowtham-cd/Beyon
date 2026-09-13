@@ -43,6 +43,8 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/v1/institution/onboard/validate-aicte").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/v1/institution/onboard/verify-otp").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/institutions/public").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/company/verification/mca/**").permitAll()
+                .requestMatchers("/api/v1/company/verification/**").authenticated()
                 .requestMatchers("/api/v1/documents/**").permitAll()
                 .requestMatchers("/api/v1/onboarding/**").authenticated()
                 .requestMatchers("/api/v1/profile").authenticated()

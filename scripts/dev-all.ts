@@ -215,9 +215,9 @@ async function main() {
     command: 'bun',
     args: ['run', 'scripts/run-backend.ts'],
   });
-  const backendReady = await waitForPort(8085, 90000);
+  const backendReady = await waitForPort(8085, 180000);
   if (!backendReady) {
-    throw new Error('Spring Boot Backend failed to become ready on port 8085 within 90s');
+    throw new Error('Spring Boot Backend failed to become ready on port 8085 within 180s');
   }
   logService('backend', `${COLORS.bold}[SUCCESS] Step 4/5 Complete: Backend Service is ONLINE.${COLORS.reset}\n`);
 

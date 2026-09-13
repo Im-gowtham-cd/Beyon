@@ -25,6 +25,7 @@ import com.beyon.profile.model.InstitutionProfile;
 import com.beyon.profile.repository.StudentProfileRepository;
 import com.beyon.profile.repository.CompanyProfileRepository;
 import com.beyon.profile.repository.InstitutionProfileRepository;
+import com.beyon.profile.repository.CompanyVerificationRepository;
 import com.beyon.practice.service.CoinService;
 import com.beyon.practice.service.StreakService;
 
@@ -49,6 +50,7 @@ public class AuthService {
     private final StudentProfileRepository studentProfileRepository;
     private final CompanyProfileRepository companyProfileRepository;
     private final InstitutionProfileRepository institutionProfileRepository;
+    private final CompanyVerificationRepository companyVerificationRepository;
     private final CoinService coinService;
     private final StreakService streakService;
 
@@ -62,6 +64,7 @@ public class AuthService {
                        StudentProfileRepository studentProfileRepository,
                        CompanyProfileRepository companyProfileRepository,
                        InstitutionProfileRepository institutionProfileRepository,
+                       CompanyVerificationRepository companyVerificationRepository,
                        CoinService coinService,
                        StreakService streakService) {
         this.userRepository = userRepository;
@@ -74,6 +77,7 @@ public class AuthService {
         this.studentProfileRepository = studentProfileRepository;
         this.companyProfileRepository = companyProfileRepository;
         this.institutionProfileRepository = institutionProfileRepository;
+        this.companyVerificationRepository = companyVerificationRepository;
         this.coinService = coinService;
         this.streakService = streakService;
     }
@@ -94,10 +98,31 @@ public class AuthService {
             throw new ConflictException("An account with this email already exists");
         }
 
+        if (request.getRole() != null && request.getRole().isCompanyTier()) {
+            if (request.getCin() != null && !request.getCin().isBlank()) {
+                String cleanCin = request.getCin().trim().toUpperCase();
+                boolean cinExists = companyProfileRepository.existsByCinIgnoreCase(cleanCin)
+                        || (companyVerificationRepository != null && companyVerificationRepository.existsByCinIgnoreCase(cleanCin));
+                if (cinExists) {
+                    throw new ConflictException("A corporate account has already been registered with CIN " + cleanCin + ". Each corporate legal entity may only be registered once.");
+                }
+            }
+        } else if (request.getRole() != null && request.getRole().isInstitutionTier()) {
+            if (request.getAicteCode() != null && !request.getAicteCode().isBlank()) {
+                String cleanCode = request.getAicteCode().trim();
+                if (institutionProfileRepository.existsByInstitutionCodeIgnoreCase(cleanCode)) {
+                    throw new ConflictException("An institution account has already been registered with AICTE Permanent ID " + cleanCode + ". Each academic institution may only be registered once.");
+                }
+            }
+        }
+
         User user = new User();
         user.setEmail(request.getEmail().toLowerCase());
         user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
-        user.setDisplayName(request.getName());
+        String displayName = (request.getRepresentativeName() != null && !request.getRepresentativeName().isBlank())
+                ? request.getRepresentativeName().trim()
+                : request.getName();
+        user.setDisplayName(displayName);
         user.setRole(request.getRole());
 
         user.setStatus(AccountStatus.PENDING_VERIFICATION);
@@ -110,6 +135,7 @@ public class AuthService {
             profile.setUserId(savedUser.getId());
             profile.setCountry("India");
             profile.setVerificationStatus("PENDING");
+            profile.setHasCompletedAssessment(false);
             profile.setCompletionPct(0);
             studentProfileRepository.save(profile);
 
@@ -120,14 +146,47 @@ public class AuthService {
         } else if (request.getRole() != null && request.getRole().isCompanyTier()) {
             CompanyProfile profile = new CompanyProfile();
             profile.setUserId(savedUser.getId());
-            profile.setCompanyName(request.getName());
+            String compName = (request.getOrganizationName() != null && !request.getOrganizationName().isBlank())
+                    ? request.getOrganizationName().trim()
+                    : request.getName();
+            profile.setCompanyName(compName);
             profile.setCountry("India");
+            if (request.getCin() != null && !request.getCin().isBlank()) {
+                profile.setCin(request.getCin().trim().toUpperCase());
+            }
+            if (request.getWebsite() != null && !request.getWebsite().isBlank()) {
+                profile.setWebsite(request.getWebsite().trim());
+            }
+            if (request.getState() != null && !request.getState().isBlank()) {
+                profile.setState(request.getState().trim());
+            }
+            if (request.getCity() != null && !request.getCity().isBlank()) {
+                profile.setCity(request.getCity().trim());
+            }
+            profile.setOfficialEmail(savedUser.getEmail());
+            profile.setVerificationStatus("PENDING_SUPER_ADMIN_APPROVAL");
             companyProfileRepository.save(profile);
         } else if (request.getRole() != null && request.getRole().isInstitutionTier()) {
             InstitutionProfile profile = new InstitutionProfile();
             profile.setUserId(savedUser.getId());
-            profile.setInstitutionName(request.getName());
+            String instName = (request.getOrganizationName() != null && !request.getOrganizationName().isBlank())
+                    ? request.getOrganizationName().trim()
+                    : request.getName();
+            profile.setInstitutionName(instName);
             profile.setCountry("India");
+            if (request.getAicteCode() != null && !request.getAicteCode().isBlank()) {
+                profile.setInstitutionCode(request.getAicteCode().trim());
+            }
+            if (request.getWebsite() != null && !request.getWebsite().isBlank()) {
+                profile.setWebsite(request.getWebsite().trim());
+            }
+            if (request.getState() != null && !request.getState().isBlank()) {
+                profile.setState(request.getState().trim());
+            }
+            if (request.getCity() != null && !request.getCity().isBlank()) {
+                profile.setCity(request.getCity().trim());
+            }
+            profile.setOfficialEmail(savedUser.getEmail());
             institutionProfileRepository.save(profile);
         }
 

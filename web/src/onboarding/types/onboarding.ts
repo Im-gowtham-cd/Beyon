@@ -194,6 +194,7 @@ export interface InstitutionRepresentativeEntry {
 }
 
 export interface CompanyFormData {
+  cin: string;
   companyName: string;
   logoUrl: string;
   companyType: string;
@@ -278,10 +279,9 @@ export const EMPTY_INSTITUTION_FORM: InstitutionFormData = {
 };
 
 export const EMPTY_COMPANY_FORM: CompanyFormData = {
-  companyName: '', logoUrl: '', companyType: '', industry: '', website: '',
+  cin: '', companyName: '', logoUrl: '', companyType: '', industry: '', website: '',
   officialEmail: '', phone: '', country: '', state: '', city: '',
   headquarters: '', companySize: '', foundedYear: '', about: '', linkedin: '',
   verificationDocUrl: '', hiringTypes: [], preferredLevels: [],
   recruitmentRegions: [], skills: [], representatives: [],
 };
-

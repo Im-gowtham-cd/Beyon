@@ -144,3 +144,11 @@ backend/uploads/
 *.pth
 *.onnx
 *.bin
+
+# ─── Datasets & Raw Data Dumps ─────────────────────────────────
+dataset/
+dataset/**
+**/dataset/**
+*.csv
+*.tsv
+*.parquet

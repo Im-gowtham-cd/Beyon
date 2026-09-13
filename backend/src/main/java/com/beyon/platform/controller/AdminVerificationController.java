@@ -12,6 +12,8 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import com.beyon.identity.security.JwtUserDetails;
+import org.springframework.security.core.Authentication;
 import java.util.*;
 
 @RestController
@@ -23,15 +25,30 @@ public class AdminVerificationController {
     private final JdbcTemplate jdbcTemplate;
     private final AuditService auditService;
     private final org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
+    private final com.beyon.profile.service.CompanyVerificationService companyVerificationService;
+    private final com.beyon.profile.repository.CompanyVerificationRepository companyVerificationRepository;
+    private final com.beyon.profile.repository.CompanyVerificationCheckRepository companyVerificationCheckRepository;
+    private final com.beyon.profile.repository.CompanyDocumentRepository companyDocumentRepository;
+    private final com.beyon.profile.repository.VerificationAuditLogRepository verificationAuditLogRepository;
 
     public AdminVerificationController(UserRepository userRepository,
                                        JdbcTemplate jdbcTemplate,
                                        AuditService auditService,
-                                       org.springframework.security.crypto.password.PasswordEncoder passwordEncoder) {
+                                       org.springframework.security.crypto.password.PasswordEncoder passwordEncoder,
+                                       com.beyon.profile.service.CompanyVerificationService companyVerificationService,
+                                       com.beyon.profile.repository.CompanyVerificationRepository companyVerificationRepository,
+                                       com.beyon.profile.repository.CompanyVerificationCheckRepository companyVerificationCheckRepository,
+                                       com.beyon.profile.repository.CompanyDocumentRepository companyDocumentRepository,
+                                       com.beyon.profile.repository.VerificationAuditLogRepository verificationAuditLogRepository) {
         this.userRepository = userRepository;
         this.jdbcTemplate = jdbcTemplate;
         this.auditService = auditService;
         this.passwordEncoder = passwordEncoder;
+        this.companyVerificationService = companyVerificationService;
+        this.companyVerificationRepository = companyVerificationRepository;
+        this.companyVerificationCheckRepository = companyVerificationCheckRepository;
+        this.companyDocumentRepository = companyDocumentRepository;
+        this.verificationAuditLogRepository = verificationAuditLogRepository;
     }
 
     @GetMapping("/pending")
@@ -112,16 +129,16 @@ public class AdminVerificationController {
 
     @PostMapping("/company/{userId}/approve")
     public ResponseEntity<ApiResponse<Map<String, Object>>> approveCompany(
+            Authentication auth,
             @PathVariable UUID userId,
             @RequestBody(required = false) Map<String, String> body) {
 
-        User user = resolveCompanyUser(userId);
-
-        user.setStatus(AccountStatus.ACTIVE);
-        user.setProfileStatus(AccountStatus.COMPLETED);
-        userRepository.save(user);
-
+        UUID adminId = extractAdminUserId(auth);
         String notes = body != null ? body.getOrDefault("notes", "Approved by Super Admin") : "Approved by Super Admin";
+
+        companyVerificationService.approveVerification(adminId, userId, notes);
+
+        User user = resolveCompanyUser(userId);
         auditService.log(AuditEventType.SUPER_ADMIN_APPROVAL, user.getEmail(), null, notes);
 
         return ResponseEntity.ok(ApiResponse.ok(Map.of(
@@ -133,16 +150,16 @@ public class AdminVerificationController {
 
     @PostMapping("/company/{userId}/reject")
     public ResponseEntity<ApiResponse<Map<String, Object>>> rejectCompany(
+            Authentication auth,
             @PathVariable UUID userId,
             @RequestBody(required = false) Map<String, String> body) {
 
-        User user = resolveCompanyUser(userId);
-
-        user.setStatus(AccountStatus.REJECTED);
-        user.setProfileStatus(AccountStatus.REJECTED);
-        userRepository.save(user);
-
+        UUID adminId = extractAdminUserId(auth);
         String reason = body != null ? body.getOrDefault("reason", "Corporate credentials did not meet verification criteria") : "Rejected by Super Admin";
+
+        companyVerificationService.rejectVerification(adminId, userId, reason);
+
+        User user = resolveCompanyUser(userId);
         auditService.log(AuditEventType.SUPER_ADMIN_REJECTION, user.getEmail(), null, reason);
 
         return ResponseEntity.ok(ApiResponse.ok(Map.of(
@@ -150,6 +167,96 @@ public class AdminVerificationController {
                 "status", "REJECTED",
                 "message", "Company registration rejected"
         )));
+    }
+
+    @PostMapping("/company/{userId}/request-documents")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> requestDocuments(
+            Authentication auth,
+            @PathVariable UUID userId,
+            @RequestBody(required = false) Map<String, String> body) {
+
+        UUID adminId = extractAdminUserId(auth);
+        String notes = body != null ? body.getOrDefault("notes", "Additional legal incorporation documents requested.") : "Additional legal incorporation documents requested.";
+
+        companyVerificationService.requestAdditionalDocuments(adminId, userId, notes);
+
+        return ResponseEntity.ok(ApiResponse.ok(Map.of(
+                "success", true,
+                "status", "MANUAL_REVIEW_DOCS_REQUESTED",
+                "message", "Document request sent to company representative."
+        )));
+    }
+
+    @PostMapping("/company/{userId}/suspend")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> suspendCompany(
+            Authentication auth,
+            @PathVariable UUID userId,
+            @RequestBody(required = false) Map<String, String> body) {
+
+        UUID adminId = extractAdminUserId(auth);
+        String reason = body != null ? body.getOrDefault("reason", "Account suspended by Super Admin.") : "Account suspended by Super Admin.";
+
+        companyVerificationService.suspendCompany(adminId, userId, reason);
+
+        return ResponseEntity.ok(ApiResponse.ok(Map.of(
+                "success", true,
+                "status", "SUSPENDED",
+                "message", "Company account has been suspended."
+        )));
+    }
+
+    @GetMapping("/company/{userId}/details")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getCompanyVerificationDetails(@PathVariable UUID userId) {
+        Map<String, Object> statusMap = companyVerificationService.getVerificationStatus(userId);
+        List<com.beyon.profile.model.CompanyDocument> docs = companyDocumentRepository.findByUserIdOrderByCreatedAtDesc(userId.toString());
+        List<com.beyon.profile.model.VerificationAuditLog> auditLogs = verificationAuditLogRepository.findByUserIdOrderByCreatedAtDesc(userId.toString());
+
+        Map<String, Object> fullDetails = new LinkedHashMap<>(statusMap);
+        fullDetails.put("documents", docs);
+        fullDetails.put("auditLogs", auditLogs);
+
+        return ResponseEntity.ok(ApiResponse.ok(fullDetails));
+    }
+
+    @GetMapping("/companies/verifications")
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getAllCompanyVerifications() {
+        List<com.beyon.profile.model.CompanyVerification> list = companyVerificationRepository.findAllByOrderByCreatedAtDesc();
+        List<Map<String, Object>> result = new ArrayList<>();
+
+        for (com.beyon.profile.model.CompanyVerification v : list) {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("id", v.getId());
+            m.put("userId", v.getUserId());
+            m.put("companyId", v.getCompanyId());
+            m.put("legalName", v.getLegalName());
+            m.put("cin", v.getCin());
+            m.put("companyStatus", v.getCompanyStatus());
+            m.put("website", v.getOfficialWebsite());
+            m.put("websiteDomain", v.getNormalizedWebsiteDomain());
+            m.put("corporateEmail", v.getCorporateEmail());
+            m.put("emailDomain", v.getNormalizedEmailDomain());
+            m.put("representativeName", v.getRepresentativeName());
+            m.put("representativeDesignation", v.getRepresentativeDesignation());
+            m.put("representativePhone", v.getRepresentativePhone());
+            m.put("overallStatus", v.getOverallStatus());
+            m.put("failureReasons", v.getFailureReasons());
+            m.put("reviewNotes", v.getReviewNotes());
+            m.put("reviewedBy", v.getReviewedBy());
+            m.put("reviewedAt", v.getReviewedAt());
+            m.put("createdAt", v.getCreatedAt());
+
+            List<com.beyon.profile.model.CompanyVerificationCheck> checks =
+                    companyVerificationCheckRepository.findByVerificationIdOrderByCreatedAtAsc(v.getId());
+            m.put("checks", checks);
+
+            List<com.beyon.profile.model.CompanyDocument> docs =
+                    companyDocumentRepository.findByUserIdOrderByCreatedAtDesc(v.getUserId());
+            m.put("documents", docs);
+
+            result.add(m);
+        }
+
+        return ResponseEntity.ok(ApiResponse.ok(result));
     }
 
     @PostMapping("/institution/{userId}/status")
@@ -275,6 +382,15 @@ public class AdminVerificationController {
                     } catch (Exception ignored) {}
                     throw new ResourceNotFoundException("Company user account not found. Orphan record removed.");
                 });
+    }
+
+    private UUID extractAdminUserId(Authentication auth) {
+        if (auth != null && auth.getDetails() instanceof JwtUserDetails details) {
+            try {
+                return UUID.fromString(details.getUserId());
+            } catch (Exception ignored) {}
+        }
+        return null;
     }
 }
 

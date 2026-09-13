@@ -19,7 +19,29 @@ export function AdminInstitutionsPage() {
       });
       if (res.ok) {
         const data = await res.json();
-        setInstitutions(data.data || []);
+        const rawList: any[] = Array.isArray(data.data) ? data.data : [];
+        const deduplicatedMap = new Map<string, any>();
+        for (const inst of rawList) {
+          const rawKey = inst.code ? inst.code.trim().toUpperCase() : (inst.name || '').trim().toLowerCase();
+          const key = rawKey || inst.userId || inst.id;
+          if (!deduplicatedMap.has(key)) {
+            deduplicatedMap.set(key, inst);
+          } else {
+            // Keep entry with highest status precedence: ACTIVE > PENDING_SUPER_ADMIN > PENDING > REJECTED
+            const existing = deduplicatedMap.get(key)!;
+            const getRank = (i: any) => {
+              const s = (i.status || '').toUpperCase();
+              if (s === 'ACTIVE' || s === 'VERIFIED') return 4;
+              if (s.includes('SUPER_ADMIN')) return 3;
+              if (s.includes('PENDING')) return 2;
+              return 1;
+            };
+            if (getRank(inst) > getRank(existing)) {
+              deduplicatedMap.set(key, inst);
+            }
+          }
+        }
+        setInstitutions(Array.from(deduplicatedMap.values()));
       }
     } catch {
 

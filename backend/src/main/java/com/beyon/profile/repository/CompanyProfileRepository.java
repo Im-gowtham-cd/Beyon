@@ -8,5 +8,7 @@ import java.util.UUID;
 public interface CompanyProfileRepository extends JpaRepository<CompanyProfile, UUID> {
     Optional<CompanyProfile> findByUserId(UUID userId);
     boolean existsByUserId(UUID userId);
+    boolean existsByCinIgnoreCase(String cin);
+    Optional<CompanyProfile> findByCinIgnoreCase(String cin);
 }
 
