@@ -191,13 +191,13 @@ public class InstitutionIntegrationService {
         UUID instUserId = otp.getInstitutionId();
         User instUser = instUserId != null ? userRepo.findById(instUserId).orElse(null) : null;
         if (instUser != null) {
-            instUser.setStatus(AccountStatus.ACTIVE);
+            instUser.setStatus(AccountStatus.PENDING_SUPER_ADMIN_VERIFICATION);
             instUser.setEmailVerified(true);
-            instUser.setProfileStatus(AccountStatus.COMPLETED);
+            instUser.setProfileStatus(AccountStatus.PENDING_SUPER_ADMIN_VERIFICATION);
             userRepo.save(instUser);
         }
 
-        // Create or update Principal account
+        // Create or update Principal account (Awaiting Super Admin approval)
         User principal = userRepo.findByEmail(pEmail).orElse(null);
         if (principal == null) {
             principal = new User();
@@ -206,14 +206,14 @@ public class InstitutionIntegrationService {
             principal.setPasswordHash(passwordEncoder.encode("Principal@2026!"));
             principal.setRole(UserRole.PRINCIPAL);
             principal.setInstitutionId(instUserId);
-            principal.setStatus(AccountStatus.ACTIVE);
+            principal.setStatus(AccountStatus.PENDING_SUPER_ADMIN_VERIFICATION);
             principal.setEmailVerified(true);
             principal.setMustChangePassword(false);
             principal = userRepo.save(principal);
         } else {
             principal.setRole(UserRole.PRINCIPAL);
             principal.setInstitutionId(instUserId);
-            principal.setStatus(AccountStatus.ACTIVE);
+            principal.setStatus(AccountStatus.PENDING_SUPER_ADMIN_VERIFICATION);
             principal.setEmailVerified(true);
             userRepo.save(principal);
         }

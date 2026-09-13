@@ -96,6 +96,16 @@ public class AdminVerificationController {
         user.setProfileStatus(AccountStatus.COMPLETED);
         userRepository.save(user);
 
+        // Also activate associated principal and coordinator accounts for this institution
+        try {
+            List<User> staff = userRepository.findByInstitutionId(user.getId());
+            for (User s : staff) {
+                s.setStatus(AccountStatus.ACTIVE);
+                s.setProfileStatus(AccountStatus.COMPLETED);
+                userRepository.save(s);
+            }
+        } catch (Exception ignored) {}
+
         String notes = body != null ? body.getOrDefault("notes", "Approved by Super Admin") : "Approved by Super Admin";
         auditService.log(AuditEventType.SUPER_ADMIN_APPROVAL, user.getEmail(), null, notes);
 

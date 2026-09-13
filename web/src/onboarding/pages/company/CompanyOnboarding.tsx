@@ -1335,7 +1335,7 @@ export function CompanyOnboarding() {
                     <div>
                       <h4 className={styles.rewardCalloutTitle}>Automated 7-Check Verification &amp; Super Admin Protocol</h4>
                       <p className={styles.rewardCalloutText}>
-                        Upon submission, our automated engine validates your 21-digit CIN against the Ministry of Corporate Affairs (MCA) database, checks active legal entity standing, ensures corporate domain usage, and verifies website and email ownership match. Accounts meeting all 7 checks receive instant verified enterprise authorization.
+                        Upon submission, our automated engine validates your 21-digit CIN against the Ministry of Corporate Affairs (MCA) database, checks active legal entity standing, ensures corporate domain usage, and verifies website and email ownership match. Accounts meeting all 7 checks are forwarded to the Super Admin review queue for mandatory manual authorization before full platform activation.
                       </p>
                     </div>
                   </div>

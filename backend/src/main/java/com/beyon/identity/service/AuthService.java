@@ -51,6 +51,7 @@ public class AuthService {
     private final CompanyProfileRepository companyProfileRepository;
     private final InstitutionProfileRepository institutionProfileRepository;
     private final CompanyVerificationRepository companyVerificationRepository;
+    private final com.beyon.profile.service.CompanyVerificationService companyVerificationService;
     private final CoinService coinService;
     private final StreakService streakService;
 
@@ -65,6 +66,7 @@ public class AuthService {
                        CompanyProfileRepository companyProfileRepository,
                        InstitutionProfileRepository institutionProfileRepository,
                        CompanyVerificationRepository companyVerificationRepository,
+                       com.beyon.profile.service.CompanyVerificationService companyVerificationService,
                        CoinService coinService,
                        StreakService streakService) {
         this.userRepository = userRepository;
@@ -78,6 +80,7 @@ public class AuthService {
         this.companyProfileRepository = companyProfileRepository;
         this.institutionProfileRepository = institutionProfileRepository;
         this.companyVerificationRepository = companyVerificationRepository;
+        this.companyVerificationService = companyVerificationService;
         this.coinService = coinService;
         this.streakService = streakService;
     }
@@ -144,6 +147,10 @@ public class AuthService {
                 coinService.earnCoins(savedUser.getId(), "WELCOME_BONUS", "REGISTRATION", savedUser.getId());
             } catch (Exception ignored) {}
         } else if (request.getRole() != null && request.getRole().isCompanyTier()) {
+            savedUser.setStatus(AccountStatus.PENDING_SUPER_ADMIN_VERIFICATION);
+            savedUser.setProfileStatus(AccountStatus.PENDING_SUPER_ADMIN_VERIFICATION);
+            userRepository.save(savedUser);
+
             CompanyProfile profile = new CompanyProfile();
             profile.setUserId(savedUser.getId());
             String compName = (request.getOrganizationName() != null && !request.getOrganizationName().isBlank())
@@ -166,7 +173,28 @@ public class AuthService {
             profile.setOfficialEmail(savedUser.getEmail());
             profile.setVerificationStatus("PENDING_SUPER_ADMIN_APPROVAL");
             companyProfileRepository.save(profile);
+
+            if (request.getCin() != null && !request.getCin().isBlank() && companyVerificationService != null) {
+                try {
+                    String repName = (request.getRepresentativeName() != null && !request.getRepresentativeName().isBlank())
+                            ? request.getRepresentativeName().trim()
+                            : request.getName();
+                    companyVerificationService.verifyCompanyRegistration(
+                            savedUser.getId(),
+                            request.getCin().trim().toUpperCase(),
+                            request.getWebsite() != null ? request.getWebsite().trim() : "",
+                            repName,
+                            "Talent Acquisition Leader",
+                            savedUser.getEmail(),
+                            ""
+                    );
+                } catch (Exception ignored) {}
+            }
         } else if (request.getRole() != null && request.getRole().isInstitutionTier()) {
+            savedUser.setStatus(AccountStatus.PENDING_SUPER_ADMIN_VERIFICATION);
+            savedUser.setProfileStatus(AccountStatus.PENDING_SUPER_ADMIN_VERIFICATION);
+            userRepository.save(savedUser);
+
             InstitutionProfile profile = new InstitutionProfile();
             profile.setUserId(savedUser.getId());
             String instName = (request.getOrganizationName() != null && !request.getOrganizationName().isBlank())

@@ -45,6 +45,7 @@ class AuthServiceTest {
     private CompanyProfileRepository companyProfileRepository;
     private InstitutionProfileRepository institutionProfileRepository;
     private CompanyVerificationRepository companyVerificationRepository;
+    private com.beyon.profile.service.CompanyVerificationService companyVerificationService;
     private CoinService coinService;
     private StreakService streakService;
 
@@ -63,6 +64,7 @@ class AuthServiceTest {
         companyProfileRepository = mock(CompanyProfileRepository.class);
         institutionProfileRepository = mock(InstitutionProfileRepository.class);
         companyVerificationRepository = mock(CompanyVerificationRepository.class);
+        companyVerificationService = mock(com.beyon.profile.service.CompanyVerificationService.class);
         coinService = mock(CoinService.class);
         streakService = mock(StreakService.class);
 
@@ -78,6 +80,7 @@ class AuthServiceTest {
                 companyProfileRepository,
                 institutionProfileRepository,
                 companyVerificationRepository,
+                companyVerificationService,
                 coinService,
                 streakService
         );
