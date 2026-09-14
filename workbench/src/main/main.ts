@@ -1,12 +1,27 @@
 import { app, BrowserWindow, ipcMain } from 'electron';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { execFileSync } from 'node:child_process';
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
 import net from 'node:net';
 import mysql from 'mysql2/promise';
 
+const execFileAsync = promisify(execFile);
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// Configure isolated user data and disable GPU shader cache to eliminate Windows disk cache access errors (0x5)
+app.setName('BeyonWorkbench');
+try {
+  const customUserData = path.join(app.getPath('appData'), 'BeyonWorkbench');
+  app.setPath('userData', customUserData);
+} catch {}
+
+app.commandLine.appendSwitch('disable-gpu-shader-disk-cache');
+app.commandLine.appendSwitch('enable-gpu-rasterization');
+app.commandLine.appendSwitch('enable-zero-copy');
+app.commandLine.appendSwitch('ignore-gpu-blocklist');
 
 let mainWindow: BrowserWindow | null = null;
 let doltPool: mysql.Pool | null = null;
@@ -32,23 +47,45 @@ function getDoltPool(): mysql.Pool {
   return doltPool;
 }
 
-function runAws(args: string[]): any {
+// In-memory cache for heavy read queries so rapid UI interactions never block or lag
+const queryCache = new Map<string, { data: any; expires: number }>();
+
+async function runAws(args: string[], useCache = true, ttlMs = 10000): Promise<any> {
+  const cacheKey = args.join(' ');
+  const now = Date.now();
+  if (useCache) {
+    const cached = queryCache.get(cacheKey);
+    if (cached && cached.expires > now) {
+      return cached.data;
+    }
+  }
+
   try {
     const fullArgs = [`--endpoint-url=${FLOCI_ENDPOINT}`, `--region=${FLOCI_REGION}`, ...args];
-    const out = execFileSync('aws', fullArgs, { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] }).trim();
-    if (!out) return null;
+    const { stdout } = await execFileAsync('aws', fullArgs, { encoding: 'utf-8' });
+    const trimmed = stdout ? stdout.trim() : '';
+    if (!trimmed) return null;
+    let result: any;
     try {
-      return JSON.parse(out);
+      result = JSON.parse(trimmed);
     } catch {
-      return out;
+      result = trimmed;
     }
+    if (useCache) {
+      queryCache.set(cacheKey, { data: result, expires: now + ttlMs });
+    }
+    return result;
   } catch (err: any) {
     const msg = err.stderr ? err.stderr.toString().trim() : err.message;
     throw new Error(msg || 'AWS CLI error');
   }
 }
 
-async function checkTcpPort(host: string, port: number, timeoutMs = 1500): Promise<{ online: boolean; latencyMs: number }> {
+function invalidateAwsCache() {
+  queryCache.clear();
+}
+
+async function checkTcpPort(host: string, port: number, timeoutMs = 1200): Promise<{ online: boolean; latencyMs: number }> {
   const start = Date.now();
   return new Promise((resolve) => {
     const socket = new net.Socket();
@@ -92,11 +129,12 @@ function createWindow() {
     minWidth: 1100,
     minHeight: 700,
     title: 'Beyon Realtime Database & Cloud Workbench',
-    backgroundColor: '#0f172a',
+    backgroundColor: '#0c1427',
     webPreferences: {
       preload: path.join(__dirname, '../preload/preload.cjs'),
       nodeIntegration: false,
       contextIsolation: true,
+      backgroundThrottling: false,
     },
   });
 
@@ -121,43 +159,37 @@ app.on('window-all-closed', () => {
 });
 
 // ==========================================
-// IPC: DOLT DATABASE (MySQL Protocol)
+// IPC: DOLT DATABASE (3306)
 // ==========================================
 
 ipcMain.handle('dolt:status', async () => {
+  const tcp = await checkTcpPort(DOLT_CONFIG.host, DOLT_CONFIG.port);
+  if (!tcp.online) return { online: false, tablesCount: 0, error: 'Cannot connect to Dolt port 3306' };
   try {
     const pool = getDoltPool();
-    const t0 = Date.now();
-    const [rows]: any = await pool.query('SELECT VERSION() as version, DATABASE() as db, active_branch() as branch');
-    const latencyMs = Date.now() - t0;
+    const [rows]: any = await pool.query('SHOW TABLES');
     return {
       online: true,
-      latencyMs,
-      version: rows[0]?.version || 'Dolt SQL Server',
-      database: rows[0]?.db || 'beyon',
-      branch: rows[0]?.branch || 'main',
+      tablesCount: rows.length,
+      database: DOLT_CONFIG.database,
+      host: `${DOLT_CONFIG.host}:${DOLT_CONFIG.port}`,
+      latencyMs: tcp.latencyMs,
     };
   } catch (err: any) {
-    return { online: false, latencyMs: -1, error: err.message };
+    return { online: false, tablesCount: 0, error: err.message };
   }
 });
 
 ipcMain.handle('dolt:tables', async () => {
   try {
     const pool = getDoltPool();
-    const sql = `
-      SELECT 
-        table_name as name, 
-        table_rows as rowCount, 
-        data_length as dataBytes, 
-        engine, 
-        create_time as createdAt
-      FROM information_schema.tables 
-      WHERE table_schema = 'beyon' 
-      ORDER BY table_name ASC
-    `;
-    const [rows]: any = await pool.query(sql);
-    return { success: true, tables: rows };
+    const [rows]: any = await pool.query('SHOW FULL TABLES WHERE Table_type = "BASE TABLE"');
+    const tables = rows.map((r: any) => {
+      const name = Object.values(r)[0] as string;
+      const type = Object.values(r)[1] as string;
+      return { name, type };
+    });
+    return { success: true, tables };
   } catch (err: any) {
     return { success: false, error: err.message, tables: [] };
   }
@@ -166,87 +198,80 @@ ipcMain.handle('dolt:tables', async () => {
 ipcMain.handle('dolt:schema', async (_event, tableName: string) => {
   try {
     const pool = getDoltPool();
-    const colSql = `
-      SELECT 
-        column_name as name, 
-        column_type as type, 
-        is_nullable as isNullable, 
-        column_key as columnKey, 
-        column_default as defaultValue, 
-        extra
-      FROM information_schema.columns 
-      WHERE table_schema = 'beyon' AND table_name = ?
-      ORDER BY ordinal_position ASC
-    `;
-    const [columns]: any = await pool.query(colSql, [tableName]);
-
-    const idxSql = `SHOW KEYS FROM \`${tableName.replace(/`/g, '')}\``;
-    const [indexes]: any = await pool.query(idxSql);
-
-    return { success: true, columns, indexes };
+    const [columns]: any = await pool.query(`DESCRIBE \`${tableName.replace(/`/g, '')}\``);
+    return { success: true, columns };
   } catch (err: any) {
-    return { success: false, error: err.message, columns: [], indexes: [] };
+    return { success: false, error: err.message, columns: [] };
   }
 });
 
-ipcMain.handle('dolt:rows', async (_event, { tableName, limit = 50, offset = 0, search = '' }: { tableName: string; limit?: number; offset?: number; search?: string }) => {
+ipcMain.handle('dolt:rows', async (_event, { tableName, limit = 50, offset = 0, search }: { tableName: string; limit?: number; offset?: number; search?: string }) => {
   try {
     const pool = getDoltPool();
-    const safeTable = tableName.replace(/`/g, '');
-    const [countRows]: any = await pool.query(`SELECT COUNT(*) as total FROM \`${safeTable}\``);
-    const total = countRows[0]?.total || 0;
-
-    let query = `SELECT * FROM \`${safeTable}\``;
+    const cleanTable = tableName.replace(/`/g, '');
+    let query = `SELECT * FROM \`${cleanTable}\``;
     const params: any[] = [];
 
     if (search && search.trim()) {
-      query += ` LIMIT 100`;
-    } else {
-      query += ` LIMIT ? OFFSET ?`;
-      params.push(Number(limit), Number(offset));
+      const [cols]: any = await pool.query(`DESCRIBE \`${cleanTable}\``);
+      const textCols = cols
+        .filter((c: any) => c.Type.includes('char') || c.Type.includes('text') || c.Type.includes('varchar'))
+        .map((c: any) => `\`${c.Field}\` LIKE ?`);
+      if (textCols.length > 0) {
+        query += ` WHERE ${textCols.join(' OR ')}`;
+        textCols.forEach(() => params.push(`%${search.trim()}%`));
+      }
     }
 
-    const [rows]: any = await pool.query(query, params);
-    return { success: true, rows, total, limit, offset };
+    const [totalRows]: any = await pool.query(`SELECT COUNT(*) as cnt FROM \`${cleanTable}\``);
+    const total = totalRows[0]?.cnt || 0;
+
+    query += ` LIMIT ${Number(limit)} OFFSET ${Number(offset)}`;
+    const [rows, fields]: any = await pool.query(query, params);
+    const columns = (fields || []).map((f: any) => f.name);
+
+    return {
+      success: true,
+      rows,
+      columns,
+      total,
+      limit,
+      offset,
+    };
   } catch (err: any) {
-    return { success: false, error: err.message, rows: [], total: 0 };
+    return { success: false, error: err.message, rows: [], columns: [], total: 0 };
   }
 });
 
-ipcMain.handle('dolt:query', async (_event, sqlQuery: string) => {
+ipcMain.handle('dolt:query', async (_event, sql: string) => {
   const t0 = Date.now();
   try {
     const pool = getDoltPool();
-    const [rows, fields]: any = await pool.query(sqlQuery);
+    const [result, fields]: any = await pool.query(sql);
     const durationMs = Date.now() - t0;
 
-    if (Array.isArray(rows)) {
-      const columns = fields ? fields.map((f: any) => f.name) : (rows.length > 0 ? Object.keys(rows[0]) : []);
+    if (Array.isArray(result)) {
+      const columns = (fields || []).map((f: any) => f.name);
       return {
         success: true,
         isSelect: true,
-        durationMs,
         columns,
-        rows,
-        rowCount: rows.length,
+        rows: result,
+        count: result.length,
+        durationMs,
       };
     } else {
       return {
         success: true,
         isSelect: false,
+        affectedRows: result.affectedRows,
+        insertId: result.insertId,
+        message: result.message || 'Query OK',
         durationMs,
-        affectedRows: rows.affectedRows ?? 0,
-        message: rows.message || 'Query executed successfully',
       };
     }
   } catch (err: any) {
-    return {
-      success: false,
-      durationMs: Date.now() - t0,
-      error: err.message,
-      rows: [],
-      columns: [],
-    };
+    return { success: false, error: err.message, durationMs: Date.now() - t0 };
   }
 });
 
@@ -305,7 +330,7 @@ ipcMain.handle('floci:status', async () => {
 // S3
 ipcMain.handle('floci:s3:list-buckets', async () => {
   try {
-    const out = runAws(['s3api', 'list-buckets']);
+    const out = await runAws(['s3api', 'list-buckets'], true, 15000);
     const buckets = out?.Buckets || [];
     return { success: true, buckets };
   } catch (err: any) {
@@ -315,7 +340,7 @@ ipcMain.handle('floci:s3:list-buckets', async () => {
 
 ipcMain.handle('floci:s3:list-objects', async (_event, bucketName: string) => {
   try {
-    const out = runAws(['s3api', 'list-objects-v2', '--bucket', bucketName]);
+    const out = await runAws(['s3api', 'list-objects-v2', '--bucket', bucketName], false);
     const objects = out?.Contents || [];
     return { success: true, objects };
   } catch (err: any) {
@@ -326,36 +351,36 @@ ipcMain.handle('floci:s3:list-objects', async (_event, bucketName: string) => {
 // SQS
 ipcMain.handle('floci:sqs:list-queues', async () => {
   try {
-    const out = runAws(['sqs', 'list-queues']);
+    const out = await runAws(['sqs', 'list-queues'], true, 10000);
     const urls: string[] = out?.QueueUrls || [];
-    const queues = [];
 
-    for (const url of urls) {
+    const queuePromises = urls.map(async (url) => {
       const qName = url.substring(url.lastIndexOf('/') + 1);
       try {
-        const attrOut = runAws(['sqs', 'get-queue-attributes', '--queue-url', url, '--attribute-names', 'All']);
+        const attrOut = await runAws(['sqs', 'get-queue-attributes', '--queue-url', url, '--attribute-names', 'All'], true, 10000);
         const attrs = attrOut?.Attributes || {};
-        queues.push({
+        return {
           url,
           name: qName,
-          visibleMessages: parseInt(attrs.ApproximateNumberOfMessages || '0', 10),
-          inFlightMessages: parseInt(attrs.ApproximateNumberOfMessagesNotVisible || '0', 10),
-          delayedMessages: parseInt(attrs.ApproximateNumberOfMessagesDelayed || '0', 10),
+          visible: parseInt(attrs.ApproximateNumberOfMessages || '0', 10),
+          inFlight: parseInt(attrs.ApproximateNumberOfMessagesNotVisible || '0', 10),
+          delayed: parseInt(attrs.ApproximateNumberOfMessagesDelayed || '0', 10),
           createdTimestamp: attrs.CreatedTimestamp,
           isDlq: qName.includes('-dlq'),
-        });
+        };
       } catch {
-        queues.push({
+        return {
           url,
           name: qName,
-          visibleMessages: 0,
-          inFlightMessages: 0,
-          delayedMessages: 0,
+          visible: 0,
+          inFlight: 0,
+          delayed: 0,
           isDlq: qName.includes('-dlq'),
-        });
+        };
       }
-    }
+    });
 
+    const queues = await Promise.all(queuePromises);
     return { success: true, queues };
   } catch (err: any) {
     return { success: false, error: err.message, queues: [] };
@@ -364,12 +389,12 @@ ipcMain.handle('floci:sqs:list-queues', async () => {
 
 ipcMain.handle('floci:sqs:peek-messages', async (_event, queueUrl: string) => {
   try {
-    const out = runAws([
+    const out = await runAws([
       'sqs', 'receive-message',
       '--queue-url', queueUrl,
       '--max-number-of-messages', '10',
       '--visibility-timeout', '0'
-    ]);
+    ], false);
     const messages = out?.Messages || [];
     return { success: true, messages };
   } catch (err: any) {
@@ -379,7 +404,8 @@ ipcMain.handle('floci:sqs:peek-messages', async (_event, queueUrl: string) => {
 
 ipcMain.handle('floci:sqs:send-message', async (_event, { queueUrl, messageBody }: { queueUrl: string; messageBody: string }) => {
   try {
-    const out = runAws(['sqs', 'send-message', '--queue-url', queueUrl, '--message-body', messageBody]);
+    invalidateAwsCache();
+    const out = await runAws(['sqs', 'send-message', '--queue-url', queueUrl, '--message-body', messageBody], false);
     return { success: true, messageId: out?.MessageId };
   } catch (err: any) {
     return { success: false, error: err.message };
@@ -388,7 +414,8 @@ ipcMain.handle('floci:sqs:send-message', async (_event, { queueUrl, messageBody 
 
 ipcMain.handle('floci:sqs:purge-queue', async (_event, queueUrl: string) => {
   try {
-    runAws(['sqs', 'purge-queue', '--queue-url', queueUrl]);
+    invalidateAwsCache();
+    await runAws(['sqs', 'purge-queue', '--queue-url', queueUrl], false);
     return { success: true };
   } catch (err: any) {
     return { success: false, error: err.message };
@@ -398,27 +425,32 @@ ipcMain.handle('floci:sqs:purge-queue', async (_event, queueUrl: string) => {
 // DynamoDB
 ipcMain.handle('floci:dynamo:list-tables', async () => {
   try {
-    const out = runAws(['dynamodb', 'list-tables']);
+    const out = await runAws(['dynamodb', 'list-tables'], true, 15000);
     const tableNames: string[] = out?.TableNames || [];
-    const tables = [];
 
-    for (const name of tableNames) {
+    const tablePromises = tableNames.map(async (name) => {
       try {
-        const descOut = runAws(['dynamodb', 'describe-table', '--table-name', name]);
+        const descOut = await runAws(['dynamodb', 'describe-table', '--table-name', name], true, 15000);
         const tb = descOut?.Table || {};
-        tables.push({
-          name,
-          itemCount: tb.ItemCount ?? 0,
-          sizeBytes: tb.TableSizeBytes ?? 0,
-          status: tb.TableStatus || 'ACTIVE',
-          keySchema: tb.KeySchema || [],
-          attributeDefinitions: tb.AttributeDefinitions || [],
-        });
+        return {
+          TableName: name,
+          ItemCount: tb.ItemCount ?? 0,
+          TableSizeBytes: tb.TableSizeBytes ?? 0,
+          KeySchema: tb.KeySchema || [],
+          AttributeDefinitions: tb.AttributeDefinitions || [],
+        };
       } catch {
-        tables.push({ name, itemCount: 0, sizeBytes: 0, status: 'UNKNOWN', keySchema: [], attributeDefinitions: [] });
+        return {
+          TableName: name,
+          ItemCount: 0,
+          TableSizeBytes: 0,
+          KeySchema: [],
+          AttributeDefinitions: [],
+        };
       }
-    }
+    });
 
+    const tables = await Promise.all(tablePromises);
     return { success: true, tables };
   } catch (err: any) {
     return { success: false, error: err.message, tables: [] };
@@ -427,31 +459,29 @@ ipcMain.handle('floci:dynamo:list-tables', async () => {
 
 ipcMain.handle('floci:dynamo:scan-table', async (_event, tableName: string) => {
   try {
-    const out = runAws(['dynamodb', 'scan', '--table-name', tableName, '--limit', '50']);
+    const out = await runAws(['dynamodb', 'scan', '--table-name', tableName, '--limit', '50'], false);
     const items = out?.Items || [];
-    return { success: true, items, count: out?.Count || items.length };
+    return { success: true, items, scannedCount: out?.Count || items.length };
   } catch (err: any) {
-    return { success: false, error: err.message, items: [] };
+    return { success: false, error: err.message, items: [], scannedCount: 0 };
   }
 });
 
 // SNS
 ipcMain.handle('floci:sns:list-topics', async () => {
   try {
-    const out = runAws(['sns', 'list-topics']);
+    const out = await runAws(['sns', 'list-topics'], true, 15000);
     const topics = out?.Topics || [];
-    const subOut = runAws(['sns', 'list-subscriptions']);
-    const subscriptions = subOut?.Subscriptions || [];
-    return { success: true, topics, subscriptions };
+    return { success: true, topics };
   } catch (err: any) {
-    return { success: false, error: err.message, topics: [], subscriptions: [] };
+    return { success: false, error: err.message, topics: [] };
   }
 });
 
 // EventBridge
 ipcMain.handle('floci:events:list-rules', async () => {
   try {
-    const out = runAws(['events', 'list-rules', '--event-bus-name', 'beyon.events']);
+    const out = await runAws(['events', 'list-rules', '--event-bus-name', 'beyon.events'], true, 15000);
     const rules = out?.Rules || [];
     return { success: true, rules };
   } catch (err: any) {
@@ -461,13 +491,14 @@ ipcMain.handle('floci:events:list-rules', async () => {
 
 ipcMain.handle('floci:events:put-event', async (_event, { source, detailType, detail }: { source: string; detailType: string; detail: string }) => {
   try {
+    invalidateAwsCache();
     const entry = {
       Source: source,
       DetailType: detailType,
       Detail: detail,
       EventBusName: 'beyon.events',
     };
-    const out = runAws(['events', 'put-events', '--entries', JSON.stringify([entry])]);
+    const out = await runAws(['events', 'put-events', '--entries', JSON.stringify([entry])], false);
     return { success: true, result: out };
   } catch (err: any) {
     return { success: false, error: err.message };

@@ -22,20 +22,33 @@ export const App: React.FC = () => {
   const [refreshInterval, setRefreshInterval] = useState<number>(5000);
   const [refreshing, setRefreshing] = useState(false);
 
-  const fetchClusterStatus = useCallback(async () => {
+  // Fast lightweight health check (TCP sockets only, takes ~15ms without blocking)
+  const fetchHealth = useCallback(async () => {
     if (!window.workbenchApi) return;
-    setRefreshing(true);
     try {
       const health = await window.workbenchApi.getClusterHealth();
       setClusterHealth(health);
+    } catch {
+      // ignore
+    }
+  }, []);
 
-      // Fetch resource counts in parallel
-      const [tablesRes, s3Res, sqsRes, dynamoRes] = await Promise.allSettled([
+  // Full resource counts query (runs on initial mount or manual Sync click)
+  const syncAllResources = useCallback(async () => {
+    if (!window.workbenchApi) return;
+    setRefreshing(true);
+    try {
+      const [health, tablesRes, s3Res, sqsRes, dynamoRes] = await Promise.allSettled([
+        window.workbenchApi.getClusterHealth(),
         window.workbenchApi.getDoltTables(),
         window.workbenchApi.listS3Buckets(),
         window.workbenchApi.listSqsQueues(),
         window.workbenchApi.listDynamoTables(),
       ]);
+
+      if (health.status === 'fulfilled') {
+        setClusterHealth(health.value);
+      }
 
       setCounts({
         doltTables: tablesRes.status === 'fulfilled' && tablesRes.value.success ? tablesRes.value.tables.length : 0,
@@ -52,21 +65,21 @@ export const App: React.FC = () => {
 
   // Initial load
   useEffect(() => {
-    fetchClusterStatus();
-  }, [fetchClusterStatus]);
+    syncAllResources();
+  }, [syncAllResources]);
 
-  // Periodic polling
+  // Periodic health polling (lightweight TCP only)
   useEffect(() => {
     if (refreshInterval <= 0) return;
-    const interval = setInterval(fetchClusterStatus, refreshInterval);
+    const interval = setInterval(fetchHealth, refreshInterval);
     return () => clearInterval(interval);
-  }, [fetchClusterStatus, refreshInterval]);
+  }, [fetchHealth, refreshInterval]);
 
   return (
     <div className="app-container">
       <Header
         clusterHealth={clusterHealth}
-        onRefresh={fetchClusterStatus}
+        onRefresh={syncAllResources}
         refreshInterval={refreshInterval}
         setRefreshInterval={setRefreshInterval}
         refreshing={refreshing}

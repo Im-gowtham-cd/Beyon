@@ -5,12 +5,12 @@
   "type": "module",
   "main": "dist/main/main.js",
   "scripts": {
-    "dev": "bun run build && concurrently --kill-others \"bun run dev:vite\" \"bun run dev:main\" \"electron .\"",
+    "dev": "concurrently --kill-others \"bun run dev:vite\" \"bun run dev:main\" \"wait-on dist/renderer/index.html dist/main/main.js dist/preload/preload.cjs && electron .\"",
     "dev:vite": "vite build --watch --config vite.renderer.config.ts",
-    "dev:main": "bun build src/main/main.ts --target node --outfile dist/main/main.js --watch",
+    "dev:main": "tsc -p tsconfig.main.json --watch",
     "build": "bun run build:renderer && bun run build:main && bun run build:preload",
     "build:renderer": "vite build --config vite.renderer.config.ts",
-    "build:main": "bun build src/main/main.ts --target node --outfile dist/main/main.js",
+    "build:main": "tsc -p tsconfig.main.json",
     "build:preload": "bun build src/preload/preload.ts --outfile dist/preload/preload.cjs --target node --format cjs --external electron",
     "typecheck": "tsc --noEmit",
     "start": "bun run build && electron ."

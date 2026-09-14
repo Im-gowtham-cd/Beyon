@@ -36,10 +36,15 @@ export const Header: React.FC<HeaderProps> = ({
   return (
     <header className="top-header">
       <div className="brand-section">
-        <div className="brand-logo-badge">BY</div>
+        <div className="brand-logo-badge">
+          <span style={{ color: 'var(--beyon-gold)' }}>B</span>
+          <span style={{ color: '#ffffff' }}>Y</span>
+        </div>
         <div>
-          <div className="brand-title">Beyon Realtime Workbench</div>
-          <div className="brand-subtitle">Database, Cloud & AI Cluster</div>
+          <div className="brand-title-row">
+            <span className="brand-title">BEYON<span>WORKBENCH</span></span>
+          </div>
+          <div className="brand-subtitle">Realtime Database & Cloud Infrastructure Studio</div>
         </div>
       </div>
 
@@ -49,7 +54,7 @@ export const Header: React.FC<HeaderProps> = ({
           <span className={`status-indicator ${clusterHealth?.dolt.online ? 'online' : 'offline'}`} />
           <Database size={13} />
           <span>Dolt (3306)</span>
-          {clusterHealth?.dolt.online && <span className="text-muted">{clusterHealth.dolt.latencyMs}ms</span>}
+          {clusterHealth?.dolt.online && <span className="badge-gold" style={{ fontSize: '10px', padding: '1px 5px', borderRadius: '3px' }}>{clusterHealth.dolt.latencyMs}ms</span>}
         </div>
 
         {/* Floci Status */}
@@ -57,23 +62,23 @@ export const Header: React.FC<HeaderProps> = ({
           <span className={`status-indicator ${clusterHealth?.floci.online ? 'online' : 'offline'}`} />
           <Cloud size={13} />
           <span>Floci AWS (4566)</span>
-          {clusterHealth?.floci.online && <span className="text-muted">{clusterHealth.floci.latencyMs}ms</span>}
+          {clusterHealth?.floci.online && <span className="badge-gold" style={{ fontSize: '10px', padding: '1px 5px', borderRadius: '3px' }}>{clusterHealth.floci.latencyMs}ms</span>}
         </div>
 
         {/* AI Engine */}
         <div className={`status-pill ${clusterHealth?.ai.online ? 'online' : 'offline'}`}>
           <span className={`status-indicator ${clusterHealth?.ai.online ? 'online' : 'offline'}`} />
           <Cpu size={13} />
-          <span>AI Engine (8000)</span>
-          {clusterHealth?.ai.online && <span className="text-muted">{clusterHealth.ai.latencyMs}ms</span>}
+          <span>Qwen AI (8000)</span>
+          {clusterHealth?.ai.online && <span className="badge-gold" style={{ fontSize: '10px', padding: '1px 5px', borderRadius: '3px' }}>{clusterHealth.ai.latencyMs}ms</span>}
         </div>
 
         {/* Backend Status */}
         <div className={`status-pill ${clusterHealth?.backend.online ? 'online' : 'offline'}`}>
           <span className={`status-indicator ${clusterHealth?.backend.online ? 'online' : 'offline'}`} />
           <Server size={13} />
-          <span>API (8085)</span>
-          {clusterHealth?.backend.online && <span className="text-muted">{clusterHealth.backend.latencyMs}ms</span>}
+          <span>Core API (8085)</span>
+          {clusterHealth?.backend.online && <span className="badge-gold" style={{ fontSize: '10px', padding: '1px 5px', borderRadius: '3px' }}>{clusterHealth.backend.latencyMs}ms</span>}
         </div>
       </div>
 
@@ -88,17 +93,17 @@ export const Header: React.FC<HeaderProps> = ({
           <option value={5000}>Auto: 5s</option>
           <option value={10000}>Auto: 10s</option>
           <option value={30000}>Auto: 30s</option>
-          <option value={0}>Paused</option>
+          <option value={0}>Manual Only</option>
         </select>
 
         <button
           onClick={onRefresh}
-          className="action-btn"
+          className="action-btn primary"
           disabled={refreshing}
-          title="Refresh All Services"
+          title="Sync Resource State"
         >
           <RefreshCw size={13} className={refreshing ? 'spin' : ''} />
-          <span>Sync</span>
+          <span>{refreshing ? 'Syncing...' : 'Sync Cluster'}</span>
         </button>
       </div>
     </header>

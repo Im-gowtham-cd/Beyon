@@ -132,7 +132,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                     )}
                   </td>
                   <td>
-                    <button onClick={() => onNavigate('dolt-studio')} className="action-btn" style={{ padding: '3px 8px', fontSize: '11px' }}>
+                    <button onClick={() => onNavigate('dolt-studio')} className="action-btn primary" style={{ padding: '4px 10px', fontSize: '11px' }}>
                       Table Studio <ArrowRight size={11} />
                     </button>
                   </td>
@@ -151,7 +151,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                     )}
                   </td>
                   <td>
-                    <button onClick={() => onNavigate('floci-s3')} className="action-btn" style={{ padding: '3px 8px', fontSize: '11px' }}>
+                    <button onClick={() => onNavigate('floci-s3')} className="action-btn primary" style={{ padding: '4px 10px', fontSize: '11px' }}>
                       S3 Storage <ArrowRight size={11} />
                     </button>
                   </td>
@@ -170,7 +170,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                     )}
                   </td>
                   <td>
-                    <button onClick={() => onNavigate('ai-telemetry')} className="action-btn" style={{ padding: '3px 8px', fontSize: '11px' }}>
+                    <button onClick={() => onNavigate('ai-telemetry')} className="action-btn primary" style={{ padding: '4px 10px', fontSize: '11px' }}>
                       AI Diagnostics <ArrowRight size={11} />
                     </button>
                   </td>
