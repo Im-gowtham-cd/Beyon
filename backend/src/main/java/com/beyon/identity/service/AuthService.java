@@ -40,6 +40,8 @@ import java.util.UUID;
 @Service
 public class AuthService {
 
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(AuthService.class);
+
     private final UserRepository userRepository;
     private final EmailVerificationTokenRepository emailVerificationTokenRepository;
     private final PasswordResetTokenRepository passwordResetTokenRepository;
@@ -245,7 +247,28 @@ public class AuthService {
 
         boolean matches = false;
         if (user != null) {
-            matches = passwordEncoder.matches(request.getPassword(), user.getPasswordHash());
+            String rawPw = request.getPassword();
+            String storedHash = user.getPasswordHash();
+            if (storedHash != null && !storedHash.isBlank()) {
+                matches = passwordEncoder.matches(rawPw, storedHash);
+                if (!matches) {
+                    if (storedHash.startsWith("$2b$")) {
+                        matches = passwordEncoder.matches(rawPw, "$2a$" + storedHash.substring(4));
+                    } else if (storedHash.startsWith("$2a$")) {
+                        matches = passwordEncoder.matches(rawPw, "$2b$" + storedHash.substring(4));
+                    }
+                }
+                if (!matches && rawPw != null && !rawPw.trim().equals(rawPw)) {
+                    matches = passwordEncoder.matches(rawPw.trim(), storedHash);
+                    if (!matches && storedHash.startsWith("$2b$")) {
+                        matches = passwordEncoder.matches(rawPw.trim(), "$2a$" + storedHash.substring(4));
+                    }
+                }
+            }
+            log.info("Login check for '{}' (resolved user '{}', id '{}'): password match = {}",
+                    identifier, user.getEmail(), user.getId(), matches);
+        } else {
+            log.warn("Login attempt for '{}': no matching user found in database", identifier);
         }
 
         if (user == null || !matches) {

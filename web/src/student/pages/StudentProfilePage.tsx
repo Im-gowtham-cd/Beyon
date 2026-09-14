@@ -277,7 +277,7 @@ function OverviewSection({ profile, skills, learningSkills, careerPrefs }: {
             <div className={styles.assessmentMetricCard}>
               <span className={styles.assessmentMetricLabel}>Verified Passed</span>
               <span className={styles.assessmentMetricVal} style={{ color: '#15803d' }}>
-                {skills.filter(s => s.verified).length} Skills
+                {skills.filter(s => s.verified || (s.score != null && Number(s.score) >= 60)).length} Skills
               </span>
             </div>
             <div className={styles.assessmentMetricCard}>
@@ -297,7 +297,7 @@ function OverviewSection({ profile, skills, learningSkills, careerPrefs }: {
           <div className={styles.assessmentSkillsGrid}>
             {skills.map(s => {
               const score = s.score != null ? Number(s.score) : 0;
-              const isVerified = Boolean(s.verified);
+              const isVerified = Boolean(s.verified || (s.score != null && Number(s.score) >= 60));
               return (
                 <div key={s.id} className={styles.assessmentSkillCard}>
                   <div className={styles.assessmentSkillCardHeader}>

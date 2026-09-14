@@ -89,7 +89,7 @@ export function StudentHome() {
     studentSkills.some(s => s.score != null || s.verified)
   );
 
-  const verifiedSkillsCount = studentSkills.filter(s => s.verified).length;
+  const verifiedSkillsCount = studentSkills.filter(s => s.verified || (s.score != null && Number(s.score) >= 60)).length;
   const testedSkills = studentSkills.filter(s => s.score != null || (s.questionsTested && s.questionsTested > 0));
   const totalQuestionsTested = testedSkills.reduce((sum, s) => sum + (s.questionsTested || 0), 0);
   const totalQuestionsCorrect = testedSkills.reduce((sum, s) => sum + (s.questionsCorrect || 0), 0);
@@ -207,9 +207,11 @@ export function StudentHome() {
           <div className={styles.statMetric}>
             <span className={styles.statMetricLabel}>Accuracy</span>
             <span className={styles.statMetricValue}>
-              {stats?.totalAttempted && stats.totalAttempted > 0
-                ? `${((stats.totalSolved / stats.totalAttempted) * 100).toFixed(1)}%`
-                : '0.0%'}
+              {testedSkills.length > 0
+                ? `${overallAccuracy}%`
+                : (stats?.totalAttempted && stats.totalAttempted > 0
+                    ? `${((stats.totalSolved / stats.totalAttempted) * 100).toFixed(1)}%`
+                    : '0.0%')}
             </span>
           </div>
           {hasAssessment && (
