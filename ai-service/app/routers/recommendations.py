@@ -5,7 +5,11 @@ from typing import List, Dict, Any, Optional
 from app.services.skill_model import evaluate_skill_state
 from app.services.gap_engine import calculate_skill_gaps
 from app.services.course_recommender import recommend_courses_for_gaps
-from app.services.daily_question_engine import generate_personalized_daily_questions
+from app.services.daily_question_engine import (
+    generate_personalized_daily_questions,
+    generate_daily_challenge_sprint,
+    generate_revise_recall_set
+)
 from app.services.adaptive_learning import process_question_attempt
 from app.services.new_skill_onboarding import onboard_new_skill
 from app.services.ollama_client import analyze_skill_gaps_for_profession, chat_with_career_advisor
@@ -158,3 +162,54 @@ async def advisor_chat(req: AdvisorChatRequest):
         question=req.question
     )
     return result
+
+
+class DailyChallengeSprintRequest(BaseModel):
+    student_id: str
+    target_role: str = "Full-Stack Software Engineer"
+    learned_skills: List[str] = []
+    lagged_concepts: List[str] = []
+    skill_level: str = "INTERMEDIATE"
+    question_count: int = 15
+
+
+class ReviseRecallRequest(BaseModel):
+    student_id: str
+    currently_learning_skills: List[str] = []
+    lagged_concepts: List[str] = []
+    incorrect_questions: List[Dict[str, Any]] = []
+    skill_level: str = "INTERMEDIATE"
+    question_count: int = 10
+
+
+@router.post("/daily-challenge/sprint")
+async def get_daily_challenge_sprint(req: DailyChallengeSprintRequest):
+    """
+    Generates Daily Challenge Sprint (15 Questions) powered by Ollama qwen3.5:4b,
+    specifically focusing on what the candidate already learned and interested company roles.
+    """
+    return await generate_daily_challenge_sprint(
+        student_id=req.student_id,
+        target_role=req.target_role,
+        learned_skills=req.learned_skills,
+        lagged_concepts=req.lagged_concepts,
+        skill_level=req.skill_level,
+        question_count=req.question_count
+    )
+
+
+@router.post("/daily-challenge/recall")
+async def get_revise_recall(req: ReviseRecallRequest):
+    """
+    Generates Revise & Recall (10 Questions) powered by Ollama qwen3.5:4b,
+    specifically focusing on what the candidate is currently learning and lagged concepts/failed questions.
+    """
+    return await generate_revise_recall_set(
+        student_id=req.student_id,
+        currently_learning_skills=req.currently_learning_skills,
+        lagged_concepts=req.lagged_concepts,
+        incorrect_questions=req.incorrect_questions,
+        skill_level=req.skill_level,
+        question_count=req.question_count
+    )
+

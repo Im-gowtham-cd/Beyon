@@ -213,4 +213,70 @@ public class AiIntelligenceClient {
             return Collections.emptyMap();
         }
     }
+
+    /**
+     * Request 15 Daily Challenge Sprint questions based on candidate's learned skills,
+     * company role relevance, and lagged concepts tailored to skill level.
+     */
+    public Map<String, Object> getDailyChallengeSprint(
+            String studentId,
+            String targetRole,
+            List<String> learnedSkills,
+            List<String> laggedConcepts,
+            String skillLevel,
+            int questionCount
+    ) {
+        try {
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("student_id", studentId);
+            payload.put("target_role", targetRole != null ? targetRole : "Full-Stack Software Engineer");
+            payload.put("learned_skills", learnedSkills != null ? learnedSkills : Collections.emptyList());
+            payload.put("lagged_concepts", laggedConcepts != null ? laggedConcepts : Collections.emptyList());
+            payload.put("skill_level", skillLevel != null ? skillLevel : "INTERMEDIATE");
+            payload.put("question_count", questionCount > 0 ? questionCount : 15);
+
+            return restClient.post()
+                    .uri("/api/v1/intelligence/daily-challenge/sprint")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(payload)
+                    .retrieve()
+                    .body(new ParameterizedTypeReference<Map<String, Object>>() {});
+        } catch (Exception e) {
+            log.warn("Failed to get Daily Challenge Sprint from AI service: {}", e.getMessage());
+            return Collections.emptyMap();
+        }
+    }
+
+    /**
+     * Request 10 Revise & Recall questions based on what candidate is currently learning,
+     * directly targeting lagged concepts and failed questions for active recall.
+     */
+    public Map<String, Object> getReviseRecall(
+            String studentId,
+            List<String> currentlyLearningSkills,
+            List<String> laggedConcepts,
+            List<Map<String, Object>> incorrectQuestions,
+            String skillLevel,
+            int questionCount
+    ) {
+        try {
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("student_id", studentId);
+            payload.put("currently_learning_skills", currentlyLearningSkills != null ? currentlyLearningSkills : Collections.emptyList());
+            payload.put("lagged_concepts", laggedConcepts != null ? laggedConcepts : Collections.emptyList());
+            payload.put("incorrect_questions", incorrectQuestions != null ? incorrectQuestions : Collections.emptyList());
+            payload.put("skill_level", skillLevel != null ? skillLevel : "INTERMEDIATE");
+            payload.put("question_count", questionCount > 0 ? questionCount : 10);
+
+            return restClient.post()
+                    .uri("/api/v1/intelligence/daily-challenge/recall")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(payload)
+                    .retrieve()
+                    .body(new ParameterizedTypeReference<Map<String, Object>>() {});
+        } catch (Exception e) {
+            log.warn("Failed to get Revise & Recall set from AI service: {}", e.getMessage());
+            return Collections.emptyMap();
+        }
+    }
 }

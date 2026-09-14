@@ -366,10 +366,10 @@ export function DailyChallengePage() {
           <div>
             <div style={{ fontWeight: 700, color: '#1e293b', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
               <Target size={16} color="#1c2d81" />
-              <span>Recommended From Your Wishlist &amp; Ongoing Tracks</span>
+              <span>Daily Challenge Sprint (15 Questions) &bull; AI Matched via Ollama Qwen 3.5</span>
             </div>
             <div style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '2px' }}>
-              These 15 questions target your active wishlisted technologies and enrolled courses to build coding fluency.
+              Based on what you already learned &amp; interested company roles. Questions target tricky edge cases and lagged concepts adapted to your verified skill level.
             </div>
           </div>
           <div style={{ fontSize: '0.82rem', fontWeight: 700, color: '#1c2d81' }}>
@@ -381,10 +381,10 @@ export function DailyChallengePage() {
           <div>
             <div style={{ fontWeight: 700, color: '#166534', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
               <Brain size={16} color="#166534" />
-              <span>Spaced Repetition &amp; Active Recall Practice</span>
+              <span>Revise &amp; Recall (10 Questions) &bull; Spaced Repetition Engine</span>
             </div>
             <div style={{ fontSize: '0.8rem', color: '#15803d', marginTop: '2px' }}>
-              Practicing completed skills &amp; finished lessons regularly protects your long-term memory and prevents decay.
+              Based strictly on what you are currently learning. Directly reinforces lagged concepts and questions answered incorrectly in recent assessments.
             </div>
           </div>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#dcfce7', color: '#166534', padding: '4px 10px', borderRadius: '12px', fontSize: '0.78rem', fontWeight: 700 }}>

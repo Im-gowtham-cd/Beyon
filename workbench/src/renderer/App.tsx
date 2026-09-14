@@ -1,0 +1,108 @@
+import React, { useState, useEffect, useCallback } from 'react';
+import { Header, ClusterHealthData } from './components/Header';
+import { Sidebar, TabKey } from './components/Sidebar';
+import { OverviewTab } from './components/tabs/OverviewTab';
+import { DoltStudioTab } from './components/tabs/DoltStudioTab';
+import { DoltGitTab } from './components/tabs/DoltGitTab';
+import { FlociS3Tab } from './components/tabs/FlociS3Tab';
+import { FlociSqsTab } from './components/tabs/FlociSqsTab';
+import { FlociDynamoTab } from './components/tabs/FlociDynamoTab';
+import { FlociEventBridgeTab } from './components/tabs/FlociEventBridgeTab';
+import { AiTelemetryTab } from './components/tabs/AiTelemetryTab';
+
+export const App: React.FC = () => {
+  const [activeTab, setActiveTab] = useState<TabKey>('overview');
+  const [clusterHealth, setClusterHealth] = useState<ClusterHealthData | null>(null);
+  const [counts, setCounts] = useState({
+    doltTables: 0,
+    s3Buckets: 0,
+    sqsQueues: 0,
+    dynamoTables: 0,
+  });
+  const [refreshInterval, setRefreshInterval] = useState<number>(5000);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchClusterStatus = useCallback(async () => {
+    if (!window.workbenchApi) return;
+    setRefreshing(true);
+    try {
+      const health = await window.workbenchApi.getClusterHealth();
+      setClusterHealth(health);
+
+      // Fetch resource counts in parallel
+      const [tablesRes, s3Res, sqsRes, dynamoRes] = await Promise.allSettled([
+        window.workbenchApi.getDoltTables(),
+        window.workbenchApi.listS3Buckets(),
+        window.workbenchApi.listSqsQueues(),
+        window.workbenchApi.listDynamoTables(),
+      ]);
+
+      setCounts({
+        doltTables: tablesRes.status === 'fulfilled' && tablesRes.value.success ? tablesRes.value.tables.length : 0,
+        s3Buckets: s3Res.status === 'fulfilled' && s3Res.value.success ? s3Res.value.buckets.length : 0,
+        sqsQueues: sqsRes.status === 'fulfilled' && sqsRes.value.success ? sqsRes.value.queues.length : 0,
+        dynamoTables: dynamoRes.status === 'fulfilled' && dynamoRes.value.success ? dynamoRes.value.tables.length : 0,
+      });
+    } catch {
+      // ignore
+    } finally {
+      setRefreshing(false);
+    }
+  }, []);
+
+  // Initial load
+  useEffect(() => {
+    fetchClusterStatus();
+  }, [fetchClusterStatus]);
+
+  // Periodic polling
+  useEffect(() => {
+    if (refreshInterval <= 0) return;
+    const interval = setInterval(fetchClusterStatus, refreshInterval);
+    return () => clearInterval(interval);
+  }, [fetchClusterStatus, refreshInterval]);
+
+  return (
+    <div className="app-container">
+      <Header
+        clusterHealth={clusterHealth}
+        onRefresh={fetchClusterStatus}
+        refreshInterval={refreshInterval}
+        setRefreshInterval={setRefreshInterval}
+        refreshing={refreshing}
+      />
+
+      <div className="workspace-body">
+        <Sidebar
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          counts={counts}
+        />
+
+        <main className="content-area">
+          {activeTab === 'overview' && (
+            <OverviewTab
+              clusterHealth={clusterHealth}
+              counts={counts}
+              onNavigate={setActiveTab}
+            />
+          )}
+
+          {activeTab === 'dolt-studio' && <DoltStudioTab />}
+
+          {activeTab === 'dolt-git' && <DoltGitTab />}
+
+          {activeTab === 'floci-s3' && <FlociS3Tab />}
+
+          {activeTab === 'floci-sqs' && <FlociSqsTab />}
+
+          {activeTab === 'floci-dynamo' && <FlociDynamoTab />}
+
+          {activeTab === 'floci-events' && <FlociEventBridgeTab />}
+
+          {activeTab === 'ai-telemetry' && <AiTelemetryTab />}
+        </main>
+      </div>
+    </div>
+  );
+};

@@ -297,3 +297,80 @@ async def chat_with_career_advisor(
         "reasoning_steps": "Local advisory heuristic applied."
     }
 
+
+async def synthesize_targeted_questions_with_qwen(
+    mode: str,
+    target_role: str,
+    skills: List[str],
+    lagged_concepts: List[str],
+    skill_level: str,
+    count: int = 3
+) -> List[Dict[str, Any]]:
+    """
+    Synthesizes custom scenario questions using Ollama qwen3.5:4b targeting
+    learned skills & company roles (for Daily Sprint) or in-progress learning & lagged concepts (for Revise & Recall).
+    """
+    skills_str = ", ".join(skills[:4]) if skills else "Full-Stack Development"
+    concepts_str = ", ".join(lagged_concepts[:4]) if lagged_concepts else "Core Architecture"
+    level_str = skill_level if skill_level else "INTERMEDIATE"
+
+    if mode == "DAILY_SPRINT":
+        prompt_instruction = (
+            f"Generate {count} multiple-choice questions for candidate who already learned: {skills_str}. "
+            f"Align questions with enterprise requirements for company role: {target_role}. "
+            f"Target tricky edge cases and lagged concepts: {concepts_str}. "
+            f"Difficulty must match: {level_str}."
+        )
+    else:
+        prompt_instruction = (
+            f"Generate {count} active recall questions for candidate currently learning: {skills_str}. "
+            f"Directly target concepts where the candidate made errors: {concepts_str}. "
+            f"Reinforce core invariants and mental models. Difficulty must match: {level_str}."
+        )
+
+    system_prompt = (
+        "You are an expert technical interviewer and question author. "
+        "Return ONLY a valid JSON object with a single key 'questions' containing an array of questions. "
+        "Each question must have: 'title', 'description', 'skill_name', 'concept', 'difficulty', and 'options' "
+        "(array of 4 objects with 'id' like 'A','B','C','D', 'optionText', 'isCorrect' boolean with exactly one true, and 'explanation')."
+    )
+
+    assistant_prefill = (
+        f"<think>\n"
+        f"Synthesizing {count} {level_str} questions for {skills_str} focusing on {concepts_str}.\n"
+        f"</think>\n"
+    )
+
+    payload = {
+        "model": OLLAMA_MODEL,
+        "messages": [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": prompt_instruction},
+            {"role": "assistant", "content": assistant_prefill}
+        ],
+        "stream": False,
+        "options": {
+            "num_ctx": 2048,
+            "num_predict": 750,
+            "temperature": 0.2
+        }
+    }
+
+    try:
+        async with httpx.AsyncClient(timeout=45.0) as client:
+            resp = await client.post(f"{OLLAMA_URL}/api/chat", json=payload)
+            if resp.status_code == 200:
+                data = resp.json()
+                msg = data.get("message", {})
+                content = msg.get("content", "").strip()
+                parsed = clean_and_repair_json(content)
+                if isinstance(parsed, dict) and "questions" in parsed and isinstance(parsed["questions"], list):
+                    return parsed["questions"]
+                elif isinstance(parsed, list):
+                    return parsed
+    except Exception as e:
+        logger.warning(f"Ollama question synthesis note: {e}. Utilizing concept bank enrichment.")
+
+    return []
+
+

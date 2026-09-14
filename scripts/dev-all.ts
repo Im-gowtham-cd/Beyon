@@ -185,11 +185,12 @@ async function main() {
     command: 'bun',
     args: ['run', 'scripts/dev-floci.ts'],
   });
-  const flociReady = await waitForPort(4566, 30000);
+  const flociReady = await waitForPort(4566, 15000);
   if (!flociReady) {
-    throw new Error('Floci AWS emulator failed to become ready on port 4566 within 30s');
+    logService('floci', `${COLORS.dim}[WARN] Floci AWS emulator is taking longer to start or Docker is initializing. Continuing startup in background...${COLORS.reset}\n`);
+  } else {
+    logService('floci', `${COLORS.bold}[SUCCESS] Step 2/5 Complete: Floci AWS Services are ONLINE.${COLORS.reset}\n`);
   }
-  logService('floci', `${COLORS.bold}[SUCCESS] Step 2/5 Complete: Floci AWS Services are ONLINE.${COLORS.reset}\n`);
 
   // 3. Step 3/5: Start FastAPI AI Service
   logService('ai', '[3/5] Starting FastAPI AI Service on http://0.0.0.0:8000...');
