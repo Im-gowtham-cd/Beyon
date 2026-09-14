@@ -58,7 +58,8 @@ export function SkillExplorer() {
   const [isRetestModalOpen, setIsRetestModalOpen] = useState(false);
   const [adaptiveTestData, setAdaptiveTestData] = useState<any>(null);
   const [adaptiveTestLoading, setAdaptiveTestLoading] = useState(false);
-  const [expandedRemediation, setExpandedRemediation] = useState(true);
+  const [selectedWeakSkillFilter, setSelectedWeakSkillFilter] = useState<string>('ALL');
+  const [expandedRemediations, setExpandedRemediations] = useState<Record<string, boolean>>({});
   const activeCategory = searchParams.get('category') || '';
 
   const loadData = useCallback(async () => {
@@ -261,11 +262,25 @@ export function SkillExplorer() {
     );
   }, [profileSkills, learningSkills, allSkills, mySkillIdentifiers, selectedRole, selectedCompany, assessmentScores]);
 
-  async function handleLaunchAdaptiveRetest(targetSkill = 'CSS', weakConcept = 'css-boxing') {
+  const distinctWeakSkills = useMemo(() => {
+    const map: Record<string, number> = {};
+    weakConcepts.forEach((item: any) => {
+      const name = item.skillName || 'Other';
+      map[name] = (map[name] || 0) + 1;
+    });
+    return map;
+  }, [weakConcepts]);
+
+  const filteredWeakConcepts = useMemo(() => {
+    if (selectedWeakSkillFilter === 'ALL') return weakConcepts;
+    return weakConcepts.filter((item: any) => (item.skillName || '').toLowerCase() === selectedWeakSkillFilter.toLowerCase());
+  }, [weakConcepts, selectedWeakSkillFilter]);
+
+  async function handleLaunchAdaptiveRetest(targetSkill = 'CSS', weakConcept = 'css-boxing', companionSkill = 'HTML') {
     setIsRetestModalOpen(true);
     setAdaptiveTestLoading(true);
     try {
-      const data = await intelligenceApi.generateAdaptiveTest(targetSkill, 'HTML', weakConcept, 30);
+      const data = await intelligenceApi.generateAdaptiveTest(targetSkill, companionSkill, weakConcept, 30);
       setAdaptiveTestData(data);
     } catch (err) {
       console.error('Failed to generate adaptive test:', err);
@@ -484,13 +499,57 @@ export function SkillExplorer() {
             </span>
           </div>
 
-          {weakConcepts.map((item: any, idx: number) => {
+          {/* Skill Filter Pills */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginBottom: '16px' }}>
+            <button
+              onClick={() => setSelectedWeakSkillFilter('ALL')}
+              style={{
+                padding: '6px 14px',
+                borderRadius: '20px',
+                fontSize: '0.78rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                border: selectedWeakSkillFilter === 'ALL' ? '1px solid #1c2d81' : '1px solid #cbd5e1',
+                background: selectedWeakSkillFilter === 'ALL' ? '#1c2d81' : '#ffffff',
+                color: selectedWeakSkillFilter === 'ALL' ? '#ffffff' : '#475569',
+                transition: 'all 0.15s ease'
+              }}
+            >
+              All Weak Skills ({weakConcepts.length})
+            </button>
+            {Object.entries(distinctWeakSkills).map(([sName, count]) => {
+              const isSelected = selectedWeakSkillFilter.toLowerCase() === sName.toLowerCase();
+              return (
+                <button
+                  key={sName}
+                  onClick={() => setSelectedWeakSkillFilter(isSelected ? 'ALL' : sName)}
+                  style={{
+                    padding: '6px 14px',
+                    borderRadius: '20px',
+                    fontSize: '0.78rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    border: isSelected ? '1px solid #991b1b' : '1px solid #fecaca',
+                    background: isSelected ? '#fee2e2' : '#ffffff',
+                    color: isSelected ? '#991b1b' : '#64748b',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  {sName} ({count})
+                </button>
+              );
+            })}
+          </div>
+
+          {filteredWeakConcepts.map((item: any, idx: number) => {
             const accuracy = typeof item.accuracy === 'number' ? item.accuracy : 20.0;
             const steps = item.improvementSteps || [];
+            const cardKey = item.conceptKey || `${item.skillName}-${idx}`;
+            const isExpanded = expandedRemediations[cardKey] ?? (idx === 0);
 
             return (
               <div
-                key={item.conceptKey || idx}
+                key={cardKey}
                 style={{
                   background: '#ffffff',
                   border: '1px solid #fecaca',
@@ -512,19 +571,19 @@ export function SkillExplorer() {
                         borderRadius: '3px',
                         textTransform: 'uppercase'
                       }}>
-                        {item.skillName || 'CSS'} Skill
+                        {item.skillName} Skill
                       </span>
                       <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>
-                        {item.conceptTitle || 'CSS Box Model (CSS Boxing)'}
+                        {item.conceptTitle}
                       </h3>
                     </div>
                     <div style={{ fontSize: '0.84rem', color: '#b91c1c', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <span>Diagnostic Accuracy: {accuracy}% ({item.correctAttempts || 1}/{item.totalAttempts || 5} questions correct)</span>
+                      <span>Diagnostic Accuracy: {accuracy}% ({item.correctAttempts || 0}/{item.totalAttempts || 0} questions correct)</span>
                     </div>
                   </div>
 
                   <button
-                    onClick={() => handleLaunchAdaptiveRetest(item.skillName || 'CSS', item.conceptKey || 'css-boxing')}
+                    onClick={() => handleLaunchAdaptiveRetest(item.skillName, item.conceptKey, item.recommendedAdaptiveBlueprint?.companionSkill)}
                     style={{
                       background: '#1c2d81',
                       color: '#ffffff',
@@ -555,13 +614,13 @@ export function SkillExplorer() {
                   color: '#7f1d1d',
                   lineHeight: 1.5
                 }}>
-                  <strong>Diagnostic Finding:</strong> {item.whyStruggled || 'Struggled with content-box vs border-box sizing calculations, vertical margin collapsing between block-level siblings, and layout overflow caused by unbudgeted padding and border dimensions.'}
+                  <strong>Diagnostic Finding:</strong> {item.whyStruggled}
                 </div>
 
                 {/* Step-by-Step Remediation Accordion */}
                 <div style={{ marginTop: '16px' }}>
                   <button
-                    onClick={() => setExpandedRemediation(prev => !prev)}
+                    onClick={() => setExpandedRemediations(prev => ({ ...prev, [cardKey]: !isExpanded }))}
                     style={{
                       background: 'none',
                       border: 'none',
@@ -575,11 +634,11 @@ export function SkillExplorer() {
                       gap: '4px'
                     }}
                   >
-                    {expandedRemediation ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-                    {expandedRemediation ? 'Hide Step-by-Step Improvement Plan' : 'View Step-by-Step Improvement Plan'}
+                    {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                    {isExpanded ? 'Hide Step-by-Step Improvement Plan' : 'View Step-by-Step Improvement Plan'}
                   </button>
 
-                  {expandedRemediation && (
+                  {isExpanded && (
                     <div style={{
                       marginTop: '12px',
                       display: 'grid',
@@ -643,7 +702,7 @@ export function SkillExplorer() {
                 }}>
                   <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                     <CheckCircle2 size={14} color="#16a34a" />
-                    <strong>Adaptive Retest Blueprint:</strong> 30 Questions (14 HTML + 16 CSS: 8 CSS Boxing + 8 Other CSS concepts)
+                    <strong>Adaptive Retest Blueprint:</strong> {item.recommendedAdaptiveBlueprint?.totalQuestions || 30} Questions ({item.recommendedAdaptiveBlueprint?.companionCount || 14} {item.recommendedAdaptiveBlueprint?.companionSkill || 'Companion'} + {item.recommendedAdaptiveBlueprint?.targetSkillCount || 16} {item.skillName}: {item.recommendedAdaptiveBlueprint?.weakConceptCount || 8} {item.conceptTitle} + {item.recommendedAdaptiveBlueprint?.otherConceptsCount || 8} Other {item.skillName} concepts)
                   </span>
                   <span style={{ fontWeight: 700, color: '#15803d' }}>
                     50% Weakness Concentration Rule Enforced

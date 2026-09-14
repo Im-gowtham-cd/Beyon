@@ -36,6 +36,7 @@ interface TestData {
   weakConcept: string;
   weakConceptTitle: string;
   breakdown: {
+    targetSkillCount?: number;
     weakConceptTargetQuestions: number;
     otherTargetSkillQuestions: number;
     companionSkillQuestions: number;
@@ -94,6 +95,9 @@ export const AdaptiveTestModal: React.FC<AdaptiveTestModalProps> = ({
     try {
       const payload = {
         testId: testData.testId,
+        targetSkill: testData.targetSkill,
+        companionSkill: testData.companionSkill,
+        weakConcept: testData.weakConcept,
         answers: Object.entries(selectedAnswers).map(([qId, optId]) => ({
           questionId: qId,
           selectedOptionId: optId,
@@ -213,10 +217,10 @@ export const AdaptiveTestModal: React.FC<AdaptiveTestModalProps> = ({
           }}>
             <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
               <Layers size={14} color="#1c2d81" />
-              <strong>Blueprint Balance:</strong> 16 CSS ({testData.breakdown.weakConceptTargetQuestions} CSS Boxing + {testData.breakdown.otherTargetSkillQuestions} Other CSS) + {testData.breakdown.companionSkillQuestions} HTML
+              <strong>Blueprint Balance:</strong> {testData.breakdown?.targetSkillCount || 16} {testData.targetSkill || 'Target'} ({testData.breakdown?.weakConceptTargetQuestions || 8} {testData.weakConceptTitle || 'Target Concept'} + {testData.breakdown?.otherTargetSkillQuestions || 8} Other {testData.targetSkill || 'Target'}) + {testData.breakdown?.companionSkillQuestions || 14} {testData.companionSkill || 'Companion'}
             </span>
             <span style={{ color: '#0f766e', fontWeight: 600 }}>
-              Weak Concept Allocation: {testData.breakdown.weakConceptPercentageOfTargetSkill} of Target Skill
+              Weak Concept Allocation: {testData.breakdown?.weakConceptPercentageOfTargetSkill || '50%'} of Target Skill
             </span>
           </div>
         )}
@@ -262,7 +266,7 @@ export const AdaptiveTestModal: React.FC<AdaptiveTestModalProps> = ({
                     Target Weak Concept
                   </div>
                   <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#1c2d81', marginBottom: '6px' }}>
-                    CSS Box Model
+                    {result.weakConceptPerformance?.concept || testData?.weakConceptTitle || 'Target Concept'}
                   </div>
                   <div style={{ fontSize: '0.86rem', color: '#334155' }}>
                     Correct: <strong>{result.weakConceptPerformance?.correct} / {result.weakConceptPerformance?.total}</strong>
@@ -279,10 +283,10 @@ export const AdaptiveTestModal: React.FC<AdaptiveTestModalProps> = ({
                   borderRadius: '6px'
                 }}>
                   <div style={{ fontSize: '0.74rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 700, marginBottom: '4px' }}>
-                    Other CSS Topics
+                    Other {result.targetSkill || testData?.targetSkill || 'Target'} Topics
                   </div>
                   <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0f172a', marginBottom: '6px' }}>
-                    Flexbox &amp; Grid
+                    {result.otherTargetSkillPerformance?.skill || 'General Topics'}
                   </div>
                   <div style={{ fontSize: '0.86rem', color: '#334155' }}>
                     Correct: <strong>{result.otherTargetSkillPerformance?.correct} / {result.otherTargetSkillPerformance?.total}</strong>
@@ -302,7 +306,7 @@ export const AdaptiveTestModal: React.FC<AdaptiveTestModalProps> = ({
                     Companion Skill
                   </div>
                   <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0f172a', marginBottom: '6px' }}>
-                    HTML Semantics
+                    {result.companionSkillPerformance?.skill || testData?.companionSkill || 'Companion Skill'}
                   </div>
                   <div style={{ fontSize: '0.86rem', color: '#334155' }}>
                     Correct: <strong>{result.companionSkillPerformance?.correct} / {result.companionSkillPerformance?.total}</strong>

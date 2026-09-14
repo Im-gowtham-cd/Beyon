@@ -119,7 +119,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/v1/certificates/**").authenticated()
                 .requestMatchers("/api/v1/growth/**").authenticated()
                 .requestMatchers("/api/v1/feed/**").authenticated()
-                .requestMatchers("/api/v1/career-intel/**").authenticated()
+                .requestMatchers("/api/v1/career-intel/**").permitAll()
                 .requestMatchers("/api/v1/drives/**").authenticated()
                 .requestMatchers("/api/v1/placement/**").authenticated()
                 .requestMatchers("/api/v1/candidates/**").authenticated()
