@@ -86,5 +86,11 @@ export const intelligenceApi = {
   getMyMatches: async (): Promise<any[]> => api.get('/career-intel/matches'),
 
   getCareerDashboard: async (): Promise<any> => api.get('/career-intel/dashboard'),
+
+  getWeakConcepts: async (): Promise<any[]> => api.get('/career-intel/weak-concepts'),
+  generateAdaptiveTest: async (targetSkill?: string, companionSkill?: string, weakConcept?: string, totalQuestions?: number): Promise<any> =>
+    api.post('/career-intel/adaptive-test/generate', { targetSkill, companionSkill, weakConcept, totalQuestions }),
+  submitAdaptiveTest: async (submission: any): Promise<any> =>
+    api.post('/career-intel/adaptive-test/submit', submission),
 };
 
