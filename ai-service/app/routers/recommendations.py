@@ -8,6 +8,7 @@ from app.services.course_recommender import recommend_courses_for_gaps
 from app.services.daily_question_engine import generate_personalized_daily_questions
 from app.services.adaptive_learning import process_question_attempt
 from app.services.new_skill_onboarding import onboard_new_skill
+from app.services.ollama_client import analyze_skill_gaps_for_profession, chat_with_career_advisor
 
 router = APIRouter(prefix="/api/v1/intelligence", tags=["Intelligence"])
 
@@ -115,4 +116,45 @@ async def submit_question_attempt(req: AttemptSubmissionRequest):
 @router.post("/skills/onboard-new-skill")
 async def onboard_skill(req: NewSkillRequest):
     result = onboard_new_skill(req.skill_name, req.current_skills)
+    return result
+
+class AiSkillGapAnalysisRequest(BaseModel):
+    student_id: str
+    target_profession: str
+    student_skills: Dict[str, Any] = {}
+    gaps: List[Dict[str, Any]] = []
+    student_interests: Optional[List[str]] = None
+
+class AdvisorChatRequest(BaseModel):
+    student_id: Optional[str] = None
+    target_profession: str = "Software Engineer"
+    student_skills: Dict[str, Any] = {}
+    chat_history: List[Dict[str, str]] = []
+    question: str
+
+@router.post("/skill-gap/ai-analysis")
+async def analyze_skill_gaps_ai(req: AiSkillGapAnalysisRequest):
+    """
+    Executes deep AI Skill Gap Analysis & Profession Career Roadmap powered by Ollama qwen3.5:4b.
+    """
+    analysis = await analyze_skill_gaps_for_profession(
+        student_id=req.student_id,
+        target_profession=req.target_profession,
+        current_skills=req.student_skills,
+        gaps=req.gaps,
+        student_interests=req.student_interests
+    )
+    return analysis
+
+@router.post("/advisor/chat")
+async def advisor_chat(req: AdvisorChatRequest):
+    """
+    Conversational Career Advisory powered by Ollama qwen3.5:4b with student profile context.
+    """
+    result = await chat_with_career_advisor(
+        student_skills=req.student_skills,
+        target_profession=req.target_profession,
+        chat_history=req.chat_history,
+        question=req.question
+    )
     return result

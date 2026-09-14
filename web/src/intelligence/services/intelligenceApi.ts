@@ -62,6 +62,9 @@ export const intelligenceApi = {
   getSkillStrengths: async (): Promise<any> => api.get('/career-intel/skill-graph/strengths'),
 
   analyzeSkillGaps: async (careerPathId: string): Promise<any> => api.get(`/career-intel/skill-gaps/${careerPathId}`),
+  analyzeSkillGapsWithAi: async (targetProfession?: string, careerPathId?: string): Promise<any> =>
+    api.post('/career-intel/skill-gaps/ai-analyze', { targetProfession, careerPathId }),
+  getTargetProfessions: async (): Promise<any[]> => api.get('/career-intel/target-professions'),
   getTopGaps: async (limit: number = 5): Promise<any> => api.get(`/career-intel/skill-gaps/weak?limit=${limit}`),
 
   createAdvisorSession: async (): Promise<any> => api.post('/career-intel/advisor/sessions', {}),

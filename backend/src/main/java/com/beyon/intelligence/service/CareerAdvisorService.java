@@ -4,6 +4,9 @@ import com.beyon.intelligence.model.*;
 import com.beyon.intelligence.repository.*;
 import com.beyon.profile.model.Skill;
 import com.beyon.profile.repository.SkillRepository;
+import com.beyon.profile.repository.StudentProfileRepository;
+import com.beyon.intelligence.client.AiIntelligenceClient;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.OffsetDateTime;
@@ -20,6 +23,27 @@ public class CareerAdvisorService {
     private final CareerPathRepository careerPathRepo;
     private final CareerPathSkillRepository pathSkillRepo;
     private final SkillRepository skillRepo;
+    private final AiIntelligenceClient aiClient;
+    private final StudentProfileRepository profileRepo;
+
+    @Autowired
+    public CareerAdvisorService(AdvisorChatSessionRepository sessionRepo,
+                                 AdvisorChatMessageRepository messageRepo,
+                                 StudentSkillGraphRepository graphRepo,
+                                 CareerPathRepository careerPathRepo,
+                                 CareerPathSkillRepository pathSkillRepo,
+                                 SkillRepository skillRepo,
+                                 @Autowired(required = false) AiIntelligenceClient aiClient,
+                                 @Autowired(required = false) StudentProfileRepository profileRepo) {
+        this.sessionRepo = sessionRepo;
+        this.messageRepo = messageRepo;
+        this.graphRepo = graphRepo;
+        this.careerPathRepo = careerPathRepo;
+        this.pathSkillRepo = pathSkillRepo;
+        this.skillRepo = skillRepo;
+        this.aiClient = aiClient;
+        this.profileRepo = profileRepo;
+    }
 
     public CareerAdvisorService(AdvisorChatSessionRepository sessionRepo,
                                  AdvisorChatMessageRepository messageRepo,
@@ -27,12 +51,7 @@ public class CareerAdvisorService {
                                  CareerPathRepository careerPathRepo,
                                  CareerPathSkillRepository pathSkillRepo,
                                  SkillRepository skillRepo) {
-        this.sessionRepo = sessionRepo;
-        this.messageRepo = messageRepo;
-        this.graphRepo = graphRepo;
-        this.careerPathRepo = careerPathRepo;
-        this.pathSkillRepo = pathSkillRepo;
-        this.skillRepo = skillRepo;
+        this(sessionRepo, messageRepo, graphRepo, careerPathRepo, pathSkillRepo, skillRepo, null, null);
     }
 
     public AdvisorChatSession createSession(UUID studentId) {
@@ -64,8 +83,61 @@ public class CareerAdvisorService {
         userMsg.setContent(question);
         messageRepo.save(userMsg);
 
-        String response = generateResponse(question, studentId);
+        String response = null;
+        String reasoningSteps = null;
+
+        if (aiClient != null) {
+            try {
+                String targetRole = "Software Engineer";
+                if (profileRepo != null) {
+                    var p = profileRepo.findByUserId(studentId).orElse(null);
+                    if (p != null && p.getPreferredJobRoles() != null && !p.getPreferredJobRoles().isBlank()) {
+                        targetRole = p.getPreferredJobRoles().split(",")[0].trim();
+                    }
+                }
+
+                List<StudentSkillGraph> graph = graphRepo.findByStudentIdOrderByProficiencyPctDesc(studentId);
+                Map<String, Object> skillsMap = new LinkedHashMap<>();
+                for (StudentSkillGraph g : graph) {
+                    Skill s = skillRepo.findById(g.getSkillId()).orElse(null);
+                    String sName = s != null ? s.getName() : "Skill";
+                    skillsMap.put(sName, g.getLevel());
+                }
+
+                List<AdvisorChatMessage> previousMsgs = messageRepo.findBySessionIdOrderByCreatedAtAsc(sessionId);
+                List<Map<String, String>> history = new ArrayList<>();
+                for (AdvisorChatMessage m : previousMsgs) {
+                    if (m.getId() == null || !m.getId().equals(userMsg.getId())) {
+                        history.add(Map.of("role", m.getRole(), "content", m.getContent()));
+                    }
+                }
+
+                Map<String, Object> aiResult = aiClient.chatWithAiAdvisor(
+                        studentId.toString(),
+                        targetRole,
+                        skillsMap,
+                        history,
+                        question
+                );
+
+                if (aiResult != null && aiResult.get("response") != null) {
+                    String respText = (String) aiResult.get("response");
+                    if (!respText.isBlank()) {
+                        response = respText;
+                        reasoningSteps = (String) aiResult.get("reasoning_steps");
+                    }
+                }
+            } catch (Exception ignored) {}
+        }
+
+        if (response == null || response.isBlank()) {
+            response = generateResponse(question, studentId);
+        }
+
         String dataRefs = generateDataReferences(question, studentId);
+        if (reasoningSteps != null && !reasoningSteps.isBlank()) {
+            dataRefs = "{\"model\":\"qwen3.5:4b\",\"aiReasoningAvailable\":true}";
+        }
 
         AdvisorChatMessage aiMsg = new AdvisorChatMessage();
         aiMsg.setSessionId(sessionId);

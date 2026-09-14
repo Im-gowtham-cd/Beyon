@@ -160,3 +160,59 @@ def test_aws_event_worker_processing():
     assert result["action"] == "SKILL_RECALCULATION"
     assert result["student_id"] == "stu-1001"
     assert "85%" in result["message"]
+
+@pytest.mark.asyncio
+async def test_ollama_skill_gap_analysis_and_fallback():
+    """
+    Verifies that analyze_skill_gaps_for_profession returns a complete analysis
+    with executive summary, readiness %, critical gaps, recommended skills, and roadmap.
+    """
+    from app.services.ollama_client import analyze_skill_gaps_for_profession, generate_fallback_analysis
+
+    current_skills = {"python": {"proficiency": 60.0}, "git": {"proficiency": 40.0}}
+    gaps = [
+        {"skill_name": "Docker", "current_level": 20, "required_level": 80, "gap": 60, "severity": "CRITICAL"},
+        {"skill_name": "Kubernetes", "current_level": 10, "required_level": 75, "gap": 65, "severity": "CRITICAL"}
+    ]
+
+    # Test fallback generation
+    fallback = generate_fallback_analysis("Cloud DevOps Engineer", current_skills, gaps)
+    assert fallback["target_profession"] == "Cloud DevOps Engineer"
+    assert fallback["overall_readiness_pct"] > 0
+    assert len(fallback["critical_gap_analysis"]) == 2
+    assert len(fallback["recommended_skills"]) == 2
+    assert len(fallback["milestone_roadmap"]) == 3
+
+    # Test analysis execution (either live Ollama or seamless fallback)
+    result = await analyze_skill_gaps_for_profession(
+        student_id="test-stu-1",
+        target_profession="Cloud DevOps Engineer",
+        current_skills=current_skills,
+        gaps=gaps
+    )
+    assert "qwen3.5:4b" in result["model_used"]
+    assert result["target_profession"] == "Cloud DevOps Engineer"
+    assert "executive_summary" in result
+    assert "overall_readiness_pct" in result
+    assert len(result["recommended_skills"]) >= 1
+    assert len(result["milestone_roadmap"]) >= 2
+    assert "reasoning_steps" in result
+
+@pytest.mark.asyncio
+async def test_ollama_advisor_chat():
+    """
+    Verifies that chat_with_career_advisor returns technical advice with reasoning steps.
+    """
+    from app.services.ollama_client import chat_with_career_advisor
+
+    current_skills = {"python": {"proficiency": 60.0}}
+    chat_result = await chat_with_career_advisor(
+        student_skills=current_skills,
+        target_profession="Cloud DevOps Engineer",
+        chat_history=[],
+        question="What should I learn first?"
+    )
+    assert "qwen3.5:4b" in chat_result["model_used"]
+    assert len(chat_result["response"]) > 20
+    assert "reasoning_steps" in chat_result
+

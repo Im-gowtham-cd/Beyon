@@ -153,4 +153,64 @@ public class AiIntelligenceClient {
             return Collections.emptyMap();
         }
     }
+
+    /**
+     * Deep AI Skill Gap & Profession Career Roadmap analysis powered by Ollama qwen3.5:4b.
+     */
+    public Map<String, Object> generateAiSkillGapAnalysis(
+            String studentId,
+            String targetProfession,
+            Map<String, Object> studentSkills,
+            List<Map<String, Object>> calculatedGaps,
+            List<String> studentInterests
+    ) {
+        try {
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("student_id", studentId != null ? studentId : "");
+            payload.put("target_profession", targetProfession != null ? targetProfession : "Software Engineer");
+            payload.put("student_skills", studentSkills != null ? studentSkills : Collections.emptyMap());
+            payload.put("gaps", calculatedGaps != null ? calculatedGaps : Collections.emptyList());
+            payload.put("student_interests", studentInterests != null ? studentInterests : Collections.emptyList());
+
+            return restClient.post()
+                    .uri("/api/v1/intelligence/skill-gap/ai-analysis")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(payload)
+                    .retrieve()
+                    .body(new ParameterizedTypeReference<Map<String, Object>>() {});
+        } catch (Exception e) {
+            log.warn("Failed to generate AI skill gap analysis via AI service: {}", e.getMessage());
+            return Collections.emptyMap();
+        }
+    }
+
+    /**
+     * Interactive Career Advisory chat powered by Ollama qwen3.5:4b.
+     */
+    public Map<String, Object> chatWithAiAdvisor(
+            String studentId,
+            String targetProfession,
+            Map<String, Object> studentSkills,
+            List<Map<String, String>> chatHistory,
+            String question
+    ) {
+        try {
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("student_id", studentId != null ? studentId : "");
+            payload.put("target_profession", targetProfession != null ? targetProfession : "Software Engineer");
+            payload.put("student_skills", studentSkills != null ? studentSkills : Collections.emptyMap());
+            payload.put("chat_history", chatHistory != null ? chatHistory : Collections.emptyList());
+            payload.put("question", question != null ? question : "");
+
+            return restClient.post()
+                    .uri("/api/v1/intelligence/advisor/chat")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(payload)
+                    .retrieve()
+                    .body(new ParameterizedTypeReference<Map<String, Object>>() {});
+        } catch (Exception e) {
+            log.warn("Failed to chat with AI advisor via AI service: {}", e.getMessage());
+            return Collections.emptyMap();
+        }
+    }
 }
