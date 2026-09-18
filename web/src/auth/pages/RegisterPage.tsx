@@ -12,6 +12,8 @@ interface VerifiedOrgData {
   instituteName?: string;
   institutionName?: string;
   companyName?: string;
+  legalName?: string;
+  industry?: string;
   institutionType?: string;
   address?: string;
   state?: string;
@@ -202,7 +204,7 @@ export function RegisterPage() {
       const res = await fetch(`/api/v1/company/verification/mca/lookup/${encodeURIComponent(cleanCin)}`);
       const json = await res.json();
 
-      if (res.ok && json.data && json.data.found) {
+      if (res.ok && json.data && (json.data.found || json.data.verified)) {
         const comp = json.data;
         if (comp.alreadyRegistered) {
           setIsOrgVerified(false);
@@ -221,11 +223,31 @@ export function RegisterPage() {
 
         setIsOrgVerified(true);
         setVerifiedOrgData(comp);
-        if (comp.officialWebsite && !website) {
+        if (comp.companyName) {
+          setName(comp.companyName);
+        }
+        if (comp.officialWebsite) {
           setWebsite(comp.officialWebsite);
         }
-        setErrors((prev) => ({ ...prev, uniqueCode: '' }));
-        showToast('Ministry of Corporate Affairs (MCA) entity verified successfully!');
+        if (comp.corporateEmail || comp.officialEmail) {
+          setEmail(comp.corporateEmail || comp.officialEmail);
+        }
+        if (comp.representativeName) {
+          setRepresentativeName(comp.representativeName);
+        }
+        if (comp.state) {
+          setInstState(comp.state);
+        }
+        if (comp.city) {
+          setInstCity(comp.city);
+        }
+
+        try {
+          sessionStorage.setItem('beyon_verified_company_data', JSON.stringify(comp));
+        } catch {}
+
+        setErrors((prev) => ({ ...prev, uniqueCode: '', representativeName: '', email: '', website: '' }));
+        showToast('Corporate entity details retrieved via Google Search & MCA public records!');
       } else {
         setIsOrgVerified(false);
         setVerifiedOrgData(null);
@@ -238,7 +260,7 @@ export function RegisterPage() {
     } catch {
       setIsOrgVerified(false);
       setVerifiedOrgData(null);
-      setOrgLookupError('Failed to query MCA database. Please check your connection.');
+      setOrgLookupError('Failed to query MCA registry / Google Search service. Please check your connection.');
     } finally {
       setIsVerifying(false);
     }
@@ -830,7 +852,7 @@ export function RegisterPage() {
                           </>
                         ) : (
                           <>
-                            <i className="bx bx-check-shield" /> Verify with MCA
+                            <i className="bx bx-check-shield" /> Verify with MCA &amp; Google Search
                           </>
                         )}
                       </button>
@@ -846,31 +868,96 @@ export function RegisterPage() {
                   {isOrgVerified && verifiedOrgData && (
                     <div className={styles.verifiedEntityCard}>
                       <div className={styles.verifiedCardHeader}>
-                        <span className={styles.verifiedBadge}>
-                          <i className="bx bx-check-circle" /> MCA REGISTERED ENTERPRISE VERIFIED
-                        </span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                          <span className={styles.verifiedBadge}>
+                            <i className="bx bx-check-circle" /> MCA &amp; CIN VERIFIED
+                          </span>
+                          <span className={styles.groundedBadge}>
+                            <i className="bx bx-search-alt" /> Google Search Grounded
+                          </span>
+                        </div>
                         <span style={{ fontSize: '0.72rem', color: '#166534', fontWeight: 600 }}>
                           Status: {verifiedOrgData.status || 'Active'}
                         </span>
                       </div>
-                      <h4 className={styles.verifiedEntityName}>{verifiedOrgData.companyName}</h4>
+                      <h4 className={styles.verifiedEntityName}>{verifiedOrgData.companyName || verifiedOrgData.legalName}</h4>
+
+                      {/* Source URLs Citation Chips */}
+                      {verifiedOrgData.sourceUrls && verifiedOrgData.sourceUrls.length > 0 && (
+                        <div className={styles.sourceCitationRow}>
+                          <span className={styles.sourceCitationLabel}>Sources:</span>
+                          {verifiedOrgData.sourceUrls.map((sUrl, sIdx) => {
+                            try {
+                              const domain = new URL(sUrl).hostname.replace('www.', '');
+                              return (
+                                <a
+                                  key={sIdx}
+                                  href={sUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className={styles.sourceChip}
+                                >
+                                  <i className="bx bx-link-external" /> {domain}
+                                </a>
+                              );
+                            } catch {
+                              return null;
+                            }
+                          })}
+                        </div>
+                      )}
+
                       <div className={styles.verifiedMetaGrid}>
                         <div className={styles.verifiedMetaItem}>
                           <span className={styles.verifiedMetaLabel}>CIN</span>
                           <span className={styles.verifiedMetaVal}>{verifiedOrgData.cin}</span>
                         </div>
                         <div className={styles.verifiedMetaItem}>
-                          <span className={styles.verifiedMetaLabel}>State</span>
-                          <span className={styles.verifiedMetaVal}>{verifiedOrgData.state || 'N/A'}</span>
+                          <span className={styles.verifiedMetaLabel}>State / Region</span>
+                          <span className={styles.verifiedMetaVal}>{verifiedOrgData.state || 'India'}</span>
                         </div>
                         <div className={styles.verifiedMetaItem}>
-                          <span className={styles.verifiedMetaLabel}>Class</span>
-                          <span className={styles.verifiedMetaVal}>{verifiedOrgData.class || 'Public'}</span>
+                          <span className={styles.verifiedMetaLabel}>City / HQ</span>
+                          <span className={styles.verifiedMetaVal}>{verifiedOrgData.city || 'National'}</span>
                         </div>
                         <div className={styles.verifiedMetaItem}>
-                          <span className={styles.verifiedMetaLabel}>Category</span>
-                          <span className={styles.verifiedMetaVal}>{verifiedOrgData.category || 'Company'}</span>
+                          <span className={styles.verifiedMetaLabel}>Industry Sector</span>
+                          <span className={styles.verifiedMetaVal}>{verifiedOrgData.industry || 'Technology & Enterprise Solutions'}</span>
                         </div>
+                        {verifiedOrgData.officialWebsite && (
+                          <div className={styles.verifiedMetaItem} style={{ gridColumn: '1 / -1' }}>
+                            <span className={styles.verifiedMetaLabel}>Official Corporate Website</span>
+                            <span className={styles.verifiedMetaVal}>
+                              <a href={verifiedOrgData.officialWebsite} target="_blank" rel="noopener noreferrer" style={{ color: '#166534', textDecoration: 'underline' }}>
+                                {verifiedOrgData.officialWebsite}
+                              </a>
+                            </span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Unretrieved / Missing Fields Warning */}
+                      {verifiedOrgData.missingFields && verifiedOrgData.missingFields.length > 0 && (
+                        <div className={styles.missingFieldsBox}>
+                          <div className={styles.missingFieldsHeader}>
+                            <i className="bx bx-info-circle" />
+                            <strong>Unretrieved Fields:</strong>
+                            <span>The following details could not be found in public records. Please verify/input them manually:</span>
+                          </div>
+                          <div className={styles.missingPillsList}>
+                            {verifiedOrgData.missingFields.map((f, fIdx) => (
+                              <span key={fIdx} className={styles.missingPill}>
+                                {f}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Confirmation & Review Notice */}
+                      <div className={styles.reviewNoticeBox}>
+                        <i className="bx bx-check-shield" />
+                        <span>Data auto-populated from Google Search &amp; MCA. Account will be instantly active upon registration.</span>
                       </div>
                     </div>
                   )}
@@ -895,9 +982,9 @@ export function RegisterPage() {
                           />
                         </div>
                         {errors.website && <span className={styles.inputError}>{errors.website}</span>}
-                        {verifiedOrgData?.officialWebsite && (
+                        {verifiedOrgData?.officialWebsite && website === verifiedOrgData.officialWebsite && (
                           <span className={styles.autofillBanner}>
-                            <i className="bx bx-check" /> Auto-populated from MCA open data records
+                            <i className="bx bx-check" /> Auto-populated from Google Search &amp; MCA public records
                           </span>
                         )}
                       </div>
@@ -920,6 +1007,11 @@ export function RegisterPage() {
                         </div>
                         {errors.representativeName && (
                           <span className={styles.inputError}>{errors.representativeName}</span>
+                        )}
+                        {verifiedOrgData?.representativeName && representativeName === verifiedOrgData.representativeName && (
+                          <span className={styles.autofillBanner}>
+                            <i className="bx bx-check" /> Auto-populated from Google Search &amp; MCA public records
+                          </span>
                         )}
                       </div>
                     </>
@@ -948,9 +1040,9 @@ export function RegisterPage() {
                     }}
                     placeholder={
                       role === 'COMPANY'
-                        ? 'name@company.com'
+                        ? 'talent@company.com'
                         : role === 'INSTITUTION'
-                        ? 'coordinator@institution.edu.in'
+                        ? 'principal@institution.edu.in'
                         : 'Enter your email'
                     }
                     required
@@ -958,6 +1050,11 @@ export function RegisterPage() {
                   />
                 </div>
                 {errors.email && <span className={styles.inputError}>{errors.email}</span>}
+                {verifiedOrgData && (role === 'INSTITUTION' || role === 'COMPANY') && email && (email === verifiedOrgData.officialEmail || email === (verifiedOrgData as any).corporateEmail) && (
+                  <span className={styles.autofillBanner}>
+                    <i className="bx bx-check" /> Auto-populated from Google Search &amp; official public records
+                  </span>
+                )}
                 {role === 'INSTITUTION' && verifiedOrgData?.officialEmail && email === verifiedOrgData.officialEmail && (
                   <span className={styles.autofillBanner}>
                     <i className="bx bx-check" /> Auto-populated from Google Search &amp; AICTE public records

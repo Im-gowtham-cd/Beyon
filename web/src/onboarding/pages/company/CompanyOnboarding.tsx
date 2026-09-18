@@ -35,7 +35,7 @@ const STEPS = [
   { label: 'Corporate Identity', sub: 'Legal name & headquarters', icon: Building2 },
   { label: 'Talent Acquisition', sub: 'HR leads & hiring models', icon: Users },
   { label: 'Recruitment Criteria', sub: 'Skills, degrees & CGPA', icon: Code2 },
-  { label: 'Review & Verify', sub: 'Submit for Super Admin review', icon: ShieldCheck },
+  { label: 'Review & Verify', sub: 'MCA & Live Grounded Verification', icon: ShieldCheck },
 ];
 
 const COMPANY_TYPES = [
@@ -140,6 +140,37 @@ export function CompanyOnboarding() {
   }, [step]);
 
   useEffect(() => {
+    // Load from sessionStorage if verified during registration
+    try {
+      const storedVerified = sessionStorage.getItem('beyon_verified_company_data');
+      if (storedVerified) {
+        const v = JSON.parse(storedVerified);
+        setForm((prev) => ({
+          ...prev,
+          companyName: v.companyName || v.legalName || prev.companyName,
+          cin: v.cin || prev.cin,
+          state: v.state || prev.state,
+          city: v.city || prev.city,
+          website: v.officialWebsite || prev.website,
+          officialEmail: v.corporateEmail || v.officialEmail || prev.officialEmail,
+          phone: v.contactPhone || prev.phone,
+          industry: v.industry || prev.industry,
+          representatives: v.representativeName
+            ? [
+                {
+                  name: v.representativeName,
+                  designation: 'Head of Talent Acquisition & University Relations',
+                  email: v.corporateEmail || v.officialEmail || prev.officialEmail,
+                  phone: v.contactPhone || '',
+                },
+              ]
+            : prev.representatives,
+        }));
+      }
+    } catch {
+      // ignore JSON parse error
+    }
+
     api.get<any>('/profile').then((res) => {
       const p = res?.companyProfile?.profile;
       if (p) {
@@ -414,9 +445,9 @@ export function CompanyOnboarding() {
           </div>
         </Link>
         <div className={styles.headerRight}>
-          <div className={styles.rewardBadge}>
-            <ShieldCheck size={14} color="#b45309" />
-            <span>Super Admin Verification Queue</span>
+          <div className={styles.rewardBadge} style={{ background: '#f0fdf4', borderColor: '#bbf7d0', color: '#166534' }}>
+            <ShieldCheck size={14} color="#166534" />
+            <span>MCA &amp; Live Registry Verified</span>
           </div>
           <div className={styles.stepIndicatorBadge}>
             <span className={styles.stepHighlight}>Step {step + 1}</span> of {STEPS.length} ({progressPercent}%)

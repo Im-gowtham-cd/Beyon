@@ -49,6 +49,7 @@ public class OnboardingController {
     private final org.springframework.jdbc.core.JdbcTemplate jdbcTemplate;
     private final com.beyon.profile.service.CompanyVerificationService companyVerificationService;
     private final com.beyon.intelligence.client.AiIntelligenceClient aiIntelligenceClient;
+    private final com.beyon.platform.service.CacheService cacheService;
 
     public OnboardingController(UserRepository userRepository,
                                 StudentProfileRepository studentProfileRepository,
@@ -64,7 +65,8 @@ public class OnboardingController {
                                 ObjectMapper objectMapper,
                                 org.springframework.jdbc.core.JdbcTemplate jdbcTemplate,
                                 com.beyon.profile.service.CompanyVerificationService companyVerificationService,
-                                com.beyon.intelligence.client.AiIntelligenceClient aiIntelligenceClient) {
+                                com.beyon.intelligence.client.AiIntelligenceClient aiIntelligenceClient,
+                                com.beyon.platform.service.CacheService cacheService) {
         this.userRepository = userRepository;
         this.studentProfileRepository = studentProfileRepository;
         this.companyProfileRepository = companyProfileRepository;
@@ -80,6 +82,7 @@ public class OnboardingController {
         this.jdbcTemplate = jdbcTemplate;
         this.companyVerificationService = companyVerificationService;
         this.aiIntelligenceClient = aiIntelligenceClient;
+        this.cacheService = cacheService;
     }
 
     @GetMapping("/institutions")
@@ -565,7 +568,67 @@ public class OnboardingController {
                 phone
         );
 
+        cacheService.evict("onboarding:draft:company:" + userId);
+        if (!officialEmail.isBlank()) {
+            cacheService.evict("onboarding:draft:company:" + officialEmail);
+        }
+
         return ResponseEntity.ok(ApiResponse.ok(verifResult));
+    }
+
+    @GetMapping("/draft/{role}")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getOnboardingDraft(
+            Authentication auth,
+            @PathVariable("role") String role,
+            @RequestParam(value = "sessionKey", required = false) String sessionKey) {
+        String userKey = resolveUserKey(auth, sessionKey);
+        String redisKey = "onboarding:draft:" + role.toLowerCase() + ":" + userKey;
+        Optional<String> draftJson = cacheService.get(redisKey, String.class);
+        if (draftJson.isPresent()) {
+            try {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> data = objectMapper.readValue(draftJson.get(), Map.class);
+                return ResponseEntity.ok(ApiResponse.ok(data));
+            } catch (Exception e) {
+                return ResponseEntity.ok(ApiResponse.ok(null));
+            }
+        }
+        return ResponseEntity.ok(ApiResponse.ok(null));
+    }
+
+    @PostMapping("/draft/{role}")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> saveOnboardingDraft(
+            Authentication auth,
+            @PathVariable("role") String role,
+            @RequestParam(value = "sessionKey", required = false) String sessionKey,
+            @RequestBody Map<String, Object> draftPayload) {
+        String userKey = resolveUserKey(auth, sessionKey);
+        String redisKey = "onboarding:draft:" + role.toLowerCase() + ":" + userKey;
+        try {
+            String serialized = objectMapper.writeValueAsString(draftPayload);
+            cacheService.put(redisKey, serialized, java.time.Duration.ofDays(7));
+            return ResponseEntity.ok(ApiResponse.ok(Map.of(
+                    "saved", true,
+                    "key", redisKey,
+                    "message", "Draft saved in Redis cache"
+            )));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(ApiResponse.error("Failed to save draft: " + e.getMessage()));
+        }
+    }
+
+    @DeleteMapping("/draft/{role}")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> clearOnboardingDraft(
+            Authentication auth,
+            @PathVariable("role") String role,
+            @RequestParam(value = "sessionKey", required = false) String sessionKey) {
+        String userKey = resolveUserKey(auth, sessionKey);
+        String redisKey = "onboarding:draft:" + role.toLowerCase() + ":" + userKey;
+        cacheService.evict(redisKey);
+        return ResponseEntity.ok(ApiResponse.ok(Map.of(
+                "cleared", true,
+                "message", "Draft removed from Redis"
+        )));
     }
 
     @PostMapping("/institution")
@@ -607,20 +670,39 @@ public class OnboardingController {
         institutionProfileRepository.save(profile);
 
         userRepository.findById(userId).ifPresent(u -> {
-            u.setProfileStatus(AccountStatus.PENDING_SUPER_ADMIN_VERIFICATION);
-            u.setStatus(AccountStatus.PENDING_SUPER_ADMIN_VERIFICATION);
+            u.setProfileStatus(AccountStatus.COMPLETED);
+            u.setStatus(AccountStatus.ACTIVE);
             userRepository.save(u);
         });
 
+        // Evict draft from Redis upon completion
+        cacheService.evict("onboarding:draft:institution:" + userId);
+        if (profile.getOfficialEmail() != null) {
+            cacheService.evict("onboarding:draft:institution:" + profile.getOfficialEmail());
+        }
+
         return ResponseEntity.ok(ApiResponse.ok(Map.of(
-                "status", "PENDING_SUPER_ADMIN_VERIFICATION",
-                "message", "Institution profile submitted for Super Admin verification"
+                "status", "COMPLETED",
+                "message", "Institution profile verified and activated successfully!"
         )));
     }
 
     private UUID extractUserId(Authentication auth) {
         JwtUserDetails details = (JwtUserDetails) auth.getDetails();
         return UUID.fromString(details.getUserId());
+    }
+
+    private String resolveUserKey(Authentication auth, String sessionKey) {
+        if (auth != null && auth.getDetails() instanceof JwtUserDetails details && details.getUserId() != null) {
+            return details.getUserId();
+        }
+        if (auth != null && auth.getName() != null && !auth.getName().isBlank() && !"anonymousUser".equalsIgnoreCase(auth.getName())) {
+            return auth.getName();
+        }
+        if (sessionKey != null && !sessionKey.isBlank()) {
+            return sessionKey.trim();
+        }
+        return "anonymous_session";
     }
 }
 

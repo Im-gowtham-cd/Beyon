@@ -85,6 +85,7 @@ export function LoginPage() {
 
       if (
         tier !== 'INSTITUTION' &&
+        tier !== 'COMPANY' &&
         (profileStatus === 'PENDING_SUPER_ADMIN_VERIFICATION' ||
           accountStatus === 'PENDING_SUPER_ADMIN_VERIFICATION' ||
           profileStatus === 'PENDING_INSTITUTION_VERIFICATION' ||

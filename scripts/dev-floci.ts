@@ -76,6 +76,23 @@ async function ensureDockerReady() {
   }
 }
 
+async function ensureRedisContainer() {
+  console.log('[Redis] Checking Redis container status...');
+  const isRunning = runShell('docker ps --filter name=^/beyon-redis$ --filter status=running --format {{.Names}}', true);
+  if (isRunning) {
+    console.log('[Redis] Redis container is already running on port 6379.');
+    return;
+  }
+  const existing = runShell('docker ps -a --filter name=^/beyon-redis$ --format {{.Names}}', true);
+  if (existing) {
+    console.log('[Redis] Starting existing beyon-redis container...');
+    runShell('docker start beyon-redis');
+  } else {
+    console.log('[Redis] Creating and running new Redis container on port 6379...');
+    runShell('docker run -d --name beyon-redis -p 6379:6379 redis:7.2-alpine');
+  }
+}
+
 async function ensureFlociContainer() {
   console.log('[Floci] Checking Floci container status...');
   const existing = runShell('docker ps -a --filter name=^/floci$ --format {{.Names}}', true);
@@ -374,6 +391,7 @@ async function startFlociDaemon() {
 async function main() {
   try {
     await ensureDockerReady();
+    await ensureRedisContainer();
     await ensureFlociContainer();
     await waitForFlociEndpoint();
     await provisionAwsResources();
