@@ -31,35 +31,67 @@ async function main() {
   const args = process.argv.slice(2);
   const action = args[0] || 'run';
 
-  let mavenArgs: string[] = [];
-
   if (action === '-v' || action === '--version' || action === 'version') {
-    mavenArgs = ['-v'];
-  } else if (action === 'test') {
-    mavenArgs = ['test', ...args.slice(1)];
-  } else if (action === 'compile') {
-    mavenArgs = ['compile', ...args.slice(1)];
-  } else {
-    // Check if Dolt is reachable
-    const doltRunning = await checkPort(3306);
-    if (!doltRunning) {
-      console.warn('\x1b[33m[Warning] Dolt SQL server is NOT detected on 127.0.0.1:3306.\x1b[0m');
-      console.warn('\x1b[33mPlease ensure Dolt is running ("bun run dev:dolt") so backend can connect to the database.\x1b[0m\n');
-    } else {
-      console.log('\x1b[32m[OK] Dolt SQL server detected on 127.0.0.1:3306.\x1b[0m');
-    }
-
-    const extraArgs = args.filter((a) => a !== 'run' && a !== 'dev');
-    mavenArgs = ['spring-boot:run', '-Dspring-boot.run.profiles=dev', ...extraArgs];
+    const child = spawn(mvnwCmd, ['-v'], { cwd: backendDir, stdio: 'inherit', shell: true });
+    child.on('exit', (code) => process.exit(code || 0));
+    return;
   }
 
-  console.log(`\x1b[36m[Backend] Starting Spring Boot in ${backendDir}...\x1b[0m`);
-  console.log(`\x1b[36m[Backend] Command: ${mvnwCmd} ${mavenArgs.join(' ')}\x1b[0m\n`);
+  if (action === 'test') {
+    const child = spawn(mvnwCmd, ['test', ...args.slice(1)], { cwd: backendDir, stdio: 'inherit', shell: true });
+    child.on('exit', (code) => process.exit(code || 0));
+    return;
+  }
 
-  const child = spawn(mvnwCmd, mavenArgs, {
+  if (action === 'compile' || action === 'build') {
+    const child = spawn(mvnwCmd, ['package', '-DskipTests', ...args.slice(1)], { cwd: backendDir, stdio: 'inherit', shell: true });
+    child.on('exit', (code) => process.exit(code || 0));
+    return;
+  }
+
+  // Check if Dolt is reachable
+  const doltRunning = await checkPort(3306);
+  if (!doltRunning) {
+    console.warn('\x1b[33m[Warning] Dolt SQL server is NOT detected on 127.0.0.1:3306.\x1b[0m');
+    console.warn('\x1b[33mPlease ensure Dolt is running ("bun run dev:dolt") so backend can connect to the database.\x1b[0m\n');
+  } else {
+    console.log('\x1b[32m[OK] Dolt SQL server detected on 127.0.0.1:3306.\x1b[0m');
+  }
+
+  const jarPath = path.resolve(backendDir, 'target/beyon-backend-0.1.0.jar');
+  const fs = await import('fs');
+  let hasJar = fs.existsSync(jarPath);
+
+  if (!hasJar) {
+    console.log(`\x1b[36m[Backend] Backend JAR not found. Building executable JAR first...\x1b[0m`);
+    await new Promise<void>((resolve, reject) => {
+      const buildProc = spawn(mvnwCmd, ['package', '-DskipTests'], {
+        cwd: backendDir,
+        stdio: 'inherit',
+        shell: true,
+      });
+      buildProc.on('exit', (code) => {
+        if (code === 0) {
+          hasJar = true;
+          resolve();
+        } else {
+          reject(new Error(`Backend build failed with exit code ${code}`));
+        }
+      });
+      buildProc.on('error', reject);
+    });
+  }
+
+  const extraArgs = args.filter((a) => a !== 'run' && a !== 'dev');
+
+  console.log(`\x1b[36m[Backend] Launching packaged Spring Boot JAR: ${jarPath}...\x1b[0m`);
+  const javaArgs = ['-jar', jarPath, '--spring.profiles.active=dev', ...extraArgs];
+  console.log(`\x1b[36m[Backend] Command: java ${javaArgs.join(' ')}\x1b[0m\n`);
+
+  const child = spawn('java', javaArgs, {
     cwd: backendDir,
     stdio: 'inherit',
-    shell: true, // Enables finding .cmd on Windows
+    shell: false,
   });
 
   child.on('exit', (code) => {
@@ -67,7 +99,7 @@ async function main() {
   });
 
   child.on('error', (err) => {
-    console.error(`\x1b[31m[Backend Error] Failed to start backend:\x1b[0m`, err);
+    console.error(`\x1b[31m[Backend Error] Failed to start backend via java:\x1b[0m`, err);
     process.exit(1);
   });
 }

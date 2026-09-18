@@ -15,6 +15,55 @@ const PRESETS: EndpointPreset[] = [
     path: '/health',
   },
   {
+    name: 'Skill Analysis Career Advisor Chat (Qwen 3.5)',
+    method: 'POST',
+    path: '/api/v1/intelligence/advisor/chat',
+    body: JSON.stringify(
+      {
+        student_id: '1853170b-89ad-41ec-b73d-14109608e84c',
+        target_profession: 'Full-Stack Software Engineer',
+        student_skills: {
+          'Spring Boot': { score: 40.0 },
+          'TypeScript': { score: 10.0 },
+          'HTML': { score: 80.0 },
+          'CSS': { score: 20.0 },
+          'React': { score: 40.0 },
+          'PostgreSQL': { score: 40.0 }
+        },
+        chat_history: [],
+        question: 'I have weak skills in TypeScript (10%) and Spring Boot (40%), but good HTML (80%). How should I prioritize my learning roadmap to become an enterprise Full-Stack Engineer?'
+      },
+      null,
+      2
+    ),
+  },
+  {
+    name: 'Skill Gap AI Analysis & 3-Phase Roadmap',
+    method: 'POST',
+    path: '/api/v1/intelligence/skill-gap/ai-analysis',
+    body: JSON.stringify(
+      {
+        student_id: '1853170b-89ad-41ec-b73d-14109608e84c',
+        target_profession: 'Full-Stack Software Engineer',
+        student_skills: {
+          'Spring Boot': { score: 40.0, verified: false },
+          'TypeScript': { score: 10.0, verified: false },
+          'HTML': { score: 80.0, verified: true },
+          'CSS': { score: 20.0, verified: false },
+          'React': { score: 40.0, verified: false }
+        },
+        gaps: [
+          { skill_name: 'TypeScript', gap_score: 90.0, urgency: 'HIGH' },
+          { skill_name: 'Spring Boot', gap_score: 60.0, urgency: 'HIGH' },
+          { skill_name: 'React', gap_score: 60.0, urgency: 'MEDIUM' }
+        ],
+        student_interests: ['Enterprise Cloud Architecture', 'Full-Stack Systems']
+      },
+      null,
+      2
+    ),
+  },
+  {
     name: 'Daily Challenge Sprint Synthesis (15 Qs)',
     method: 'POST',
     path: '/api/v1/intelligence/daily-challenge/sprint',

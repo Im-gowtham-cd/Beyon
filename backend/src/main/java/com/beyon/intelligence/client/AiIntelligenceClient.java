@@ -279,4 +279,56 @@ public class AiIntelligenceClient {
             return Collections.emptyMap();
         }
     }
+
+    /**
+     * Look up and auto-extract institution details based on AICTE Permanent Institute ID
+     * using google_search from google.adk.tools in the AI service.
+     */
+    public Map<String, Object> lookupAicteInstitution(String aicteId, String institutionName, String city, String state) {
+        try {
+            return restClient.get()
+                    .uri(uriBuilder -> uriBuilder
+                            .path("/api/v1/institution/aicte-lookup")
+                            .queryParam("code", aicteId != null ? aicteId.trim() : "")
+                            .queryParam("institution_name", institutionName != null ? institutionName : "")
+                            .queryParam("city", city != null ? city : "")
+                            .queryParam("state", state != null ? state : "")
+                            .build())
+                    .retrieve()
+                    .body(new ParameterizedTypeReference<Map<String, Object>>() {});
+        } catch (Exception e) {
+            log.warn("Failed to lookup AICTE institution from AI service: {}", e.getMessage());
+            return Collections.emptyMap();
+        }
+    }
+
+    public Map<String, Object> lookupAicteInstitution(String aicteId) {
+        return lookupAicteInstitution(aicteId, null, null, null);
+    }
+
+    /**
+     * Look up and auto-extract corporate company details based on MCA Corporate Identification Number (CIN)
+     * using google_search from google.adk.tools in the AI service.
+     */
+    public Map<String, Object> lookupCinCompany(String cin, String companyName, String city, String state) {
+        try {
+            return restClient.get()
+                    .uri(uriBuilder -> uriBuilder
+                            .path("/api/v1/company/cin-lookup")
+                            .queryParam("cin", cin != null ? cin.trim().toUpperCase() : "")
+                            .queryParam("company_name", companyName != null ? companyName : "")
+                            .queryParam("city", city != null ? city : "")
+                            .queryParam("state", state != null ? state : "")
+                            .build())
+                    .retrieve()
+                    .body(new ParameterizedTypeReference<Map<String, Object>>() {});
+        } catch (Exception e) {
+            log.warn("Failed to lookup CIN corporate details from AI service: {}", e.getMessage());
+            return Collections.emptyMap();
+        }
+    }
+
+    public Map<String, Object> lookupCinCompany(String cin) {
+        return lookupCinCompany(cin, null, null, null);
+    }
 }

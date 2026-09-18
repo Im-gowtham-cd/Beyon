@@ -790,12 +790,131 @@
   flex-shrink: 0;
 }
 
+.groundedTag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #e0f2fe;
+  color: #0369a1;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  border: 1px solid #bae6fd;
+}
+
+.groundedSources {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  font-size: 0.7rem;
+  color: #0369a1;
+  margin-top: 4px;
+}
+
+.sourcePill {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: #0284c7;
+  background: #f0f9ff;
+  border: 1px solid #e0f2fe;
+  padding: 1px 6px;
+  border-radius: 4px;
+  text-decoration: none;
+  font-size: 0.68rem;
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sourcePill:hover {
+  text-decoration: underline;
+  color: #0369a1;
+}
+
+.missingFieldsAlert {
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  color: #9a3412;
+  border-radius: var(--radius-xs);
+  padding: 8px 10px;
+  font-size: 0.73rem;
+  line-height: 1.35;
+  margin-top: 6px;
+}
+
+.missingFieldsChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.missingFieldChip {
+  background: #ffedd5;
+  border: 1px solid #fdba74;
+  color: #c2410c;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 0.66rem;
+  font-weight: 600;
+}
+
+.fieldEditGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.fieldEditGridFull {
+  grid-column: 1 / -1;
+}
+
+.reviewNoticeBox {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  color: #1e40af;
+  border-radius: var(--radius-xs);
+  padding: 8px 10px;
+  font-size: 0.72rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.editToggleBtn {
+  background: transparent;
+  border: 1px solid #86efac;
+  color: #15803d;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.2s ease;
+}
+
+.editToggleBtn:hover {
+  background: #dcfce7;
+}
+
 @media (max-width: 640px) {
   .roleTabsGrid {
     grid-template-columns: 1fr;
   }
   .verifyRow {
     flex-direction: column;
+  }
+  .fieldEditGrid {
+    grid-template-columns: 1fr;
   }
 }
 

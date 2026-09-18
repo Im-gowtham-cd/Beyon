@@ -9,6 +9,7 @@ import { FlociSqsTab } from './components/tabs/FlociSqsTab';
 import { FlociDynamoTab } from './components/tabs/FlociDynamoTab';
 import { FlociEventBridgeTab } from './components/tabs/FlociEventBridgeTab';
 import { AiTelemetryTab } from './components/tabs/AiTelemetryTab';
+import { SkillAnalysisChatTab } from './components/tabs/SkillAnalysisChatTab';
 
 export const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabKey>('overview');
@@ -112,6 +113,8 @@ export const App: React.FC = () => {
           {activeTab === 'floci-dynamo' && <FlociDynamoTab />}
 
           {activeTab === 'floci-events' && <FlociEventBridgeTab />}
+
+          {activeTab === 'skill-chat' && <SkillAnalysisChatTab />}
 
           {activeTab === 'ai-telemetry' && <AiTelemetryTab />}
         </main>

@@ -31,6 +31,23 @@ export function VerificationPendingPage() {
             : "You will receive an email notification as soon as verification is complete."}
         </p>
         <div style={{ display: 'flex', gap: 'var(--space-md)', flexWrap: 'wrap', justifyContent: 'center' }}>
+          {(user?.role === 'INSTITUTION' || user?.tier === 'INSTITUTION') && (
+            <Link
+              to="/institution/home"
+              style={{
+                padding: '12px 24px',
+                background: '#1c2d81',
+                border: '1px solid #1c2d81',
+                borderRadius: 'var(--radius-sm)',
+                color: '#ffffff',
+                fontWeight: 600,
+                fontSize: 'var(--text-base)',
+                textDecoration: 'none',
+              }}
+            >
+              Enter Institution Workspace
+            </Link>
+          )}
           {(user?.role === 'COMPANY' || user?.role === 'COMPANY_ADMIN') && (
             <Link
               to="/company/home"
@@ -48,7 +65,7 @@ export function VerificationPendingPage() {
               Inspect Company Workspace
             </Link>
           )}
-          <button onClick={() => logout()} style={{ padding: '12px 24px', background: '#1c2d81', border: '1px solid #1c2d81', borderRadius: 'var(--radius-sm)', color: '#ffffff', fontWeight: 600, fontSize: 'var(--text-base)', cursor: 'pointer' }}>
+          <button onClick={() => logout()} style={{ padding: '12px 24px', background: (user?.role === 'INSTITUTION' || user?.tier === 'INSTITUTION') ? '#ffffff' : '#1c2d81', border: (user?.role === 'INSTITUTION' || user?.tier === 'INSTITUTION') ? '1px solid #cbd5e1' : '1px solid #1c2d81', borderRadius: 'var(--radius-sm)', color: (user?.role === 'INSTITUTION' || user?.tier === 'INSTITUTION') ? '#475569' : '#ffffff', fontWeight: 600, fontSize: 'var(--text-base)', cursor: 'pointer' }}>
             Sign Out
           </button>
         </div>

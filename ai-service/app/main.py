@@ -6,6 +6,8 @@ from app.routers.laptop_analysis import router as laptop_router
 from app.routers.mobile_analysis import router as mobile_router
 from app.routers.audio_analysis import router as audio_router
 from app.routers.recommendations import router as recommendations_router
+from app.routers.institution_lookup import router as institution_lookup_router
+from app.routers.company_lookup import router as company_lookup_router
 
 app = FastAPI(
     title="Beyon Skill Intelligence & DualView AI Service",
@@ -25,6 +27,8 @@ app.include_router(laptop_router)
 app.include_router(mobile_router)
 app.include_router(audio_router)
 app.include_router(recommendations_router)
+app.include_router(institution_lookup_router)
+app.include_router(company_lookup_router)
 
 @app.get("/health")
 async def health():

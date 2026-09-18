@@ -32,9 +32,9 @@ let isShuttingDown = false;
 function checkPort(port: number, host = '127.0.0.1'): Promise<boolean> {
   return new Promise((resolve) => {
     const socket = new net.Socket();
-    socket.setTimeout(1000);
+    socket.setTimeout(1200);
     socket.on('connect', () => {
-      socket.destroy();
+      socket.end();
       resolve(true);
     });
     socket.on('timeout', () => {
@@ -49,7 +49,7 @@ function checkPort(port: number, host = '127.0.0.1'): Promise<boolean> {
   });
 }
 
-async function waitForPort(port: number, maxWaitMs = 15000): Promise<boolean> {
+async function waitForPort(port: number, maxWaitMs = 30000): Promise<boolean> {
   const start = Date.now();
   while (Date.now() - start < maxWaitMs) {
     if (await checkPort(port)) return true;
@@ -74,29 +74,19 @@ function shouldFilterDoltLog(line: string): boolean {
     line.includes('NewConnection') ||
     line.includes('level=info') ||
     line.includes('Cannot read client handshake response') ||
+    line.includes('Cannot send HandshakeV10 packet') ||
+    line.includes('Write(packet) failed') ||
     line.includes('io.ReadFull(header size) failed') ||
+    line.includes('wsasend:') ||
     line.includes('wsarecv:')
   );
 }
 
-function pipeOutput(name: string, child: ChildProcess) {
-  if (child.stdout) {
-    const rl = readline.createInterface({ input: child.stdout });
-    rl.on('line', (line) => {
-      if (name === 'dolt' && shouldFilterDoltLog(line)) return;
-      logService(name, line);
-    });
-  }
-  if (child.stderr) {
-    const rl = readline.createInterface({ input: child.stderr });
-    rl.on('line', (line) => {
-      if (name === 'dolt' && shouldFilterDoltLog(line)) return;
-      logService(name, line, true);
-    });
-  }
-}
-
-function startService(svc: ServiceConfig): ChildProcess {
+function startService(
+  svc: ServiceConfig,
+  onLine?: (line: string) => void,
+  onExit?: (code: number | null, signal: string | null) => void
+): ChildProcess {
   logService(svc.name, `Starting ${svc.name}... (${svc.command} ${svc.args.join(' ')})`);
 
   const child = spawn(svc.command, svc.args, {
@@ -106,9 +96,26 @@ function startService(svc: ServiceConfig): ChildProcess {
     env: { ...process.env, FORCE_COLOR: '1' },
   });
 
-  pipeOutput(svc.name, child);
+  if (child.stdout) {
+    const rl = readline.createInterface({ input: child.stdout });
+    rl.on('line', (line) => {
+      if (onLine) onLine(line);
+      if (svc.name === 'dolt' && shouldFilterDoltLog(line)) return;
+      logService(svc.name, line);
+    });
+  }
+
+  if (child.stderr) {
+    const rl = readline.createInterface({ input: child.stderr });
+    rl.on('line', (line) => {
+      if (onLine) onLine(line);
+      if (svc.name === 'dolt' && shouldFilterDoltLog(line)) return;
+      logService(svc.name, line, true);
+    });
+  }
 
   child.on('exit', (code, signal) => {
+    if (onExit) onExit(code, signal);
     if (!isShuttingDown) {
       logService(svc.name, `Process exited with code ${code ?? signal}`);
     }
@@ -130,7 +137,6 @@ function shutdown() {
   for (const { name, process: proc } of processes) {
     try {
       if (isWin && proc.pid) {
-        // Kill process tree on Windows
         spawn('taskkill', ['/pid', String(proc.pid), '/T', '/F'], { stdio: 'ignore' });
       } else {
         proc.kill('SIGTERM');
@@ -151,7 +157,7 @@ process.on('SIGTERM', shutdown);
 async function main() {
   console.log(`${COLORS.bold}======================================================${COLORS.reset}`);
   console.log(`${COLORS.bold}BEYON UNIFIED SEQUENTIAL SERVICE DEV RUNNER${COLORS.reset}`);
-  console.log(`${COLORS.dim}Pipeline: Dolt (3306) -> Floci (4566) -> AI (8000) -> Backend (8085) -> Web (5173)${COLORS.reset}`);
+  console.log(`${COLORS.dim}Pipeline: Dolt (3306) -> Floci (4566) -> Backend (8085) -> AI (8000) -> Web (5173)${COLORS.reset}`);
   console.log(`${COLORS.bold}======================================================${COLORS.reset}\n`);
 
   // 1. Step 1/5: Check or Start Dolt Database
@@ -169,60 +175,135 @@ async function main() {
     });
 
     logService('dolt', 'Waiting for Dolt SQL server to become ready on port 3306...');
-    const doltReady = await waitForPort(3306, 20000);
+    const doltReady = await waitForPort(3306, 30000);
     if (!doltReady) {
-      throw new Error('Dolt SQL server failed to bind port 3306 within 20s');
+      throw new Error('Dolt SQL server failed to bind port 3306 within 30s');
     }
   }
   logService('dolt', `${COLORS.bold}[SUCCESS] Step 1/5 Complete: Dolt Database is ONLINE.${COLORS.reset}\n`);
 
-  // 2. Step 2/5: Start Floci Local AWS Services
+  // 2. Step 2/5: Start Floci Local AWS Services (Strict Sequential Wait)
   logService('floci', '[2/5] Starting Floci AWS Services on http://localhost:4566...');
-  startService({
-    name: 'floci',
-    color: 'floci',
-    cwd: rootDir,
-    command: 'bun',
-    args: ['run', 'scripts/dev-floci.ts'],
-  });
-  const flociReady = await waitForPort(4566, 15000);
-  if (!flociReady) {
-    logService('floci', `${COLORS.dim}[WARN] Floci AWS emulator is taking longer to start or Docker is initializing. Continuing startup in background...${COLORS.reset}\n`);
-  } else {
-    logService('floci', `${COLORS.bold}[SUCCESS] Step 2/5 Complete: Floci AWS Services are ONLINE.${COLORS.reset}\n`);
+  let flociProvisioned = false;
+  let flociExited = false;
+  let flociExitCode: number | string | null = null;
+
+  startService(
+    {
+      name: 'floci',
+      color: 'floci',
+      cwd: rootDir,
+      command: 'bun',
+      args: ['run', 'scripts/dev-floci.ts'],
+    },
+    (line) => {
+      if (
+        line.includes('ALL BEYON AWS SERVICES & AI EMULATORS OPERATIONAL') ||
+        line.includes('[Floci] Daemon running')
+      ) {
+        flociProvisioned = true;
+      }
+    },
+    (code, signal) => {
+      flociExited = true;
+      flociExitCode = code ?? signal;
+    }
+  );
+
+  logService('floci', 'Waiting for Floci container and full AWS resource provisioning (up to 180s)...');
+  const startFloci = Date.now();
+  while (Date.now() - startFloci < 180000) {
+    if (flociProvisioned) break;
+    if (flociExited && !flociProvisioned) {
+      throw new Error(`Floci AWS Services process terminated unexpectedly with code ${flociExitCode} before completing provisioning`);
+    }
+    await new Promise((r) => setTimeout(r, 600));
   }
 
-  // 3. Step 3/5: Start FastAPI AI Service
-  logService('ai', '[3/5] Starting FastAPI AI Service on http://0.0.0.0:8000...');
-  startService({
-    name: 'ai',
-    color: 'ai',
-    cwd: path.resolve(rootDir, 'ai-service'),
-    command: 'python',
-    args: ['-m', 'uvicorn', 'app.main:app', '--reload', '--host', '0.0.0.0', '--port', '8000'],
-  });
-  const aiReady = await waitForPort(8000, 25000);
-  if (!aiReady) {
-    throw new Error('FastAPI AI Service failed to become ready on port 8000 within 25s');
+  if (!flociProvisioned) {
+    throw new Error('Floci AWS Services failed to finish resource provisioning within 180s');
   }
-  logService('ai', `${COLORS.bold}[SUCCESS] Step 3/5 Complete: AI Service is ONLINE.${COLORS.reset}\n`);
+  logService('floci', `${COLORS.bold}[SUCCESS] Step 2/5 Complete: Floci AWS Services are ONLINE.${COLORS.reset}\n`);
 
-  // 4. Step 4/5: Start Spring Boot Backend
-  logService('backend', '[4/5] Starting Spring Boot Backend on port 8085...');
-  startService({
-    name: 'backend',
-    color: 'backend',
-    cwd: rootDir,
-    command: 'bun',
-    args: ['run', 'scripts/run-backend.ts'],
-  });
-  const backendReady = await waitForPort(8085, 180000);
-  if (!backendReady) {
-    throw new Error('Spring Boot Backend failed to become ready on port 8085 within 180s');
+  // 3. Step 3/5: Start Spring Boot Backend (Strict Sequential Wait)
+  logService('backend', '[3/5] Starting Spring Boot Backend on port 8085...');
+  let backendReadySignal = false;
+  let backendExited = false;
+  let backendExitCode: number | string | null = null;
+
+  startService(
+    {
+      name: 'backend',
+      color: 'backend',
+      cwd: rootDir,
+      command: 'bun',
+      args: ['run', 'scripts/run-backend.ts'],
+    },
+    (line) => {
+      if (line.includes('Started BeyonApplication') || line.includes('Tomcat started on port 8085')) {
+        backendReadySignal = true;
+      }
+    },
+    (code, signal) => {
+      backendExited = true;
+      backendExitCode = code ?? signal;
+    }
+  );
+
+  logService('backend', 'Waiting for Spring Boot Backend to compile and bind port 8085 (up to 300s)...');
+  const startBackend = Date.now();
+  while (Date.now() - startBackend < 300000) {
+    if (backendReadySignal) break;
+    if (backendExited && !backendReadySignal) {
+      throw new Error(`Spring Boot Backend process terminated unexpectedly with code ${backendExitCode} before becoming ready`);
+    }
+    if (await checkPort(8085)) {
+      backendReadySignal = true;
+      break;
+    }
+    await new Promise((r) => setTimeout(r, 800));
   }
-  logService('backend', `${COLORS.bold}[SUCCESS] Step 4/5 Complete: Backend Service is ONLINE.${COLORS.reset}\n`);
 
-  // 5. Step 5/5: Start Vite Frontend Web App
+  if (!backendReadySignal) {
+    throw new Error('Spring Boot Backend failed to become ready on port 8085 within 300s');
+  }
+  logService('backend', `${COLORS.bold}[SUCCESS] Step 3/5 Complete: Backend Service is ONLINE.${COLORS.reset}\n`);
+
+  // 4. Step 4/5: Start FastAPI AI Service (Strict Sequential Wait)
+  logService('ai', '[4/5] Starting FastAPI AI Service on http://0.0.0.0:8000...');
+  let aiReadySignal = false;
+  startService(
+    {
+      name: 'ai',
+      color: 'ai',
+      cwd: path.resolve(rootDir, 'ai-service'),
+      command: 'python',
+      args: ['-m', 'uvicorn', 'app.main:app', '--reload', '--host', '0.0.0.0', '--port', '8000'],
+    },
+    (line) => {
+      if (line.includes('Application startup complete') || line.includes('Uvicorn running')) {
+        aiReadySignal = true;
+      }
+    }
+  );
+
+  logService('ai', 'Waiting for FastAPI AI Service to bind port 8000 (up to 60s)...');
+  const startAi = Date.now();
+  while (Date.now() - startAi < 60000) {
+    if (aiReadySignal) break;
+    if (await checkPort(8000)) {
+      aiReadySignal = true;
+      break;
+    }
+    await new Promise((r) => setTimeout(r, 600));
+  }
+
+  if (!aiReadySignal) {
+    throw new Error('FastAPI AI Service failed to become ready on port 8000 within 60s');
+  }
+  logService('ai', `${COLORS.bold}[SUCCESS] Step 4/5 Complete: AI Service is ONLINE.${COLORS.reset}\n`);
+
+  // 5. Step 5/5: Start Vite Frontend Web App (Strict Sequential Wait)
   logService('web', '[5/5] Starting Vite Web Frontend on https://localhost:5173/...');
   startService({
     name: 'web',
@@ -231,9 +312,10 @@ async function main() {
     command: 'bun',
     args: ['run', '--filter', '@beyon/web', 'dev'],
   });
-  const webReady = await waitForPort(5173, 20000);
+  logService('web', 'Waiting for Vite Web Frontend to bind port 5173 (up to 45s)...');
+  const webReady = await waitForPort(5173, 45000);
   if (!webReady) {
-    throw new Error('Vite Web Frontend failed to become ready on port 5173 within 20s');
+    throw new Error('Vite Web Frontend failed to become ready on port 5173 within 45s');
   }
   logService('web', `${COLORS.bold}[SUCCESS] Step 5/5 Complete: Web Frontend is ONLINE.${COLORS.reset}\n`);
 

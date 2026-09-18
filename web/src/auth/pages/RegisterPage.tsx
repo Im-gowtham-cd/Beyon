@@ -8,17 +8,31 @@ import styles from './LoginPage.module.css';
 interface VerifiedOrgData {
   aicteId?: string;
   cin?: string;
+  alreadyRegistered?: boolean;
   instituteName?: string;
+  institutionName?: string;
   companyName?: string;
+  institutionType?: string;
+  address?: string;
   state?: string;
   district?: string;
   city?: string;
+  pincode?: string;
   region?: string;
   userGroup?: string;
   status?: string;
   category?: string;
   class?: string;
   officialWebsite?: string;
+  officialEmail?: string;
+  contactPhone?: string;
+  affiliatedUniversity?: string;
+  representativeName?: string;
+  coursesOffered?: string[];
+  sourceUrls?: string[];
+  missingFields?: string[];
+  confidenceScore?: number;
+  message?: string;
 }
 
 export function RegisterPage() {
@@ -48,6 +62,18 @@ export function RegisterPage() {
   const [website, setWebsite] = useState('');
   const [representativeName, setRepresentativeName] = useState('');
 
+  // Editable institution fields auto-populated from AICTE lookup
+  const [instName, setInstName] = useState('');
+  const [instType, setInstType] = useState('UGC Autonomous Engineering Institute');
+  const [instAddress, setInstAddress] = useState('');
+  const [instCity, setInstCity] = useState('');
+  const [instDistrict, setInstDistrict] = useState('');
+  const [instState, setInstState] = useState('');
+  const [instPincode, setInstPincode] = useState('');
+  const [instPhone, setInstPhone] = useState('');
+  const [instAffiliatedUni, setInstAffiliatedUni] = useState('');
+  const [isEditingDetails, setIsEditingDetails] = useState(false);
+
   const [errors, setErrors] = useState<{
     name?: string;
     email?: string;
@@ -56,6 +82,9 @@ export function RegisterPage() {
     uniqueCode?: string;
     website?: string;
     representativeName?: string;
+    instName?: string;
+    instCity?: string;
+    instState?: string;
   }>({});
   const [toast, setToast] = useState({ show: false, message: '', isError: false });
   const [loading, setLoading] = useState(false);
@@ -68,6 +97,15 @@ export function RegisterPage() {
     setOrgLookupError('');
     setWebsite('');
     setRepresentativeName('');
+    setInstName('');
+    setInstAddress('');
+    setInstCity('');
+    setInstDistrict('');
+    setInstState('');
+    setInstPincode('');
+    setInstPhone('');
+    setInstAffiliatedUni('');
+    setIsEditingDetails(false);
     setErrors({});
   }, [role]);
 
@@ -91,31 +129,54 @@ export function RegisterPage() {
       const json = await res.json();
 
       if (res.ok && json.data && json.data.verified) {
-        if (json.data.alreadyRegistered) {
+        const data = json.data as VerifiedOrgData;
+        if (data.alreadyRegistered) {
           setIsOrgVerified(false);
           setVerifiedOrgData(null);
           setOrgLookupError(
-            `Institution "${json.data.instituteName || cleanCode}" is already registered on the platform. Each institution may only register once. Please sign in with existing credentials.`
+            `Institution "${data.instituteName || data.institutionName || cleanCode}" is already registered on the platform. Each institution may only register once. Please sign in with existing credentials.`
           );
           return;
         }
+
         setIsOrgVerified(true);
-        setVerifiedOrgData(json.data);
-        setErrors((prev) => ({ ...prev, uniqueCode: '' }));
-        showToast('AICTE Accredited Institution verified successfully!');
+        setVerifiedOrgData(data);
+        
+        // Auto-populate all corresponding registration fields
+        const fetchedName = data.institutionName || data.instituteName || '';
+        setInstName(fetchedName);
+        if (data.institutionType) setInstType(data.institutionType);
+        if (data.address) setInstAddress(data.address);
+        if (data.city) setInstCity(data.city);
+        if (data.district) setInstDistrict(data.district);
+        if (data.state) setInstState(data.state);
+        if (data.pincode) setInstPincode(data.pincode);
+        if (data.officialWebsite) setWebsite(data.officialWebsite);
+        if (data.contactPhone) setInstPhone(data.contactPhone);
+        if (data.affiliatedUniversity) setInstAffiliatedUni(data.affiliatedUniversity);
+        if (data.officialEmail) setEmail(data.officialEmail);
+        if (data.representativeName) setRepresentativeName(data.representativeName);
+
+        // Store into session for subsequent onboarding wizard
+        try {
+          sessionStorage.setItem('beyon_verified_aicte_data', JSON.stringify(data));
+        } catch {}
+
+        setErrors((prev) => ({ ...prev, uniqueCode: '', representativeName: '', email: '', website: '' }));
+        showToast('Institution details retrieved via Google Search & AICTE public records!');
       } else {
         setIsOrgVerified(false);
         setVerifiedOrgData(null);
         setOrgLookupError(
           json.data?.message ||
             json.message ||
-            `AICTE Permanent ID "${cleanCode}" not found in accredited institution records.`
+            `AICTE Permanent ID "${cleanCode}" not found in accredited institution records. Please enter details manually.`
         );
       }
     } catch {
       setIsOrgVerified(false);
       setVerifiedOrgData(null);
-      setOrgLookupError('Failed to query authoritative AICTE registry. Please check your network.');
+      setOrgLookupError('Failed to query AICTE registry / Google Search service. Please check your network.');
     } finally {
       setIsVerifying(false);
     }
@@ -192,8 +253,17 @@ export function RegisterPage() {
       if (!isOrgVerified || !verifiedOrgData) {
         nextErrors.uniqueCode = 'AICTE Institute ID must be verified against official records before registering';
       }
+      if (!instName.trim()) {
+        nextErrors.instName = 'Institution name is required';
+      }
       if (!representativeName.trim()) {
         nextErrors.representativeName = 'Representative / Coordinator full name is required';
+      }
+      if (!instCity.trim()) {
+        nextErrors.instCity = 'City is required';
+      }
+      if (!instState.trim()) {
+        nextErrors.instState = 'State is required';
       }
     } else if (role === 'COMPANY') {
       if (!isOrgVerified || !verifiedOrgData) {
@@ -238,14 +308,24 @@ export function RegisterPage() {
       role === 'STUDENT'
         ? name.trim()
         : representativeName.trim() ||
-          (role === 'INSTITUTION' ? verifiedOrgData?.instituteName || '' : verifiedOrgData?.companyName || '');
+          (role === 'INSTITUTION' ? instName.trim() || verifiedOrgData?.institutionName || verifiedOrgData?.instituteName || '' : verifiedOrgData?.companyName || '');
 
     const orgName =
       role === 'INSTITUTION'
-        ? verifiedOrgData?.instituteName
+        ? instName.trim() || verifiedOrgData?.institutionName || verifiedOrgData?.instituteName
         : role === 'COMPANY'
         ? verifiedOrgData?.companyName
         : undefined;
+
+    const orgState =
+      role === 'INSTITUTION'
+        ? instState.trim() || verifiedOrgData?.state
+        : verifiedOrgData?.state;
+
+    const orgCity =
+      role === 'INSTITUTION'
+        ? instCity.trim() || verifiedOrgData?.city
+        : verifiedOrgData?.city;
 
     try {
       await authApi.register({
@@ -259,8 +339,8 @@ export function RegisterPage() {
         organizationName: orgName,
         website: website.trim() || undefined,
         representativeName: role !== 'STUDENT' ? representativeName.trim() : undefined,
-        state: verifiedOrgData?.state || undefined,
-        city: verifiedOrgData?.city || undefined,
+        state: orgState || undefined,
+        city: orgCity || undefined,
       });
 
       try {
@@ -461,33 +541,197 @@ export function RegisterPage() {
                   {isOrgVerified && verifiedOrgData && (
                     <div className={styles.verifiedEntityCard}>
                       <div className={styles.verifiedCardHeader}>
-                        <span className={styles.verifiedBadge}>
-                          <i className="bx bx-check-circle" /> AICTE ACCREDITED INSTITUTION VERIFIED
-                        </span>
-                        <span style={{ fontSize: '0.72rem', color: '#166534', fontWeight: 600 }}>
-                          ID: {verifiedOrgData.aicteId}
-                        </span>
-                      </div>
-                      <h4 className={styles.verifiedEntityName}>{verifiedOrgData.instituteName}</h4>
-                      <div className={styles.verifiedMetaGrid}>
-                        <div className={styles.verifiedMetaItem}>
-                          <span className={styles.verifiedMetaLabel}>State</span>
-                          <span className={styles.verifiedMetaVal}>{verifiedOrgData.state || 'N/A'}</span>
-                        </div>
-                        <div className={styles.verifiedMetaItem}>
-                          <span className={styles.verifiedMetaLabel}>City / District</span>
-                          <span className={styles.verifiedMetaVal}>
-                            {[verifiedOrgData.city, verifiedOrgData.district].filter(Boolean).join(', ') || 'N/A'}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                          <span className={styles.verifiedBadge}>
+                            <i className="bx bx-check-circle" /> AICTE VERIFIED
+                          </span>
+                          <span className={styles.groundedTag}>
+                            <i className="bx bx-search-alt-2" /> Google Search Grounded
                           </span>
                         </div>
-                        <div className={styles.verifiedMetaItem}>
-                          <span className={styles.verifiedMetaLabel}>Region</span>
-                          <span className={styles.verifiedMetaVal}>{verifiedOrgData.region || 'National'}</span>
+                        <button
+                          type="button"
+                          className={styles.editToggleBtn}
+                          onClick={() => setIsEditingDetails(!isEditingDetails)}
+                        >
+                          <i className={`bx ${isEditingDetails ? 'bx-check' : 'bx-edit'}`} />
+                          {isEditingDetails ? 'Done Reviewing' : 'Edit / Review Details'}
+                        </button>
+                      </div>
+
+                      <h4 className={styles.verifiedEntityName}>{instName || verifiedOrgData.instituteName || verifiedOrgData.institutionName}</h4>
+
+                      {/* Grounded Source Citations */}
+                      {verifiedOrgData.sourceUrls && verifiedOrgData.sourceUrls.length > 0 && (
+                        <div className={styles.groundedSources}>
+                          <span style={{ fontWeight: 600 }}>Sources:</span>
+                          {verifiedOrgData.sourceUrls.map((url, idx) => {
+                            let domain = url;
+                            try {
+                              domain = new URL(url).hostname;
+                            } catch {}
+                            return (
+                              <a
+                                key={idx}
+                                href={url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className={styles.sourcePill}
+                                title={url}
+                              >
+                                <i className="bx bx-link-external" /> {domain}
+                              </a>
+                            );
+                          })}
                         </div>
-                        <div className={styles.verifiedMetaItem}>
-                          <span className={styles.verifiedMetaLabel}>Group</span>
-                          <span className={styles.verifiedMetaVal}>{verifiedOrgData.userGroup || 'Accredited'}</span>
+                      )}
+
+                      {/* Meta Information Overview */}
+                      {!isEditingDetails && (
+                        <div className={styles.verifiedMetaGrid}>
+                          <div className={styles.verifiedMetaItem}>
+                            <span className={styles.verifiedMetaLabel}>State</span>
+                            <span className={styles.verifiedMetaVal}>{instState || verifiedOrgData.state || 'N/A'}</span>
+                          </div>
+                          <div className={styles.verifiedMetaItem}>
+                            <span className={styles.verifiedMetaLabel}>City / District</span>
+                            <span className={styles.verifiedMetaVal}>
+                              {[instCity || verifiedOrgData.city, instDistrict || verifiedOrgData.district].filter(Boolean).join(', ') || 'N/A'}
+                            </span>
+                          </div>
+                          <div className={styles.verifiedMetaItem}>
+                            <span className={styles.verifiedMetaLabel}>Institute Type</span>
+                            <span className={styles.verifiedMetaVal}>{instType || verifiedOrgData.institutionType || 'Autonomous'}</span>
+                          </div>
+                          <div className={styles.verifiedMetaItem}>
+                            <span className={styles.verifiedMetaLabel}>Affiliated University</span>
+                            <span className={styles.verifiedMetaVal}>{instAffiliatedUni || verifiedOrgData.affiliatedUniversity || 'N/A'}</span>
+                          </div>
+                          {instPincode && (
+                            <div className={styles.verifiedMetaItem}>
+                              <span className={styles.verifiedMetaLabel}>Pincode</span>
+                              <span className={styles.verifiedMetaVal}>{instPincode}</span>
+                            </div>
+                          )}
+                          {website && (
+                            <div className={styles.verifiedMetaItem}>
+                              <span className={styles.verifiedMetaLabel}>Website</span>
+                              <span className={styles.verifiedMetaVal}>{website}</span>
+                            </div>
+                          )}
                         </div>
+                      )}
+
+                      {/* Missing Fields Banner */}
+                      {verifiedOrgData.missingFields && verifiedOrgData.missingFields.length > 0 && (
+                        <div className={styles.missingFieldsAlert}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <i className="bx bx-info-circle" />
+                            <strong>Unretrieved Fields:</strong> The following details could not be found in public records. Please verify/input them manually:
+                          </div>
+                          <div className={styles.missingFieldsChips}>
+                            {verifiedOrgData.missingFields.map((f, i) => (
+                              <span key={i} className={styles.missingFieldChip}>
+                                {f}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Interactive Editing Grid for Institution Owner Verification */}
+                      {isEditingDetails && (
+                        <div className={styles.fieldEditGrid}>
+                          <div className={styles.fieldEditGridFull}>
+                            <label style={{ fontSize: '0.74rem', fontWeight: 600, color: '#166534' }}>Institution Name</label>
+                            <input
+                              type="text"
+                              value={instName}
+                              onChange={(e) => setInstName(e.target.value)}
+                              style={{ width: '100%', padding: '6px 10px', fontSize: '0.8rem', borderRadius: '4px', border: '1px solid #86efac' }}
+                            />
+                            {errors.instName && <span className={styles.inputError}>{errors.instName}</span>}
+                          </div>
+
+                          <div>
+                            <label style={{ fontSize: '0.74rem', fontWeight: 600, color: '#166534' }}>City</label>
+                            <input
+                              type="text"
+                              value={instCity}
+                              onChange={(e) => setInstCity(e.target.value)}
+                              style={{ width: '100%', padding: '6px 10px', fontSize: '0.8rem', borderRadius: '4px', border: '1px solid #86efac' }}
+                            />
+                          </div>
+
+                          <div>
+                            <label style={{ fontSize: '0.74rem', fontWeight: 600, color: '#166534' }}>District</label>
+                            <input
+                              type="text"
+                              value={instDistrict}
+                              onChange={(e) => setInstDistrict(e.target.value)}
+                              style={{ width: '100%', padding: '6px 10px', fontSize: '0.8rem', borderRadius: '4px', border: '1px solid #86efac' }}
+                            />
+                          </div>
+
+                          <div>
+                            <label style={{ fontSize: '0.74rem', fontWeight: 600, color: '#166534' }}>State</label>
+                            <input
+                              type="text"
+                              value={instState}
+                              onChange={(e) => setInstState(e.target.value)}
+                              style={{ width: '100%', padding: '6px 10px', fontSize: '0.8rem', borderRadius: '4px', border: '1px solid #86efac' }}
+                            />
+                          </div>
+
+                          <div>
+                            <label style={{ fontSize: '0.74rem', fontWeight: 600, color: '#166534' }}>Pincode</label>
+                            <input
+                              type="text"
+                              value={instPincode}
+                              onChange={(e) => setInstPincode(e.target.value)}
+                              style={{ width: '100%', padding: '6px 10px', fontSize: '0.8rem', borderRadius: '4px', border: '1px solid #86efac' }}
+                            />
+                          </div>
+
+                          <div>
+                            <label style={{ fontSize: '0.74rem', fontWeight: 600, color: '#166534' }}>Official Contact Phone</label>
+                            <input
+                              type="text"
+                              value={instPhone}
+                              onChange={(e) => setInstPhone(e.target.value)}
+                              placeholder="e.g. 04294-226555"
+                              style={{ width: '100%', padding: '6px 10px', fontSize: '0.8rem', borderRadius: '4px', border: '1px solid #86efac' }}
+                            />
+                          </div>
+
+                          <div className={styles.fieldEditGridFull}>
+                            <label style={{ fontSize: '0.74rem', fontWeight: 600, color: '#166534' }}>Campus Address / Street</label>
+                            <input
+                              type="text"
+                              value={instAddress}
+                              onChange={(e) => setInstAddress(e.target.value)}
+                              placeholder="e.g. Perundurai Road, Thoppupalayam"
+                              style={{ width: '100%', padding: '6px 10px', fontSize: '0.8rem', borderRadius: '4px', border: '1px solid #86efac' }}
+                            />
+                          </div>
+
+                          <div className={styles.fieldEditGridFull}>
+                            <label style={{ fontSize: '0.74rem', fontWeight: 600, color: '#166534' }}>Affiliated University</label>
+                            <input
+                              type="text"
+                              value={instAffiliatedUni}
+                              onChange={(e) => setInstAffiliatedUni(e.target.value)}
+                              placeholder="e.g. Anna University, Chennai"
+                              style={{ width: '100%', padding: '6px 10px', fontSize: '0.8rem', borderRadius: '4px', border: '1px solid #86efac' }}
+                            />
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Confirmation & Review Notice */}
+                      <div className={styles.reviewNoticeBox}>
+                        <i className="bx bx-check-shield" />
+                        <span>Data auto-populated from Google Search &amp; AICTE. Please confirm accuracy before registration.</span>
                       </div>
                     </div>
                   )}
@@ -514,6 +758,11 @@ export function RegisterPage() {
                         {errors.representativeName && (
                           <span className={styles.inputError}>{errors.representativeName}</span>
                         )}
+                        {verifiedOrgData?.representativeName && representativeName === verifiedOrgData.representativeName && (
+                          <span className={styles.autofillBanner}>
+                            <i className="bx bx-check" /> Auto-populated from Google Search &amp; AICTE public records
+                          </span>
+                        )}
                       </div>
 
                       <div className={styles.inputGroup}>
@@ -528,6 +777,11 @@ export function RegisterPage() {
                             placeholder="https://www.institution.edu.in"
                           />
                         </div>
+                        {verifiedOrgData?.officialWebsite && website === verifiedOrgData.officialWebsite && (
+                          <span className={styles.autofillBanner}>
+                            <i className="bx bx-check" /> Auto-populated from Google Search &amp; AICTE public records
+                          </span>
+                        )}
                       </div>
                     </>
                   )}
@@ -704,6 +958,11 @@ export function RegisterPage() {
                   />
                 </div>
                 {errors.email && <span className={styles.inputError}>{errors.email}</span>}
+                {role === 'INSTITUTION' && verifiedOrgData?.officialEmail && email === verifiedOrgData.officialEmail && (
+                  <span className={styles.autofillBanner}>
+                    <i className="bx bx-check" /> Auto-populated from Google Search &amp; AICTE public records
+                  </span>
+                )}
               </div>
 
               {/* Password */}

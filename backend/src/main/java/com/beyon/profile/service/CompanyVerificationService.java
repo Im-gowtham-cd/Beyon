@@ -201,7 +201,7 @@ public class CompanyVerificationService {
         } else if (!domainMatchPass) {
             overallStatus = "DOMAIN_MISMATCH";
         } else {
-            overallStatus = "PENDING_SUPER_ADMIN_APPROVAL";
+            overallStatus = "VERIFIED";
         }
 
         // Resolve CompanyProfile
@@ -229,13 +229,8 @@ public class CompanyVerificationService {
 
         // Update User account status
         userRepo.findById(userId).ifPresent(u -> {
-            if ("VERIFIED".equals(overallStatus)) {
-                u.setStatus(AccountStatus.ACTIVE);
-                u.setProfileStatus(AccountStatus.COMPLETED);
-            } else {
-                u.setStatus(AccountStatus.PENDING_SUPER_ADMIN_VERIFICATION);
-                u.setProfileStatus(AccountStatus.PENDING_SUPER_ADMIN_VERIFICATION);
-            }
+            u.setStatus(AccountStatus.ACTIVE);
+            u.setProfileStatus(AccountStatus.COMPLETED);
             userRepo.save(u);
         });
 

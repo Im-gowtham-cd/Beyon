@@ -3,11 +3,24 @@ import { existsSync } from 'fs';
 
 const ENDPOINT = 'http://localhost:4566';
 const REGION = 'us-east-1';
+const AWS_ENV = {
+  ...process.env,
+  AWS_ACCESS_KEY_ID: 'test',
+  AWS_SECRET_ACCESS_KEY: 'test',
+  AWS_DEFAULT_REGION: REGION,
+  AWS_REGION: REGION,
+  AWS_EC2_METADATA_DISABLED: 'true',
+};
 
 function runAws(args: string[], ignoreError = false): string {
   try {
-    const fullArgs = [`--endpoint-url=${ENDPOINT}`, `--region=${REGION}`, ...args];
-    return execFileSync('aws', fullArgs, { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] }).trim();
+    const fullArgs = [`--endpoint-url=${ENDPOINT}`, `--region=${REGION}`, '--no-cli-pager', ...args];
+    return execFileSync('aws', fullArgs, {
+      encoding: 'utf-8',
+      stdio: ['pipe', 'pipe', 'pipe'],
+      env: AWS_ENV,
+      timeout: 8000,
+    }).trim();
   } catch (err: any) {
     if (!ignoreError) {
       const errMsg = err.stderr ? err.stderr.toString().trim() : err.message;

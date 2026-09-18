@@ -149,8 +149,9 @@ public class AuthService {
                 coinService.earnCoins(savedUser.getId(), "WELCOME_BONUS", "REGISTRATION", savedUser.getId());
             } catch (Exception ignored) {}
         } else if (request.getRole() != null && request.getRole().isCompanyTier()) {
-            savedUser.setStatus(AccountStatus.PENDING_SUPER_ADMIN_VERIFICATION);
-            savedUser.setProfileStatus(AccountStatus.PENDING_SUPER_ADMIN_VERIFICATION);
+            savedUser.setStatus(AccountStatus.ACTIVE);
+            savedUser.setProfileStatus(AccountStatus.COMPLETED);
+            savedUser.setEmailVerified(true);
             userRepository.save(savedUser);
 
             CompanyProfile profile = new CompanyProfile();
@@ -173,7 +174,8 @@ public class AuthService {
                 profile.setCity(request.getCity().trim());
             }
             profile.setOfficialEmail(savedUser.getEmail());
-            profile.setVerificationStatus("PENDING_SUPER_ADMIN_APPROVAL");
+            profile.setVerificationStatus("VERIFIED");
+            profile.setCompletionPct(100);
             companyProfileRepository.save(profile);
 
             if (request.getCin() != null && !request.getCin().isBlank() && companyVerificationService != null) {
@@ -193,8 +195,9 @@ public class AuthService {
                 } catch (Exception ignored) {}
             }
         } else if (request.getRole() != null && request.getRole().isInstitutionTier()) {
-            savedUser.setStatus(AccountStatus.PENDING_SUPER_ADMIN_VERIFICATION);
-            savedUser.setProfileStatus(AccountStatus.PENDING_SUPER_ADMIN_VERIFICATION);
+            savedUser.setStatus(AccountStatus.ACTIVE);
+            savedUser.setProfileStatus(AccountStatus.COMPLETED);
+            savedUser.setEmailVerified(true);
             userRepository.save(savedUser);
 
             InstitutionProfile profile = new InstitutionProfile();

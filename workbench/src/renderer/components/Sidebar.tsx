@@ -8,6 +8,7 @@ import {
   TableProperties,
   Radio,
   BrainCircuit,
+  MessageSquareCode,
 } from 'lucide-react';
 
 export type TabKey =
@@ -18,6 +19,7 @@ export type TabKey =
   | 'floci-sqs'
   | 'floci-dynamo'
   | 'floci-events'
+  | 'skill-chat'
   | 'ai-telemetry';
 
 interface SidebarProps {
@@ -116,6 +118,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </div>
 
       <div className="nav-group-title">AI & Intelligence</div>
+      <div
+        className={`nav-item ${activeTab === 'skill-chat' ? 'active' : ''}`}
+        onClick={() => setActiveTab('skill-chat')}
+      >
+        <div className="nav-item-left">
+          <MessageSquareCode size={16} />
+          <span>Skill Analysis Chat</span>
+        </div>
+      </div>
       <div
         className={`nav-item ${activeTab === 'ai-telemetry' ? 'active' : ''}`}
         onClick={() => setActiveTab('ai-telemetry')}

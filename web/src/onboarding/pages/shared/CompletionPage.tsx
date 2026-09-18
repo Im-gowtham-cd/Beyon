@@ -13,9 +13,9 @@ const ROLE_MESSAGES: Record<string, { title: string; subtitle: string; cta: stri
     path: '/onboarding/skill-assessment',
   },
   INSTITUTION: {
-    title: 'Registration Submitted for Super Admin Verification',
-    subtitle: 'Your institutional credentials have been submitted to the Super Admin verification queue. Placement workflows will be activated upon approval.',
-    cta: 'View Institutional Dashboard',
+    title: 'Institution Verified & Activated',
+    subtitle: 'Your institutional credentials have been verified via AICTE official registry & Google Search grounding. Your campus workspace is ready.',
+    cta: 'Enter Institution Workspace',
     path: '/institution/home',
   },
   COMPANY: {

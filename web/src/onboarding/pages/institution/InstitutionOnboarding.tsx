@@ -31,10 +31,10 @@ import { EMPTY_INSTITUTION_FORM } from '../../types/onboarding';
 import styles from '../student/StudentOnboarding.module.css';
 
 const STEPS = [
-  { label: 'Campus Details', sub: 'AISHE code & address', icon: Landmark },
+  { label: 'Campus Details', sub: 'AISHE/AICTE code & address', icon: Landmark },
   { label: 'Academic Governance', sub: 'NAAC, NIRF & programs', icon: GraduationCap },
   { label: 'Leadership & TPO', sub: 'Principal & placement cell', icon: UserCheck },
-  { label: 'Review & Verify', sub: 'Super Admin review', icon: ShieldCheck },
+  { label: 'Review & Activate', sub: 'AICTE Verified', icon: ShieldCheck },
 ];
 
 const INSTITUTION_TYPES = [
@@ -100,6 +100,30 @@ export function InstitutionOnboarding() {
   }, [step]);
 
   useEffect(() => {
+    // 1. Read locally verified AICTE search-grounded data if present
+    try {
+      const cached = sessionStorage.getItem('beyon_verified_aicte_data');
+      if (cached) {
+        const d = JSON.parse(cached);
+        setForm((prev) => ({
+          ...prev,
+          institutionName: d.institutionName || d.instituteName || prev.institutionName,
+          institutionCode: d.aicteId || prev.institutionCode,
+          institutionType: d.institutionType || prev.institutionType,
+          address: d.address || prev.address,
+          state: d.state || prev.state,
+          city: d.city || prev.city,
+          postalCode: d.pincode || prev.postalCode,
+          website: d.officialWebsite || prev.website,
+          officialEmail: d.officialEmail || prev.officialEmail,
+          phone: d.contactPhone || prev.phone,
+          affiliatedUniversity: d.affiliatedUniversity || prev.affiliatedUniversity,
+          departmentsOffered: d.coursesOffered && d.coursesOffered.length > 0 ? d.coursesOffered : prev.departmentsOffered,
+        }));
+      }
+    } catch {}
+
+    // 2. Query backend profile
     api.get<any>('/profile').then((res) => {
       const p = res?.institutionProfile?.profile;
       if (p) {
@@ -252,8 +276,8 @@ export function InstitutionOnboarding() {
         </Link>
         <div className={styles.headerRight}>
           <div className={styles.rewardBadge}>
-            <ShieldCheck size={14} color="#b45309" />
-            <span>Super Admin Verification Queue</span>
+            <ShieldCheck size={14} color="#15803d" />
+            <span>AICTE Instant Verified Institution</span>
           </div>
           <div className={styles.stepIndicatorBadge}>
             <span className={styles.stepHighlight}>Step {step + 1}</span> of {STEPS.length} ({progressPercent}%)
@@ -270,14 +294,14 @@ export function InstitutionOnboarding() {
             </div>
             <div className={styles.verifiedBadge}>
               <CheckCircle2 size={12} />
-              AISHE &amp; NAAC Institutional Verification
+              AICTE &amp; NAAC Verified Institution
             </div>
           </div>
           <h1 className={styles.welcomeTitle}>
             {form.institutionName ? form.institutionName : 'Setup Institutional Campus Profile'}
           </h1>
           <p className={styles.welcomeSub}>
-            Complete your academic accreditation, NAAC credentials, and training &amp; placement cell leadership details for Super Admin platform authorization and corporate drive scheduling.
+            Complete your academic accreditation, NAAC credentials, and training &amp; placement cell leadership details to activate your institution workspace.
           </p>
           <div className={styles.progressStrip}>
             <div className={styles.progressBarFill} style={{ width: `${progressPercent}%` }} />
@@ -298,7 +322,7 @@ export function InstitutionOnboarding() {
               {step === 0 && 'Provide your official legal campus identity, AISHE regulatory code, and physical location.'}
               {step === 1 && 'Record your affiliating university, NAAC accreditation, NIRF ranking, and active engineering departments.'}
               {step === 2 && 'Register authorized campus leadership, Training & Placement Officer (TPO), and departmental coordinators.'}
-              {step === 3 && 'Perform a final audit of all campus credentials before submission for Super Admin verification.'}
+              {step === 3 && 'Perform a final audit of all campus credentials before entering your Institution Workspace.'}
             </p>
           </div>
 
@@ -942,9 +966,9 @@ export function InstitutionOnboarding() {
                   <ShieldCheck size={20} />
                 </div>
                 <div className={styles.sectionTitleGroup}>
-                  <h2 className={styles.sectionTitle}>4. Review Credentials &amp; Super Admin Verification</h2>
+                  <h2 className={styles.sectionTitle}>4. Review Credentials &amp; Verification Details</h2>
                   <p className={styles.sectionSubtitle}>
-                    Review your campus profile details before final submission for Super Admin platform authorization.
+                    Review your AICTE verified campus profile details before entering your Institution Workspace.
                   </p>
                 </div>
               </div>
@@ -954,9 +978,9 @@ export function InstitutionOnboarding() {
                   <ShieldCheck size={24} />
                 </div>
                 <div>
-                  <h4 className={styles.rewardCalloutTitle}>Super Administrator Verification Protocol</h4>
+                  <h4 className={styles.rewardCalloutTitle}>AICTE Grounded Verification</h4>
                   <p className={styles.rewardCalloutText}>
-                    Upon submission, your institution enters <code>PENDING_SUPER_ADMIN_VERIFICATION</code>. The Super Administrator (`superadmin@beyon.io`) inspects your AISHE code, affiliating university status, and placement cell leadership before enabling corporate recruitment drives.
+                    Your institutional accreditation and permanent ID are verified against official AICTE records and Google Search. Your campus workspace will be immediately active upon completion.
                   </p>
                 </div>
               </div>
@@ -1062,7 +1086,7 @@ export function InstitutionOnboarding() {
                   style={{ width: '18px', height: '18px', marginTop: '2px', cursor: 'pointer', accentColor: '#1c2d81' }}
                 />
                 <span style={{ fontSize: '0.84rem', color: '#334155', lineHeight: 1.5 }}>
-                  I certify under regulatory penalty that the institutional information, AISHE codes, NAAC accreditation, and placement contact details provided are authentic and authorized by campus leadership for Super Admin validation.
+                  I certify that the institutional information, AISHE/AICTE codes, and placement contact details provided are accurate and authorized by campus leadership.
                 </span>
               </label>
             </div>
@@ -1094,11 +1118,11 @@ export function InstitutionOnboarding() {
                 style={{ background: '#15803d', borderColor: '#15803d' }}
               >
                 {loading ? (
-                  <span>Submitting Credentials...</span>
+                  <span>Activating Workspace...</span>
                 ) : (
                   <>
                     <ShieldCheck size={18} />
-                    <span>Submit for Super Admin Verification</span>
+                    <span>Complete &amp; Enter Institution Workspace</span>
                   </>
                 )}
               </button>

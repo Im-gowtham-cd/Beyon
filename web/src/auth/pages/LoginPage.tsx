@@ -71,8 +71,9 @@ export function LoginPage() {
         return;
       }
 
+      const tier = getRoleTier(response.user.role);
+
       if (profileStatus === 'INCOMPLETE') {
-        const tier = getRoleTier(response.user.role);
         if (tier === 'SUPER_ADMIN') {
           navigate('/admin/home');
           return;
@@ -83,11 +84,12 @@ export function LoginPage() {
       }
 
       if (
-        profileStatus === 'PENDING_SUPER_ADMIN_VERIFICATION' ||
-        accountStatus === 'PENDING_SUPER_ADMIN_VERIFICATION' ||
-        profileStatus === 'PENDING_INSTITUTION_VERIFICATION' ||
-        profileStatus === 'PENDING_COMPANY_VERIFICATION' ||
-        accountStatus === 'PENDING_VERIFICATION'
+        tier !== 'INSTITUTION' &&
+        (profileStatus === 'PENDING_SUPER_ADMIN_VERIFICATION' ||
+          accountStatus === 'PENDING_SUPER_ADMIN_VERIFICATION' ||
+          profileStatus === 'PENDING_INSTITUTION_VERIFICATION' ||
+          profileStatus === 'PENDING_COMPANY_VERIFICATION' ||
+          accountStatus === 'PENDING_VERIFICATION')
       ) {
         navigate('/verification-pending');
         return;

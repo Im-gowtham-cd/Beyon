@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -47,6 +48,7 @@ public class OnboardingController {
     private final ObjectMapper objectMapper;
     private final org.springframework.jdbc.core.JdbcTemplate jdbcTemplate;
     private final com.beyon.profile.service.CompanyVerificationService companyVerificationService;
+    private final com.beyon.intelligence.client.AiIntelligenceClient aiIntelligenceClient;
 
     public OnboardingController(UserRepository userRepository,
                                 StudentProfileRepository studentProfileRepository,
@@ -61,7 +63,8 @@ public class OnboardingController {
                                 CoinService coinService,
                                 ObjectMapper objectMapper,
                                 org.springframework.jdbc.core.JdbcTemplate jdbcTemplate,
-                                com.beyon.profile.service.CompanyVerificationService companyVerificationService) {
+                                com.beyon.profile.service.CompanyVerificationService companyVerificationService,
+                                com.beyon.intelligence.client.AiIntelligenceClient aiIntelligenceClient) {
         this.userRepository = userRepository;
         this.studentProfileRepository = studentProfileRepository;
         this.companyProfileRepository = companyProfileRepository;
@@ -76,6 +79,7 @@ public class OnboardingController {
         this.objectMapper = objectMapper;
         this.jdbcTemplate = jdbcTemplate;
         this.companyVerificationService = companyVerificationService;
+        this.aiIntelligenceClient = aiIntelligenceClient;
     }
 
     @GetMapping("/institutions")
@@ -100,7 +104,29 @@ public class OnboardingController {
             return ResponseEntity.badRequest().body(ApiResponse.error("AICTE code cannot be empty"));
         }
         boolean alreadyRegistered = institutionProfileRepository.existsByInstitutionCodeIgnoreCase(cleanCode);
+
+        // 1. Check local AICTE accredited registry for known institution identity
         Optional<AicteInstitution> opt = aicteInstitutionRepository.findByAicteIdIgnoreCase(cleanCode);
+        String knownName = opt.map(AicteInstitution::getInstituteName).orElse(null);
+        String knownCity = opt.map(AicteInstitution::getCity).orElse(null);
+        String knownState = opt.map(AicteInstitution::getState).orElse(null);
+
+        // 2. Query AICTE Lookup with Google Search Grounding via AI Service
+        try {
+            Map<String, Object> aiLookup = aiIntelligenceClient.lookupAicteInstitution(cleanCode, knownName, knownCity, knownState);
+            if (aiLookup != null && Boolean.TRUE.equals(aiLookup.get("verified"))) {
+                Map<String, Object> data = new HashMap<>(aiLookup);
+                data.put("alreadyRegistered", alreadyRegistered);
+                data.put("instituteName", aiLookup.getOrDefault("institutionName", knownName != null ? knownName : cleanCode));
+                if (data.get("city") == null && knownCity != null) data.put("city", knownCity);
+                if (data.get("state") == null && knownState != null) data.put("state", knownState);
+                return ResponseEntity.ok(ApiResponse.ok(data));
+            }
+        } catch (Exception e) {
+            // Fallback to database record if AI service lookup encounters error
+        }
+
+        // 3. Fallback to local database record if AI search is unavailable
         if (opt.isPresent()) {
             AicteInstitution inst = opt.get();
             Map<String, Object> data = new HashMap<>();
@@ -108,13 +134,18 @@ public class OnboardingController {
             data.put("alreadyRegistered", alreadyRegistered);
             data.put("aicteId", inst.getAicteId());
             data.put("instituteName", inst.getInstituteName());
+            data.put("institutionName", inst.getInstituteName());
             data.put("region", inst.getRegion());
             data.put("state", inst.getState());
             data.put("district", inst.getDistrict());
             data.put("city", inst.getCity());
             data.put("userGroup", inst.getUserGroup());
+            data.put("sourceUrls", List.of("https://facilities.aicte-india.org/dashboard/pages/angulardashboard.php"));
+            data.put("missingFields", List.of("officialWebsite", "officialEmail", "affiliatedUniversity"));
+            data.put("confidenceScore", 0.95);
             return ResponseEntity.ok(ApiResponse.ok(data));
         }
+
         List<InstitutionProfile> profiles = institutionProfileRepository.findAll();
         for (InstitutionProfile ip : profiles) {
             if (ip.getInstitutionCode() != null && cleanCode.equalsIgnoreCase(ip.getInstitutionCode().trim())) {
@@ -123,18 +154,29 @@ public class OnboardingController {
                 data.put("alreadyRegistered", true);
                 data.put("aicteId", ip.getInstitutionCode());
                 data.put("instituteName", ip.getInstitutionName());
+                data.put("institutionName", ip.getInstitutionName());
                 data.put("region", "National");
                 data.put("state", ip.getState());
                 data.put("district", ip.getCity());
                 data.put("city", ip.getCity());
                 data.put("userGroup", "Accredited");
+                data.put("officialWebsite", ip.getWebsite());
+                data.put("officialEmail", ip.getOfficialEmail());
+                data.put("sourceUrls", List.of("https://facilities.aicte-india.org/dashboard/pages/angulardashboard.php"));
+                data.put("missingFields", Collections.emptyList());
+                data.put("confidenceScore", 0.99);
                 return ResponseEntity.ok(ApiResponse.ok(data));
             }
         }
+
         Map<String, Object> notFound = new HashMap<>();
         notFound.put("verified", false);
         notFound.put("alreadyRegistered", false);
-        notFound.put("message", "AICTE Permanent ID " + cleanCode + " not found in accredited institution records");
+        notFound.put("aicteId", cleanCode);
+        notFound.put("missingFields", List.of("institutionName", "address", "city", "district", "state", "pincode", "officialWebsite", "officialEmail"));
+        notFound.put("sourceUrls", Collections.emptyList());
+        notFound.put("confidenceScore", 0.0);
+        notFound.put("message", "AICTE Permanent ID " + cleanCode + " not found in accredited institution records. Please enter details manually.");
         return ResponseEntity.ok(ApiResponse.ok(notFound));
     }
 

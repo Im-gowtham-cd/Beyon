@@ -76,6 +76,9 @@ export function ProtectedRoute() {
     if (tier === 'COMPANY' && (path.startsWith('/company') || path.startsWith('/onboarding/company'))) {
       return <Outlet />;
     }
+    if (tier === 'INSTITUTION' && (path.startsWith('/institution') || path.startsWith('/onboarding/institution'))) {
+      return <Outlet />;
+    }
     if (!path.startsWith('/verification-pending')) {
       return <Navigate to="/verification-pending" replace />;
     }

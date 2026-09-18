@@ -219,7 +219,8 @@ public class OnboardingService {
         profile.setCompletionPct(calculateInstitutionCompletion(req));
         institutionProfileRepository.save(profile);
 
-        user.setProfileStatus(AccountStatus.PENDING_INSTITUTION_VERIFICATION);
+        user.setStatus(AccountStatus.ACTIVE);
+        user.setProfileStatus(AccountStatus.COMPLETED);
         userRepository.save(user);
 
         if (req.getPlacementHistory() != null) {
@@ -283,7 +284,8 @@ public class OnboardingService {
         profile.setCompletionPct(calculateCompanyCompletion(req));
         companyProfileRepository.save(profile);
 
-        user.setProfileStatus(AccountStatus.PENDING_COMPANY_VERIFICATION);
+        user.setStatus(AccountStatus.ACTIVE);
+        user.setProfileStatus(AccountStatus.COMPLETED);
         userRepository.save(user);
 
         if (req.getHiringTypes() != null || req.getPreferredLevels() != null || req.getRecruitmentRegions() != null) {
