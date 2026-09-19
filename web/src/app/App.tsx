@@ -86,6 +86,7 @@ import { AdminFeedbackPage } from '../community/pages/AdminFeedbackPage';
 import { InstitutionHome } from '../pages/institution/InstitutionHome';
 import { InstitutionLayout } from '../layouts/InstitutionLayout';
 import { InstitutionStudentsPage } from '../pages/institution/InstitutionStudentsPage';
+import { InstitutionMonitoringPage } from '../pages/institution/InstitutionMonitoringPage';
 import { InstitutionDrivesPage } from '../pages/institution/InstitutionDrivesPage';
 import { InstitutionPlacementsPage } from '../pages/institution/InstitutionPlacementsPage';
 import { InstitutionCurriculumPage } from '../pages/institution/InstitutionCurriculumPage';
@@ -183,6 +184,8 @@ export function App() {
             <Route path="/institution/dashboard" element={<InstitutionHome />} />
             <Route path="/institution/hierarchy" element={<InstitutionHierarchyPage />} />
             <Route path="/institution/analytics" element={<InstitutionAnalyticsPage />} />
+            <Route path="/institution/monitoring" element={<InstitutionMonitoringPage />} />
+            <Route path="/institution/monitoring/:studentId" element={<InstitutionMonitoringPage />} />
             <Route path="/institution/drives" element={<InstitutionDrivesPage />} />
             <Route path="/institution/students" element={<InstitutionStudentsPage />} />
             <Route path="/institution/placements" element={<InstitutionPlacementsPage />} />

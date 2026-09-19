@@ -47,6 +47,14 @@ public class InstitutionController {
         return ResponseEntity.ok(ApiResponse.ok(institutionService.getStudentsWithDetails(instId, status)));
     }
 
+    @GetMapping("/students/{studentId}/monitoring")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getStudentMonitoring(
+            Authentication auth,
+            @PathVariable UUID studentId) {
+        UUID instId = extractInstitutionId(auth);
+        return ResponseEntity.ok(ApiResponse.ok(institutionService.getStudentMonitoringDetails(instId, studentId)));
+    }
+
     @PostMapping("/students")
     public ResponseEntity<ApiResponse<InstitutionStudent>> addStudent(
             Authentication auth,

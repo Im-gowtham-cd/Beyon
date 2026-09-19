@@ -43,8 +43,9 @@ export function ProtectedRoute() {
   }
 
   const tier = getRoleTier(user?.role);
+  const isProfileIncomplete = profileStatus === 'INCOMPLETE' || user?.profileStatus === 'INCOMPLETE';
 
-  if (profileStatus === 'INCOMPLETE') {
+  if (isProfileIncomplete) {
     if (tier === 'SUPER_ADMIN') {
       return <Outlet />;
     }

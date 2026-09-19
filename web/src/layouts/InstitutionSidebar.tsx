@@ -15,6 +15,7 @@ import {
   ChevronLeft,
   ChevronRight,
   ShieldCheck,
+  Activity,
 } from 'lucide-react';
 import styles from './InstitutionSidebar.module.css';
 
@@ -61,6 +62,7 @@ export function InstitutionSidebar({
           title: 'Institutional Overview',
           items: [
             { to: '/institution/home', icon: LayoutDashboard, label: 'Overview Dashboard' },
+            { to: '/institution/monitoring', icon: Activity, label: 'Student Monitoring Hub', badge: 'Live', badgeType: 'primary' },
             { to: '/institution/analytics', icon: LineChart, label: 'Analytics & Trends' },
             { to: '/institution/students', icon: Users, label: 'Student Directory' },
             { to: '/institution/placements', icon: Award, label: 'Placement Reports' },
@@ -76,6 +78,7 @@ export function InstitutionSidebar({
           items: [
             { to: '/institution/home', icon: LayoutDashboard, label: 'Faculty Dashboard' },
             { to: '/institution/faculty-hub', icon: GraduationCap, label: 'Academician Industry Hub (FDP & Sabbaticals)', badge: '6 Open', badgeType: 'primary' },
+            { to: '/institution/monitoring', icon: Activity, label: 'Cohort Monitoring & Telemetry', badge: 'Live', badgeType: 'primary' },
             { to: '/institution/students', icon: Users, label: 'Department Students', badge: enrolledCount > 0 ? `${enrolledCount}` : undefined, badgeType: 'gold' },
             { to: '/institution/curriculum', icon: BookOpen, label: 'Curriculum & Skill Gaps' },
             { to: '/institution/analytics', icon: LineChart, label: 'Academic Performance' },
@@ -90,6 +93,7 @@ export function InstitutionSidebar({
           title: 'Placement Operations',
           items: [
             { to: '/institution/home', icon: LayoutDashboard, label: 'Placement Dashboard' },
+            { to: '/institution/monitoring', icon: Activity, label: 'Candidate Monitoring Hub', badge: 'Telemetry', badgeType: 'primary' },
             { to: '/institution/drives', icon: Briefcase, label: 'Campus Drives', badge: activeDrivesCount > 0 ? `${activeDrivesCount} Active` : undefined, badgeType: 'primary' },
             { to: '/institution/students', icon: Users, label: 'Eligible Candidates', badge: enrolledCount > 0 ? `${enrolledCount}` : undefined, badgeType: 'gold' },
             { to: '/institution/placements', icon: Award, label: 'Placement Outcomes & Offers' },
@@ -112,6 +116,7 @@ export function InstitutionSidebar({
           title: 'Department Placement Hub',
           items: [
             { to: '/institution/hierarchy', icon: Users, label: 'Department Student Cohort' },
+            { to: '/institution/monitoring', icon: Activity, label: 'Cohort Live Monitoring' },
             { to: '/institution/students', icon: GraduationCap, label: 'Candidate Directory' },
             { to: '/institution/curriculum', icon: BookOpen, label: 'Curriculum & Skills' },
           ],
@@ -133,6 +138,18 @@ export function InstitutionSidebar({
             icon: Briefcase,
             label: 'Placement Drives',
             badge: activeDrivesCount > 0 ? `${activeDrivesCount} Active` : undefined,
+            badgeType: 'primary',
+          },
+        ],
+      },
+      {
+        title: 'Cohort Surveillance & Monitoring',
+        items: [
+          {
+            to: '/institution/monitoring',
+            icon: Activity,
+            label: 'Student Monitoring Hub',
+            badge: 'Live',
             badgeType: 'primary',
           },
         ],

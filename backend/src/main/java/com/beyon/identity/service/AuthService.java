@@ -150,7 +150,7 @@ public class AuthService {
             } catch (Exception ignored) {}
         } else if (request.getRole() != null && request.getRole().isCompanyTier()) {
             savedUser.setStatus(AccountStatus.ACTIVE);
-            savedUser.setProfileStatus(AccountStatus.COMPLETED);
+            savedUser.setProfileStatus(AccountStatus.INCOMPLETE);
             savedUser.setEmailVerified(true);
             userRepository.save(savedUser);
 
@@ -175,7 +175,7 @@ public class AuthService {
             }
             profile.setOfficialEmail(savedUser.getEmail());
             profile.setVerificationStatus("VERIFIED");
-            profile.setCompletionPct(100);
+            profile.setCompletionPct(0);
             companyProfileRepository.save(profile);
 
             if (request.getCin() != null && !request.getCin().isBlank() && companyVerificationService != null) {
@@ -196,7 +196,7 @@ public class AuthService {
             }
         } else if (request.getRole() != null && request.getRole().isInstitutionTier()) {
             savedUser.setStatus(AccountStatus.ACTIVE);
-            savedUser.setProfileStatus(AccountStatus.COMPLETED);
+            savedUser.setProfileStatus(AccountStatus.INCOMPLETE);
             savedUser.setEmailVerified(true);
             userRepository.save(savedUser);
 
@@ -220,6 +220,7 @@ public class AuthService {
                 profile.setCity(request.getCity().trim());
             }
             profile.setOfficialEmail(savedUser.getEmail());
+            profile.setCompletionPct(0);
             institutionProfileRepository.save(profile);
         }
 

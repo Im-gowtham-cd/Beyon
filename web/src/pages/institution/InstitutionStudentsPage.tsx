@@ -17,8 +17,10 @@ import {
   FileText,
   Key,
   Copy,
+  Eye,
 } from 'lucide-react';
 import { institutionApi } from '../../institution/services/institutionApi';
+import { StudentMonitoringModal } from './components/StudentMonitoringModal';
 import styles from '../../assessment/pages/AssessmentBuilderPage.module.css';
 
 interface StudentRecord {
@@ -220,6 +222,7 @@ export function InstitutionStudentsPage() {
   const [deptFilter, setDeptFilter] = useState('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   const [actionMessage, setActionMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
 
   // Bulk Importer State
   const [showImportModal, setShowImportModal] = useState(false);
@@ -665,83 +668,118 @@ export function InstitutionStudentsPage() {
                 </tr>
               </thead>
               <tbody>
-                {filteredPending.map((s) => (
-                  <tr key={s.id || s.studentId} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                    <td style={{ padding: '12px 16px' }}>
-                      <code style={{ background: '#f1f5f9', padding: '2px 6px', borderRadius: '3px', fontWeight: 600 }}>
-                        {s.registrationNumber || s.studentId?.slice(0, 8).toUpperCase() || 'N/A'}
-                      </code>
-                    </td>
-                    <td style={{ padding: '12px 16px' }}>
-                      <div style={{ fontWeight: 700, color: '#0f172a' }}>{s.displayName || 'Student Candidate'}</div>
-                      <div style={{ fontSize: '0.78rem', color: '#64748b' }}>{s.email}</div>
-                    </td>
-                    <td style={{ padding: '12px 16px', color: '#334155' }}>{s.department || 'General Engineering'}</td>
-                    <td style={{ padding: '12px 16px', color: '#64748b' }}>{s.batch || '2022-2026'}</td>
-                    <td style={{ padding: '12px 16px', fontWeight: 800, color: '#0f172a' }}>
-                      {s.cgpa ? s.cgpa.toFixed(2) : '8.50'}
-                    </td>
-                    <td style={{ padding: '12px 16px' }}>
-                      <span
-                        style={{
-                          fontSize: '0.72rem',
-                          fontWeight: 700,
-                          padding: '3px 8px',
-                          borderRadius: '3px',
-                          background: '#fef3c7',
-                          color: '#b45309',
-                          border: '1px solid #fde68a',
-                        }}
-                      >
-                        PENDING VERIFICATION
-                      </span>
-                    </td>
-                    <td style={{ padding: '12px 16px', textAlign: 'center' }}>
-                      <div style={{ display: 'inline-flex', gap: '8px' }}>
-                        <button
-                          disabled={verifyingId === s.studentId}
-                          onClick={() => handleVerify(s.studentId, true)}
+                {filteredPending.map((s) => {
+                  const sId = s.studentId || s.id;
+                  return (
+                    <tr
+                      key={sId}
+                      style={{ borderBottom: '1px solid #f1f5f9', cursor: 'pointer', transition: 'background 0.15s' }}
+                      onClick={() => setSelectedStudentId(sId)}
+                      title="Click to view student profile monitoring dashboard"
+                    >
+                      <td style={{ padding: '12px 16px' }}>
+                        <code style={{ background: '#f1f5f9', padding: '2px 6px', borderRadius: '3px', fontWeight: 600 }}>
+                          {s.registrationNumber || sId?.slice(0, 8).toUpperCase() || 'N/A'}
+                        </code>
+                      </td>
+                      <td style={{ padding: '12px 16px' }}>
+                        <div style={{ fontWeight: 700, color: '#0f172a' }}>{s.displayName || 'Student Candidate'}</div>
+                        <div style={{ fontSize: '0.78rem', color: '#64748b' }}>{s.email}</div>
+                      </td>
+                      <td style={{ padding: '12px 16px', color: '#334155' }}>{s.department || 'General Engineering'}</td>
+                      <td style={{ padding: '12px 16px', color: '#64748b' }}>{s.batch || '2022-2026'}</td>
+                      <td style={{ padding: '12px 16px', fontWeight: 800, color: '#0f172a' }}>
+                        {s.cgpa ? Number(s.cgpa).toFixed(2) : '8.50'}
+                      </td>
+                      <td style={{ padding: '12px 16px' }}>
+                        <span
                           style={{
-                            padding: '6px 14px',
-                            background: '#15803d',
-                            color: '#ffffff',
-                            border: '1px solid #15803d',
-                            fontSize: '0.78rem',
+                            fontSize: '0.72rem',
                             fontWeight: 700,
+                            padding: '3px 8px',
                             borderRadius: '3px',
-                            cursor: 'pointer',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '4px',
+                            background: '#fef3c7',
+                            color: '#b45309',
+                            border: '1px solid #fde68a',
                           }}
                         >
-                          <Check size={14} />
-                          <span>Approve</span>
-                        </button>
-                        <button
-                          disabled={verifyingId === s.studentId}
-                          onClick={() => handleVerify(s.studentId, false)}
-                          style={{
-                            padding: '6px 12px',
-                            background: '#ffffff',
-                            color: '#dc2626',
-                            border: '1px solid #fca5a5',
-                            fontSize: '0.78rem',
-                            fontWeight: 600,
-                            borderRadius: '3px',
-                            cursor: 'pointer',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '4px',
-                          }}
-                        >
-                          <X size={14} />
-                          <span>Reject</span>
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                          PENDING VERIFICATION
+                        </span>
+                      </td>
+                      <td style={{ padding: '12px 16px', textAlign: 'center' }}>
+                        <div style={{ display: 'inline-flex', gap: '8px', alignItems: 'center' }}>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedStudentId(sId);
+                            }}
+                            style={{
+                              padding: '5px 10px',
+                              background: '#eff6ff',
+                              color: '#1c2d81',
+                              border: '1px solid #bfdbfe',
+                              fontSize: '0.75rem',
+                              fontWeight: 700,
+                              borderRadius: '3px',
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                            }}
+                          >
+                            <Eye size={13} />
+                            <span>Monitor</span>
+                          </button>
+                          <button
+                            disabled={verifyingId === s.studentId}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleVerify(s.studentId, true);
+                            }}
+                            style={{
+                              padding: '5px 10px',
+                              background: '#15803d',
+                              color: '#ffffff',
+                              border: '1px solid #15803d',
+                              fontSize: '0.75rem',
+                              fontWeight: 700,
+                              borderRadius: '3px',
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                            }}
+                          >
+                            <Check size={13} />
+                            <span>Approve</span>
+                          </button>
+                          <button
+                            disabled={verifyingId === s.studentId}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleVerify(s.studentId, false);
+                            }}
+                            style={{
+                              padding: '5px 8px',
+                              background: '#ffffff',
+                              color: '#dc2626',
+                              border: '1px solid #fca5a5',
+                              fontSize: '0.75rem',
+                              fontWeight: 600,
+                              borderRadius: '3px',
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                            }}
+                          >
+                            <X size={13} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           )
@@ -760,102 +798,136 @@ export function InstitutionStudentsPage() {
               </tr>
             </thead>
             <tbody>
-              {filteredAll.map((s) => (
-                <tr key={s.id || s.studentId} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                  <td style={{ padding: '12px 16px' }}>
-                    <code style={{ background: '#f1f5f9', padding: '2px 6px', borderRadius: '3px', fontWeight: 600 }}>
-                      {s.registrationNumber || s.rollNumber || (s.studentId ? s.studentId.slice(0, 8).toUpperCase() : 'N/A')}
-                    </code>
-                  </td>
-                  <td style={{ padding: '12px 16px' }}>
-                    <div style={{ fontWeight: 700, color: '#0f172a' }}>{s.displayName || 'Student Candidate'}</div>
-                    <div style={{ fontSize: '0.78rem', color: '#64748b' }}>{s.email}</div>
-                  </td>
-                  <td style={{ padding: '12px 16px' }}>
-                    <div style={{ fontWeight: 600, color: '#1c2d81' }}>{s.department || 'CSE'}</div>
-                    <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{s.degree || 'B.Tech'}</div>
-                  </td>
-                  <td style={{ padding: '12px 16px', color: '#64748b' }}>{s.batch || '2026'}</td>
-                  <td style={{ padding: '12px 16px', fontWeight: 800, color: '#0f172a' }}>
-                    {s.cgpa ? Number(s.cgpa).toFixed(2) : '-'}
-                  </td>
-                  <td style={{ padding: '12px 16px' }}>
-                    <select
-                      value={s.placementStatus || 'UNPLACED'}
-                      onChange={async (e) => {
-                        const newStatus = e.target.value;
-                        try {
-                          await institutionApi.updatePlacementStatus(s.studentId, newStatus);
-                          setActionMessage({ type: 'success', text: `Updated student status to: ${newStatus}` });
-                          await loadData();
-                        } catch {
-                          setActionMessage({ type: 'error', text: 'Failed to update student placement status.' });
-                        }
-                      }}
-                      style={{
-                        padding: '4px 8px',
-                        borderRadius: '4px',
-                        fontSize: '0.76rem',
-                        fontWeight: 700,
-                        cursor: 'pointer',
-                        background: s.placementStatus === 'PLACED' ? '#dcfce7' : '#eff6ff',
-                        color: s.placementStatus === 'PLACED' ? '#15803d' : '#1d4ed8',
-                        border: `1px solid ${s.placementStatus === 'PLACED' ? '#86efac' : '#bfdbfe'}`,
-                      }}
-                    >
-                      <option value="UNPLACED">UNPLACED</option>
-                      <option value="PLACEMENT_SEEKING">PLACEMENT_SEEKING</option>
-                      <option value="PLACED">PLACED (Offer Certified)</option>
-                      <option value="OPTED_OUT">OPTED_OUT</option>
-                    </select>
-                  </td>
-                  <td style={{ padding: '12px 16px' }}>
-                    <span
-                      style={{
-                        fontSize: '0.72rem',
-                        fontWeight: 700,
-                        padding: '3px 8px',
-                        borderRadius: '3px',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '4px',
-                        background: s.verified ? '#dcfce7' : '#fef3c7',
-                        color: s.verified ? '#15803d' : '#b45309',
-                        border: `1px solid ${s.verified ? '#bbf7d0' : '#fde68a'}`,
-                      }}
-                    >
-                      {s.verified ? <ShieldCheck size={12} /> : <Clock size={12} />}
-                      <span>{s.verified ? 'VERIFIED' : 'PENDING'}</span>
-                    </span>
-                  </td>
-                  <td style={{ padding: '12px 16px', textAlign: 'center' }}>
-                    {!s.verified ? (
-                      <button
-                        disabled={verifyingId === s.studentId}
-                        onClick={() => handleVerify(s.studentId, true)}
+              {filteredAll.map((s) => {
+                const sId = s.studentId || s.id;
+                return (
+                  <tr
+                    key={sId}
+                    style={{ borderBottom: '1px solid #f1f5f9', cursor: 'pointer', transition: 'background 0.15s' }}
+                    onClick={() => setSelectedStudentId(sId)}
+                    title="Click to inspect student profile monitoring dashboard"
+                  >
+                    <td style={{ padding: '12px 16px' }}>
+                      <code style={{ background: '#f1f5f9', padding: '2px 6px', borderRadius: '3px', fontWeight: 600 }}>
+                        {s.registrationNumber || s.rollNumber || (sId ? sId.slice(0, 8).toUpperCase() : 'N/A')}
+                      </code>
+                    </td>
+                    <td style={{ padding: '12px 16px' }}>
+                      <div style={{ fontWeight: 700, color: '#0f172a' }}>{s.displayName || 'Student Candidate'}</div>
+                      <div style={{ fontSize: '0.78rem', color: '#64748b' }}>{s.email}</div>
+                    </td>
+                    <td style={{ padding: '12px 16px' }}>
+                      <div style={{ fontWeight: 600, color: '#1c2d81' }}>{s.department || 'CSE'}</div>
+                      <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{s.degree || 'B.Tech'}</div>
+                    </td>
+                    <td style={{ padding: '12px 16px', color: '#64748b' }}>{s.batch || '2026'}</td>
+                    <td style={{ padding: '12px 16px', fontWeight: 800, color: '#0f172a' }}>
+                      {s.cgpa ? Number(s.cgpa).toFixed(2) : '-'}
+                    </td>
+                    <td style={{ padding: '12px 16px' }}>
+                      <select
+                        value={s.placementStatus || 'UNPLACED'}
+                        onClick={(e) => e.stopPropagation()}
+                        onChange={async (e) => {
+                          const newStatus = e.target.value;
+                          try {
+                            await institutionApi.updatePlacementStatus(s.studentId, newStatus);
+                            setActionMessage({ type: 'success', text: `Updated student status to: ${newStatus}` });
+                            await loadData();
+                          } catch {
+                            setActionMessage({ type: 'error', text: 'Failed to update student placement status.' });
+                          }
+                        }}
                         style={{
-                          padding: '5px 10px',
-                          background: '#15803d',
-                          color: '#ffffff',
-                          border: 'none',
-                          fontSize: '0.75rem',
+                          padding: '4px 8px',
+                          borderRadius: '4px',
+                          fontSize: '0.76rem',
                           fontWeight: 700,
-                          borderRadius: '3px',
                           cursor: 'pointer',
+                          background: s.placementStatus === 'PLACED' ? '#dcfce7' : '#eff6ff',
+                          color: s.placementStatus === 'PLACED' ? '#15803d' : '#1d4ed8',
+                          border: `1px solid ${s.placementStatus === 'PLACED' ? '#86efac' : '#bfdbfe'}`,
+                        }}
+                      >
+                        <option value="UNPLACED">UNPLACED</option>
+                        <option value="PLACEMENT_SEEKING">PLACEMENT_SEEKING</option>
+                        <option value="PLACED">PLACED (Offer Certified)</option>
+                        <option value="OPTED_OUT">OPTED_OUT</option>
+                      </select>
+                    </td>
+                    <td style={{ padding: '12px 16px' }}>
+                      <span
+                        style={{
+                          fontSize: '0.72rem',
+                          fontWeight: 700,
+                          padding: '3px 8px',
+                          borderRadius: '3px',
                           display: 'inline-flex',
                           alignItems: 'center',
                           gap: '4px',
+                          background: s.verified ? '#dcfce7' : '#fef3c7',
+                          color: s.verified ? '#15803d' : '#b45309',
+                          border: `1px solid ${s.verified ? '#bbf7d0' : '#fde68a'}`,
                         }}
                       >
-                        <Check size={12} />
-                        <span>Verify</span>
-                      </button>
-                    ) : (
-                      <span style={{ fontSize: '0.75rem', color: '#15803d', fontWeight: 600 }}>Active</span>
-                    )}
-                  </td>
-                </tr>
-              ))}
+                        {s.verified ? <ShieldCheck size={12} /> : <Clock size={12} />}
+                        <span>{s.verified ? 'VERIFIED' : 'PENDING'}</span>
+                      </span>
+                    </td>
+                    <td style={{ padding: '12px 16px', textAlign: 'center' }}>
+                      <div style={{ display: 'inline-flex', gap: '6px', alignItems: 'center' }}>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedStudentId(sId);
+                          }}
+                          style={{
+                            padding: '5px 10px',
+                            background: '#eff6ff',
+                            color: '#1c2d81',
+                            border: '1px solid #bfdbfe',
+                            fontSize: '0.75rem',
+                            fontWeight: 700,
+                            borderRadius: '3px',
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                          }}
+                        >
+                          <Eye size={13} />
+                          <span>Monitor</span>
+                        </button>
+                        {!s.verified && (
+                          <button
+                            disabled={verifyingId === s.studentId}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleVerify(s.studentId, true);
+                            }}
+                            style={{
+                              padding: '5px 10px',
+                              background: '#15803d',
+                              color: '#ffffff',
+                              border: 'none',
+                              fontSize: '0.75rem',
+                              fontWeight: 700,
+                              borderRadius: '3px',
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                            }}
+                          >
+                            <Check size={12} />
+                            <span>Verify</span>
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         )}
@@ -1468,6 +1540,15 @@ export function InstitutionStudentsPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Student Profile Monitoring Dashboard Modal */}
+      {selectedStudentId && (
+        <StudentMonitoringModal
+          studentId={selectedStudentId}
+          onClose={() => setSelectedStudentId(null)}
+          onStatusUpdated={loadData}
+        />
       )}
     </div>
   );
