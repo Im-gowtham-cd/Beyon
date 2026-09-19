@@ -28,19 +28,31 @@ public class User {
     private String displayName;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
+    @Column(nullable = false, length = 50)
     private UserRole role;
 
+    @Column(columnDefinition = "varchar(36)")
+    private UUID institutionId;
+
+    @Column(columnDefinition = "varchar(36)")
+    private UUID companyId;
+
+    @Column(length = 100)
+    private String departmentId;
+
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 30)
+    @Column(nullable = false, length = 64)
     private AccountStatus status = AccountStatus.PENDING_VERIFICATION;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 30)
+    @Column(nullable = false, length = 64)
     private AccountStatus profileStatus = AccountStatus.INCOMPLETE;
 
     @Column(nullable = false)
     private boolean emailVerified = false;
+
+    @Column(name = "must_change_password", nullable = false)
+    private boolean mustChangePassword = false;
 
     @Column(nullable = false, updatable = false)
     private Instant createdAt = Instant.now();
@@ -65,12 +77,20 @@ public class User {
     public void setDisplayName(String displayName) { this.displayName = displayName; }
     public UserRole getRole() { return role; }
     public void setRole(UserRole role) { this.role = role; }
+    public UUID getInstitutionId() { return institutionId; }
+    public void setInstitutionId(UUID institutionId) { this.institutionId = institutionId; }
+    public UUID getCompanyId() { return companyId; }
+    public void setCompanyId(UUID companyId) { this.companyId = companyId; }
+    public String getDepartmentId() { return departmentId; }
+    public void setDepartmentId(String departmentId) { this.departmentId = departmentId; }
     public AccountStatus getStatus() { return status; }
     public void setStatus(AccountStatus status) { this.status = status; }
     public AccountStatus getProfileStatus() { return profileStatus; }
     public void setProfileStatus(AccountStatus profileStatus) { this.profileStatus = profileStatus; }
     public boolean isEmailVerified() { return emailVerified; }
     public void setEmailVerified(boolean emailVerified) { this.emailVerified = emailVerified; }
+    public boolean isMustChangePassword() { return mustChangePassword; }
+    public void setMustChangePassword(boolean mustChangePassword) { this.mustChangePassword = mustChangePassword; }
     public Instant getCreatedAt() { return createdAt; }
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
     public Instant getUpdatedAt() { return updatedAt; }

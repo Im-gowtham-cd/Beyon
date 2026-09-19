@@ -1,13 +1,13 @@
-import type { UserRole } from '../types/auth';
+import type { OnboardingRole } from '../types/auth';
 import styles from './RoleCard.module.css';
 
 interface RoleCardProps {
-  role: Exclude<UserRole, 'ADMIN'>;
+  role: OnboardingRole;
   icon: string;
   title: string;
   description: string;
   selected: boolean;
-  onSelect: (role: Exclude<UserRole, 'ADMIN'>) => void;
+  onSelect: (role: OnboardingRole) => void;
 }
 
 export function RoleCard({ role, icon, title, description, selected, onSelect }: RoleCardProps) {

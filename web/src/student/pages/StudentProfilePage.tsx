@@ -1,5 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
+import {
+  ShieldCheck,
+  CheckCircle2,
+  Clock,
+} from 'lucide-react';
 import { studentProfileApi } from '../services/studentProfileApi';
 import type {
   StudentProfile, StudentSkill, StudentProject, StudentCertification,
@@ -91,7 +96,16 @@ export function StudentProfilePage() {
   }
 
   const completion = profile.completionPct;
-  const initials = (profile.institution || 'S').substring(0, 2).toUpperCase();
+  const fullName = [profile.firstName, profile.middleName, profile.lastName].filter(Boolean).join(' ')
+    || profile.username
+    || 'Student';
+  const initials = fullName
+    .split(' ')
+    .filter(Boolean)
+    .map(w => w[0])
+    .slice(0, 2)
+    .join('')
+    .toUpperCase() || 'ST';
 
   return (
     <div className={styles.page}>
@@ -104,7 +118,7 @@ export function StudentProfilePage() {
           </div>
         </div>
         <div className={styles.infoSection}>
-          <h1 className={styles.name}>{profile.username || profile.institution || 'Student'}</h1>
+          <h1 className={styles.name}>{fullName}</h1>
           <p className={styles.subtitle}>
             {profile.degree ? `${profile.degree} ${profile.department ? `- ${profile.department}` : ''}` : 'Student'}
           </p>
@@ -118,6 +132,12 @@ export function StudentProfilePage() {
             <span className={`${styles.statusBadge} ${styles.placementBadge}`}>
               ● {completion}% Complete
             </span>
+            {profile.hasCompletedAssessment && (
+              <span className={`${styles.statusBadge} ${styles.verifiedBadge}`}>
+                <ShieldCheck size={14} className={styles.badgeIcon} />
+                Assessment Verified
+              </span>
+            )}
           </div>
         </div>
         <div className={styles.headerActions}>
@@ -140,6 +160,19 @@ export function StudentProfilePage() {
           <span className={styles.statLabel}>Skills</span>
           <span className={styles.statValue}>{skills.length}</span>
         </div>
+        {profile.hasCompletedAssessment && (
+          <div className={styles.statCard} style={{ borderLeft: '3px solid #15803d' }}>
+            <span className={styles.statLabel}>Verified Skills</span>
+            <span className={styles.statValue} style={{ color: '#15803d' }}>
+              {skills.filter(s => s.verified).length} / {skills.length}
+            </span>
+            <span className={styles.statSubtext}>
+              {skills.length > 0
+                ? `${(skills.reduce((sum, s) => sum + (s.score || 0), 0) / skills.length).toFixed(1)}% Benchmark Avg`
+                : 'Competency Validated'}
+            </span>
+          </div>
+        )}
         <div className={styles.statCard}>
           <span className={styles.statLabel}>Projects</span>
           <span className={styles.statValue}>{projects.length}</span>
@@ -209,16 +242,122 @@ function OverviewSection({ profile, skills, learningSkills, careerPrefs }: {
         </div>
       )}
 
+      {profile.hasCompletedAssessment && (
+        <div className={styles.assessmentCard}>
+          <div className={styles.assessmentHeader}>
+            <div className={styles.assessmentTitleGroup}>
+              <div className={styles.assessmentIconBox}>
+                <ShieldCheck size={24} style={{ color: '#15803d' }} />
+              </div>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                  <h3 className={styles.sectionTitle} style={{ margin: 0 }}>Skill Validation Assessment</h3>
+                  <span className={styles.verifiedTag}>
+                    <CheckCircle2 size={13} /> Verified Scholar
+                  </span>
+                </div>
+                <p className={styles.assessmentSubtitle}>
+                  Validated across {skills.reduce((acc, s) => acc + (s.questionsTested || 0), 0) || 50} benchmark questions • Evaluated against official Beyon taxonomy
+                </p>
+              </div>
+            </div>
+            {skills.some(s => s.retestAvailableAt) && (
+              <div className={styles.assessmentRetestInfo}>
+                <Clock size={14} />
+                <span>Next Retest: {new Date(skills.find(s => s.retestAvailableAt)?.retestAvailableAt || '').toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })} (7-Day Cooldown)</span>
+              </div>
+            )}
+          </div>
+
+          <div className={styles.assessmentMetricsGrid}>
+            <div className={styles.assessmentMetricCard}>
+              <span className={styles.assessmentMetricLabel}>Skills Tested</span>
+              <span className={styles.assessmentMetricVal}>{skills.length} Skills</span>
+            </div>
+            <div className={styles.assessmentMetricCard}>
+              <span className={styles.assessmentMetricLabel}>Verified Passed</span>
+              <span className={styles.assessmentMetricVal} style={{ color: '#15803d' }}>
+                {skills.filter(s => s.verified || (s.score != null && Number(s.score) >= 60)).length} Skills
+              </span>
+            </div>
+            <div className={styles.assessmentMetricCard}>
+              <span className={styles.assessmentMetricLabel}>Benchmark Accuracy</span>
+              <span className={styles.assessmentMetricVal} style={{ color: '#1c2d81' }}>
+                {skills.length > 0 ? (skills.reduce((sum, s) => sum + (s.score || 0), 0) / skills.length).toFixed(1) : 0}%
+              </span>
+            </div>
+            <div className={styles.assessmentMetricCard}>
+              <span className={styles.assessmentMetricLabel}>Questions Solved</span>
+              <span className={styles.assessmentMetricVal}>
+                {skills.reduce((acc, s) => acc + (s.questionsCorrect || 0), 0)} / {skills.reduce((acc, s) => acc + (s.questionsTested || 0), 0)}
+              </span>
+            </div>
+          </div>
+
+          <div className={styles.assessmentSkillsGrid}>
+            {skills.map(s => {
+              const score = s.score != null ? Number(s.score) : 0;
+              const isVerified = Boolean(s.verified || (s.score != null && Number(s.score) >= 60));
+              return (
+                <div key={s.id} className={styles.assessmentSkillCard}>
+                  <div className={styles.assessmentSkillCardHeader}>
+                    <div>
+                      <div className={styles.assessmentSkillName}>{s.skillName}</div>
+                      <span className={styles.assessmentSkillCat}>{s.category || 'Technical'}</span>
+                    </div>
+                    {isVerified ? (
+                      <span className={styles.verifiedSkillBadge}>
+                        <ShieldCheck size={12} /> Verified
+                      </span>
+                    ) : (
+                      <span className={styles.unverifiedSkillBadge}>
+                        Needs Review
+                      </span>
+                    )}
+                  </div>
+
+                  <div className={styles.assessmentSkillScoreRow}>
+                    <span className={styles.assessmentSkillScore} style={{ color: isVerified ? '#15803d' : '#b45309' }}>
+                      {score.toFixed(1)}%
+                    </span>
+                    {s.questionsTested ? (
+                      <span className={styles.assessmentSkillCorrect}>
+                        {s.questionsCorrect} / {s.questionsTested} correct
+                      </span>
+                    ) : null}
+                  </div>
+
+                  <div className={styles.assessmentProgressBar}>
+                    <div
+                      className={styles.assessmentProgressFill}
+                      style={{
+                        width: `${Math.min(100, Math.max(0, score))}%`,
+                        background: isVerified ? '#15803d' : '#f59e0b',
+                      }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       <div className={styles.section}>
         <h3 className={styles.sectionTitle}>Top Skills</h3>
         {skills.length === 0 ? (
           <p className={styles.emptyText}>No skills added yet</p>
         ) : (
           <div className={styles.skillChips}>
-            {skills.slice(0, 10).map(s => (
-              <span key={s.id} className={styles.skillChip}>
+            {skills.slice(0, 12).map(s => (
+              <span key={s.id} className={`${styles.skillChip} ${s.verified ? styles.verifiedChip : ''}`}>
+                {s.verified && <ShieldCheck size={13} style={{ color: '#15803d' }} />}
                 <span className={styles.skillChipName}>{s.skillName}</span>
-                {s.proficiency && <span className={styles.skillChipProf}>{s.proficiency}</span>}
+                {s.score != null ? (
+                  <span className={styles.skillChipScore}>{Number(s.score).toFixed(0)}%</span>
+                ) : s.proficiency ? (
+                  <span className={styles.skillChipProf}>{s.proficiency}</span>
+                ) : null}
               </span>
             ))}
           </div>
@@ -385,15 +524,62 @@ function SkillsSection({ skills, learningSkills, onReload }: {
           <button className={styles.sectionAction} onClick={() => setShowAdd(true)}>+ Add Skills</button>
         </div>
       ) : (
-        <div className={styles.skillChips}>
-          {skills.map(s => (
-            <span key={s.id} className={styles.skillChip}>
-              <span className={styles.skillChipName}>{s.skillName}</span>
-              {s.proficiency && <span className={styles.skillChipProf}>{s.proficiency}</span>}
-              {s.verified && <span className={styles.skillChipProf}>✓</span>}
-              <button className={styles.skillChipRemove} onClick={() => handleRemove(s.id)}>×</button>
-            </span>
-          ))}
+        <div className={styles.assessmentSkillsGrid} style={{ marginTop: 'var(--space-md)' }}>
+          {skills.map(s => {
+            const score = s.score != null ? Number(s.score) : null;
+            const isVerified = Boolean(s.verified);
+            return (
+              <div key={s.id} className={styles.assessmentSkillCard}>
+                <div className={styles.assessmentSkillCardHeader}>
+                  <div>
+                    <div className={styles.assessmentSkillName}>{s.skillName}</div>
+                    <span className={styles.assessmentSkillCat}>{s.category || 'Technical'} • {s.proficiency || 'INTERMEDIATE'}</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    {isVerified ? (
+                      <span className={styles.verifiedSkillBadge}>
+                        <ShieldCheck size={12} /> Verified
+                      </span>
+                    ) : (
+                      <span className={styles.unverifiedSkillBadge}>
+                        {score != null ? 'Needs Review' : 'Self-Reported'}
+                      </span>
+                    )}
+                    <button className={styles.skillChipRemove} onClick={() => handleRemove(s.id)} title="Remove Skill">×</button>
+                  </div>
+                </div>
+
+                {score != null ? (
+                  <>
+                    <div className={styles.assessmentSkillScoreRow}>
+                      <span className={styles.assessmentSkillScore} style={{ color: isVerified ? '#15803d' : '#b45309' }}>
+                        {score.toFixed(1)}% Accuracy
+                      </span>
+                      {s.questionsTested ? (
+                        <span className={styles.assessmentSkillCorrect}>
+                          {s.questionsCorrect} / {s.questionsTested} questions correct
+                        </span>
+                      ) : null}
+                    </div>
+
+                    <div className={styles.assessmentProgressBar}>
+                      <div
+                        className={styles.assessmentProgressFill}
+                        style={{
+                          width: `${Math.min(100, Math.max(0, score))}%`,
+                          background: isVerified ? '#15803d' : '#f59e0b',
+                        }}
+                      />
+                    </div>
+                  </>
+                ) : (
+                  <div style={{ fontSize: '0.78rem', color: '#64748b' }}>
+                    Self-reported skill. Take verification assessment to earn verified badge.
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
 

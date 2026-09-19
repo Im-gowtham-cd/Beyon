@@ -1,5 +1,6 @@
 import mysql from "mysql2/promise";
 import crypto from "crypto";
+import { APTITUDE_AND_SOFTSKILLS_QUESTIONS } from "./modules/seed-aptitude-softskills.js";
 
 function toUUID(str: string): string {
   const hash = crypto.createHash("md5").update(str).digest("hex");
@@ -326,12 +327,13 @@ async function main() {
   }
   const defaultSkillId = skills[0]?.id;
 
-  console.log("Seeding authentic domain questions with rich options & explanations...");
+  const ALL_CURATED_QUESTIONS = [...REAL_QUESTIONS, ...APTITUDE_AND_SOFTSKILLS_QUESTIONS];
+  console.log(`[SEED] Seeding ${ALL_CURATED_QUESTIONS.length} authentic technical, aptitude, and soft skills questions with rich options and explanations...`);
   let insertedCount = 0;
   let firstQId = "";
 
-  for (let i = 0; i < REAL_QUESTIONS.length; i++) {
-    const q = REAL_QUESTIONS[i];
+  for (let i = 0; i < ALL_CURATED_QUESTIONS.length; i++) {
+    const q = ALL_CURATED_QUESTIONS[i];
     const skillId = skillMap[q.skillSlug] || defaultSkillId;
     const qId = toUUID(`beyon-curated-q-${i}-${q.title}`);
     if (!firstQId) firstQId = qId;
@@ -369,7 +371,7 @@ async function main() {
     insertedCount++;
   }
 
-  console.log(`✅ Seeded ${insertedCount} authentic curated questions.`);
+  console.log(`[SEED] Seeded ${insertedCount} authentic curated questions.`);
 
   const today = new Date().toISOString().slice(0, 10);
   console.log(`Configuring Today's Daily Challenge for date: ${today}`);
@@ -383,7 +385,7 @@ async function main() {
       [dcId, u.id, today, firstQId]
     );
   }
-  console.log("✅ Daily challenges updated for active users.");
+  console.log("[SEED] Daily challenges updated for active users.");
 
   const [totalQ] = await conn.query("SELECT count(*) as count FROM questions;") as any[];
   const [totalOpt] = await conn.query("SELECT count(*) as count FROM question_options;") as any[];

@@ -3,6 +3,7 @@ package com.beyon.identity.security;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -13,6 +14,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 public class SecurityConfig {
 
     private final com.beyon.identity.security.JwtAuthFilter jwtAuthFilter;
@@ -37,7 +39,14 @@ public class SecurityConfig {
                 .requestMatchers("/api/v1/auth/forgot-password").permitAll()
                 .requestMatchers("/api/v1/auth/reset-password").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/onboarding/institutions").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/onboarding/institutions/verify-aicte").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/institution/onboard/validate-aicte").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/v1/institution/onboard/verify-otp").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/institutions/public").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/company/verification/mca/**").permitAll()
+                .requestMatchers("/api/v1/company/verification/**").authenticated()
+                .requestMatchers("/api/v1/documents/**").permitAll()
+                .requestMatchers("/api/v1/onboarding/draft/**").permitAll()
                 .requestMatchers("/api/v1/onboarding/**").authenticated()
                 .requestMatchers("/api/v1/profile").authenticated()
                 .requestMatchers("/api/v1/student/public/**").permitAll()
@@ -94,6 +103,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/v1/search/**").authenticated()
                 .requestMatchers("/api/v1/realtime/**").authenticated()
                 .requestMatchers("/api/v1/rec-feedback/**").authenticated()
+                .requestMatchers("/api/v1/telemetry/**").authenticated()
                 .requestMatchers("/api/v1/discussions/**").authenticated()
                 .requestMatchers("/api/v1/achievements/**").authenticated()
                 .requestMatchers("/api/v1/messages/**").authenticated()
@@ -110,7 +120,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/v1/certificates/**").authenticated()
                 .requestMatchers("/api/v1/growth/**").authenticated()
                 .requestMatchers("/api/v1/feed/**").authenticated()
-                .requestMatchers("/api/v1/career-intel/**").authenticated()
+                .requestMatchers("/api/v1/career-intel/**").permitAll()
                 .requestMatchers("/api/v1/drives/**").authenticated()
                 .requestMatchers("/api/v1/placement/**").authenticated()
                 .requestMatchers("/api/v1/candidates/**").authenticated()
@@ -135,6 +145,13 @@ public class SecurityConfig {
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
+    }
+
+    @Bean
+    public org.springframework.security.access.expression.method.MethodSecurityExpressionHandler methodSecurityExpressionHandler(BeyonPermissionEvaluator permissionEvaluator) {
+        org.springframework.security.access.expression.method.DefaultMethodSecurityExpressionHandler expressionHandler = new org.springframework.security.access.expression.method.DefaultMethodSecurityExpressionHandler();
+        expressionHandler.setPermissionEvaluator(permissionEvaluator);
+        return expressionHandler;
     }
 }
 

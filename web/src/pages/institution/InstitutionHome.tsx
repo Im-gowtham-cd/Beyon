@@ -273,8 +273,8 @@ export function InstitutionHome() {
             <table className={styles.instTable}>
               <thead>
                 <tr>
-                  <th>Student Ref</th>
-                  <th>Department</th>
+                  <th>Student</th>
+                  <th>Department &amp; Degree</th>
                   <th>Batch</th>
                   <th>Placement Status</th>
                   <th>Verification</th>
@@ -291,9 +291,25 @@ export function InstitutionHome() {
                 ) : (
                   students.slice(0, 8).map((s) => (
                     <tr key={s.id}>
-                      <td><code>{s.studentId?.slice(0, 8).toUpperCase()}</code></td>
                       <td>
-                        <div className={styles.studentName}>{s.department || 'Unassigned Department'}</div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                          <span style={{ fontWeight: 600, color: '#0f172a', fontSize: '0.85rem' }}>
+                            {s.displayName || 'Enrolled Student'}
+                          </span>
+                          <span style={{ fontSize: '0.74rem', color: '#64748b' }}>
+                            {s.registrationNumber || s.studentId?.slice(0, 8).toUpperCase()} {s.email ? `• ${s.email}` : ''}
+                          </span>
+                        </div>
+                      </td>
+                      <td>
+                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                          <div className={styles.studentName}>{s.department || 'Unassigned Department'}</div>
+                          {s.degree && (
+                            <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 500 }}>
+                              {s.degree}
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td style={{ fontWeight: 400 }}>{s.batch || 'Current Batch'}</td>
                       <td>

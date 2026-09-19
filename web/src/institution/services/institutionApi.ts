@@ -6,11 +6,30 @@ export const institutionApi = {
     const q = status ? `?status=${status}` : '';
     return api.get<InstitutionStudent[]>(`/institution/students${q}`);
   },
+  getStudentMonitoring: (studentId: string) =>
+    api.get<any>(`/institution/students/${studentId}/monitoring`),
   getPendingStudents: () => api.get<any[]>('/institution/students/pending'),
   verifyStudent: (studentId: string, approved: boolean, notes?: string) =>
     api.post<any>(`/institution/students/${studentId}/verify`, { approved, notes }),
   addStudent: (studentId: string, department?: string, batch?: string) =>
     api.post<InstitutionStudent>('/institution/students', { studentId, department, batch }),
+  bulkImportStudents: (students: any[]) =>
+    api.post<{
+      success: boolean;
+      count: number;
+      students: Array<{
+        userId: string;
+        name: string;
+        email: string;
+        rollNumber: string;
+        department: string;
+        batch: string;
+        tempPassword: string;
+        mustChangePassword: boolean;
+        status: string;
+      }>;
+      message: string;
+    }>('/institution/students/bulk-import', students),
   updatePlacementStatus: (studentId: string, status: string) =>
     api.put<InstitutionStudent>(`/institution/students/${studentId}/status`, { status }),
   getMetrics: () => api.get<Record<string, unknown>>('/institution/metrics'),

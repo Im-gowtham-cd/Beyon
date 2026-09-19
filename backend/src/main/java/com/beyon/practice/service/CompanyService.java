@@ -37,6 +37,7 @@ public class CompanyService {
     private final com.beyon.practice.repository.QuestionRepository questionRepository;
     private final com.beyon.practice.repository.QuestionOptionRepository questionOptionRepository;
     private final com.beyon.assessment.repository.AssessmentConfigurationRepository assessmentConfigRepository;
+    private final com.beyon.profile.service.CompanyVerificationService companyVerificationService;
 
     public CompanyService(CompanyOpportunityRepository opportunityRepository,
                           OpportunityApplicationRepository applicationRepository,
@@ -49,7 +50,8 @@ public class CompanyService {
                           com.beyon.institution.repository.InstitutionStudentRepository institutionStudentRepository,
                           com.beyon.practice.repository.QuestionRepository questionRepository,
                           com.beyon.practice.repository.QuestionOptionRepository questionOptionRepository,
-                          com.beyon.assessment.repository.AssessmentConfigurationRepository assessmentConfigRepository) {
+                          com.beyon.assessment.repository.AssessmentConfigurationRepository assessmentConfigRepository,
+                          com.beyon.profile.service.CompanyVerificationService companyVerificationService) {
         this.opportunityRepository = opportunityRepository;
         this.applicationRepository = applicationRepository;
         this.userRepository = userRepository;
@@ -62,6 +64,7 @@ public class CompanyService {
         this.questionRepository = questionRepository;
         this.questionOptionRepository = questionOptionRepository;
         this.assessmentConfigRepository = assessmentConfigRepository;
+        this.companyVerificationService = companyVerificationService;
     }
 
     public List<Map<String, Object>> getActiveInstitutions() {
@@ -216,6 +219,7 @@ public class CompanyService {
 
     @Transactional
     public CompanyOpportunity createOpportunity(UUID companyUserId, CompanyOpportunity opp) {
+        companyVerificationService.enforceCompanyVerified(companyUserId);
         opp.setCompanyUserId(companyUserId);
         CompanyOpportunity saved = opportunityRepository.save(opp);
 
@@ -250,6 +254,7 @@ public class CompanyService {
 
     @Transactional
     public CompanyOpportunity createOpportunityWithQuestions(UUID companyUserId, Map<String, Object> payload) {
+        companyVerificationService.enforceCompanyVerified(companyUserId);
         CompanyOpportunity opp = new CompanyOpportunity();
         opp.setCompanyUserId(companyUserId);
         opp.setTitle((String) payload.get("title"));
@@ -395,6 +400,7 @@ public class CompanyService {
 
     @Transactional
     public CompanyOpportunity updateOpportunity(UUID id, CompanyOpportunity update, UUID companyUserId) {
+        companyVerificationService.enforceCompanyVerified(companyUserId);
         CompanyOpportunity opp = getOpportunity(id);
         if (!opp.getCompanyUserId().equals(companyUserId)) {
             throw new ForbiddenException("Cannot modify another company's opportunity");

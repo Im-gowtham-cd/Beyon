@@ -30,9 +30,32 @@ public class ReportingController {
         return ResponseEntity.ok(ApiResponse.ok(reportService.getMyReports(extractUserId(auth))));
     }
 
+    @GetMapping("/all")
+    public ResponseEntity<ApiResponse<List<PlatformReport>>> allReports() {
+        return ResponseEntity.ok(ApiResponse.ok(reportService.getAllReports()));
+    }
+
     @GetMapping("/pending")
     public ResponseEntity<ApiResponse<List<PlatformReport>>> pendingReports() {
         return ResponseEntity.ok(ApiResponse.ok(reportService.getPendingReports()));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ApiResponse<Void>> deleteReport(@PathVariable UUID id) {
+        reportService.deleteReport(id);
+        return ResponseEntity.ok(ApiResponse.ok(null, "Report deleted successfully"));
+    }
+
+    @GetMapping("/{id}/download")
+    public ResponseEntity<String> downloadReport(@PathVariable UUID id) {
+        PlatformReport report = reportService.getById(id);
+        String csvContent = "Report ID,Title,Report Type,Format,Generated At,Status\n" +
+            String.format("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
+                report.getId(), report.getTitle(), report.getReportType(), report.getFormat(), report.getCreatedAt(), report.getGenerationStatus());
+        return ResponseEntity.ok()
+            .header(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"report-" + report.getReportType().toLowerCase() + ".csv\"")
+            .header(org.springframework.http.HttpHeaders.CONTENT_TYPE, "text/csv; charset=UTF-8")
+            .body(csvContent);
     }
 
     private UUID extractUserId(Authentication auth) {

@@ -23,11 +23,15 @@ public class ReportingService {
         report.setReportType(type);
         report.setTitle(title);
         report.setFormat(format != null ? format : "PDF");
+        report.setGenerationStatus("COMPLETED");
+        report.setCompletedAt(OffsetDateTime.now());
         try {
             report.setParameters(new com.fasterxml.jackson.databind.ObjectMapper().valueToTree(parameters).toString());
         } catch (Exception e) {
             report.setParameters("{}");
         }
+        report = reportRepo.save(report);
+        report.setFileUrl("/api/v1/reports/" + report.getId() + "/download");
         return reportRepo.save(report);
     }
 
@@ -40,8 +44,21 @@ public class ReportingService {
         return reportRepo.save(report);
     }
 
+    public PlatformReport getById(UUID reportId) {
+        return reportRepo.findById(reportId)
+            .orElseThrow(() -> new RuntimeException("Report not found: " + reportId));
+    }
+
     public List<PlatformReport> getMyReports(UUID userId) {
         return reportRepo.findByUserIdOrderByCreatedAtDesc(userId);
+    }
+
+    public List<PlatformReport> getAllReports() {
+        return reportRepo.findAll(org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "createdAt"));
+    }
+
+    public void deleteReport(UUID reportId) {
+        reportRepo.deleteById(reportId);
     }
 
     public List<PlatformReport> getPendingReports() {

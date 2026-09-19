@@ -4,9 +4,9 @@ import { AuthLayout } from '../components/AuthLayout';
 import { AuthCard } from '../components/AuthCard';
 import { RoleCard } from '../components/RoleCard';
 import { AuthButton } from '../components/AuthButton';
-import type { UserRole } from '../types/auth';
+import type { OnboardingRole } from '../types/auth';
 
-type SelectableRole = Exclude<UserRole, 'ADMIN'>;
+type SelectableRole = OnboardingRole;
 
 const ROLE_ROUTES: Record<SelectableRole, string> = {
   STUDENT: '/student/home',

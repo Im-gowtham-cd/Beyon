@@ -54,5 +54,18 @@ public class AdminDashboardController {
     public ResponseEntity<ApiResponse<PlatformDailyStats>> recordStats(@RequestBody PlatformDailyStats stats) {
         return ResponseEntity.ok(ApiResponse.ok(adminService.recordDailyStats(stats)));
     }
+
+    @GetMapping("/activity")
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> activity() {
+        return ResponseEntity.ok(ApiResponse.ok(adminService.getRecentActivity()));
+    }
+
+    @PostMapping("/activity/ping")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> activityPing(@RequestBody(required = false) Map<String, String> payload) {
+        String email = payload != null && payload.containsKey("email") ? payload.get("email") : "superadmin@beyon.io";
+        String action = payload != null && payload.containsKey("action") ? payload.get("action") : "SYSTEM_HEALTH_CHECK";
+        String details = payload != null && payload.containsKey("details") ? payload.get("details") : "Platform Administrator audit ping dispatched";
+        return ResponseEntity.ok(ApiResponse.ok(adminService.recordActivityPing(email, action, details)));
+    }
 }
 

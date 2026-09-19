@@ -26,6 +26,14 @@ public class RegisterRequest {
     @NotNull(message = "Role is required")
     private UserRole role;
 
+    private String cin;
+    private String aicteCode;
+    private String organizationName;
+    private String website;
+    private String representativeName;
+    private String state;
+    private String city;
+
     public String getName() {
         return name;
     }
@@ -64,6 +72,62 @@ public class RegisterRequest {
 
     public void setRole(UserRole role) {
         this.role = role;
+    }
+
+    public String getCin() {
+        return cin;
+    }
+
+    public void setCin(String cin) {
+        this.cin = cin;
+    }
+
+    public String getAicteCode() {
+        return aicteCode;
+    }
+
+    public void setAicteCode(String aicteCode) {
+        this.aicteCode = aicteCode;
+    }
+
+    public String getOrganizationName() {
+        return organizationName;
+    }
+
+    public void setOrganizationName(String organizationName) {
+        this.organizationName = organizationName;
+    }
+
+    public String getWebsite() {
+        return website;
+    }
+
+    public void setWebsite(String website) {
+        this.website = website;
+    }
+
+    public String getRepresentativeName() {
+        return representativeName;
+    }
+
+    public void setRepresentativeName(String representativeName) {
+        this.representativeName = representativeName;
+    }
+
+    public String getState() {
+        return state;
+    }
+
+    public void setState(String state) {
+        this.state = state;
+    }
+
+    public String getCity() {
+        return city;
+    }
+
+    public void setCity(String city) {
+        this.city = city;
     }
 }
 

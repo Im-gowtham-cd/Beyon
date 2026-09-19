@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { NavLink, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../auth/context/AuthContext';
+import { getRoleTier, getRoleDashboardPath } from '../auth/types/auth';
 import styles from './Header.module.css';
 
 export function Header() {
@@ -59,7 +60,7 @@ export function Header() {
     document.body.style.overflow = '';
   }
 
-  const dashboardPath = user ? `/${user.role.toLowerCase()}/home` : '/';
+  const dashboardPath = user ? getRoleDashboardPath(user.role, user.tier) : '/';
 
   const publicLinks = [
     { label: 'Home', href: '/' },
@@ -80,14 +81,14 @@ export function Header() {
   const companyLinks = [
     { label: 'Dashboard', href: '/company/home' },
     { label: 'Assessments', href: '/company/assessments' },
-    { label: 'Drives', href: '/drives' },
-    { label: 'Candidates', href: '/candidates' },
+    { label: 'Drives', href: '/company/drives' },
+    { label: 'Candidates', href: '/company/candidates' },
   ];
 
   const institutionLinks = [
     { label: 'Dashboard', href: '/institution/home' },
     { label: 'Analytics', href: '/institution/analytics' },
-    { label: 'Students', href: '/institution/dashboard' },
+    { label: 'Students', href: '/institution/students' },
   ];
 
   const adminLinks = [
@@ -96,15 +97,16 @@ export function Header() {
     { label: 'Feedback', href: '/admin/feedback' },
   ];
 
+  const userTier = user ? getRoleTier(user.role) : 'STUDENT';
   const navLinks = !authenticated
     ? publicLinks
-    : user?.role === 'STUDENT'
+    : userTier === 'STUDENT'
     ? studentLinks
-    : user?.role === 'COMPANY'
+    : userTier === 'COMPANY'
     ? companyLinks
-    : user?.role === 'INSTITUTION'
+    : userTier === 'INSTITUTION'
     ? institutionLinks
-    : user?.role === 'ADMIN'
+    : userTier === 'SUPER_ADMIN'
     ? adminLinks
     : publicLinks;
 

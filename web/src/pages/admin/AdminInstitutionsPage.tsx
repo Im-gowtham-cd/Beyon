@@ -19,7 +19,29 @@ export function AdminInstitutionsPage() {
       });
       if (res.ok) {
         const data = await res.json();
-        setInstitutions(data.data || []);
+        const rawList: any[] = Array.isArray(data.data) ? data.data : [];
+        const deduplicatedMap = new Map<string, any>();
+        for (const inst of rawList) {
+          const rawKey = inst.code ? inst.code.trim().toUpperCase() : (inst.name || '').trim().toLowerCase();
+          const key = rawKey || inst.userId || inst.id;
+          if (!deduplicatedMap.has(key)) {
+            deduplicatedMap.set(key, inst);
+          } else {
+            // Keep entry with highest status precedence: ACTIVE > PENDING_SUPER_ADMIN > PENDING > REJECTED
+            const existing = deduplicatedMap.get(key)!;
+            const getRank = (i: any) => {
+              const s = (i.status || '').toUpperCase();
+              if (s === 'ACTIVE' || s === 'VERIFIED') return 4;
+              if (s.includes('SUPER_ADMIN')) return 3;
+              if (s.includes('PENDING')) return 2;
+              return 1;
+            };
+            if (getRank(inst) > getRank(existing)) {
+              deduplicatedMap.set(key, inst);
+            }
+          }
+        }
+        setInstitutions(Array.from(deduplicatedMap.values()));
       }
     } catch {
 
@@ -83,6 +105,34 @@ export function AdminInstitutionsPage() {
       }
     } catch {
       setMsg({ text: `Network error while rejecting "${name}".`, isError: true });
+    } finally {
+      setActionLoading(null);
+      setTimeout(() => setMsg(null), 5000);
+    }
+  };
+
+  const handleToggleStatus = async (userId: string, currentStatus: string, name: string) => {
+    if (!userId) return;
+    const targetStatus = currentStatus === 'ACTIVE' ? 'DEACTIVATED' : 'ACTIVE';
+    setActionLoading(userId);
+    try {
+      const token = localStorage.getItem('beyon_token') || localStorage.getItem('beyon_access_token');
+      const res = await fetch(`/api/v1/admin/verifications/institution/${userId}/status`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ status: targetStatus, reason: `Status toggled by Super Admin` }),
+      });
+      if (res.ok) {
+        setMsg({ text: `Institution "${name}" status updated to ${targetStatus}.` });
+        await fetchInstitutions();
+      } else {
+        setMsg({ text: `Failed to update status for "${name}".`, isError: true });
+      }
+    } catch {
+      setMsg({ text: `Network error updating status for "${name}".`, isError: true });
     } finally {
       setActionLoading(null);
       setTimeout(() => setMsg(null), 5000);
@@ -352,16 +402,28 @@ export function AdminInstitutionsPage() {
                             </button>
                           </>
                         ) : isActive ? (
-                          <span style={{ fontSize: '0.74rem', fontWeight: 700, color: '#15803d', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                            <ShieldCheck size={14} /> Authorized
-                          </span>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span style={{ fontSize: '0.74rem', fontWeight: 700, color: '#15803d', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                              <ShieldCheck size={14} /> Active
+                            </span>
+                            <button
+                              onClick={() => handleToggleStatus(inst.userId, inst.status, inst.name)}
+                              disabled={actionLoading === inst.userId}
+                              style={{ padding: '3px 8px', background: '#fee2e2', color: '#b91c1c', border: '1px solid #fecaca', borderRadius: '4px', fontSize: '0.72rem', fontWeight: 600, cursor: 'pointer' }}
+                            >
+                              Deactivate
+                            </button>
+                          </div>
                         ) : (
-                          <button
-                            onClick={() => handleApprove(inst.userId, inst.name)}
-                            style={{ padding: '4px 8px', background: '#ffffff', border: '1px solid #cbd5e1', fontSize: '0.72rem', cursor: 'pointer' }}
-                          >
-                            Re-verify
-                          </button>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <button
+                              onClick={() => handleToggleStatus(inst.userId, inst.status, inst.name)}
+                              disabled={actionLoading === inst.userId}
+                              style={{ padding: '4px 8px', background: '#dcfce7', color: '#15803d', border: '1px solid #bbf7d0', borderRadius: '4px', fontSize: '0.72rem', fontWeight: 600, cursor: 'pointer' }}
+                            >
+                              Activate
+                            </button>
+                          </div>
                         )}
                       </div>
                     </td>

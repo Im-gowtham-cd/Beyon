@@ -1,0 +1,35 @@
+{
+  "name": "@beyon/workbench",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "dist/main/main.js",
+  "scripts": {
+    "dev": "concurrently --kill-others \"bun run dev:vite\" \"bun run dev:main\" \"wait-on dist/renderer/index.html dist/main/main.js dist/preload/preload.cjs && electron .\"",
+    "dev:vite": "vite build --watch --config vite.renderer.config.ts",
+    "dev:main": "tsc -p tsconfig.main.json --watch",
+    "build": "bun run build:renderer && bun run build:main && bun run build:preload",
+    "build:renderer": "vite build --config vite.renderer.config.ts",
+    "build:main": "tsc -p tsconfig.main.json",
+    "build:preload": "bun build src/preload/preload.ts --outfile dist/preload/preload.cjs --target node --format cjs --external electron",
+    "typecheck": "tsc --noEmit",
+    "start": "bun run build && electron ."
+  },
+  "dependencies": {
+    "electron": "^43.4.1",
+    "lucide-react": "^1.34.0",
+    "mysql2": "^3.12.0",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
+  },
+  "devDependencies": {
+    "@types/node": "^26.2.0",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.5",
+    "@vitejs/plugin-react": "^6.1.0",
+    "concurrently": "^10.0.5",
+    "typescript": "^7.0.2",
+    "vite": "^8.2.2",
+    "wait-on": "^9.1.0"
+  }
+}

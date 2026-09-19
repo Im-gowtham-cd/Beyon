@@ -7,6 +7,8 @@ export interface RecommendedSkillItem {
   reason: string;
   synergyTag: string;
   domain: string;
+  companyMatch?: string;
+  roleRelevance?: string;
 }
 
 export interface RecommendationResult {
@@ -193,12 +195,27 @@ function normalizeName(name: string): string {
   return name.toLowerCase().replace(/[^a-z0-9]/g, '');
 }
 
+/**
+ * Robust skill equality and bounded token matching.
+ * Never matches short tokens (<= 3 chars like 'c', 'r', 'go', 'cpp', 'sql', 'php', 'aws')
+ * as arbitrary substrings of other words!
+ */
+export function isSkillMatch(candidateNorm: string, target: string): boolean {
+  const targetNorm = normalizeName(target);
+  if (candidateNorm === targetNorm) return true;
+  // Strict exact match for short identifiers
+  if (candidateNorm.length <= 3 || targetNorm.length <= 3) {
+    return candidateNorm === targetNorm;
+  }
+  // Allow compound prefix matches (e.g. 'tailwindcss' starting with 'tailwind')
+  return candidateNorm.startsWith(targetNorm) || targetNorm.startsWith(candidateNorm);
+}
+
 function findDomainForSkill(skillName: string): TechDomain | null {
   const norm = normalizeName(skillName);
   for (const domain of DOMAINS) {
     for (const kw of domain.keywords) {
-      const normKw = normalizeName(kw);
-      if (norm === normKw || norm.includes(normKw) || normKw.includes(norm)) {
+      if (isSkillMatch(norm, kw)) {
         return domain.id;
       }
     }
@@ -206,13 +223,81 @@ function findDomainForSkill(skillName: string): TechDomain | null {
   return null;
 }
 
+export interface RecommendationOptions {
+  targetJobRole?: string;
+  targetCompany?: string;
+  assessmentScores?: Record<string, number>;
+}
+
+export const COMPANY_TECH_STACKS: Record<string, { label: string; skills: string[]; reason: string }> = {
+  'amazon': {
+    label: 'Amazon',
+    skills: ['system design', 'aws', 'docker', 'kubernetes', 'dynamodb', 'microservices', 'java'],
+    reason: 'Core technology stack evaluated in Amazon Full-Stack & SDE hiring rounds'
+  },
+  'google': {
+    label: 'Google',
+    skills: ['go', 'kubernetes', 'distributed systems', 'system design', 'python', 'data structures & algorithms'],
+    reason: 'High-scale infrastructure and systems stack prioritized by Google'
+  },
+  'microsoft': {
+    label: 'Microsoft',
+    skills: ['typescript', 'next.js', 'azure', 'c#', 'microservices', 'react'],
+    reason: 'Enterprise cloud and TypeScript ecosystem standard at Microsoft'
+  },
+  'infosys': {
+    label: 'Infosys',
+    skills: ['spring boot', 'java', 'react', 'postgresql', 'microservices', 'docker'],
+    reason: 'Industry enterprise digital transformation stack required at Infosys'
+  },
+  'tcs': {
+    label: 'TCS',
+    skills: ['java', 'spring boot', 'angular', 'sql', 'devops'],
+    reason: 'Core enterprise delivery and backend stack across TCS client architectures'
+  },
+  'startup': {
+    label: 'High-Growth Startups',
+    skills: ['next.js', 'tailwind css', 'fastapi', 'redis', 'docker', 'postgresql'],
+    reason: 'Rapid shipping, high-performance modern web stack across tech startups'
+  }
+};
+
+export const JOB_ROLE_TARGETS: Record<string, { label: string; skills: string[]; reason: string }> = {
+  'Full Stack Developer': {
+    label: 'Full Stack Developer',
+    skills: ['next.js', 'system design', 'docker', 'redis', 'microservices', 'postgresql', 'tailwind css'],
+    reason: 'Critical competency to bridge frontend experiences with resilient backend microservices'
+  },
+  'Frontend Developer': {
+    label: 'Frontend Developer',
+    skills: ['next.js', 'tailwind css', 'typescript', 'redux', 'ui/ux', 'web performance'],
+    reason: 'Essential modern frontend framework and design system skill'
+  },
+  'Backend Developer': {
+    label: 'Backend Developer',
+    skills: ['system design', 'microservices', 'redis', 'docker', 'kubernetes', 'kafka', 'postgresql'],
+    reason: 'High-concurrency microservice and distributed caching architectural requirement'
+  },
+  'Cloud DevOps Engineer': {
+    label: 'Cloud DevOps Engineer',
+    skills: ['docker', 'kubernetes', 'aws', 'terraform', 'ci/cd', 'linux'],
+    reason: 'Production cloud provisioning and automated delivery pipeline competency'
+  },
+  'AI & Data Science': {
+    label: 'AI & Data Science',
+    skills: ['python', 'machine learning', 'deep learning', 'pytorch', 'fastapi', 'sql'],
+    reason: 'Core machine learning modeling and data pipeline engineering requirement'
+  }
+};
+
 export function computeSkillRecommendations(
   topSkills: StudentSkill[],
   learningSkills: Array<{ id?: string; skillId?: string; skillName: string }>,
   allSkills: TaxonomySkill[],
   limit = 8,
   additionalExcludedNames?: Set<string>,
-  additionalExcludedIds?: Set<string>
+  additionalExcludedIds?: Set<string>,
+  options?: RecommendationOptions
 ): RecommendationResult {
 
   const existingNormalizedNames = new Set<string>();
@@ -279,7 +364,10 @@ export function computeSkillRecommendations(
   let primaryFocus = primaryDomainConfig ? primaryDomainConfig.label : 'General Software Engineering';
   let focusSummary = 'Curated skills matching your active technologies and career trajectories';
 
-  if (hasSkills) {
+  if (options?.targetJobRole) {
+    primaryFocus = `${options.targetJobRole} Target Track`;
+    focusSummary = `Tailored for ${options.targetJobRole} competencies across enterprise hiring rubrics`;
+  } else if (hasSkills) {
     if (domainScores.frontend >= 3 && domainScores.backend >= 3) {
       primaryFocus = 'Full-Stack Architecture & Cloud';
       focusSummary = 'Tailored for engineers combining modern web frontends with robust backend microservices';
@@ -319,20 +407,19 @@ export function computeSkillRecommendations(
     let totalScore = 0;
     let matchReason = '';
     let synergyTag = 'Recommended';
+    let companyMatch: string | undefined;
+    let roleRelevance: string | undefined;
 
     if (hasSkills) {
       if (candidateDomain === primaryDomainId) {
-
         totalScore += 50;
         matchReason = `Matches your core focus in ${primaryDomainConfig?.label || 'this area'}`;
         synergyTag = 'Core Path';
       } else if (secondaryDomainId && candidateDomain === secondaryDomainId) {
-
         totalScore += 35;
         matchReason = `Complements your ${secondaryDomainConfig?.label || 'secondary stack'}`;
         synergyTag = 'Complementary';
       } else if (primaryDomainConfig?.companionDomains.includes(candidateDomain)) {
-
         totalScore += 25;
         matchReason = `Natural next milestone for your engineering stack`;
         synergyTag = 'Expansion';
@@ -342,7 +429,6 @@ export function computeSkillRecommendations(
         synergyTag = 'New Domain';
       }
     } else {
-
       if (['datastructuresalgorithms', 'dsa', 'python', 'git', 'react', 'java', 'sql', 'postgresql'].includes(candidateNorm)) {
         totalScore += 80;
         matchReason = 'Essential software engineering foundation recommended for all developers';
@@ -354,16 +440,14 @@ export function computeSkillRecommendations(
       }
     }
 
+    // 1. Skill synergy rules with STRICT bound checking
     if (hasSkills) {
       for (const studentSkill of topSkills) {
         const studentNorm = normalizeName(studentSkill.skillName);
         const rules = SPECIFIC_SYNERGIES[studentNorm];
         if (rules) {
           for (const rule of rules) {
-            const matchesTarget = rule.targetSkills.some(t => {
-              const targetNorm = normalizeName(t);
-              return candidateNorm === targetNorm || candidateNorm.includes(targetNorm) || targetNorm.includes(candidateNorm);
-            });
+            const matchesTarget = rule.targetSkills.some(t => isSkillMatch(candidateNorm, t));
             if (matchesTarget) {
               totalScore += rule.boost;
               matchReason = `${rule.reason} (based on your ${studentSkill.skillName} skill)`;
@@ -374,10 +458,59 @@ export function computeSkillRecommendations(
       }
     }
 
+    // 2. Company technology alignment
+    if (options?.targetCompany) {
+      const companyKey = options.targetCompany.toLowerCase().trim();
+      const companyConfig = COMPANY_TECH_STACKS[companyKey];
+      if (companyConfig) {
+        const matchesCompany = companyConfig.skills.some(t => isSkillMatch(candidateNorm, t));
+        if (matchesCompany) {
+          totalScore += 45;
+          companyMatch = companyConfig.label;
+          matchReason = `${companyConfig.reason}; builds on your active stack`;
+          synergyTag = `${companyConfig.label} Stack`;
+        }
+      }
+    }
+
+    // 3. Job role target alignment
+    if (options?.targetJobRole) {
+      const roleConfig = JOB_ROLE_TARGETS[options.targetJobRole];
+      if (roleConfig) {
+        const matchesRole = roleConfig.skills.some(t => isSkillMatch(candidateNorm, t));
+        if (matchesRole) {
+          totalScore += 40;
+          roleRelevance = roleConfig.label;
+          if (!companyMatch) {
+            matchReason = `${roleConfig.reason}`;
+            synergyTag = 'Role Priority';
+          }
+        }
+      }
+    }
+
+    // 4. Assessment scores & remediation priorities
+    if (options?.assessmentScores) {
+      for (const [assessedSkill, score] of Object.entries(options.assessmentScores)) {
+        if (score < 60) {
+          const assessedNorm = normalizeName(assessedSkill);
+          const rules = SPECIFIC_SYNERGIES[assessedNorm];
+          if (rules) {
+            const isPrereqOrCompanion = rules.some(r => r.targetSkills.some(t => isSkillMatch(candidateNorm, t)));
+            if (isPrereqOrCompanion) {
+              totalScore += 25;
+              matchReason = `Reinforces fundamental concepts to boost your ${assessedSkill} assessment performance (${score}%)`;
+              synergyTag = 'Remediation Path';
+            }
+          }
+        }
+      }
+    }
+
     if (['systemdesign', 'datastructuresalgorithms', 'dsa', 'oop'].includes(candidateNorm)) {
       totalScore += 15;
       if (!matchReason.includes('interview')) {
-        matchReason = `${matchReason} & critical for SDE coding assessments`;
+        matchReason = `${matchReason} & critical for SDE technical interviews`;
       }
     }
 
@@ -387,6 +520,8 @@ export function computeSkillRecommendations(
       reason: matchReason,
       synergyTag,
       domain: candidateDomain,
+      companyMatch,
+      roleRelevance
     });
   }
 
@@ -399,4 +534,5 @@ export function computeSkillRecommendations(
     recommendedSkills: scoredSkills.slice(0, limit),
   };
 }
+
 

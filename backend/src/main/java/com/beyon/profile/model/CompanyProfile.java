@@ -16,6 +16,12 @@ public class CompanyProfile {
     @Column(nullable = false, unique = true)
     private UUID userId;
 
+    @Column(length = 21)
+    private String cin;
+
+    @Column(length = 50)
+    private String verificationStatus = "PENDING";
+
     @Column(nullable = false, length = 200)
     private String companyName;
 
@@ -113,6 +119,10 @@ public class CompanyProfile {
     public void setVerificationDocUrl(String verificationDocUrl) { this.verificationDocUrl = verificationDocUrl; }
     public int getCompletionPct() { return completionPct; }
     public void setCompletionPct(int completionPct) { this.completionPct = completionPct; }
+    public String getCin() { return cin; }
+    public void setCin(String cin) { this.cin = cin; }
+    public String getVerificationStatus() { return verificationStatus; }
+    public void setVerificationStatus(String verificationStatus) { this.verificationStatus = verificationStatus; }
     public Instant getCreatedAt() { return createdAt; }
     public Instant getUpdatedAt() { return updatedAt; }
 }

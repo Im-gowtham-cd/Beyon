@@ -97,6 +97,40 @@ public class CareerIntelligenceController {
         return ResponseEntity.ok(gapService.getTopGaps(userId, limit));
     }
 
+    @PostMapping("/skill-gaps/ai-analyze")
+    public ResponseEntity<?> analyzeSkillGapsWithAi(@RequestBody(required = false) Map<String, Object> body, HttpServletRequest request) {
+        UUID userId = extractUserId(request);
+        UUID careerPathId = null;
+        String targetProfession = null;
+
+        if (body != null) {
+            if (body.get("careerPathId") != null && !body.get("careerPathId").toString().isBlank()) {
+                try {
+                    careerPathId = UUID.fromString(body.get("careerPathId").toString());
+                } catch (Exception ignored) {}
+            }
+            if (body.get("targetProfession") != null) {
+                targetProfession = body.get("targetProfession").toString();
+            }
+        }
+
+        return ResponseEntity.ok(gapService.analyzeWithAi(userId, careerPathId, targetProfession));
+    }
+
+    @GetMapping("/target-professions")
+    public ResponseEntity<?> getTargetProfessions() {
+        List<Map<String, String>> professions = List.of(
+            Map.of("id", "fullstack-java", "name", "Full Stack Java Developer", "category", "Software Engineering", "description", "Spring Boot, React, Dolt/MySQL, Microservices, REST APIs, Cloud Deployment"),
+            Map.of("id", "cloud-devops", "name", "Cloud DevOps Engineer", "category", "Cloud & Infrastructure", "description", "Docker, Kubernetes, AWS, CI/CD Pipelines, Infrastructure as Code, Linux"),
+            Map.of("id", "ai-data-science", "name", "AI & Data Science Engineer", "category", "Artificial Intelligence", "description", "Python, Machine Learning, Deep Learning, SQL, Ollama/LLM Engineering"),
+            Map.of("id", "backend-engineer", "name", "Backend Systems Engineer", "category", "Software Engineering", "description", "Java, Go, High-concurrency Systems, SQL Optimization, Messaging Queues"),
+            Map.of("id", "frontend-engineer", "name", "Frontend Experience Engineer", "category", "Web Development", "description", "TypeScript, React, Next.js, State Management, UI/UX Systems"),
+            Map.of("id", "cybersecurity-analyst", "name", "Cybersecurity & InfoSec Analyst", "category", "Security", "description", "Network Security, Identity & Access, Ethical Hacking, Vulnerability Remediation"),
+            Map.of("id", "mobile-app-developer", "name", "Mobile Application Engineer", "category", "Mobile", "description", "React Native, Flutter, Swift, Android Kotlin, Offline Sync Architecture")
+        );
+        return ResponseEntity.ok(professions);
+    }
+
     @PostMapping("/advisor/sessions")
     public ResponseEntity<?> createAdvisorSession(HttpServletRequest request) {
         UUID userId = extractUserId(request);

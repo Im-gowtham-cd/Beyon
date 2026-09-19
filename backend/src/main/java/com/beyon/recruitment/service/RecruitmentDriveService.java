@@ -18,20 +18,26 @@ public class RecruitmentDriveService {
     private final PlacementRegistrationRepository placementRepo;
     private final RecruitmentApplicationRepository applicationRepo;
     private final NotificationService notificationService;
+    private final com.beyon.profile.service.CompanyVerificationService companyVerificationService;
 
     public RecruitmentDriveService(RecruitmentDriveRepository driveRepo,
                                     DriveInstitutionTargetRepository targetRepo,
                                     PlacementRegistrationRepository placementRepo,
                                     RecruitmentApplicationRepository applicationRepo,
-                                    NotificationService notificationService) {
+                                    NotificationService notificationService,
+                                    com.beyon.profile.service.CompanyVerificationService companyVerificationService) {
         this.driveRepo = driveRepo;
         this.targetRepo = targetRepo;
         this.placementRepo = placementRepo;
         this.applicationRepo = applicationRepo;
         this.notificationService = notificationService;
+        this.companyVerificationService = companyVerificationService;
     }
 
     public RecruitmentDrive createDrive(RecruitmentDrive drive) {
+        if (drive.getCompanyUserId() != null) {
+            companyVerificationService.enforceCompanyVerified(drive.getCompanyUserId());
+        }
         if (drive.getJobRole() == null || drive.getJobRole().isBlank()) {
             drive.setJobRole(drive.getTitle() != null ? drive.getTitle() : "Software Engineer");
         }
@@ -104,6 +110,7 @@ public class RecruitmentDriveService {
     }
 
     public void publishDrive(UUID driveId, UUID companyId) {
+        companyVerificationService.enforceCompanyVerified(companyId);
         RecruitmentDrive drive = driveRepo.findById(driveId)
             .orElseThrow(() -> new RuntimeException("Drive not found"));
         if (!drive.getCompanyUserId().equals(companyId)) throw new RuntimeException("Forbidden");

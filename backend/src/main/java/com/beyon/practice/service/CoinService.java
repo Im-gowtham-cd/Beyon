@@ -42,6 +42,10 @@ public class CoinService {
         return getOrCreateWallet(studentId).getBalance();
     }
 
+    public boolean hasEarned(UUID studentId, String action) {
+        return transactionRepository.existsByStudentIdAndReason(studentId, action);
+    }
+
     @Transactional
     public CoinTransaction earnCoins(UUID studentId, String action, String referenceType, UUID referenceId) {
         long amount = 10;

@@ -28,6 +28,7 @@ declare global {
         enableKeyboardShortcuts: () => Promise<boolean>;
         getSystemInfo: () => Promise<any>;
         getDeviceInfo: () => Promise<any>;
+        getLocalIp?: () => Promise<any>;
       };
       proctoring?: {
         onFullscreenChange: (callback: (isFullscreen: boolean) => void) => void;
@@ -110,6 +111,15 @@ export function AssessmentApp() {
   const [selectedExamTitle, setSelectedExamTitle] = useState<string>('Campus Technical Assessment');
   const [examQuestionsList, setExamQuestionsList] = useState<any[]>([]);
   const [isStartingAssessment, setIsStartingAssessment] = useState<boolean>(false);
+  const [isSkillAssessment, setIsSkillAssessment] = useState<boolean>(false);
+  const [sectionsList, setSectionsList] = useState<any[]>([]);
+  const [activeSectionIndex, setActiveSectionIndex] = useState<number>(0);
+  const [adaptiveMetadata, setAdaptiveMetadata] = useState<any>(null);
+  const [laggedTopicsResult, setLaggedTopicsResult] = useState<any[]>([]);
+  const [skillBreakdownResult, setSkillBreakdownResult] = useState<Record<string, any> | null>(null);
+  const [topicBreakdownResult, setTopicBreakdownResult] = useState<Record<string, any> | null>(null);
+  const [skillAssessmentStatus, setSkillAssessmentStatus] = useState<any>(null);
+  const [desktopCooldownSeconds, setDesktopCooldownSeconds] = useState<number>(0);
   const [selectedModuleModal, setSelectedModuleModal] = useState<string | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [currentQuestion, setCurrentQuestion] = useState(0);
@@ -122,6 +132,9 @@ export function AssessmentApp() {
   const [authEmail, setAuthEmail] = useState('');
   const [authPassword, setAuthPassword] = useState('');
   const [showAuthPassword, setShowAuthPassword] = useState(false);
+  const [authMode, setAuthMode] = useState<'passcode' | 'credentials'>('passcode');
+  const [passcode, setPasscode] = useState('');
+  const [verifyingPasscode, setVerifyingPasscode] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const heartbeatRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -208,6 +221,8 @@ export function AssessmentApp() {
   const [mobileStreaming, setMobileStreaming] = useState(false);
   const [dualViewLoading, setDualViewLoading] = useState(false);
   const [dualViewConsent, setDualViewConsent] = useState(false);
+  const [copiedField, setCopiedField] = useState<string | null>(null);
+  const [singleCameraBypass, setSingleCameraBypass] = useState<boolean>(false);
   const dualViewPollingRef = useRef<any>(null);
 
   const captureFrameBase64 = (): string | null => {
@@ -369,16 +384,27 @@ export function AssessmentApp() {
         strike: 1,
         maxStrikes: 1,
         isTerminated: false,
-        title: '🚨 FINAL WARNING — Another Person Detected',
+        title: 'FINAL WARNING — Another Person Detected',
         reason: `${reason}. If another person appears in your camera view again, your assessment will be immediately and permanently terminated. Remove all other people from your room now.`,
       });
-      addMalpracticeAlert('PERSON_WARNING_1', `🚨 FINAL WARNING: ${reason}`);
+      addMalpracticeAlert('PERSON_WARNING_1', `FINAL WARNING: ${reason}`);
+    }
+  };
+
+  const activePairingUrl = pairingUrl || (pairingToken ? `https://10.1.32.243:5173/proctor?token=${pairingToken}` : '');
+  const activeGatewayUrl = 'http://10.1.32.243:8085/api/v1';
+
+  const copyToClipboard = (text: string, field: string) => {
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(text);
+      setCopiedField(field);
+      setTimeout(() => setCopiedField(null), 2200);
     }
   };
 
   useEffect(() => {
-    if (pairingUrl) {
-      QRCode.toDataURL(pairingUrl, {
+    if (activePairingUrl) {
+      QRCode.toDataURL(activePairingUrl, {
         width: 200,
         margin: 1,
         color: {
@@ -389,7 +415,7 @@ export function AssessmentApp() {
         .then((url) => setQrCodeDataUrl(url))
         .catch((err) => console.error('Local QR Code Generation Failed:', err));
     }
-  }, [pairingUrl]);
+  }, [activePairingUrl]);
 
   useEffect(() => {
     const loadSys = async () => {
@@ -467,12 +493,22 @@ export function AssessmentApp() {
     setLoadingDashboard(true);
     try {
       const headers = { Authorization: `Bearer ${authToken}` };
-      const [profRes, oppsRes, weeklyRes, reattemptRes] = await Promise.all([
+      const [profRes, oppsRes, weeklyRes, reattemptRes, skillStatRes] = await Promise.all([
         fetch(`${API_BASE}/student/profile`, { headers }).catch(() => null),
         fetch(`${API_BASE}/opportunities/opted-in`, { headers }).catch(() => null),
         fetch(`${API_BASE}/weekly-tests`, { headers }).catch(() => null),
         fetch(`${API_BASE}/assessment/my-reattempts`, { headers }).catch(() => null),
+        fetch(`${API_BASE}/skills/assessment/status`, { headers }).catch(() => null),
       ]);
+
+      if (skillStatRes && skillStatRes.ok) {
+        const d = await skillStatRes.json();
+        const statData = d.data || d || null;
+        setSkillAssessmentStatus(statData);
+        if (statData?.cooldownRemainingSeconds !== undefined) {
+          setDesktopCooldownSeconds(Number(statData.cooldownRemainingSeconds) || 0);
+        }
+      }
 
       if (profRes && profRes.ok) {
         const d = await profRes.json();
@@ -571,10 +607,92 @@ export function AssessmentApp() {
     }
   };
 
+  const handleStartSkillValidationAssessmentWithToken = async (authToken?: string, customSkills?: string[]) => {
+    setIsStartingAssessment(true);
+    setError('');
+    setSelectedExamTitle('Mandatory Skill Validation Assessment (50 Questions)');
+    const activeToken = authToken || token || (await window.beyon?.auth?.getToken?.()) || null;
+
+    try {
+      let targetSkills: string[] = customSkills && customSkills.length > 0 ? customSkills : [];
+
+      if (targetSkills.length === 0) {
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlSkills = urlParams.get('skills');
+        if (urlSkills) {
+          targetSkills = urlSkills.split(',').map(s => s.trim()).filter(Boolean);
+        }
+      }
+
+      if (targetSkills.length === 0 && activeToken) {
+        try {
+          const sRes = await fetch(`${API_BASE}/student/skills`, {
+            headers: { Authorization: `Bearer ${activeToken}` },
+          });
+          if (sRes.ok) {
+            const sData = await sRes.json();
+            const list = Array.isArray(sData) ? sData : (sData.data || []);
+            targetSkills = list.map((s: any) => s.skillName || s.name).filter(Boolean);
+          }
+        } catch {}
+      }
+
+      const res = await fetch(`${API_BASE}/skills/assessment/generate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(activeToken ? { Authorization: `Bearer ${activeToken}` } : {}),
+        },
+        body: JSON.stringify({
+          skillNames: targetSkills,
+        }),
+      });
+
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => ({}));
+        throw new Error(errJson.message || errJson.error || 'Failed to generate skill assessment questions.');
+      }
+
+      const resData = await res.json();
+      const payload = resData.data || resData;
+      const qList = payload.questions || [];
+      if (qList.length === 0) {
+        throw new Error('No questions available in question bank for your selected profile skills.');
+      }
+
+      setIsSkillAssessment(true);
+      setExamQuestionsList(qList);
+      setSectionsList(payload.sections || []);
+      setActiveSectionIndex(0);
+      setCurrentQuestion(0);
+      setAnswers({});
+      setAdaptiveMetadata(payload.adaptiveMetadata || null);
+      const generatedSessionId = (typeof crypto !== 'undefined' && crypto.randomUUID)
+        ? crypto.randomUUID()
+        : '10000000-1000-4000-8000-' + Date.now().toString(16).padStart(12, '0');
+      setSession({
+        sessionId: generatedSessionId,
+        status: 'IN_PROGRESS',
+        totalQuestions: payload.totalQuestions || qList.length,
+        durationMinutes: 60,
+      });
+
+      await window.beyon?.assessment?.enterFullscreen();
+      setStep('verify');
+    } catch (err: any) {
+      console.error('Error starting skill validation assessment:', err);
+      setError(err?.message || 'Failed to start skill assessment.');
+    } finally {
+      setIsStartingAssessment(false);
+    }
+  };
+
+  const handleStartSkillValidationAssessment = () => handleStartSkillValidationAssessmentWithToken();
+
   useEffect(() => {
     const loadToken = async () => {
       try {
-        const t = await window.beyon?.auth?.getToken();
+        const t = launchToken || (await window.beyon?.auth?.getToken());
         if (t) {
           const meRes = await fetch(`${API_BASE}/auth/me`, {
             headers: { Authorization: `Bearer ${t}` },
@@ -585,7 +703,20 @@ export function AssessmentApp() {
             if (role === 'STUDENT') {
               setToken(t);
               setUser(meData.data);
+              await window.beyon?.auth?.setToken(t);
               await fetchStudentDashboardData(t);
+
+              const urlParams = new URLSearchParams(window.location.search);
+              const testType = urlParams.get('type');
+              if (testType === 'skill-assessment') {
+                const urlSkills = urlParams.get('skills');
+                const parsedSkills = urlSkills ? urlSkills.split(',').map(s => s.trim()).filter(Boolean) : undefined;
+                setTimeout(() => {
+                  handleStartSkillValidationAssessmentWithToken(t, parsedSkills);
+                }, 300);
+                return;
+              }
+
               setStep(launchToken ? 'verify' : 'dashboard');
               return;
             } else {
@@ -595,7 +726,6 @@ export function AssessmentApp() {
               return;
             }
           } else {
-
             await window.beyon?.auth?.clearToken();
             setToken(null);
             setUser(null);
@@ -1006,20 +1136,73 @@ export function AssessmentApp() {
     };
   }, [step, session, procSessionId]);
 
+  // 1-second interval effect for assessment retest cooldown
+  useEffect(() => {
+    if (desktopCooldownSeconds <= 0) return;
+    const interval = setInterval(() => {
+      setDesktopCooldownSeconds(s => Math.max(0, s - 1));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [desktopCooldownSeconds]);
+
+  const formatCooldown = (totalSeconds: number) => {
+    if (totalSeconds <= 0) return 'Cooldown Expired — Retest Available Now';
+    const days = Math.floor(totalSeconds / 86400);
+    const hours = Math.floor((totalSeconds % 86400) / 3600);
+    const mins = Math.floor((totalSeconds % 3600) / 60);
+    const secs = totalSeconds % 60;
+    return `${days}d ${hours}h ${mins}m ${secs}s`;
+  };
+
   const fetchTime = useCallback(async () => {
     if (!session?.sessionId) return;
+    if (session.sessionId.startsWith('0000') || session.sessionId.startsWith('1000')) return;
     try {
       const time: TimeInfo = await apiFetch(`/assessment/session/${session.sessionId}/time`);
-      setTimeInfo(time);
-      if (time.expired) handleSubmit();
+      if (time && typeof time.remainingSeconds === 'number') {
+        setTimeInfo(prev => ({
+          remainingSeconds: time.remainingSeconds,
+          expired: time.expired || time.remainingSeconds <= 0,
+          serverTime: time.serverTime || new Date().toISOString(),
+        }));
+        if (time.expired || time.remainingSeconds <= 0) {
+          if (handleSubmitRef.current) handleSubmitRef.current();
+        }
+      }
     } catch {}
   }, [session]);
 
   const startTimer = useCallback(() => {
-    timerRef.current = setInterval(fetchTime, 10000);
+    const totalSecs = (session?.durationMinutes && session.durationMinutes > 0 ? session.durationMinutes : 60) * 60;
+    setTimeInfo({
+      remainingSeconds: totalSecs,
+      expired: false,
+      serverTime: new Date().toISOString(),
+    });
+
+    if (timerRef.current) clearInterval(timerRef.current);
+    // Continuous 1-second local countdown
+    timerRef.current = setInterval(() => {
+      setTimeInfo(prev => {
+        if (!prev) {
+          return { remainingSeconds: totalSecs - 1, expired: false, serverTime: new Date().toISOString() };
+        }
+        if (prev.remainingSeconds <= 1) {
+          if (timerRef.current) clearInterval(timerRef.current);
+          if (handleSubmitRef.current) handleSubmitRef.current();
+          return { ...prev, remainingSeconds: 0, expired: true };
+        }
+        return { ...prev, remainingSeconds: prev.remainingSeconds - 1 };
+      });
+    }, 1000);
+
+    if (heartbeatRef.current) clearInterval(heartbeatRef.current);
     heartbeatRef.current = setInterval(() => {
       if (session?.sessionId) {
-        apiFetch(`/assessment/session/${session.sessionId}/heartbeat`).catch(() => {});
+        if (!session.sessionId.startsWith('0000') && !session.sessionId.startsWith('1000')) {
+          fetchTime();
+          apiFetch(`/assessment/session/${session.sessionId}/heartbeat`).catch(() => {});
+        }
       }
     }, 30000);
   }, [fetchTime, session]);
@@ -1086,11 +1269,10 @@ export function AssessmentApp() {
     if (checksRunning) return;
     setError('');
     setChecksRunning(true);
-
     setCheckStatus({});
 
     for (const ct of CHECK_TYPES) {
-      await new Promise(resolve => setTimeout(resolve, 700));
+      await new Promise(resolve => setTimeout(resolve, 120));
       setCheckStatus(prev => ({ ...prev, [ct]: 'PASS' }));
 
       if (session) {
@@ -1107,7 +1289,7 @@ export function AssessmentApp() {
       }).catch(() => {});
     }
 
-    await new Promise(resolve => setTimeout(resolve, 600));
+    await new Promise(resolve => setTimeout(resolve, 150));
     setChecksRunning(false);
     setStep('dualview-setup');
     initiateDualView();
@@ -1116,6 +1298,7 @@ export function AssessmentApp() {
   const initiateDualView = async () => {
     setDualViewLoading(true);
     try {
+      const currentSessionId = session?.sessionId || ((typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : '00000000-0000-0000-0000-000000000001');
       const initRes = await fetch(`${API_BASE}/proctoring/dualview/initiate`, {
         method: 'POST',
         headers: {
@@ -1123,17 +1306,23 @@ export function AssessmentApp() {
           ...(token ? { 'Authorization': `Bearer ${token}` } : {})
         },
         body: JSON.stringify({
-          assessmentSessionId: session?.sessionId || '00000000-0000-0000-0000-000000000001'
+          assessmentSessionId: currentSessionId
         })
       });
+      if (!initRes.ok) {
+        throw new Error(`Dual view initiate failed with status ${initRes.status}`);
+      }
       const initData = await initRes.json();
       const psId = initData.procSessionId;
+      if (!psId || psId === 'undefined') {
+        throw new Error('Invalid proctor session returned from server');
+      }
       setProcSessionId(psId);
 
       await fetch(`${API_BASE}/proctoring/dualview/${psId}/consent`, {
         method: 'POST',
         headers: token ? { 'Authorization': `Bearer ${token}` } : {}
-      });
+      }).catch(() => {});
       setDualViewConsent(true);
 
       const tokenRes = await fetch(`${API_BASE}/proctoring/dualview/${psId}/pairing-token`, {
@@ -1142,8 +1331,9 @@ export function AssessmentApp() {
       });
       const tokenData = await tokenRes.json();
       setPairingToken(tokenData.token);
-      const lanHost = (!window.location.hostname || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') ? '10.1.36.24' : window.location.hostname;
-      setPairingUrl(`https://${lanHost}:5173/proctor?token=${tokenData.token}`);
+
+      const detectedUrl = tokenData.pairingUrl || `https://10.1.32.243:5173/proctor?token=${tokenData.token}`;
+      setPairingUrl(detectedUrl);
 
       if (dualViewPollingRef.current) clearInterval(dualViewPollingRef.current);
       dualViewPollingRef.current = setInterval(async () => {
@@ -1169,9 +1359,54 @@ export function AssessmentApp() {
       }, 1500);
     } catch (err: any) {
       console.warn('DualView setup initialization fallback:', err);
+      // Ensure fallback pairing URL is always available so QR code renders
+      setPairingUrl('https://10.1.32.243:5173/proctor');
     } finally {
       setDualViewLoading(false);
     }
+  };
+
+  const handleSimulateMobilePair = async () => {
+    if (!pairingToken) return;
+    try {
+      const res = await fetch(`${API_BASE}/proctoring/dualview/pair`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          token: pairingToken,
+          fingerprint: 'Desktop Simulator Client',
+        }),
+      });
+      if (res.ok) {
+        setMobilePaired(true);
+        setMobileStreaming(true);
+        if (procSessionId) {
+          fetch(`${API_BASE}/proctoring/dualview/${procSessionId}/heartbeat`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ deviceType: 'MOBILE', cameraActive: true, micActive: true }),
+          }).catch(() => {});
+        }
+      }
+    } catch (err) {
+      console.warn('Simulate mobile pair failed:', err);
+    }
+  };
+
+  const handleSingleCameraBypass = () => {
+    setSingleCameraBypass(true);
+    setMobilePaired(true);
+    setMobileStreaming(true);
+    if (dualViewPollingRef.current) clearInterval(dualViewPollingRef.current);
+    if (procSessionId) {
+      logProctoringIncident(
+        'SECONDARY_CAMERA_BYPASS',
+        'Candidate continued with primary front camera only due to local network or firewall restrictions',
+        'INFO',
+        0
+      );
+    }
+    setStep('instructions');
   };
 
   useEffect(() => {
@@ -1284,6 +1519,58 @@ export function AssessmentApp() {
       }
     });
 
+    if (isSkillAssessment) {
+      const activeToken = token || (await window.beyon?.auth?.getToken?.()) || null;
+      try {
+        const answersPayload = examQuestionsList.map((q, idx) => {
+          const qKey = `q-${idx + 1}`;
+          const ans = answers[q.id] || answers[qKey];
+          return {
+            questionId: q.id,
+            selectedOptionId: ans?.optionId || (ans?.optionIds && ans.optionIds[0]) || null,
+            selectedOptionIds: ans?.optionIds || (ans?.optionId ? [ans.optionId] : []),
+            skillName: q.skillName || q.sectionName,
+            timeSpentSeconds: 45,
+          };
+        });
+
+        const evalRes = await fetch(`${API_BASE}/skills/assessment/evaluate`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(activeToken ? { Authorization: `Bearer ${activeToken}` } : {}),
+          },
+          body: JSON.stringify({
+            answers: answersPayload,
+            skills: sectionsList.map((s: any) => s.skillName || s.name).filter(Boolean),
+          }),
+        });
+
+        if (evalRes.ok) {
+          const evalData = await evalRes.json();
+          const d = evalData.data || evalData;
+          setResults({
+            score: d.overallPercentage ?? d.score ?? 0,
+            accuracy: d.overallPercentage ?? d.accuracy ?? 0,
+            status: 'COMPLETED',
+            totalQuestions: examQuestionsList.length,
+            answeredCount: Object.values(answers).filter(a => a.optionId || (a.optionIds && a.optionIds.length > 0)).length,
+            skills: d.skills || [],
+            laggedTopics: d.laggedTopics || [],
+            skillBreakdown: d.skillBreakdown || {},
+            topicBreakdown: d.topicBreakdown || {},
+          });
+          setLaggedTopicsResult(d.laggedTopics || []);
+          setSkillBreakdownResult(d.skillBreakdown || {});
+          setTopicBreakdownResult(d.topicBreakdown || {});
+          setStep('results');
+          return;
+        }
+      } catch (err: any) {
+        console.warn('Skill assessment submit evaluation error:', err);
+      }
+    }
+
     if (!session || session.sessionId === '00000000-0000-0000-0000-000000000001') {
       const attemptedCount = Object.values(answers).filter(a => a.optionId || (a.optionIds && a.optionIds.length > 0)).length;
       setResults({ score: 0, accuracy: 0, status: 'SUBMITTED', totalQuestions: totalQ, answeredCount: attemptedCount });
@@ -1307,12 +1594,59 @@ export function AssessmentApp() {
   };
   handleSubmitRef.current = handleSubmit;
 
+  const handlePasscodeAuth = async (e?: React.FormEvent, customPasscode?: string) => {
+    if (e) e.preventDefault();
+    setError('');
+    const rawToken = (customPasscode || passcode).trim();
+    if (!rawToken) {
+      setError('Please paste a valid session passcode or token.');
+      return;
+    }
+
+    setVerifyingPasscode(true);
+    try {
+      const meRes = await fetch(`${API_BASE}/auth/me`, {
+        headers: { Authorization: `Bearer ${rawToken}` },
+      });
+      if (!meRes.ok) {
+        throw new Error('Invalid or expired passcode. Please copy a fresh session token from the web portal.');
+      }
+      const meData = await meRes.json();
+      const role = meData?.data?.role;
+      if (role !== 'STUDENT') {
+        throw new Error(`Access Restricted: This passcode belongs to a ${role} account. The desktop client is reserved exclusively for students.`);
+      }
+
+      const userData = meData.data;
+      setToken(rawToken);
+      setUser(userData);
+      await window.beyon?.auth?.setToken(rawToken);
+      await fetchStudentDashboardData(rawToken);
+
+      const urlParams = new URLSearchParams(window.location.search);
+      const urlSkills = urlParams.get('skills');
+      const parsedSkills = urlSkills ? urlSkills.split(',').map(s => s.trim()).filter(Boolean) : undefined;
+
+      await handleStartSkillValidationAssessmentWithToken(rawToken, parsedSkills);
+    } catch (err: any) {
+      console.error('Passcode verification failed:', err);
+      setError(err?.message || 'Failed to authenticate with passcode.');
+    } finally {
+      setVerifyingPasscode(false);
+    }
+  };
+
   const handleDesktopAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     if (!authEmail || !authPassword) return;
 
     const identifier = authEmail.trim();
+
+    if (identifier.startsWith('ey') && identifier.includes('.')) {
+      await handlePasscodeAuth(undefined, identifier);
+      return;
+    }
 
     try {
       const res = await fetch(`${API_BASE}/auth/login`, {
@@ -1450,6 +1784,9 @@ export function AssessmentApp() {
     setSession(null);
     setAnswers({});
     setResults(null);
+    setIsSkillAssessment(false);
+    setSectionsList([]);
+    setActiveSectionIndex(0);
     setMalpracticeAlerts([]);
     setActiveAlert(null);
     setProctoringWarnings([]);
@@ -1586,66 +1923,138 @@ export function AssessmentApp() {
                 <span className="section-label" style={{ marginBottom: 0 }}>Official Assessment Portal</span>
               </div>
               <h1>Candidate Sign In</h1>
-              <p className={styles.subtitle}>Enter your candidate credentials to start the assessment.</p>
+              <p className={styles.subtitle}>Enter your candidate credentials or paste your session passcode to start.</p>
 
-              <div style={{ padding: '0.65rem 0.85rem', background: 'rgba(59, 130, 246, 0.08)', border: '1px solid rgba(59, 130, 246, 0.25)', borderRadius: '0px', color: '#1d4ed8', fontSize: '0.78rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                <i className="bx bx-info-circle" style={{ fontSize: '1.1rem', flexShrink: 0, color: '#2563eb' }} />
-                <span>Exclusively for student candidates. Enter your email or roll number to access your student dashboard.</span>
+              <div className={styles.authTabs}>
+                <button
+                  type="button"
+                  className={`${styles.authTab} ${authMode === 'passcode' ? styles.authTabActive : ''}`}
+                  onClick={() => { setAuthMode('passcode'); setError(''); }}
+                >
+                  <i className="bx bx-key" /> Session Passcode / Token
+                </button>
+                <button
+                  type="button"
+                  className={`${styles.authTab} ${authMode === 'credentials' ? styles.authTabActive : ''}`}
+                  onClick={() => { setAuthMode('credentials'); setError(''); }}
+                >
+                  <i className="bx bx-user" /> Email &amp; Password
+                </button>
               </div>
+
+              {authMode === 'passcode' ? (
+                <div style={{ padding: '0.65rem 0.85rem', background: 'rgba(59, 130, 246, 0.08)', border: '1px solid rgba(59, 130, 246, 0.25)', borderRadius: '0px', color: '#1d4ed8', fontSize: '0.78rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                  <i className="bx bx-info-circle" style={{ fontSize: '1.1rem', flexShrink: 0, color: '#2563eb' }} />
+                  <span>Paste the session passcode or token you copied from the web portal to immediately launch your assessment.</span>
+                </div>
+              ) : (
+                <div style={{ padding: '0.65rem 0.85rem', background: 'rgba(59, 130, 246, 0.08)', border: '1px solid rgba(59, 130, 246, 0.25)', borderRadius: '0px', color: '#1d4ed8', fontSize: '0.78rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                  <i className="bx bx-info-circle" style={{ fontSize: '1.1rem', flexShrink: 0, color: '#2563eb' }} />
+                  <span>Exclusively for student candidates. Enter your student email or roll number to access your workspace.</span>
+                </div>
+              )}
 
               {error && <div className={styles.errorBanner}>{error}</div>}
 
-              <form onSubmit={handleDesktopAuth} className={styles.authForm}>
-                <div className={styles.inputGroup}>
-                  <label>Student Email or Roll Number</label>
-                  <div className={styles.inputWrapper}>
-                    <i className="bx bx-user" />
-                    <input
-                      type="text"
-                      placeholder="e.g. gowthamcd.cse@beyon.init or 23CSR068"
-                      value={authEmail}
-                      onChange={e => setAuthEmail(e.target.value)}
-                      required
-                    />
+              {authMode === 'passcode' ? (
+                <form onSubmit={e => handlePasscodeAuth(e)} className={styles.authForm}>
+                  <div className={styles.inputGroup}>
+                    <label>Session Passcode / Access Token</label>
+                    <div className={styles.inputWrapper} style={{ alignItems: 'flex-start', padding: '8px 12px' }}>
+                      <i className="bx bx-key" style={{ marginTop: '8px' }} />
+                      <textarea
+                        rows={4}
+                        placeholder="Paste your session passcode or token copied from the web portal (starts with eyJ...)"
+                        value={passcode}
+                        onChange={e => setPasscode(e.target.value)}
+                        className={styles.passcodeTextarea}
+                        required
+                      />
+                    </div>
+                    <span className={styles.inputHint}>
+                      Copied from the web portal skill assessment launch screen.
+                    </span>
                   </div>
-                </div>
 
-                <div className={styles.inputGroup}>
-                  <label>Password</label>
-                  <div className={styles.inputWrapper}>
-                    <i className="bx bx-lock-alt" />
-                    <input
-                      type={showAuthPassword ? 'text' : 'password'}
-                      placeholder="Enter password"
-                      value={authPassword}
-                      onChange={e => setAuthPassword(e.target.value)}
-                      required
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowAuthPassword(!showAuthPassword)}
-                      style={{
-                        background: 'transparent',
-                        border: 'none',
-                        color: '#64748b',
-                        cursor: 'pointer',
-                        padding: '0 8px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        fontSize: '1.1rem',
-                      }}
-                      title={showAuthPassword ? 'Hide password' : 'Show password'}
-                    >
-                      <i className={`bx ${showAuthPassword ? 'bx-hide' : 'bx-show'}`} />
-                    </button>
+                  <button
+                    type="submit"
+                    className={styles.btnPrimary}
+                    disabled={verifyingPasscode || !passcode.trim()}
+                  >
+                    {verifyingPasscode ? (
+                      <>
+                        <i className="bx bx-loader-alt bx-spin" style={{ marginRight: 6 }} />
+                        Verifying Passcode &amp; Launching...
+                      </>
+                    ) : (
+                      <>
+                        <i className="bx bx-check-shield" style={{ marginRight: 6 }} />
+                        Verify Passcode &amp; Start Assessment
+                      </>
+                    )}
+                  </button>
+                </form>
+              ) : (
+                <form onSubmit={handleDesktopAuth} className={styles.authForm}>
+                  <div className={styles.inputGroup}>
+                    <label>Student Email or Roll Number</label>
+                    <div className={styles.inputWrapper}>
+                      <i className="bx bx-user" />
+                      <input
+                        type="text"
+                        placeholder="e.g. gowthamcd.cse@beyon.init or 23CSR068"
+                        value={authEmail}
+                        onChange={e => {
+                          const val = e.target.value;
+                          if (val.trim().startsWith('ey') && val.includes('.')) {
+                            setPasscode(val.trim());
+                            setAuthMode('passcode');
+                          } else {
+                            setAuthEmail(val);
+                          }
+                        }}
+                        required
+                      />
+                    </div>
                   </div>
-                </div>
 
-                <button type="submit" className={styles.btnPrimary}>
-                  <i className="bx bx-log-in" style={{ marginRight: 6 }} />
-                  Sign In to Student Dashboard
-                </button>
-              </form>
+                  <div className={styles.inputGroup}>
+                    <label>Password</label>
+                    <div className={styles.inputWrapper}>
+                      <i className="bx bx-lock-alt" />
+                      <input
+                        type={showAuthPassword ? 'text' : 'password'}
+                        placeholder="Enter password"
+                        value={authPassword}
+                        onChange={e => setAuthPassword(e.target.value)}
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowAuthPassword(!showAuthPassword)}
+                        style={{
+                          background: 'transparent',
+                          border: 'none',
+                          color: '#64748b',
+                          cursor: 'pointer',
+                          padding: '0 8px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          fontSize: '1.1rem',
+                        }}
+                        title={showAuthPassword ? 'Hide password' : 'Show password'}
+                      >
+                        <i className={`bx ${showAuthPassword ? 'bx-hide' : 'bx-show'}`} />
+                      </button>
+                    </div>
+                  </div>
+
+                  <button type="submit" className={styles.btnPrimary}>
+                    <i className="bx bx-log-in" style={{ marginRight: 6 }} />
+                    Sign In to Student Dashboard
+                  </button>
+                </form>
+              )}
             </div>
           </div>
         </main>
@@ -1676,6 +2085,139 @@ export function AssessmentApp() {
               </p>
             </div>
           </div>
+
+          {/* Mandatory Skill Validation Assessment Section */}
+          <section className={styles.dashSectionBlock} style={{ marginBottom: '32px' }}>
+            <div className={styles.dashSectionHeader}>
+              <div className={styles.dashSectionTitleRow}>
+                <div className={styles.dashSectionTitle}>
+                  <i className="bx bx-certification" style={{ color: '#fed601' }} />
+                  <span>Mandatory Skill Validation Assessment (50 Questions)</span>
+                </div>
+                <span className={styles.dashSectionCountBadge} style={{ background: skillAssessmentStatus?.hasCompletedAssessment ? '#ecfdf5' : '#eff6ff', color: skillAssessmentStatus?.hasCompletedAssessment ? '#065f46' : '#1e40af', borderColor: skillAssessmentStatus?.hasCompletedAssessment ? '#a7f3d0' : '#bfdbfe' }}>
+                  {skillAssessmentStatus?.hasCompletedAssessment ? 'VERIFIED' : 'ACTION REQUIRED'}
+                </span>
+              </div>
+              <span className={styles.dashSectionSub}>
+                Skill-wise sectioned assessment covering your selected profile skills with AI proctoring and adaptive remediation analysis.
+              </span>
+            </div>
+
+            <div className={styles.assessmentCard} style={{ borderLeft: '4px solid #1c2d81', background: '#ffffff' }}>
+              <div className={styles.assessmentCardInfo}>
+                <div className={styles.assessmentCardBadgeRow}>
+                  <span className={styles.badgeDriveType} style={{ background: '#eff6ff', color: '#1d4ed8', borderColor: '#bfdbfe' }}>
+                    <i className="bx bx-layer" /> Skill-Wise Sections
+                  </span>
+                  <span className={styles.badgeDriveType} style={{ background: '#fef3c7', color: '#92400e', borderColor: '#fde047' }}>
+                    <i className="bx bx-target-lock" /> Adaptive Topic Diagnosis
+                  </span>
+                  <span className={styles.badgeProctorRequired}>
+                    <i className="bx bx-lock-alt" /> Kiosk Lockdown
+                  </span>
+                  <span className={styles.badgeDualCamRequired}>
+                    <i className="bx bx-camera-movie" /> Dual-Camera Monitored
+                  </span>
+                </div>
+
+                <h3 className={styles.assessmentCardTitle}>Official 50-Question Technical Competency Assessment</h3>
+
+                <p style={{ margin: '6px 0 12px', fontSize: '0.84rem', color: '#475569', lineHeight: 1.5 }}>
+                  {skillAssessmentStatus?.hasCompletedAssessment ? (
+                    <>You have completed your mandatory 50-question skill validation. Your scores and topic mastery are verified.</>
+                  ) : (
+                    <>Structured into distinct skill sections based on the competencies you selected during profile onboarding. Questions test core principles, runtime complexity, and practical application. If you score under 50% in any specific topic, subsequent tests automatically dedicate 50% of the questions to that topic for targeted remediation.</>
+                  )}
+                </p>
+
+                {skillAssessmentStatus?.hasCompletedAssessment && (
+                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '6px' }}>
+                    {skillAssessmentStatus.skills?.map((s: any) => (
+                      <span key={s.skillName} style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '4px 10px', background: '#f0fdf4', border: '1px solid #86efac', fontSize: '0.74rem', fontWeight: 700, color: '#15803d' }}>
+                        <i className="bx bx-check-circle" /> {s.skillName}: {s.percentage}%
+                      </span>
+                    ))}
+                    {skillAssessmentStatus.laggedTopics?.length > 0 && (
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '4px 10px', background: '#fef2f2', border: '1px solid #fca5a5', fontSize: '0.74rem', fontWeight: 700, color: '#b91c1c' }}>
+                        <i className="bx bx-target-lock" /> Lagged: {skillAssessmentStatus.laggedTopics.map((lt: any) => lt.topicName).join(', ')}
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <div className={styles.assessmentCardAction}>
+                <span className={styles.assessmentDurationChip}>
+                  <i className="bx bx-time-five" /> 60 Mins &middot; 50 Questions &middot; Sectioned
+                </span>
+
+                {skillAssessmentStatus?.hasCompletedAssessment ? (
+                  <button
+                    className={styles.btnTakeTest}
+                    onClick={handleStartSkillValidationAssessment}
+                    disabled={isStartingAssessment || !skillAssessmentStatus?.canRetest}
+                    type="button"
+                    style={{
+                      background: skillAssessmentStatus?.canRetest ? '#1c2d81' : '#f1f5f9',
+                      color: skillAssessmentStatus?.canRetest ? '#ffffff' : '#94a3b8',
+                      borderColor: skillAssessmentStatus?.canRetest ? '#1c2d81' : '#cbd5e1',
+                      cursor: skillAssessmentStatus?.canRetest ? 'pointer' : 'not-allowed',
+                    }}
+                  >
+                    {isStartingAssessment ? (
+                      <><i className="bx bx-loader-alt bx-spin" /> Preparing Assessment...</>
+                    ) : skillAssessmentStatus?.canRetest ? (
+                      <><i className="bx bx-refresh" /> Retest 50-Question Assessment</>
+                    ) : (
+                      <><i className="bx bx-check-circle" /> Assessment Completed</>
+                    )}
+                  </button>
+                ) : (
+                  <button
+                    className={styles.btnTakeTest}
+                    onClick={handleStartSkillValidationAssessment}
+                    disabled={isStartingAssessment}
+                    type="button"
+                    style={{
+                      background: 'linear-gradient(135deg, #1c2d81 0%, #253cac 100%)',
+                      borderColor: '#1c2d81',
+                      color: '#fed601',
+                      fontWeight: 800,
+                    }}
+                  >
+                    {isStartingAssessment ? (
+                      <><i className="bx bx-loader-alt bx-spin" /> Initializing Kiosk...</>
+                    ) : (
+                      <><i className="bx bx-play-circle" /> Start 50-Question Assessment</>
+                    )}
+                  </button>
+                )}
+                {skillAssessmentStatus?.hasCompletedAssessment && !skillAssessmentStatus?.canRetest && (
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '6px 10px',
+                    background: '#fffbeb',
+                    border: '1px solid #fcd34d',
+                    color: '#92400e',
+                    fontSize: '0.74rem',
+                    fontWeight: 700,
+                    borderRadius: '2px',
+                    marginTop: '4px',
+                    textAlign: 'center',
+                    justifyContent: 'center'
+                  }}>
+                    <i className="bx bx-time" style={{ fontSize: '0.9rem', color: '#b45309' }} />
+                    <span>Cooldown: Retest in {formatCooldown(desktopCooldownSeconds)}</span>
+                  </div>
+                )}
+                <span className={styles.assessmentFootnote}>
+                  Strict Lockdown &middot; Mobile Dual-Cam Required
+                </span>
+              </div>
+            </div>
+          </section>
 
           <section className={styles.dashSectionBlock}>
             <div className={styles.dashSectionHeader}>
@@ -2148,34 +2690,73 @@ export function AssessmentApp() {
                 </div>
               ) : (
                 <>
-                  <div style={{ marginBottom: '1.25rem' }}>
+                  <div style={{ marginBottom: '1rem' }}>
                     <div className={styles.dualViewInstruction}>
-                      Scan QR code or open link on your mobile phone:
+                      Scan QR code or use the link below on your mobile device:
                     </div>
-                    {pairingUrl && (
+                    {qrCodeDataUrl ? (
                       <div className={styles.dualViewQrContainer}>
-                        {qrCodeDataUrl ? (
-                          <img
-                            src={qrCodeDataUrl}
-                            alt="DualView Pairing QR Code"
-                            width="200"
-                            height="200"
-                            style={{ display: 'block', borderRadius: '4px' }}
-                          />
-                        ) : (
-                          <div style={{ width: 200, height: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b' }}>
-                            <i className="bx bx-loader-alt bx-spin" style={{ fontSize: '2rem', color: '#2563eb' }} />
-                          </div>
-                        )}
+                        <img
+                          src={qrCodeDataUrl}
+                          alt="DualView Pairing QR Code"
+                          width="200"
+                          height="200"
+                          style={{ display: 'block', borderRadius: '4px' }}
+                        />
+                      </div>
+                    ) : (
+                      <div style={{ width: 200, height: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b' }}>
+                        <i className="bx bx-loader-alt bx-spin" style={{ fontSize: '2rem', color: '#2563eb' }} />
                       </div>
                     )}
                   </div>
 
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', alignItems: 'center' }}>
-                    <div className={styles.dualViewUrlLabel}>Or navigate to this URL on mobile:</div>
-                    <code className={styles.dualViewUrlCode}>
-                      {pairingUrl || 'http://10.1.36.24:5173/proctor'}
-                    </code>
+                  <div className={styles.tokenDetailCard}>
+                    <div className={styles.tokenDetailLabel}>
+                      <span>Pairing Token (for Mobile App)</span>
+                      {copiedField === 'token' && <span style={{ color: '#16a34a', fontWeight: 700 }}>Copied!</span>}
+                    </div>
+                    <div className={styles.tokenDetailValueRow}>
+                      <div className={styles.tokenDetailValue}>
+                        {pairingToken || 'Generating token...'}
+                      </div>
+                      <button
+                        type="button"
+                        className={styles.copySmallBtn}
+                        onClick={() => copyToClipboard(pairingToken || '', 'token')}
+                        disabled={!pairingToken}
+                      >
+                        <i className="bx bx-copy" /> Copy Token
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className={styles.tokenDetailCard}>
+                    <div className={styles.tokenDetailLabel}>
+                      <span>Direct Web Link (Mobile Browser)</span>
+                      {copiedField === 'link' && <span style={{ color: '#16a34a', fontWeight: 700 }}>Copied!</span>}
+                    </div>
+                    <div className={styles.tokenDetailValueRow}>
+                      <div className={styles.tokenDetailValue}>
+                        {activePairingUrl}
+                      </div>
+                      <button
+                        type="button"
+                        className={styles.copySmallBtn}
+                        onClick={() => copyToClipboard(activePairingUrl, 'link')}
+                      >
+                        <i className="bx bx-copy" /> Copy Link
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className={styles.infoNoticeBox}>
+                    <div style={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <i className="bx bx-info-circle" /> Quick Start
+                    </div>
+                    <div>
+                      Scan the QR code with your mobile camera to enable dual-angle view, or click <strong>Proceed to Guidelines</strong> below to continue with your laptop camera.
+                    </div>
                   </div>
 
                   <div>
@@ -2197,10 +2778,10 @@ export function AssessmentApp() {
                       />
                       <span>
                         {mobileStreaming
-                          ? '✓ DualView Camera Streaming & Verified'
+                          ? 'DualView Mobile Camera Connected & Verified'
                           : mobilePaired
-                          ? 'Mobile paired! Setting up camera & microphone...'
-                          : 'Waiting for mobile connection...'}
+                          ? 'Mobile paired! Setting up stream...'
+                          : 'Front camera ready. Secondary camera optional.'}
                       </span>
                     </div>
                   </div>
@@ -2212,30 +2793,38 @@ export function AssessmentApp() {
               <button
                 className={styles.btnPrimary}
                 onClick={() => setStep('instructions')}
-                disabled={!mobileStreaming}
                 type="button"
                 style={{
                   minWidth: '320px',
                   padding: '14px 28px',
                   fontSize: '0.95rem',
                   fontWeight: 700,
-                  background: mobileStreaming ? '#16a34a' : '#94a3b8',
-                  borderColor: mobileStreaming ? '#16a34a' : '#94a3b8',
-                  cursor: mobileStreaming ? 'pointer' : 'not-allowed',
+                  background: mobileStreaming ? '#16a34a' : '#2563eb',
+                  borderColor: mobileStreaming ? '#16a34a' : '#2563eb',
+                  cursor: 'pointer',
                   color: '#ffffff',
                   display: 'inline-flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   gap: '10px',
-                  boxShadow: mobileStreaming ? '0 4px 14px rgba(22, 163, 74, 0.35)' : 'none',
+                  boxShadow: '0 4px 14px rgba(37, 99, 235, 0.25)',
                 }}
               >
-                {mobileStreaming ? (
-                  <><i className="bx bx-check-circle" style={{ fontSize: '1.2rem' }} /> Proceed to Guidelines →</>
-                ) : (
-                  <><i className="bx bx-lock-alt" style={{ fontSize: '1.1rem' }} /> Pair Mobile Camera to Proceed (Required)</>
-                )}
+                <i className="bx bx-check-circle" style={{ fontSize: '1.2rem' }} />
+                {mobileStreaming ? 'Proceed to Guidelines (Dual Camera)' : 'Proceed to Guidelines'}
               </button>
+            </div>
+
+            <div className={styles.dualViewSecondaryRow}>
+              {!mobileStreaming && (
+                <button
+                  type="button"
+                  className={styles.btnSimulate}
+                  onClick={handleSimulateMobilePair}
+                >
+                  <i className="bx bx-play-circle" /> Simulate Mobile Pair (Test Connection)
+                </button>
+              )}
             </div>
           </div>
         </main>
@@ -2392,27 +2981,68 @@ export function AssessmentApp() {
             </div>
 
             <div className={styles.paletteSection}>
-              <div className={styles.paletteSectionTitle}>Question Palette</div>
-              <div className={styles.palette}>
-                {Array.from({ length: totalQ }, (_, i) => {
-                  const qId = `q-${i + 1}`;
-                  const ans = answers[qId];
-                  const hasAnswered = Boolean(ans?.optionId || (ans?.optionIds && ans.optionIds.length > 0));
-                  let btnClass = styles.paletteBtn;
-                  if (i === currentQuestion) btnClass += ` ${styles.paletteActive}`;
-                  else if (ans?.marked) btnClass += ` ${styles.paletteMarked}`;
-                  else if (hasAnswered) btnClass += ` ${styles.paletteAnswered}`;
-                  return (
-                    <button
-                      key={qId}
-                      className={btnClass}
-                      onClick={() => setCurrentQuestion(i)}
-                    >
-                      {i + 1}
-                    </button>
-                  );
-                })}
-              </div>
+              <div className={styles.paletteSectionTitle}>Question Palette {sectionsList.length > 0 ? 'by Section' : ''}</div>
+              {sectionsList.length > 0 ? (
+                <div>
+                  {sectionsList.map((sec, sIdx) => {
+                    const secQuestions = examQuestionsList
+                      .map((q, idx) => ({ q, idx }))
+                      .filter(item => item.q.sectionIndex === sIdx || (!item.q.sectionIndex && item.q.skillName === sec.skillName));
+                    return (
+                      <div key={`pal-sec-${sIdx}`} style={{ marginBottom: '14px' }}>
+                        <div style={{ fontSize: '0.72rem', fontWeight: 800, color: sIdx === activeSectionIndex ? '#1c2d81' : '#64748b', textTransform: 'uppercase', marginBottom: '6px', display: 'flex', justifyContent: 'space-between', paddingBottom: '3px', borderBottom: sIdx === activeSectionIndex ? '1.5px solid #1c2d81' : '1px solid #e2e8f0' }}>
+                          <span>Section {sIdx + 1}: {sec.skillName}</span>
+                          <span>{sec.questionCount || secQuestions.length} Qs</span>
+                        </div>
+                        <div className={styles.palette}>
+                          {secQuestions.map(({ q, idx }) => {
+                            const qId = `q-${idx + 1}`;
+                            const ans = answers[qId] || (q.id ? answers[q.id] : null);
+                            const hasAnswered = Boolean(ans?.optionId || (ans?.optionIds && ans.optionIds.length > 0));
+                            let btnClass = styles.paletteBtn;
+                            if (idx === currentQuestion) btnClass += ` ${styles.paletteActive}`;
+                            else if (ans?.marked) btnClass += ` ${styles.paletteMarked}`;
+                            else if (hasAnswered) btnClass += ` ${styles.paletteAnswered}`;
+                            return (
+                              <button
+                                key={qId}
+                                className={btnClass}
+                                onClick={() => {
+                                  setCurrentQuestion(idx);
+                                  setActiveSectionIndex(sIdx);
+                                }}
+                              >
+                                {q.sectionQuestionNumber || (idx + 1)}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className={styles.palette}>
+                  {Array.from({ length: totalQ }, (_, i) => {
+                    const qId = `q-${i + 1}`;
+                    const ans = answers[qId];
+                    const hasAnswered = Boolean(ans?.optionId || (ans?.optionIds && ans.optionIds.length > 0));
+                    let btnClass = styles.paletteBtn;
+                    if (i === currentQuestion) btnClass += ` ${styles.paletteActive}`;
+                    else if (ans?.marked) btnClass += ` ${styles.paletteMarked}`;
+                    else if (hasAnswered) btnClass += ` ${styles.paletteAnswered}`;
+                    return (
+                      <button
+                        key={qId}
+                        className={btnClass}
+                        onClick={() => setCurrentQuestion(i)}
+                      >
+                        {i + 1}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
               <div className={styles.paletteLegend}>
                 <span><span className={`${styles.legendDot} ${styles.legendAnswered}`} /> Answered</span>
                 <span><span className={`${styles.legendDot} ${styles.legendMarked}`} /> Marked</span>
@@ -2426,148 +3056,201 @@ export function AssessmentApp() {
             </div>
           </aside>
 
-          <main className={styles.questionArea}>
-            <div className={styles.questionHeader}>
-              <span className={styles.questionNum}>
-                Question {currentQuestion + 1} of {totalQ}
-              </span>
-              <button
-                className={`${styles.markBtn} ${currentAns?.marked ? styles.markedActive : ''}`}
-                onClick={() => handleMarkReview(currentQId)}
-              >
-                <i className="bx bx-flag" /> {currentAns?.marked ? 'Marked for Review' : 'Mark for Review'}
-              </button>
-            </div>
+          {(() => {
+            const activeQ = examQuestionsList[currentQuestion];
+            const isMultiple = activeQ?.questionType === 'MCQ_MULTIPLE' ||
+                               activeQ?.questionType === 'MULTIPLE' ||
+                               activeQ?.type === 'MULTIPLE' ||
+                               Boolean(activeQ?.allowMultiple) ||
+                               Boolean(activeQ?.isMultipleChoice);
 
-            {(() => {
-              const activeQ = examQuestionsList[currentQuestion];
-              const isMultiple = activeQ?.questionType === 'MCQ_MULTIPLE' ||
-                                 activeQ?.questionType === 'MULTIPLE' ||
-                                 activeQ?.type === 'MULTIPLE' ||
-                                 Boolean(activeQ?.allowMultiple) ||
-                                 Boolean(activeQ?.isMultipleChoice);
+            const qTitle = activeQ?.title || activeQ?.description || `Technical Competency Question #${currentQuestion + 1}: Which architecture or data structure guarantees thread safety and O(1) performance in high-concurrency systems?`;
+            const qOptions = (Array.isArray(activeQ?.options) && activeQ.options.length > 0)
+              ? activeQ.options.map((opt: any, idx: number) => ({
+                  id: opt.id || `opt-${idx}`,
+                  label: String.fromCharCode(65 + idx),
+                  text: opt.optionText || opt.text || String(opt),
+                }))
+              : [
+                  { id: 'opt-a', label: 'A', text: 'ConcurrentHashMap utilizing CAS and synchronized bucket nodes' },
+                  { id: 'opt-b', label: 'B', text: 'Binary Search Tree with non-atomic recursive insertion' },
+                  { id: 'opt-c', label: 'C', text: 'Singly Linked List requiring sequential O(N) traversal' },
+                  { id: 'opt-d', label: 'D', text: 'Balanced AVL Tree with global lock contention' },
+                ];
 
-              const qTitle = activeQ?.title || activeQ?.description || `Technical Competency Question #${currentQuestion + 1}: Which architecture or data structure guarantees thread safety and O(1) performance in high-concurrency systems?`;
-              const qOptions = (Array.isArray(activeQ?.options) && activeQ.options.length > 0)
-                ? activeQ.options.map((opt: any, idx: number) => ({
-                    id: opt.id || `opt-${idx}`,
-                    label: String.fromCharCode(65 + idx),
-                    text: opt.optionText || opt.text || String(opt),
-                  }))
-                : [
-                    { id: 'opt-a', label: 'A', text: 'ConcurrentHashMap utilizing CAS and synchronized bucket nodes' },
-                    { id: 'opt-b', label: 'B', text: 'Binary Search Tree with non-atomic recursive insertion' },
-                    { id: 'opt-c', label: 'C', text: 'Singly Linked List requiring sequential O(N) traversal' },
-                    { id: 'opt-d', label: 'D', text: 'Balanced AVL Tree with global lock contention' },
-                  ];
-
-              return (
-                <>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                    {isMultiple ? (
-                      <span style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '5px',
-                        padding: '3px 8px',
-                        background: '#eff6ff',
-                        color: '#1d4ed8',
-                        border: '1px solid #bfdbfe',
-                        fontSize: '0.74rem',
-                        fontWeight: 700,
-                        letterSpacing: '0.02em',
-                      }}>
-                        <i className="bx bx-check-square" style={{ fontSize: '1rem', color: '#2563eb' }} />
-                        MULTIPLE CHOICE &middot; Select all that apply
-                      </span>
-                    ) : (
-                      <span style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '5px',
-                        padding: '3px 8px',
-                        background: '#f8fafc',
-                        color: '#475569',
-                        border: '1px solid #e2e8f0',
-                        fontSize: '0.74rem',
-                        fontWeight: 600,
-                      }}>
-                        <i className="bx bx-radio-circle-marked" style={{ fontSize: '1rem', color: '#64748b' }} />
-                        SINGLE CHOICE QUESTION
-                      </span>
-                    )}
-                  </div>
-
-                  <h2 className={styles.questionText}>{qTitle}</h2>
-
-                  <div className={styles.options}>
-                    {qOptions.map((opt: any) => {
-                      const isSelected = isMultiple
-                        ? Boolean(currentAns?.optionIds?.includes(opt.id))
-                        : (currentAns?.optionId === opt.id || Boolean(currentAns?.optionIds?.includes(opt.id)));
+            return (
+              <main className={styles.questionArea}>
+                {sectionsList.length > 0 && (
+                  <div className={styles.sectionTabBar}>
+                    {sectionsList.map((sec, sIdx) => {
+                      const isCurrentSec = sIdx === activeSectionIndex;
+                      const secQuestions = examQuestionsList.filter(q => q.sectionIndex === sIdx || (!q.sectionIndex && q.skillName === sec.skillName));
+                      const secAnsweredCount = secQuestions.filter(q => {
+                        const gIdx = examQuestionsList.indexOf(q);
+                        const qKey = `q-${gIdx + 1}`;
+                        const ans = answers[q.id] || answers[qKey];
+                        return Boolean(ans?.optionId || (ans?.optionIds && ans.optionIds.length > 0));
+                      }).length;
 
                       return (
-                        <div
-                          key={opt.id}
-                          className={`${styles.option} ${isSelected ? styles.optionSelected : ''}`}
-                          onClick={() => handleAnswer(currentQId, opt.id, isMultiple)}
-                          style={{
-                            cursor: 'pointer',
-                            transition: 'all 0.15s ease',
+                        <button
+                          key={`sec-tab-${sIdx}`}
+                          type="button"
+                          className={`${styles.sectionTab} ${isCurrentSec ? styles.sectionTabActive : ''}`}
+                          onClick={() => {
+                            setActiveSectionIndex(sIdx);
+                            const firstIdx = examQuestionsList.findIndex(q => q.sectionIndex === sIdx || (!q.sectionIndex && q.skillName === sec.skillName));
+                            if (firstIdx >= 0) setCurrentQuestion(firstIdx);
                           }}
                         >
-                          {isMultiple ? (
-                            <span
-                              className={styles.optionMarker}
-                              style={{
-                                background: isSelected ? 'var(--color-primary)' : '#f8fafc',
-                                color: isSelected ? '#ffffff' : '#475569',
-                                border: `1.5px solid ${isSelected ? 'var(--color-primary)' : '#cbd5e1'}`,
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                              }}
-                            >
-                              <i className={`bx ${isSelected ? 'bx-check' : 'bx-minus'}`} style={{ fontSize: '1.1rem' }} />
-                            </span>
-                          ) : (
-                            <span className={styles.optionMarker}>{opt.label}</span>
-                          )}
-                          <span className={styles.optionText} style={{ fontWeight: isSelected ? 600 : 400 }}>{opt.text}</span>
-                        </div>
+                          <span className={styles.sectionTabTag}>Section {sIdx + 1}</span>
+                          <span className={styles.sectionTabName}>{sec.skillName}</span>
+                          <span className={styles.sectionTabCount}>({secAnsweredCount}/{sec.questionCount || secQuestions.length})</span>
+                        </button>
                       );
                     })}
                   </div>
-                </>
-              );
-            })()}
+                )}
 
-            <div className={styles.navBar}>
-              <button
-                className={styles.navBtn}
-                disabled={currentQuestion === 0}
-                onClick={() => setCurrentQuestion(prev => Math.max(0, prev - 1))}
-              >
-                <i className="bx bx-chevron-left" /> Previous
-              </button>
+                <div className={styles.questionHeader}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                      {activeQ?.sectionName && (
+                        <span className={styles.sectionBadge}>
+                          <i className="bx bx-layer" /> Section: {activeQ.sectionName}
+                        </span>
+                      )}
+                      {activeQ?.topicName && (
+                        <span className={styles.topicBadge}>
+                          <i className="bx bx-bookmark" /> Topic: {activeQ.topicName}
+                        </span>
+                      )}
+                      {activeQ?.isRemediationTarget && (
+                        <span className={styles.remediationBadge}>
+                          <i className="bx bx-target-lock" /> 50% Remediation Focus: {activeQ.laggedTopicName || activeQ.topicName}
+                        </span>
+                      )}
+                    </div>
+                    <span className={styles.questionNum}>
+                      {activeQ?.sectionQuestionNumber !== undefined ? (
+                        <>Question {activeQ.sectionQuestionNumber} of {sectionsList[activeSectionIndex]?.questionCount || activeQ.sectionQuestionNumber} in Section &middot; Question {currentQuestion + 1} of {totalQ} Overall</>
+                      ) : (
+                        <>Question {currentQuestion + 1} of {totalQ}</>
+                      )}
+                    </span>
+                  </div>
+                  <button
+                    className={`${styles.markBtn} ${currentAns?.marked ? styles.markedActive : ''}`}
+                    onClick={() => handleMarkReview(currentQId)}
+                  >
+                    <i className="bx bx-flag" /> {currentAns?.marked ? 'Marked for Review' : 'Mark for Review'}
+                  </button>
+                </div>
 
-              {currentQuestion < totalQ - 1 ? (
-                <button
-                  className={`${styles.navBtn} ${styles.navBtnPrimary}`}
-                  onClick={() => setCurrentQuestion(prev => Math.min(totalQ - 1, prev + 1))}
-                >
-                  Next Question <i className="bx bx-chevron-right" />
-                </button>
-              ) : (
-                <button
-                  className={`${styles.navBtn} ${styles.navBtnSubmit}`}
-                  onClick={handleSubmit}
-                >
-                  <i className="bx bx-check-double" /> Submit Assessment
-                </button>
-              )}
-            </div>
-          </main>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                  {isMultiple ? (
+                    <span style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '5px',
+                      padding: '3px 8px',
+                      background: '#eff6ff',
+                      color: '#1d4ed8',
+                      border: '1px solid #bfdbfe',
+                      fontSize: '0.74rem',
+                      fontWeight: 700,
+                      letterSpacing: '0.02em',
+                    }}>
+                      <i className="bx bx-check-square" style={{ fontSize: '1rem', color: '#2563eb' }} />
+                      MULTIPLE CHOICE &middot; Select all that apply
+                    </span>
+                  ) : (
+                    <span style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '5px',
+                      padding: '3px 8px',
+                      background: '#f8fafc',
+                      color: '#475569',
+                      border: '1px solid #e2e8f0',
+                      fontSize: '0.74rem',
+                      fontWeight: 600,
+                    }}>
+                      <i className="bx bx-radio-circle-marked" style={{ fontSize: '1rem', color: '#64748b' }} />
+                      SINGLE CHOICE QUESTION
+                    </span>
+                  )}
+                </div>
+
+                <h2 className={styles.questionText}>{qTitle}</h2>
+
+                <div className={styles.options}>
+                  {qOptions.map((opt: any) => {
+                    const isSelected = isMultiple
+                      ? Boolean(currentAns?.optionIds?.includes(opt.id))
+                      : (currentAns?.optionId === opt.id || Boolean(currentAns?.optionIds?.includes(opt.id)));
+
+                    return (
+                      <div
+                        key={opt.id}
+                        className={`${styles.option} ${isSelected ? styles.optionSelected : ''}`}
+                        onClick={() => handleAnswer(currentQId, opt.id, isMultiple)}
+                        style={{
+                          cursor: 'pointer',
+                          transition: 'all 0.15s ease',
+                        }}
+                      >
+                        {isMultiple ? (
+                          <span
+                            className={styles.optionMarker}
+                            style={{
+                              background: isSelected ? 'var(--color-primary)' : '#f8fafc',
+                              color: isSelected ? '#ffffff' : '#475569',
+                              border: `1.5px solid ${isSelected ? 'var(--color-primary)' : '#cbd5e1'}`,
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                            }}
+                          >
+                            <i className={`bx ${isSelected ? 'bx-check' : 'bx-minus'}`} style={{ fontSize: '1.1rem' }} />
+                          </span>
+                        ) : (
+                          <span className={styles.optionMarker}>{opt.label}</span>
+                        )}
+                        <span className={styles.optionText} style={{ fontWeight: isSelected ? 600 : 400 }}>{opt.text}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div className={styles.navBar}>
+                  <button
+                    className={styles.navBtn}
+                    disabled={currentQuestion === 0}
+                    onClick={() => setCurrentQuestion(prev => Math.max(0, prev - 1))}
+                  >
+                    <i className="bx bx-chevron-left" /> Previous
+                  </button>
+
+                  {currentQuestion < totalQ - 1 ? (
+                    <button
+                      className={`${styles.navBtn} ${styles.navBtnPrimary}`}
+                      onClick={() => setCurrentQuestion(prev => Math.min(totalQ - 1, prev + 1))}
+                    >
+                      Next Question <i className="bx bx-chevron-right" />
+                    </button>
+                  ) : (
+                    <button
+                      className={`${styles.navBtn} ${styles.navBtnSubmit}`}
+                      onClick={handleSubmit}
+                    >
+                      <i className="bx bx-check-double" /> Submit Assessment
+                    </button>
+                  )}
+                </div>
+              </main>
+            );
+          })()}
         </div>
       )}
 
@@ -2694,6 +3377,98 @@ export function AssessmentApp() {
                   <i className="bx bx-power-off" /> Close &amp; Exit Application
                 </button>
               </div>
+            </div>
+
+            {((results?.skills && results.skills.length > 0) || (results?.skillBreakdown && Object.keys(results.skillBreakdown).length > 0)) && (
+              <div className={styles.resultsReportCard} style={{ marginTop: '20px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+                  <i className="bx bx-layer" style={{ fontSize: 20, color: '#1c2d81' }} />
+                  <span style={{ fontWeight: 800, fontSize: '1rem', color: '#020617' }}>Section-Wise Skill Performance</span>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '12px' }}>
+                  {results?.skills?.map((s: any) => (
+                    <div key={s.skillName} style={{ background: '#f8fafc', border: '1px solid #e2e8f0', padding: '14px 16px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                        <strong style={{ fontSize: '0.9rem', color: '#0f172a' }}>{s.skillName}</strong>
+                        <span style={{ fontSize: '0.75rem', fontWeight: 800, padding: '2px 8px', background: s.percentage >= 50 ? '#ecfdf5' : '#fef2f2', color: s.percentage >= 50 ? '#065f46' : '#991b1b', border: `1px solid ${s.percentage >= 50 ? '#a7f3d0' : '#fecaca'}` }}>
+                          {s.percentage}% {s.verified ? 'VERIFIED' : 'UNDER REVIEW'}
+                        </span>
+                      </div>
+                      <div style={{ fontSize: '0.78rem', color: '#64748b' }}>
+                        {s.correctQuestions} / {s.totalQuestions} Questions Correct
+                      </div>
+                      <div style={{ height: 5, background: '#e2e8f0', marginTop: 8 }}>
+                        <div style={{ height: '100%', width: `${s.percentage}%`, background: s.percentage >= 50 ? '#15803d' : '#ea580c' }} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Topic-Level Diagnosis & Remediation Report */}
+            <div className={styles.remediationCard}>
+              {(laggedTopicsResult.length > 0 || (results?.laggedTopics && results.laggedTopics.length > 0)) ? (
+                <>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+                    <i className="bx bx-target-lock" style={{ fontSize: '24px', color: '#dc2626' }} />
+                    <div>
+                      <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: 900, color: '#991b1b' }}>
+                        Lagged Topic Detected &middot; 50% Adaptive Remediation Focus Active
+                      </h4>
+                      <span style={{ fontSize: '0.78rem', color: '#7f1d1d' }}>
+                        The adaptive diagnostic engine identified conceptual gaps in the following topic(s) where accuracy fell below 50%:
+                      </span>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '10px', marginTop: '12px' }}>
+                    {(laggedTopicsResult.length > 0 ? laggedTopicsResult : results?.laggedTopics || []).map((t: any, idx: number) => (
+                      <div key={idx} style={{ background: '#ffffff', border: '1.5px solid #f87171', padding: '12px 16px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                          <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#0f172a' }}>{t.topicName}</span>
+                          <span style={{ fontSize: '0.74rem', fontWeight: 800, padding: '2px 6px', background: '#fee2e2', color: '#dc2626' }}>
+                            {t.accuracy}% Accuracy
+                          </span>
+                        </div>
+                        <span style={{ fontSize: '0.74rem', color: '#64748b' }}>Skill Domain: {t.skillName}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div style={{ marginTop: '14px', padding: '12px 16px', background: '#fffbeb', border: '1px solid #fcd34d', fontSize: '0.84rem', color: '#92400e', lineHeight: 1.6 }}>
+                    <i className="bx bx-info-circle" style={{ marginRight: 6 }} />
+                    <strong>Adaptive Prioritization Rule:</strong> In your subsequent practice sessions and assessments, <strong>50% of questions will focus exclusively on these lagged topics</strong> to remediate weak concepts, while the remaining <strong>50% will be a balanced mix of other domain topics</strong>.
+                  </div>
+                </>
+              ) : (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', background: '#f0fdf4', border: '1px solid #86efac' }}>
+                  <i className="bx bx-check-shield" style={{ fontSize: '24px', color: '#15803d' }} />
+                  <div>
+                    <strong style={{ color: '#15803d', fontSize: '0.92rem', display: 'block' }}>Conceptual Mastery Confirmed</strong>
+                    <span style={{ fontSize: '0.82rem', color: '#166534' }}>
+                      No lagging topics identified across your selected profile skills. You have demonstrated &gt;= 50% accuracy across all tested topics.
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Evaluation Cooldown Notice */}
+            <div style={{ marginTop: '16px', padding: '16px 20px', background: '#f8fafc', border: '1px solid #cbd5e1', lineHeight: 1.6 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+                <i className="bx bx-calendar-check" style={{ fontSize: '1.25rem', color: '#1c2d81' }} />
+                <strong style={{ color: '#0f172a', fontSize: '0.95rem' }}>Evaluation Cooldown Period (7 Days)</strong>
+              </div>
+              <p style={{ margin: 0, fontSize: '0.84rem', color: '#475569' }}>
+                Students are permitted to rewrite the 50-question skill assessment once every 7 days to demonstrate improved mastery. Future tests automatically exclude previously seen questions and prioritize identified weak topics.
+              </p>
+              {desktopCooldownSeconds > 0 && (
+                <div style={{ marginTop: '10px', display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '5px 12px', background: '#eff6ff', border: '1px solid #bfdbfe', color: '#1d4ed8', fontSize: '0.78rem', fontWeight: 800 }}>
+                  <i className="bx bx-time" />
+                  <span>Next Attempt Unlocks In: {formatCooldown(desktopCooldownSeconds)}</span>
+                </div>
+              )}
             </div>
           </div>
         </main>

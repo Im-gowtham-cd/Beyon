@@ -57,7 +57,7 @@ public class FeedbackController {
     public ResponseEntity<?> getReport(@PathVariable UUID id, HttpServletRequest request) {
         UUID userId = extractUserId(request);
         User user = userRepo.findById(userId).orElseThrow();
-        if ("ADMIN".equals(user.getRole().name())) {
+        if (user.getRole().isSuperAdmin()) {
             return ResponseEntity.ok(ApiResponse.ok(feedbackService.getById(id)));
         }
         return ResponseEntity.ok(ApiResponse.ok(feedbackService.getByIdForUser(id, userId)));
@@ -136,7 +136,7 @@ public class FeedbackController {
     private UUID requireAdmin(HttpServletRequest request) {
         UUID userId = extractUserId(request);
         User user = userRepo.findById(userId).orElseThrow();
-        if (!"ADMIN".equals(user.getRole().name())) throw new RuntimeException("Forbidden");
+        if (!user.getRole().isSuperAdmin()) throw new RuntimeException("Forbidden");
         return userId;
     }
 }

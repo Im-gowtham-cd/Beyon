@@ -18,7 +18,10 @@ import {
   ListChecks,
   ArrowRight,
   Brain,
+  Lock,
+  AlertTriangle,
 } from 'lucide-react';
+import { CompanyVerificationDiagnosticCard } from '../../components/company/CompanyVerificationDiagnosticCard';
 import styles from './CompanyHome.module.css';
 
 export function CompanyHome() {
@@ -27,38 +30,45 @@ export function CompanyHome() {
   const [profileData, setProfileData] = useState<any>(null);
   const [opportunities, setOpportunities] = useState<any[]>([]);
   const [applicants, setApplicants] = useState<any[]>([]);
+  const [verificationStatus, setVerificationStatus] = useState<any>(null);
 
-  useEffect(() => {
-    async function loadData() {
-      try {
-        const token = localStorage.getItem('beyon_token') || localStorage.getItem('beyon_access_token');
-        if (token) {
-          const [profRes, oppRes, appRes] = await Promise.all([
-            fetch('/api/v1/profile', { headers: { Authorization: `Bearer ${token}` } }).catch(() => null),
-            fetch('/api/v1/opportunities', { headers: { Authorization: `Bearer ${token}` } }).catch(() => null),
-            fetch('/api/v1/recruitment/applications', { headers: { Authorization: `Bearer ${token}` } }).catch(() => null),
-          ]);
-          if (profRes && profRes.ok) {
-            const p = await profRes.json();
-            setProfileData(p.data?.companyProfile?.profile || null);
-          }
-          if (oppRes && oppRes.ok) {
-            const o = await oppRes.json();
-            if (Array.isArray(o.data)) {
-              setOpportunities(o.data);
-            }
-          }
-          if (appRes && appRes.ok) {
-            const a = await appRes.json();
-            if (Array.isArray(a.data)) {
-              setApplicants(a.data);
-            }
+  const loadData = async () => {
+    try {
+      const token = localStorage.getItem('beyon_token') || localStorage.getItem('beyon_access_token');
+      if (token) {
+        const [profRes, oppRes, appRes, verifRes] = await Promise.all([
+          fetch('/api/v1/profile', { headers: { Authorization: `Bearer ${token}` } }).catch(() => null),
+          fetch('/api/v1/opportunities', { headers: { Authorization: `Bearer ${token}` } }).catch(() => null),
+          fetch('/api/v1/recruitment/applications', { headers: { Authorization: `Bearer ${token}` } }).catch(() => null),
+          fetch('/api/v1/company/verification/status', { headers: { Authorization: `Bearer ${token}` } }).catch(() => null),
+        ]);
+        if (profRes && profRes.ok) {
+          const p = await profRes.json();
+          setProfileData(p.data?.companyProfile?.profile || null);
+        }
+        if (oppRes && oppRes.ok) {
+          const o = await oppRes.json();
+          if (Array.isArray(o.data)) {
+            setOpportunities(o.data);
           }
         }
-      } catch {
-
+        if (appRes && appRes.ok) {
+          const a = await appRes.json();
+          if (Array.isArray(a.data)) {
+            setApplicants(a.data);
+          }
+        }
+        if (verifRes && verifRes.ok) {
+          const v = await verifRes.json();
+          setVerificationStatus(v.data || null);
+        }
       }
+    } catch {
+
     }
+  };
+
+  useEffect(() => {
     loadData();
   }, []);
 
@@ -75,44 +85,25 @@ export function CompanyHome() {
       ? (validScores.reduce((sum, a) => sum + Number(a.assessmentScore), 0) / validScores.length).toFixed(1) + '%'
       : '0.0%';
 
-  const isPendingVerification =
-    user?.status === 'PENDING_SUPER_ADMIN_VERIFICATION' ||
-    user?.status === 'PENDING_VERIFICATION' ||
-    user?.status === 'PENDING';
+  const isVerified = verificationStatus
+    ? (verificationStatus.isVerified === true && verificationStatus.overallStatus === 'VERIFIED')
+    : (user?.status === 'ACTIVE' && profileData?.verificationStatus === 'VERIFIED');
 
   return (
     <div className={styles.page}>
-      {isPendingVerification && (
-        <div
-          style={{
-            padding: '16px 20px',
-            background: '#fffbeb',
-            border: '1px solid #fde68a',
-            marginBottom: '20px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            flexWrap: 'wrap',
-            gap: '12px',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{ width: '40px', height: '40px', background: '#fef3c7', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#b45309', flexShrink: 0 }}>
-              <ShieldCheck size={22} />
-            </div>
-            <div>
-              <div style={{ fontWeight: 800, color: '#92400e', fontSize: '0.94rem' }}>
-                Corporate Account Pending Super Admin Approval
-              </div>
-              <div style={{ fontSize: '0.82rem', color: '#b45309', marginTop: '2px' }}>
-                Your corporate registration is currently being verified by platform administrators. Campus recruitment drives, student assessment results, and verified candidate rosters will be accessible upon authorization.
-              </div>
-            </div>
-          </div>
-          <span style={{ fontSize: '0.74rem', fontWeight: 800, padding: '4px 10px', background: '#b45309', color: '#ffffff' }}>
-            STATUS: PENDING VERIFICATION
-          </span>
-        </div>
+      {!isVerified && (
+        <CompanyVerificationDiagnosticCard
+          data={
+            verificationStatus || {
+              overallStatus: user?.status || 'PENDING_REVIEW',
+              isVerified: false,
+              legalName: companyName,
+              cin: profileData?.cin || '',
+            }
+          }
+          allowDocumentUpload={true}
+          onUploadSuccess={loadData}
+        />
       )}
 
       <section className={styles.welcomeHero}>
@@ -122,10 +113,17 @@ export function CompanyHome() {
               <Building2 size={13} />
               <span>Beyon Corporate Recruitment Portal</span>
             </span>
-            <span className={styles.verifiedBadge}>
-              <ShieldCheck size={13} style={{ color: '#15803d' }} />
-              <span>Verified Enterprise Partner</span>
-            </span>
+            {isVerified ? (
+              <span className={styles.verifiedBadge}>
+                <ShieldCheck size={13} style={{ color: '#15803d' }} />
+                <span>Verified Enterprise Partner</span>
+              </span>
+            ) : (
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '0.74rem', fontWeight: 700, padding: '3px 8px', background: '#fef3c7', color: '#b45309', border: '1px solid #fde68a' }}>
+                <AlertTriangle size={13} />
+                <span>Verification Required: {verificationStatus?.overallStatus || 'PENDING_REVIEW'}</span>
+              </span>
+            )}
           </div>
           <h1 className={styles.welcomeTitle}>
             Welcome back, <span className={styles.highlightName}>{recruiterName}</span>
@@ -222,18 +220,65 @@ export function CompanyHome() {
           </div>
         </div>
         <div className={styles.actionBannerButtons}>
-          <Link to="/company/opportunities/create" className={styles.btnGold}>
-            <PlusCircle size={15} />
-            <span>Post New Drive</span>
-          </Link>
-          <Link to="/company/candidates" className={styles.btnOutlineWhite}>
-            <Search size={15} />
-            <span>Discover Candidates</span>
-          </Link>
-          <Link to="/company/pipeline" className={styles.btnOutlineWhite}>
-            <GitCommit size={15} />
-            <span>View Pipeline</span>
-          </Link>
+          {isVerified ? (
+            <>
+              <Link to="/company/opportunities/create" className={styles.btnGold}>
+                <PlusCircle size={15} />
+                <span>Post New Drive</span>
+              </Link>
+              <Link to="/company/candidates" className={styles.btnOutlineWhite}>
+                <Search size={15} />
+                <span>Discover Candidates</span>
+              </Link>
+              <Link to="/company/pipeline" className={styles.btnOutlineWhite}>
+                <GitCommit size={15} />
+                <span>View Pipeline</span>
+              </Link>
+            </>
+          ) : (
+            <>
+              <div
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '9px 16px',
+                  background: 'rgba(255, 255, 255, 0.15)',
+                  color: '#ffffff',
+                  fontSize: '0.84rem',
+                  fontWeight: 700,
+                  border: '1px solid rgba(255, 255, 255, 0.3)',
+                  cursor: 'not-allowed',
+                }}
+                title="Corporate verification required to publish placement drives"
+              >
+                <Lock size={14} />
+                <span>Post New Drive (Locked)</span>
+              </div>
+              <div
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '9px 16px',
+                  background: 'rgba(255, 255, 255, 0.15)',
+                  color: '#ffffff',
+                  fontSize: '0.84rem',
+                  fontWeight: 700,
+                  border: '1px solid rgba(255, 255, 255, 0.3)',
+                  cursor: 'not-allowed',
+                }}
+                title="Candidate sourcing is restricted to verified enterprise partners"
+              >
+                <Lock size={14} />
+                <span>Discover Candidates (Locked)</span>
+              </div>
+              <Link to="/company/pipeline" className={styles.btnOutlineWhite}>
+                <GitCommit size={15} />
+                <span>View Pipeline</span>
+              </Link>
+            </>
+          )}
         </div>
       </div>
 
@@ -268,24 +313,45 @@ export function CompanyHome() {
                         No candidate applications received yet
                       </div>
                       <div style={{ fontSize: '0.82rem', maxWidth: '420px', margin: '0 auto 16px' }}>
-                        When students apply to your opportunities and complete technical assessments, their verified profiles and benchmark scores will appear here in real-time.
+                        {isVerified
+                          ? 'When students apply to your opportunities and complete technical assessments, their verified profiles and benchmark scores will appear here in real-time.'
+                          : 'Corporate verification is in progress. Once authorized, student applications and proctored test evaluations will appear here.'}
                       </div>
-                      <Link
-                        to="/company/opportunities/create"
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '6px',
-                          background: '#1c2d81',
-                          color: '#ffffff',
-                          padding: '6px 14px',
-                          fontSize: '0.8rem',
-                          fontWeight: 600,
-                          textDecoration: 'none',
-                        }}
-                      >
-                        <PlusCircle size={14} /> Create Opportunity Drive
-                      </Link>
+                      {isVerified ? (
+                        <Link
+                          to="/company/opportunities/create"
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            background: '#1c2d81',
+                            color: '#ffffff',
+                            padding: '6px 14px',
+                            fontSize: '0.8rem',
+                            fontWeight: 600,
+                            textDecoration: 'none',
+                          }}
+                        >
+                          <PlusCircle size={14} /> Create Opportunity Drive
+                        </Link>
+                      ) : (
+                        <div
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            background: '#94a3b8',
+                            color: '#ffffff',
+                            padding: '6px 14px',
+                            fontSize: '0.8rem',
+                            fontWeight: 600,
+                            cursor: 'not-allowed',
+                          }}
+                          title="Corporate verification required to create drives"
+                        >
+                          <Lock size={14} /> Drive Creation Locked (Verification Required)
+                        </div>
+                      )}
                     </td>
                   </tr>
                 ) : (

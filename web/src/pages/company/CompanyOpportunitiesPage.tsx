@@ -9,6 +9,8 @@ import {
   Coins,
   Users,
   ArrowRight,
+  Lock,
+  AlertTriangle,
 } from 'lucide-react';
 import styles from './CompanyOpportunitiesPage.module.css';
 
@@ -20,15 +22,17 @@ export function CompanyOpportunitiesPage() {
   const [searchQuery, setSearchQuery] = useState('');
 
   const [applicantCount, setApplicantCount] = useState<number>(0);
+  const [isVerified, setIsVerified] = useState<boolean>(true);
 
   useEffect(() => {
     async function loadOpportunities() {
       try {
         const token = localStorage.getItem('beyon_token') || localStorage.getItem('beyon_access_token');
         if (token) {
-          const [res, appRes] = await Promise.all([
+          const [res, appRes, verifRes] = await Promise.all([
             fetch('/api/v1/opportunities', { headers: { Authorization: `Bearer ${token}` } }),
             fetch('/api/v1/recruitment/applications', { headers: { Authorization: `Bearer ${token}` } }).catch(() => null),
+            fetch('/api/v1/company/verification/status', { headers: { Authorization: `Bearer ${token}` } }).catch(() => null),
           ]);
           if (res.ok) {
             const data = await res.json();
@@ -40,6 +44,12 @@ export function CompanyOpportunitiesPage() {
             const appData = await appRes.json();
             if (Array.isArray(appData.data)) {
               setApplicantCount(appData.data.length);
+            }
+          }
+          if (verifRes && verifRes.ok) {
+            const v = await verifRes.json();
+            if (v.data) {
+              setIsVerified(Boolean(v.data.isVerified === true && v.data.overallStatus === 'VERIFIED'));
             }
           }
         }
@@ -70,6 +80,48 @@ export function CompanyOpportunitiesPage() {
 
   return (
     <div className={styles.page}>
+      {!isVerified && (
+        <div
+          style={{
+            padding: '14px 18px',
+            background: '#fffbeb',
+            border: '1px solid #fde68a',
+            borderLeft: '4px solid #b45309',
+            marginBottom: '20px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '12px',
+            flexWrap: 'wrap',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <AlertTriangle size={20} color="#b45309" />
+            <div>
+              <div style={{ fontWeight: 700, color: '#92400e', fontSize: '0.88rem' }}>
+                Corporate Representative Verification Required
+              </div>
+              <div style={{ fontSize: '0.8rem', color: '#b45309', marginTop: '2px' }}>
+                Publishing campus recruitment drives and job openings is locked until your company account is verified by platform administrators.
+              </div>
+            </div>
+          </div>
+          <Link
+            to="/company/home"
+            style={{
+              fontSize: '0.78rem',
+              fontWeight: 700,
+              padding: '6px 12px',
+              background: '#b45309',
+              color: '#ffffff',
+              textDecoration: 'none',
+            }}
+          >
+            Inspect Verification
+          </Link>
+        </div>
+      )}
+
       <div className={styles.pageHeader}>
         <div>
           <h1 className={styles.title}>Corporate Job &amp; Campus Drives</h1>
@@ -77,10 +129,30 @@ export function CompanyOpportunitiesPage() {
             Publish and manage enterprise placement drives, tech job listings, and campus internships
           </p>
         </div>
-        <Link to="/company/opportunities/create" className={styles.btnCreate}>
-          <PlusCircle size={15} />
-          <span>Post New Drive / Opening</span>
-        </Link>
+        {isVerified ? (
+          <Link to="/company/opportunities/create" className={styles.btnCreate}>
+            <PlusCircle size={15} />
+            <span>Post New Drive / Opening</span>
+          </Link>
+        ) : (
+          <div
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              background: '#94a3b8',
+              color: '#ffffff',
+              padding: '8px 16px',
+              fontSize: '0.84rem',
+              fontWeight: 700,
+              cursor: 'not-allowed',
+            }}
+            title="Corporate verification required to publish opportunities"
+          >
+            <Lock size={14} />
+            <span>Post New Drive (Locked)</span>
+          </div>
+        )}
       </div>
 
       <div className={styles.statsRow}>

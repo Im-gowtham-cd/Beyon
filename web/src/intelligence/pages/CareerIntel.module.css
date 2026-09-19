@@ -135,3 +135,60 @@
 .loadingSpinner { display: inline-block; width: 20px; height: 20px; border: 2px solid #e5e7eb; border-top-color: #6366f1; border-radius: 50%; animation: spin 0.6s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
+/* AI Career Intelligence & Ollama Qwen 3.5 Components */
+.aiBadgeRow { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem; }
+.aiBadge { display: inline-flex; align-items: center; gap: 8px; background: #eff6ff; border: 1px solid #bfdbfe; color: #1d4ed8; padding: 6px 14px; border-radius: 9999px; font-size: 0.8rem; font-weight: 700; }
+.aiPulse { width: 8px; height: 8px; border-radius: 50%; background: #10b981; box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2); animation: pulseDot 2s infinite; }
+@keyframes pulseDot { 0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); } 70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); } 100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); } }
+
+.professionSelectorContainer { margin-bottom: 2rem; }
+.professionGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1rem; margin-bottom: 1.25rem; }
+.professionCard { background: #fff; border: 2px solid #e5e7eb; border-radius: 12px; padding: 1.25rem; cursor: pointer; transition: all 0.2s ease; display: flex; flex-direction: column; justify-content: space-between; }
+.professionCard:hover { border-color: #6366f1; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(99, 102, 241, 0.08); }
+.professionCardSelected { border-color: #4f46e5; background: #f5f3ff; box-shadow: 0 4px 14px rgba(79, 70, 229, 0.12); }
+.professionCategory { font-size: 0.75rem; font-weight: 700; color: #6366f1; text-transform: uppercase; margin-bottom: 0.25rem; }
+.professionName { font-size: 1.05rem; font-weight: 700; color: #0f172a; margin-bottom: 0.5rem; }
+.professionDesc { font-size: 0.8rem; color: #64748b; line-height: 1.4; }
+
+.customRoleRow { display: flex; gap: 0.75rem; align-items: center; margin-top: 1rem; }
+.customRoleInput { flex: 1; padding: 0.75rem 1rem; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.9rem; outline: none; transition: border-color 0.2s; }
+.customRoleInput:focus { border-color: #6366f1; }
+.aiAnalyzeBtn { display: inline-flex; align-items: center; gap: 8px; background: #4f46e5; color: #fff; font-weight: 700; padding: 0.75rem 1.5rem; border-radius: 8px; border: none; cursor: pointer; transition: background 0.2s; }
+.aiAnalyzeBtn:hover { background: #4338ca; }
+.aiAnalyzeBtn:disabled { background: #94a3b8; cursor: not-allowed; }
+
+.executiveCard { background: linear-gradient(135deg, #f8fafc 0%, #eff6ff 100%); border: 1px solid #dbeafe; border-radius: 16px; padding: 1.75rem; margin-bottom: 2rem; }
+.executiveHeader { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap; }
+.executiveTitle { font-size: 1.25rem; font-weight: 800; color: #1e3a8a; display: flex; align-items: center; gap: 8px; }
+.executiveScoreBadge { font-size: 1.1rem; font-weight: 800; color: #1e40af; background: #dbeafe; padding: 4px 14px; border-radius: 9999px; }
+.executiveText { font-size: 0.95rem; color: #334155; line-height: 1.6; margin-bottom: 1rem; }
+
+.roadmapContainer { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.25rem; margin-bottom: 2rem; }
+.roadmapCard { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1.5rem; position: relative; display: flex; flex-direction: column; justify-content: space-between; }
+.roadmapPhase { font-size: 0.75rem; font-weight: 800; color: #4f46e5; text-transform: uppercase; margin-bottom: 0.25rem; }
+.roadmapTitle { font-size: 1.05rem; font-weight: 700; color: #0f172a; margin-bottom: 0.5rem; }
+.roadmapDesc { font-size: 0.85rem; color: #475569; line-height: 1.5; margin-bottom: 1rem; }
+.roadmapDuration { align-self: flex-start; background: #f1f5f9; color: #475569; font-size: 0.75rem; font-weight: 600; padding: 4px 10px; border-radius: 6px; }
+
+.recommendedSkillsGrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.25rem; margin-bottom: 2rem; }
+.recommendedCard { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1.5rem; display: flex; flex-direction: column; justify-content: space-between; transition: all 0.2s; }
+.recommendedCard:hover { border-color: #cbd5e1; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); }
+.recHeader { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem; }
+.recSkillName { font-size: 1.1rem; font-weight: 700; color: #0f172a; }
+.recBadge { font-size: 0.7rem; font-weight: 700; padding: 2px 8px; border-radius: 4px; text-transform: uppercase; }
+.recCritical { background: #fee2e2; color: #991b1b; }
+.recModerate { background: #fef3c7; color: #92400e; }
+.recWhy { font-size: 0.85rem; color: #334155; margin-bottom: 0.75rem; line-height: 1.45; }
+.recTopics { font-size: 0.8rem; color: #64748b; margin-bottom: 0.75rem; }
+.recProject { background: #f8fafc; border-left: 3px solid #6366f1; padding: 0.75rem; border-radius: 4px; font-size: 0.825rem; color: #1e293b; margin-bottom: 1rem; line-height: 1.4; }
+.recMetaRow { display: flex; align-items: center; justify-content: space-between; padding-top: 0.75rem; border-top: 1px solid #f1f5f9; }
+.recHours { font-size: 0.8rem; font-weight: 600; color: #64748b; }
+.recActionBtn { padding: 0.4rem 0.85rem; background: #6366f1; color: #fff; font-size: 0.8rem; font-weight: 600; border-radius: 6px; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; }
+.recActionBtn:hover { background: #4f46e5; }
+
+.reasoningBox { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; margin-bottom: 2rem; overflow: hidden; }
+.reasoningToggle { width: 100%; padding: 1rem 1.25rem; background: none; border: none; text-align: left; font-weight: 600; font-size: 0.9rem; color: #475569; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+.reasoningToggle:hover { background: #f1f5f9; }
+.reasoningContent { padding: 1.25rem; border-top: 1px solid #e2e8f0; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 0.8rem; color: #334155; line-height: 1.6; white-space: pre-wrap; background: #fafafa; max-height: 350px; overflow-y: auto; }
+
+

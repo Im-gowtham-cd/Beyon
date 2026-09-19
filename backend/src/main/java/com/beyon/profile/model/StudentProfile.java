@@ -2,6 +2,7 @@ package com.beyon.profile.model;
 
 import com.beyon.profile.enums.PlacementPreference;
 import com.beyon.profile.enums.WorkType;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -85,6 +86,43 @@ public class StudentProfile {
     @Column(length = 500)
     private String profilePhotoUrl;
 
+    @Column(name = "first_name", length = 100)
+    private String firstName;
+
+    @Column(name = "middle_name", length = 100)
+    private String middleName;
+
+    @Column(name = "last_name", length = 100)
+    private String lastName;
+
+    @Column(name = "aicte_code", length = 50)
+    private String aicteCode;
+
+    @Column(name = "student_id_card_url", length = 500)
+    private String studentIdCardUrl;
+
+    @Column(name = "education_10th", columnDefinition = "TEXT")
+    private String education10th;
+
+    @Column(name = "education_12th", columnDefinition = "TEXT")
+    private String education12th;
+
+    @Column(name = "education_diploma", columnDefinition = "TEXT")
+    private String educationDiploma;
+
+    @Column(name = "internship_experience", columnDefinition = "TEXT")
+    private String internshipExperience;
+
+    @Column(name = "verification_status", length = 30)
+    private String verificationStatus = "PENDING";
+
+    @JsonProperty("hasCompletedAssessment")
+    @Column(name = "has_completed_assessment", nullable = false)
+    private boolean hasCompletedAssessment = false;
+
+    @Column(name = "assessment_completed_at")
+    private Instant assessmentCompletedAt;
+
     @Column(nullable = false)
     private int completionPct = 0;
 
@@ -148,6 +186,31 @@ public class StudentProfile {
     public void setGraduationYear(Integer graduationYear) { this.graduationYear = graduationYear; }
     public String getPreferredLocations() { return preferredLocations; }
     public void setPreferredLocations(String preferredLocations) { this.preferredLocations = preferredLocations; }
+    public String getFirstName() { return firstName; }
+    public void setFirstName(String firstName) { this.firstName = firstName; }
+    public String getMiddleName() { return middleName; }
+    public void setMiddleName(String middleName) { this.middleName = middleName; }
+    public String getLastName() { return lastName; }
+    public void setLastName(String lastName) { this.lastName = lastName; }
+    public String getAicteCode() { return aicteCode; }
+    public void setAicteCode(String aicteCode) { this.aicteCode = aicteCode; }
+    public String getStudentIdCardUrl() { return studentIdCardUrl; }
+    public void setStudentIdCardUrl(String studentIdCardUrl) { this.studentIdCardUrl = studentIdCardUrl; }
+    public String getEducation10th() { return education10th; }
+    public void setEducation10th(String education10th) { this.education10th = education10th; }
+    public String getEducation12th() { return education12th; }
+    public void setEducation12th(String education12th) { this.education12th = education12th; }
+    public String getEducationDiploma() { return educationDiploma; }
+    public void setEducationDiploma(String educationDiploma) { this.educationDiploma = educationDiploma; }
+    public String getInternshipExperience() { return internshipExperience; }
+    public void setInternshipExperience(String internshipExperience) { this.internshipExperience = internshipExperience; }
+    public String getVerificationStatus() { return verificationStatus; }
+    public void setVerificationStatus(String verificationStatus) { this.verificationStatus = verificationStatus; }
+    public boolean isHasCompletedAssessment() { return hasCompletedAssessment; }
+    public boolean getHasCompletedAssessment() { return hasCompletedAssessment; }
+    public void setHasCompletedAssessment(boolean hasCompletedAssessment) { this.hasCompletedAssessment = hasCompletedAssessment; }
+    public Instant getAssessmentCompletedAt() { return assessmentCompletedAt; }
+    public void setAssessmentCompletedAt(Instant assessmentCompletedAt) { this.assessmentCompletedAt = assessmentCompletedAt; }
     public Instant getUpdatedAt() { return updatedAt; }
 }
 

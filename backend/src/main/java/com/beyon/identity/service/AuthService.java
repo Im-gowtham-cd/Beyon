@@ -25,6 +25,7 @@ import com.beyon.profile.model.InstitutionProfile;
 import com.beyon.profile.repository.StudentProfileRepository;
 import com.beyon.profile.repository.CompanyProfileRepository;
 import com.beyon.profile.repository.InstitutionProfileRepository;
+import com.beyon.profile.repository.CompanyVerificationRepository;
 import com.beyon.practice.service.CoinService;
 import com.beyon.practice.service.StreakService;
 
@@ -39,6 +40,8 @@ import java.util.UUID;
 @Service
 public class AuthService {
 
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(AuthService.class);
+
     private final UserRepository userRepository;
     private final EmailVerificationTokenRepository emailVerificationTokenRepository;
     private final PasswordResetTokenRepository passwordResetTokenRepository;
@@ -49,6 +52,8 @@ public class AuthService {
     private final StudentProfileRepository studentProfileRepository;
     private final CompanyProfileRepository companyProfileRepository;
     private final InstitutionProfileRepository institutionProfileRepository;
+    private final CompanyVerificationRepository companyVerificationRepository;
+    private final com.beyon.profile.service.CompanyVerificationService companyVerificationService;
     private final CoinService coinService;
     private final StreakService streakService;
 
@@ -62,6 +67,8 @@ public class AuthService {
                        StudentProfileRepository studentProfileRepository,
                        CompanyProfileRepository companyProfileRepository,
                        InstitutionProfileRepository institutionProfileRepository,
+                       CompanyVerificationRepository companyVerificationRepository,
+                       com.beyon.profile.service.CompanyVerificationService companyVerificationService,
                        CoinService coinService,
                        StreakService streakService) {
         this.userRepository = userRepository;
@@ -74,13 +81,15 @@ public class AuthService {
         this.studentProfileRepository = studentProfileRepository;
         this.companyProfileRepository = companyProfileRepository;
         this.institutionProfileRepository = institutionProfileRepository;
+        this.companyVerificationRepository = companyVerificationRepository;
+        this.companyVerificationService = companyVerificationService;
         this.coinService = coinService;
         this.streakService = streakService;
     }
 
     @Transactional
     public AuthResponse.UserInfo register(RegisterRequest request) {
-        if (request.getRole() == UserRole.ADMIN) {
+        if (request.getRole() != null && request.getRole().isSuperAdmin()) {
             throw new ForbiddenException("Admin registration is not allowed");
         }
 
@@ -94,45 +103,124 @@ public class AuthService {
             throw new ConflictException("An account with this email already exists");
         }
 
+        if (request.getRole() != null && request.getRole().isCompanyTier()) {
+            if (request.getCin() != null && !request.getCin().isBlank()) {
+                String cleanCin = request.getCin().trim().toUpperCase();
+                boolean cinExists = companyProfileRepository.existsByCinIgnoreCase(cleanCin)
+                        || (companyVerificationRepository != null && companyVerificationRepository.existsByCinIgnoreCase(cleanCin));
+                if (cinExists) {
+                    throw new ConflictException("A corporate account has already been registered with CIN " + cleanCin + ". Each corporate legal entity may only be registered once.");
+                }
+            }
+        } else if (request.getRole() != null && request.getRole().isInstitutionTier()) {
+            if (request.getAicteCode() != null && !request.getAicteCode().isBlank()) {
+                String cleanCode = request.getAicteCode().trim();
+                if (institutionProfileRepository.existsByInstitutionCodeIgnoreCase(cleanCode)) {
+                    throw new ConflictException("An institution account has already been registered with AICTE Permanent ID " + cleanCode + ". Each academic institution may only be registered once.");
+                }
+            }
+        }
+
         User user = new User();
         user.setEmail(request.getEmail().toLowerCase());
         user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
-        user.setDisplayName(request.getName());
+        String displayName = (request.getRepresentativeName() != null && !request.getRepresentativeName().isBlank())
+                ? request.getRepresentativeName().trim()
+                : request.getName();
+        user.setDisplayName(displayName);
         user.setRole(request.getRole());
 
         user.setStatus(AccountStatus.PENDING_VERIFICATION);
         user.setProfileStatus(AccountStatus.INCOMPLETE);
-        user.setEmailVerified(true);
+        user.setEmailVerified(false);
         User savedUser = userRepository.save(user);
 
-        if (request.getRole() == UserRole.STUDENT) {
+        if (request.getRole() != null && request.getRole().isStudentTier()) {
             StudentProfile profile = new StudentProfile();
             profile.setUserId(savedUser.getId());
             profile.setCountry("India");
-            profile.setDegree("B.Tech");
-            profile.setDepartment("Computer Science and Engineering");
-            profile.setAcademicYear("3rd Year");
-            profile.setPlacementPreference(com.beyon.profile.enums.PlacementPreference.PLACEMENT_WILLING);
-            profile.setPreferredWorkType(com.beyon.profile.enums.WorkType.ANY);
-            profile.setCompletionPct(60);
+            profile.setVerificationStatus("PENDING");
+            profile.setHasCompletedAssessment(false);
+            profile.setCompletionPct(0);
             studentProfileRepository.save(profile);
 
             try {
                 coinService.getOrCreateWallet(savedUser.getId());
                 coinService.earnCoins(savedUser.getId(), "WELCOME_BONUS", "REGISTRATION", savedUser.getId());
-                streakService.recordActivity(savedUser.getId());
             } catch (Exception ignored) {}
-        } else if (request.getRole() == UserRole.COMPANY) {
+        } else if (request.getRole() != null && request.getRole().isCompanyTier()) {
+            savedUser.setStatus(AccountStatus.ACTIVE);
+            savedUser.setProfileStatus(AccountStatus.INCOMPLETE);
+            savedUser.setEmailVerified(true);
+            userRepository.save(savedUser);
+
             CompanyProfile profile = new CompanyProfile();
             profile.setUserId(savedUser.getId());
-            profile.setCompanyName(request.getName());
+            String compName = (request.getOrganizationName() != null && !request.getOrganizationName().isBlank())
+                    ? request.getOrganizationName().trim()
+                    : request.getName();
+            profile.setCompanyName(compName);
             profile.setCountry("India");
+            if (request.getCin() != null && !request.getCin().isBlank()) {
+                profile.setCin(request.getCin().trim().toUpperCase());
+            }
+            if (request.getWebsite() != null && !request.getWebsite().isBlank()) {
+                profile.setWebsite(request.getWebsite().trim());
+            }
+            if (request.getState() != null && !request.getState().isBlank()) {
+                profile.setState(request.getState().trim());
+            }
+            if (request.getCity() != null && !request.getCity().isBlank()) {
+                profile.setCity(request.getCity().trim());
+            }
+            profile.setOfficialEmail(savedUser.getEmail());
+            profile.setVerificationStatus("VERIFIED");
+            profile.setCompletionPct(0);
             companyProfileRepository.save(profile);
-        } else if (request.getRole() == UserRole.INSTITUTION) {
+
+            if (request.getCin() != null && !request.getCin().isBlank() && companyVerificationService != null) {
+                try {
+                    String repName = (request.getRepresentativeName() != null && !request.getRepresentativeName().isBlank())
+                            ? request.getRepresentativeName().trim()
+                            : request.getName();
+                    companyVerificationService.verifyCompanyRegistration(
+                            savedUser.getId(),
+                            request.getCin().trim().toUpperCase(),
+                            request.getWebsite() != null ? request.getWebsite().trim() : "",
+                            repName,
+                            "Talent Acquisition Leader",
+                            savedUser.getEmail(),
+                            ""
+                    );
+                } catch (Exception ignored) {}
+            }
+        } else if (request.getRole() != null && request.getRole().isInstitutionTier()) {
+            savedUser.setStatus(AccountStatus.ACTIVE);
+            savedUser.setProfileStatus(AccountStatus.INCOMPLETE);
+            savedUser.setEmailVerified(true);
+            userRepository.save(savedUser);
+
             InstitutionProfile profile = new InstitutionProfile();
             profile.setUserId(savedUser.getId());
-            profile.setInstitutionName(request.getName());
+            String instName = (request.getOrganizationName() != null && !request.getOrganizationName().isBlank())
+                    ? request.getOrganizationName().trim()
+                    : request.getName();
+            profile.setInstitutionName(instName);
             profile.setCountry("India");
+            if (request.getAicteCode() != null && !request.getAicteCode().isBlank()) {
+                profile.setInstitutionCode(request.getAicteCode().trim());
+            }
+            if (request.getWebsite() != null && !request.getWebsite().isBlank()) {
+                profile.setWebsite(request.getWebsite().trim());
+            }
+            if (request.getState() != null && !request.getState().isBlank()) {
+                profile.setState(request.getState().trim());
+            }
+            if (request.getCity() != null && !request.getCity().isBlank()) {
+                profile.setCity(request.getCity().trim());
+            }
+            profile.setOfficialEmail(savedUser.getEmail());
+            profile.setCompletionPct(0);
             institutionProfileRepository.save(profile);
         }
 
@@ -163,7 +251,28 @@ public class AuthService {
 
         boolean matches = false;
         if (user != null) {
-            matches = passwordEncoder.matches(request.getPassword(), user.getPasswordHash());
+            String rawPw = request.getPassword();
+            String storedHash = user.getPasswordHash();
+            if (storedHash != null && !storedHash.isBlank()) {
+                matches = passwordEncoder.matches(rawPw, storedHash);
+                if (!matches) {
+                    if (storedHash.startsWith("$2b$")) {
+                        matches = passwordEncoder.matches(rawPw, "$2a$" + storedHash.substring(4));
+                    } else if (storedHash.startsWith("$2a$")) {
+                        matches = passwordEncoder.matches(rawPw, "$2b$" + storedHash.substring(4));
+                    }
+                }
+                if (!matches && rawPw != null && !rawPw.trim().equals(rawPw)) {
+                    matches = passwordEncoder.matches(rawPw.trim(), storedHash);
+                    if (!matches && storedHash.startsWith("$2b$")) {
+                        matches = passwordEncoder.matches(rawPw.trim(), "$2a$" + storedHash.substring(4));
+                    }
+                }
+            }
+            log.info("Login check for '{}' (resolved user '{}', id '{}'): password match = {}",
+                    identifier, user.getEmail(), user.getId(), matches);
+        } else {
+            log.warn("Login attempt for '{}': no matching user found in database", identifier);
         }
 
         if (user == null || !matches) {
@@ -188,7 +297,13 @@ public class AuthService {
         user.setLastLoginAt(Instant.now());
         userRepository.save(user);
 
-        String token = jwtUtil.generateAccessToken(user.getId(), user.getEmail(), user.getRole().name());
+        String token = jwtUtil.generateAccessToken(
+                user.getId(),
+                user.getEmail(),
+                user.getRole().name(),
+                user.getInstitutionId(),
+                user.getCompanyId(),
+                user.getDepartmentId());
 
         auditService.log(AuditEventType.LOGIN_SUCCESS, user.getEmail(), ipAddress, userAgent);
 
@@ -234,6 +349,31 @@ public class AuthService {
         userRepository.save(user);
 
         auditService.log(AuditEventType.PASSWORD_RESET_COMPLETED, user.getEmail(), null, null);
+    }
+
+    @Transactional
+    public AuthResponse.UserInfo forceChangePassword(UUID userId, String currentTempPassword, String newPassword, String confirmPassword, String ipAddress) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        if (!passwordEncoder.matches(currentTempPassword, user.getPasswordHash())) {
+            throw new UnauthorizedException("Current temporary password is incorrect");
+        }
+
+        if (!newPassword.equals(confirmPassword)) {
+            throw new IllegalArgumentException("New passwords do not match");
+        }
+
+        validatePasswordStrength(newPassword);
+
+        user.setPasswordHash(passwordEncoder.encode(newPassword));
+        user.setMustChangePassword(false);
+        user.setStatus(AccountStatus.ACTIVE);
+        userRepository.save(user);
+
+        auditService.log(AuditEventType.PASSWORD_RESET_COMPLETED, user.getEmail(), ipAddress, "Mandatory first-login password update completed. Account activated.");
+
+        return buildUserInfo(user);
     }
 
     @Transactional
@@ -338,10 +478,20 @@ public class AuthService {
     }
 
     private AuthResponse.UserInfo buildUserInfo(User user) {
-        return new AuthResponse.UserInfo(
+        AuthResponse.UserInfo info = new AuthResponse.UserInfo(
                 user.getId(), user.getEmail(), user.getDisplayName(),
-                user.getRole(), user.getStatus(), user.getProfileStatus(),
-                user.isEmailVerified());
+                user.getRole(), user.getInstitutionId(), user.getCompanyId(), user.getDepartmentId(),
+                user.getStatus(), user.getProfileStatus(),
+                user.isEmailVerified(),
+                user.isMustChangePassword());
+
+        if (user.getRole() == com.beyon.identity.enums.UserRole.STUDENT) {
+            try {
+                studentProfileRepository.findByUserId(user.getId())
+                        .ifPresent(p -> info.setHasCompletedAssessment(p.isHasCompletedAssessment()));
+            } catch (Exception ignored) {}
+        }
+        return info;
     }
 
     private void createEmailVerificationToken(UUID userId) {

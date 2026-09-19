@@ -72,6 +72,8 @@ import { ProfessionalProfilePage } from '../profile/pages/ProfessionalProfilePag
 import { CredentialVerificationPage } from '../profile/pages/CredentialVerificationPage';
 import { TeamFormationPage } from '../community/pages/TeamFormationPage';
 import { AdminDashboardPage } from '../pages/admin/AdminDashboardPage';
+import { AdminSkillTaxonomyPage } from '../pages/admin/AdminSkillTaxonomyPage';
+import { AdminSkillGraphPage } from '../pages/admin/AdminSkillGraphPage';
 import { ReportsPage } from '../pages/admin/ReportsPage';
 import { SocialFeedPage } from '../community/pages/SocialFeedPage';
 import { DiscussionsPage } from '../community/pages/DiscussionsPage';
@@ -84,10 +86,14 @@ import { AdminFeedbackPage } from '../community/pages/AdminFeedbackPage';
 import { InstitutionHome } from '../pages/institution/InstitutionHome';
 import { InstitutionLayout } from '../layouts/InstitutionLayout';
 import { InstitutionStudentsPage } from '../pages/institution/InstitutionStudentsPage';
+import { InstitutionMonitoringPage } from '../pages/institution/InstitutionMonitoringPage';
 import { InstitutionDrivesPage } from '../pages/institution/InstitutionDrivesPage';
 import { InstitutionPlacementsPage } from '../pages/institution/InstitutionPlacementsPage';
 import { InstitutionCurriculumPage } from '../pages/institution/InstitutionCurriculumPage';
 import { InstitutionProfilePage } from '../pages/institution/InstitutionProfilePage';
+import { AcademicianPortalPage } from '../pages/institution/AcademicianPortalPage';
+import { InternshipTrackingPage } from '../recruitment/pages/InternshipTrackingPage';
+import { StudentDocumentsPage } from '../profile/pages/StudentDocumentsPage';
 import { CompanyHome } from '../pages/company/CompanyHome';
 import { CompanyLayout } from '../layouts/CompanyLayout';
 import { CompanyOpportunitiesPage } from '../pages/company/CompanyOpportunitiesPage';
@@ -102,11 +108,17 @@ import { AdminEconomyPage } from '../pages/admin/AdminEconomyPage';
 import { AdminModerationPage } from '../pages/admin/AdminModerationPage';
 import { AdminLayout } from '../layouts/AdminLayout';
 import { StudentOnboarding } from '../onboarding/pages/student/StudentOnboarding';
+import { SkillValidationAssessmentPage } from '../onboarding/pages/student/SkillValidationAssessmentPage';
 import { InstitutionOnboarding } from '../onboarding/pages/institution/InstitutionOnboarding';
 import { CompanyOnboarding } from '../onboarding/pages/company/CompanyOnboarding';
 import { CompletionPage } from '../onboarding/pages/shared/CompletionPage';
 import { AccountRejectedPage } from '../auth/pages/AccountRejectedPage';
 import { MobileProctorApp } from '../proctor/MobileProctorApp';
+import { ForcePasswordChangePage } from '../auth/pages/ForcePasswordChangePage';
+import { InstitutionOnboardingPage } from '../pages/admin/InstitutionOnboardingPage';
+import { InstitutionHierarchyPage } from '../pages/institution/InstitutionHierarchyPage';
+import { AdminAuditLogsPage } from '../pages/admin/AdminAuditLogsPage';
+import { AdminInstitutionManagersPage } from '../pages/admin/AdminInstitutionManagersPage';
 
 export function App() {
   return (
@@ -123,8 +135,11 @@ export function App() {
       <Route path="/403" element={<UnauthorizedPage />} />
 
       <Route element={<ProtectedRoute />}>
+        <Route path="/auth/force-change-password" element={<ForcePasswordChangePage />} />
+        <Route path="/force-change-password" element={<ForcePasswordChangePage />} />
 
         <Route path="/onboarding/student" element={<StudentOnboarding />} />
+        <Route path="/onboarding/skill-assessment" element={<SkillValidationAssessmentPage />} />
         <Route path="/onboarding/institution" element={<InstitutionOnboarding />} />
         <Route path="/onboarding/company" element={<CompanyOnboarding />} />
         <Route path="/onboarding/complete" element={<CompletionPage />} />
@@ -167,11 +182,15 @@ export function App() {
             <Route path="/institution/home" element={<InstitutionHome />} />
             <Route path="/institution" element={<Navigate to="/institution/home" replace />} />
             <Route path="/institution/dashboard" element={<InstitutionHome />} />
+            <Route path="/institution/hierarchy" element={<InstitutionHierarchyPage />} />
             <Route path="/institution/analytics" element={<InstitutionAnalyticsPage />} />
+            <Route path="/institution/monitoring" element={<InstitutionMonitoringPage />} />
+            <Route path="/institution/monitoring/:studentId" element={<InstitutionMonitoringPage />} />
             <Route path="/institution/drives" element={<InstitutionDrivesPage />} />
             <Route path="/institution/students" element={<InstitutionStudentsPage />} />
             <Route path="/institution/placements" element={<InstitutionPlacementsPage />} />
             <Route path="/institution/curriculum" element={<InstitutionCurriculumPage />} />
+            <Route path="/institution/faculty-hub" element={<AcademicianPortalPage />} />
             <Route path="/institution/profile" element={<InstitutionProfilePage />} />
             <Route path="/institution/profile/edit" element={<InstitutionProfilePage />} />
             <Route path="/institution/messages" element={<MessagingPage />} />
@@ -184,6 +203,7 @@ export function App() {
             <Route path="/student/home" element={<StudentHome />} />
             <Route path="/student/profile" element={<StudentProfilePage />} />
             <Route path="/student/profile/edit" element={<StudentProfilePage />} />
+            <Route path="/student/skill-assessment" element={<SkillValidationAssessmentPage />} />
             <Route path="/student/skills" element={<SkillExplorer />} />
             <Route path="/student/skills/:skillSlug" element={<SkillDetail />} />
             <Route path="/student/skills/:skillSlug/:topicSlug" element={<TopicDetail />} />
@@ -231,6 +251,10 @@ export function App() {
             <Route path="/career-intelligence" element={<CareerIntelligenceDashboard />} />
             <Route path="/placement" element={<PlacementDashboardPage />} />
             <Route path="/placement-intelligence" element={<PlacementIntelligencePage />} />
+            <Route path="/student/internship-tracking" element={<InternshipTrackingPage />} />
+            <Route path="/internship-tracking" element={<InternshipTrackingPage />} />
+            <Route path="/student/documents" element={<StudentDocumentsPage />} />
+            <Route path="/documents" element={<StudentDocumentsPage />} />
             <Route path="/professional-profile" element={<ProfessionalProfilePage />} />
           </Route>
         </Route>
@@ -242,10 +266,19 @@ export function App() {
             <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
             <Route path="/admin/users" element={<AdminUsersPage />} />
             <Route path="/admin/institutions" element={<AdminInstitutionsPage />} />
+            <Route path="/admin/institution-managers" element={<AdminInstitutionManagersPage />} />
+            <Route path="/institution-manager/onboard" element={<InstitutionOnboardingPage />} />
+            <Route path="/admin/audit-logs" element={<AdminAuditLogsPage />} />
             <Route path="/admin/companies" element={<AdminCompaniesPage />} />
             <Route path="/admin/questions" element={<AdminQuestionsPage />} />
             <Route path="/admin/questions/create" element={<CreateQuestionPage />} />
+            <Route path="/admin/questions/edit/:id" element={<CreateQuestionPage />} />
             <Route path="/practice/create" element={<CreateQuestionPage />} />
+            <Route path="/practice/edit/:id" element={<CreateQuestionPage />} />
+            <Route path="/admin/skills" element={<AdminSkillTaxonomyPage />} />
+            <Route path="/admin/skills/graph" element={<AdminSkillGraphPage />} />
+            <Route path="/admin/skill-taxonomy" element={<AdminSkillTaxonomyPage />} />
+            <Route path="/admin/skill-graph" element={<AdminSkillGraphPage />} />
             <Route path="/admin/economy" element={<AdminEconomyPage />} />
             <Route path="/admin/moderation" element={<AdminModerationPage />} />
             <Route path="/admin/feedback" element={<AdminFeedbackPage />} />

@@ -69,7 +69,7 @@ public class OnboardingService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-        if (user.getRole() != UserRole.STUDENT) {
+        if (user.getRole() == null || !user.getRole().isStudentTier()) {
             throw new ConflictException("User is not a student");
         }
 
@@ -127,6 +127,10 @@ public class OnboardingService {
                 skill.setSkillName(s.getSkillName());
                 skill.setCategory(s.getCategory());
                 skill.setProficiency(s.getProficiency());
+                if (s.getVerified() != null && s.getVerified()) {
+                    skill.setVerified(true);
+                    skill.setSource(s.getSource() != null ? s.getSource() : "ONBOARDING_VERIFIED");
+                }
                 studentSkillRepository.save(skill);
             }
         }
@@ -179,7 +183,7 @@ public class OnboardingService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-        if (user.getRole() != UserRole.INSTITUTION) {
+        if (user.getRole() == null || !user.getRole().isInstitutionTier()) {
             throw new ConflictException("User is not an institution");
         }
 
@@ -215,7 +219,8 @@ public class OnboardingService {
         profile.setCompletionPct(calculateInstitutionCompletion(req));
         institutionProfileRepository.save(profile);
 
-        user.setProfileStatus(AccountStatus.PENDING_INSTITUTION_VERIFICATION);
+        user.setStatus(AccountStatus.ACTIVE);
+        user.setProfileStatus(AccountStatus.COMPLETED);
         userRepository.save(user);
 
         if (req.getPlacementHistory() != null) {
@@ -250,7 +255,7 @@ public class OnboardingService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-        if (user.getRole() != UserRole.COMPANY) {
+        if (user.getRole() == null || !user.getRole().isCompanyTier()) {
             throw new ConflictException("User is not a company");
         }
 
@@ -279,7 +284,8 @@ public class OnboardingService {
         profile.setCompletionPct(calculateCompanyCompletion(req));
         companyProfileRepository.save(profile);
 
-        user.setProfileStatus(AccountStatus.PENDING_COMPANY_VERIFICATION);
+        user.setStatus(AccountStatus.ACTIVE);
+        user.setProfileStatus(AccountStatus.COMPLETED);
         userRepository.save(user);
 
         if (req.getHiringTypes() != null || req.getPreferredLevels() != null || req.getRecruitmentRegions() != null) {

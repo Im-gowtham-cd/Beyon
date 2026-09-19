@@ -8,6 +8,7 @@ import com.beyon.identity.model.User;
 import com.beyon.identity.repository.UserRepository;
 import com.beyon.practice.model.CompanyOpportunity;
 import com.beyon.practice.repository.CompanyOpportunityRepository;
+import com.beyon.common.aws.S3StorageService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,7 +16,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.UUID;
@@ -30,6 +30,12 @@ public class EvidenceStorageService {
 
     @Value("${beyon.proctoring.evidence-base-url:http://localhost:8085/api/v1/evidence}")
     private String evidenceBaseUrl;
+
+    @Value("${beyon.s3.evidence-bucket:beyon-evidence}")
+    private String evidenceBucket;
+
+    @Autowired(required = false)
+    private S3StorageService s3StorageService;
 
     @Autowired(required = false)
     private DualViewSessionRepository dvSessionRepo;
@@ -72,27 +78,53 @@ public class EvidenceStorageService {
                     "VIOLATION"
             );
 
-            File baseDir = new File(evidenceBasePath);
-            File testDir = new File(baseDir, safeTestName);
-            File studentDir = new File(testDir, safeStudentName);
-
-            if (!studentDir.exists()) {
-                studentDir.mkdirs();
-            }
-
             String filename = safeWarningName + "_" + Instant.now().toEpochMilli() + ".jpg";
-            File file = new File(studentDir, filename);
+            String s3Key = "evidence/" + safeTestName + "/" + safeStudentName + "/" + filename;
 
-            try (FileOutputStream fos = new FileOutputStream(file)) {
-                fos.write(imageBytes);
+            if (s3StorageService != null) {
+                try {
+                    s3StorageService.ensureBucketExists(evidenceBucket);
+                    s3StorageService.uploadFile(evidenceBucket, s3Key, imageBytes, "image/jpeg");
+                    log.info("Saved proctoring evidence frame to S3: s3://{}/{}", evidenceBucket, s3Key);
+                } catch (Exception e) {
+                    log.error("Failed to store evidence frame to S3: {}", e.getMessage());
+                }
             }
 
-            log.info("Saved proctoring evidence frame to: {}", file.getAbsolutePath());
             return "/api/v1/evidence/" + safeTestName + "/" + safeStudentName + "/" + filename;
-        } catch (IOException e) {
+        } catch (Exception e) {
             log.error("Failed to store evidence frame: {}", e.getMessage());
             return null;
         }
+    }
+
+    public byte[] getEvidenceBytes(String relativeUrl) {
+        if (relativeUrl == null || relativeUrl.isBlank()) return null;
+        String cleanPath = relativeUrl.replace("/api/v1/evidence/", "").replace("api/v1/evidence/", "").replace('\\', '/');
+        String s3Key = cleanPath.startsWith("evidence/") ? cleanPath : "evidence/" + cleanPath;
+
+        if (s3StorageService != null) {
+            try {
+                if (s3StorageService.doesObjectExist(evidenceBucket, s3Key)) {
+                    return s3StorageService.downloadFile(evidenceBucket, s3Key);
+                }
+                if (s3StorageService.doesObjectExist(evidenceBucket, cleanPath)) {
+                    return s3StorageService.downloadFile(evidenceBucket, cleanPath);
+                }
+            } catch (Exception e) {
+                log.warn("S3 download fallback for evidence {}: {}", cleanPath, e.getMessage());
+            }
+        }
+
+        // Fallback to legacy local file if present
+        try {
+            File localFile = new File(evidenceBasePath, cleanPath);
+            if (localFile.exists() && localFile.isFile()) {
+                return java.nio.file.Files.readAllBytes(localFile.toPath());
+            }
+        } catch (Exception ignored) {}
+
+        return null;
     }
 
     public File resolveStoragePath(String relativeUrl) {

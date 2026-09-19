@@ -1,0 +1,49 @@
+Institution:
+
+google search --register            done
+OTP verification --register         bycott
+Instution Onboarding Form           
+Student/Faculty Add
+
+Student:
+
+Login
+Student Onboarding Form
+skill assessment
+skill gap analysis
+practice arena
+daily challenge
+revised challenge
+skills learning video course with test validation
+weekly contest section
+Drive/Intern mapped as per skills
+student mentorship
+project colab
+XP + Coins
+Level
+Institutitons level ranking
+
+
+Faculty:
+
+Login
+Faculty Onboarding Form
+monitor students 
+workshop
+project
+mentorship video call
+industrial training
+
+
+Industry:
+
+google search --register            
+OTP verification --register         
+Industry Onboarding Form
+Post Drive / Internship Whether On-Campus/Off-Campus
+Question bank contribution
+create assessment
+drive monitoring
+industrial training
+workshop
+mentorship
