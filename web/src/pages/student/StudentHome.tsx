@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../auth/context/AuthContext';
+import { api } from '../../services/api/client';
 import { LearningWidget } from '../../student/components/LearningWidget';
 import {
   UserCheck,
@@ -18,6 +19,7 @@ import {
   ArrowRight,
   BookOpen,
   Radio,
+  Clock,
 } from 'lucide-react';
 import styles from './StudentHome.module.css';
 
@@ -28,49 +30,74 @@ export function StudentHome() {
   const [coins, setCoins] = useState<number>(0);
   const [streak, setStreak] = useState<number>(0);
   const [stats, setStats] = useState<any>(null);
+  const [assessmentStatus, setAssessmentStatus] = useState<any>(null);
+  const [studentSkills, setStudentSkills] = useState<any[]>([]);
 
   useEffect(() => {
+    let mounted = true;
     async function loadData() {
       try {
-        const token = localStorage.getItem('beyon_token') || localStorage.getItem('beyon_access_token');
-        if (token) {
-          const [profRes, chalRes, coinRes, streakRes, statsRes] = await Promise.all([
-            fetch('/api/v1/student/profile', { headers: { Authorization: `Bearer ${token}` } }).catch(() => null),
-            fetch('/api/v1/daily-challenge/today', { headers: { Authorization: `Bearer ${token}` } }).catch(() => null),
-            fetch('/api/v1/coins/balance', { headers: { Authorization: `Bearer ${token}` } }).catch(() => null),
-            fetch('/api/v1/gamification/streak', { headers: { Authorization: `Bearer ${token}` } }).catch(() => null),
-            fetch('/api/v1/practice/stats', { headers: { Authorization: `Bearer ${token}` } }).catch(() => null),
-          ]);
-          if (profRes && profRes.ok) {
-            const data = await profRes.json();
-            setProfileData(data.data || null);
-          }
-          if (chalRes && chalRes.ok) {
-            const data = await chalRes.json();
-            setDailyChallenge(data.data || null);
-          }
-          if (coinRes && coinRes.ok) {
-            const data = await coinRes.json();
-            setCoins(data.data ?? 0);
-          }
-          if (streakRes && streakRes.ok) {
-            const data = await streakRes.json();
-            setStreak(data.data?.currentStreak ?? 0);
-          }
-          if (statsRes && statsRes.ok) {
-            const data = await statsRes.json();
-            setStats(data.data || null);
-          }
+        const [profRes, chalRes, coinRes, streakRes, statsRes, assessRes, skillsRes] = await Promise.all([
+          api.get<any>('/student/profile').catch(() => null),
+          api.get<any>('/daily-challenge/today').catch(() => null),
+          api.get<any>('/coins/balance').catch(() => null),
+          api.get<any>('/gamification/streak').catch(() => null),
+          api.get<any>('/practice/stats').catch(() => null),
+          api.get<any>('/skills/assessment/status').catch(() => null),
+          api.get<any>('/student/skills').catch(() => null),
+        ]);
+        if (!mounted) return;
+        if (profRes) setProfileData(profRes.data || profRes);
+        if (chalRes) setDailyChallenge(chalRes.data || chalRes);
+        if (assessRes) setAssessmentStatus(assessRes.data || assessRes);
+        if (skillsRes) {
+          const sData = (skillsRes as any)?.data || skillsRes;
+          if (Array.isArray(sData)) setStudentSkills(sData);
         }
-      } catch {
-
+        if (typeof coinRes === 'number') {
+          setCoins(coinRes);
+        } else if (coinRes?.data !== undefined) {
+          setCoins(typeof coinRes.data === 'number' ? coinRes.data : 0);
+        }
+        if (typeof streakRes?.currentStreak === 'number') {
+          setStreak(streakRes.currentStreak);
+        } else if (typeof streakRes?.data?.currentStreak === 'number') {
+          setStreak(streakRes.data.currentStreak);
+        }
+        if (statsRes) setStats(statsRes.data || statsRes);
+      } catch (err) {
+        console.error('Failed to load student home stats:', err);
       }
     }
     loadData();
-  }, []);
+
+    window.addEventListener('beyon-stats-refresh', loadData);
+    window.addEventListener('focus', loadData);
+    return () => {
+      mounted = false;
+      window.removeEventListener('beyon-stats-refresh', loadData);
+      window.removeEventListener('focus', loadData);
+    };
+  }, [user?.id]);
 
   const displayName = profileData?.fullName || user?.name || 'Candidate';
   const firstName = displayName.split(' ')[0];
+
+  const hasAssessment = Boolean(
+    profileData?.hasCompletedAssessment ||
+    assessmentStatus?.hasCompletedAssessment ||
+    studentSkills.some(s => s.score != null || s.verified)
+  );
+
+  const verifiedSkillsCount = studentSkills.filter(s => s.verified || (s.score != null && Number(s.score) >= 60)).length;
+  const testedSkills = studentSkills.filter(s => s.score != null || (s.questionsTested && s.questionsTested > 0));
+  const totalQuestionsTested = testedSkills.reduce((sum, s) => sum + (s.questionsTested || 0), 0);
+  const totalQuestionsCorrect = testedSkills.reduce((sum, s) => sum + (s.questionsCorrect || 0), 0);
+  const overallAccuracy = totalQuestionsTested > 0
+    ? ((totalQuestionsCorrect / totalQuestionsTested) * 100).toFixed(1)
+    : testedSkills.length > 0
+    ? (testedSkills.reduce((sum, s) => sum + (Number(s.score) || 0), 0) / testedSkills.length).toFixed(1)
+    : '0.0';
 
   const quickNavs = [
     {
@@ -180,16 +207,149 @@ export function StudentHome() {
           <div className={styles.statMetric}>
             <span className={styles.statMetricLabel}>Accuracy</span>
             <span className={styles.statMetricValue}>
-              {stats?.totalAttempted && stats.totalAttempted > 0
-                ? `${((stats.totalSolved / stats.totalAttempted) * 100).toFixed(1)}%`
-                : '0.0%'}
+              {testedSkills.length > 0
+                ? `${overallAccuracy}%`
+                : (stats?.totalAttempted && stats.totalAttempted > 0
+                    ? `${((stats.totalSolved / stats.totalAttempted) * 100).toFixed(1)}%`
+                    : '0.0%')}
             </span>
           </div>
+          {hasAssessment && (
+            <>
+              <div className={styles.statDivider} />
+              <div className={styles.statMetric}>
+                <span className={styles.statMetricLabel}>Verified Skills</span>
+                <span className={styles.statMetricValue} style={{ color: '#15803d' }}>
+                  <ShieldCheck size={16} style={{ color: '#15803d', display: 'inline', marginRight: '4px' }} />
+                  {verifiedSkillsCount} / {testedSkills.length || studentSkills.length}
+                </span>
+              </div>
+            </>
+          )}
         </div>
       </section>
 
       <div className={styles.dashboardGrid}>
         <div className={styles.mainContent}>
+
+          {/* Skill Validation Assessment Status Card */}
+          {hasAssessment ? (
+            <div className={styles.assessmentBanner}>
+              <div className={styles.assessmentBannerHeader}>
+                <div className={styles.assessmentHeaderLeft}>
+                  <div className={styles.assessmentIconWrap}>
+                    <ShieldCheck size={26} style={{ color: '#15803d' }} />
+                  </div>
+                  <div>
+                    <div className={styles.assessmentTitleRow}>
+                      <h3 className={styles.assessmentBannerTitle}>Skill Validation Assessment</h3>
+                      <span className={styles.verifiedTagBadge}>
+                        <CheckCircle2 size={13} /> Verified Scholar
+                      </span>
+                    </div>
+                    <p className={styles.assessmentBannerDesc}>
+                      Technical competency benchmark complete • {verifiedSkillsCount} of {testedSkills.length || studentSkills.length} skills verified against official Beyon taxonomy
+                    </p>
+                  </div>
+                </div>
+
+                <div className={styles.assessmentHeaderRight}>
+                  {assessmentStatus?.retestAvailableAt ? (
+                    <div className={styles.retestCooldownBadge}>
+                      <Clock size={13} />
+                      <span>Next Retest: {new Date(assessmentStatus.retestAvailableAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })} (7-Day Rule)</span>
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+
+              {/* Assessment Benchmark Metrics Bar */}
+              <div className={styles.assessmentMetricsBar}>
+                <div className={styles.assessmentBarItem}>
+                  <span className={styles.assessmentBarLabel}>Benchmark Accuracy</span>
+                  <span className={styles.assessmentBarValue} style={{ color: '#15803d' }}>{overallAccuracy}%</span>
+                </div>
+                <div className={styles.assessmentBarDivider} />
+                <div className={styles.assessmentBarItem}>
+                  <span className={styles.assessmentBarLabel}>Verified Skills</span>
+                  <span className={styles.assessmentBarValue} style={{ color: '#1c2d81' }}>{verifiedSkillsCount} / {testedSkills.length || studentSkills.length}</span>
+                </div>
+                <div className={styles.assessmentBarDivider} />
+                <div className={styles.assessmentBarItem}>
+                  <span className={styles.assessmentBarLabel}>Questions Solved</span>
+                  <span className={styles.assessmentBarValue}>{totalQuestionsCorrect} / {totalQuestionsTested || 50}</span>
+                </div>
+                <div className={styles.assessmentBarDivider} />
+                <div className={styles.assessmentBarItem}>
+                  <span className={styles.assessmentBarLabel}>Verification Status</span>
+                  <span className={styles.assessmentBarValue} style={{ color: '#15803d', fontSize: '0.9rem' }}>
+                    AICTE / Beyon Lake Validated
+                  </span>
+                </div>
+              </div>
+
+              {/* Assessed Skills Pills */}
+              <div className={styles.skillsPillsContainer}>
+                {testedSkills.slice(0, 9).map((sk) => (
+                  <div key={sk.id || sk.skillName} className={`${styles.skillPill} ${sk.verified ? styles.skillPillVerified : ''}`}>
+                    <div className={styles.skillPillTop}>
+                      <span className={styles.skillPillName}>{sk.skillName}</span>
+                      {sk.verified ? (
+                        <span className={styles.pillBadgeSuccess}>
+                          <ShieldCheck size={11} /> {Number(sk.score).toFixed(0)}%
+                        </span>
+                      ) : (
+                        <span className={styles.pillBadgeMuted}>
+                          {sk.score != null ? `${Number(sk.score).toFixed(0)}%` : 'Pending'}
+                        </span>
+                      )}
+                    </div>
+                    <div className={styles.pillProgressBar}>
+                      <div
+                        className={styles.pillProgressFill}
+                        style={{
+                          width: `${Math.min(100, Math.max(0, Number(sk.score) || 0))}%`,
+                          background: sk.verified ? '#15803d' : '#f59e0b',
+                        }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className={styles.assessmentBannerActions}>
+                <Link to="/student/profile" className={styles.assessmentPrimaryBtn}>
+                  <ShieldCheck size={14} />
+                  <span>View Verified Profile &amp; Skills</span>
+                </Link>
+                <Link to="/student/skill-assessment" className={styles.assessmentSecondaryBtn}>
+                  <span>Assessment Report</span>
+                  <ArrowRight size={14} />
+                </Link>
+              </div>
+            </div>
+          ) : (
+            <div className={styles.assessmentInviteBanner}>
+              <div className={styles.assessmentIconWrap}>
+                <ShieldCheck size={26} style={{ color: '#1c2d81' }} />
+              </div>
+              <div style={{ flex: 1, minWidth: '260px' }}>
+                <div className={styles.assessmentTitleRow}>
+                  <h3 className={styles.assessmentBannerTitle}>Validate Your Engineering Skills</h3>
+                  <span className={styles.verifiedTagBadge} style={{ background: '#fef3c7', color: '#b45309', borderColor: '#fde68a' }}>
+                    Pending Assessment
+                  </span>
+                </div>
+                <p className={styles.assessmentBannerDesc}>
+                  Take the 50-question personalized assessment based on your selected skills to unlock full student access and verify your profile for recruiters.
+                </p>
+              </div>
+              <Link to="/student/skill-assessment" className={styles.assessmentPrimaryBtn}>
+                <ShieldCheck size={14} />
+                <span>Start Skill Assessment</span>
+              </Link>
+            </div>
+          )}
 
           {dailyChallenge?.question ? (
             <div className={styles.spotlightBanner}>

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { NavLink, Link } from 'react-router-dom';
+import { NavLink, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../auth/context/AuthContext';
+import { api } from '../services/api/client';
 import {
   LayoutDashboard,
   User,
@@ -21,6 +22,8 @@ import {
   Coins,
   ChevronLeft,
   ChevronRight,
+  FolderLock,
+  FileCheck,
 } from 'lucide-react';
 import styles from './StudentSidebar.module.css';
 
@@ -38,32 +41,43 @@ export function StudentSidebar({
   onToggleCollapse,
 }: StudentSidebarProps) {
   const { user } = useAuth();
+  const location = useLocation();
   const [coins, setCoins] = useState<number>(0);
   const [streak, setStreak] = useState<number>(0);
 
   useEffect(() => {
+    let mounted = true;
     async function fetchStats() {
       try {
-        const token = localStorage.getItem('beyon_token') || localStorage.getItem('beyon_access_token');
-        if (!token) return;
-        const [coinRes, streakRes] = await Promise.all([
-          fetch('/api/v1/coins/balance', { headers: { Authorization: `Bearer ${token}` } }).catch(() => null),
-          fetch('/api/v1/gamification/streak', { headers: { Authorization: `Bearer ${token}` } }).catch(() => null),
+        const [coinBalance, streakData] = await Promise.all([
+          api.get<number>('/coins/balance').catch(() => null),
+          api.get<any>('/gamification/streak').catch(() => null),
         ]);
-        if (coinRes && coinRes.ok) {
-          const coinData = await coinRes.json();
-          setCoins(coinData.data ?? 0);
+        if (!mounted) return;
+        if (typeof coinBalance === 'number') {
+          setCoins(coinBalance);
+        } else if (coinBalance && typeof (coinBalance as any).data === 'number') {
+          setCoins((coinBalance as any).data);
         }
-        if (streakRes && streakRes.ok) {
-          const streakData = await streakRes.json();
-          setStreak(streakData.data?.currentStreak ?? 0);
+        if (streakData && typeof streakData.currentStreak === 'number') {
+          setStreak(streakData.currentStreak);
+        } else if (streakData?.data && typeof streakData.data.currentStreak === 'number') {
+          setStreak(streakData.data.currentStreak);
         }
-      } catch {
-
+      } catch (err) {
+        console.error('Failed to load sidebar student stats:', err);
       }
     }
     fetchStats();
-  }, []);
+
+    window.addEventListener('beyon-stats-refresh', fetchStats);
+    window.addEventListener('focus', fetchStats);
+    return () => {
+      mounted = false;
+      window.removeEventListener('beyon-stats-refresh', fetchStats);
+      window.removeEventListener('focus', fetchStats);
+    };
+  }, [user?.id, location.pathname]);
 
   const navSections = [
     {
@@ -71,6 +85,7 @@ export function StudentSidebar({
       items: [
         { to: '/student/home', icon: LayoutDashboard, label: 'Dashboard' },
         { to: '/student/profile', icon: User, label: 'Portfolio & Profile' },
+        { to: '/student/documents', icon: FolderLock, label: 'Document Vault', badge: '5 Files', badgeType: 'primary' },
         { to: '/student/skills', icon: Cpu, label: 'Skill Taxonomy', badge: '109', badgeType: 'primary' },
       ],
     },
@@ -88,6 +103,7 @@ export function StudentSidebar({
       items: [
         { to: '/opportunities', icon: Briefcase, label: 'Opportunities & Drives', badge: '35 Open', badgeType: 'primary' },
         { to: '/my-applications', icon: FileText, label: 'My Applications' },
+        { to: '/student/internship-tracking', icon: FileCheck, label: 'Internship Logbook', badge: 'Active', badgeType: 'gold' },
         { to: '/placement', icon: LineChart, label: 'Placement Intel' },
       ],
     },
@@ -148,15 +164,26 @@ export function StudentSidebar({
             </div>
 
             {!collapsed && (
-              <div className={styles.userStatsBar}>
-                <div className={styles.userStatItem}>
-                  <Coins size={14} className={styles.goldIcon} />
+              <div className={styles.walletBar}>
+                <div className={styles.coinTag}>
+                  <Coins size={14} style={{ color: '#fed601' }} />
                   <span>{coins} Coins</span>
                 </div>
-                <div className={styles.statDivider} />
-                <div className={styles.userStatItem}>
-                  <Flame size={14} className={styles.fireIcon} />
+                <div className={styles.streakTag}>
+                  <Flame size={14} style={{ color: streak > 0 ? '#ea580c' : '#ffffff' }} />
                   <span>{streak}d Streak</span>
+                </div>
+              </div>
+            )}
+            {collapsed && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'center', marginTop: '6px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '2px', fontSize: '0.7rem', color: '#fed601', fontWeight: 800 }} title={`${coins} Coins`}>
+                  <Coins size={12} />
+                  <span>{coins}</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '2px', fontSize: '0.7rem', color: '#ffffff', fontWeight: 700 }} title={`${streak} Day Streak`}>
+                  <Flame size={12} color={streak > 0 ? '#ea580c' : '#94a3b8'} />
+                  <span>{streak}d</span>
                 </div>
               </div>
             )}

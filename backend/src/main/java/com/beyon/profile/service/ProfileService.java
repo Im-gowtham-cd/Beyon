@@ -8,6 +8,7 @@ import com.beyon.profile.model.*;
 import com.beyon.profile.repository.*;
 import org.springframework.stereotype.Service;
 
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -71,15 +72,15 @@ public class ProfileService {
         ProfileResponse response = new ProfileResponse();
         boolean profileCompleted = false;
 
-        if (user.getRole() == com.beyon.identity.enums.UserRole.STUDENT) {
+        if (user.getRole() != null && user.getRole().isStudentTier()) {
             var studentProfile = studentProfileRepository.findByUserId(userId);
             profileCompleted = studentProfile.isPresent() && studentProfile.get().getCompletionPct() >= 80;
             response.setStudentProfile(loadStudentData(userId));
-        } else if (user.getRole() == com.beyon.identity.enums.UserRole.INSTITUTION) {
-            var instProfile = institutionProfileRepository.findByUserId(userId);
-            profileCompleted = instProfile.isPresent() && instProfile.get().getCompletionPct() >= 80;
-            response.setInstitutionProfile(loadInstitutionData(userId));
-        } else if (user.getRole() == com.beyon.identity.enums.UserRole.COMPANY) {
+        } else if (user.getRole() != null && user.getRole().isInstitutionTier()) {
+            var instData = loadInstitutionData(userId, user);
+            profileCompleted = instData.getProfile() != null && instData.getProfile().getCompletionPct() >= 80;
+            response.setInstitutionProfile(instData);
+        } else if (user.getRole() != null && user.getRole().isCompanyTier()) {
             var compProfile = companyProfileRepository.findByUserId(userId);
             profileCompleted = compProfile.isPresent() && compProfile.get().getCompletionPct() >= 80;
             response.setCompanyProfile(loadCompanyData(userId));
@@ -104,11 +105,29 @@ public class ProfileService {
         return data;
     }
 
-    private ProfileResponse.InstitutionProfileData loadInstitutionData(UUID userId) {
+    private ProfileResponse.InstitutionProfileData loadInstitutionData(UUID userId, User user) {
         ProfileResponse.InstitutionProfileData data = new ProfileResponse.InstitutionProfileData();
-        institutionProfileRepository.findByUserId(userId).ifPresent(data::setProfile);
-        data.setPlacementHistory(institutionPlacementHistoryRepository.findByUserId(userId));
-        data.setRepresentatives(institutionRepresentativeRepository.findByUserId(userId));
+        UUID effectiveInstId = (user != null && user.getInstitutionId() != null) ? user.getInstitutionId() : userId;
+        var optProfile = institutionProfileRepository.findByUserId(userId);
+        if (optProfile.isEmpty() && !effectiveInstId.equals(userId)) {
+            optProfile = institutionProfileRepository.findByUserId(effectiveInstId);
+        }
+        if (optProfile.isEmpty() && user != null && user.getDisplayName() != null) {
+            String name = user.getDisplayName().trim();
+            for (com.beyon.profile.model.InstitutionProfile ip : institutionProfileRepository.findAll()) {
+                if (ip.getInstitutionName() != null &&
+                        (ip.getInstitutionName().equalsIgnoreCase(name) ||
+                                ip.getInstitutionName().toLowerCase().contains(name.toLowerCase()) ||
+                                name.toLowerCase().contains(ip.getInstitutionName().toLowerCase()))) {
+                    optProfile = Optional.of(ip);
+                    effectiveInstId = ip.getUserId();
+                    break;
+                }
+            }
+        }
+        optProfile.ifPresent(data::setProfile);
+        data.setPlacementHistory(institutionPlacementHistoryRepository.findByUserId(effectiveInstId));
+        data.setRepresentatives(institutionRepresentativeRepository.findByUserId(effectiveInstId));
         return data;
     }
 

@@ -73,8 +73,16 @@ public class DualViewProctoringService {
 
     public String generatePairingToken(UUID dvSessionId) {
         DualViewSession session = getSession(dvSessionId);
+        if (session == null) {
+            DualViewSession newSession = new DualViewSession();
+            newSession.setAssessmentSessionId(dvSessionId);
+            newSession.setCandidateId(UUID.randomUUID());
+            newSession.setStatus("SETUP");
+            session = dvSessionRepo.save(newSession);
+        }
+        UUID effectiveDvSessionId = session.getId();
 
-        List<ProctoringDevice> mobiles = deviceRepo.findByProctoringSessionIdAndDeviceType(dvSessionId, "MOBILE");
+        List<ProctoringDevice> mobiles = deviceRepo.findByProctoringSessionIdAndDeviceType(effectiveDvSessionId, "MOBILE");
         for (ProctoringDevice d : mobiles) {
             if (!Boolean.TRUE.equals(d.getPairingTokenUsed())) {
                 if (d.getPairingToken() != null) {
@@ -88,11 +96,11 @@ public class DualViewProctoringService {
         OffsetDateTime expires = OffsetDateTime.now().plusSeconds(PAIRING_TOKEN_TTL_SECONDS);
 
         String pairKey = PAIR_KEY_PREFIX + token;
-        String pairValue = "{\"procSessionId\":\"" + dvSessionId + "\",\"candidateId\":\"" + session.getCandidateId() + "\"}";
+        String pairValue = "{\"procSessionId\":\"" + effectiveDvSessionId + "\",\"candidateId\":\"" + session.getCandidateId() + "\"}";
         redisSet(pairKey, pairValue, PAIRING_TOKEN_TTL_SECONDS, TimeUnit.SECONDS);
 
         ProctoringDevice mobile = new ProctoringDevice();
-        mobile.setProctoringSessionId(dvSessionId);
+        mobile.setProctoringSessionId(effectiveDvSessionId);
         mobile.setDeviceType("MOBILE");
         mobile.setPairingToken(token);
         mobile.setPairingTokenExpiresAt(expires);

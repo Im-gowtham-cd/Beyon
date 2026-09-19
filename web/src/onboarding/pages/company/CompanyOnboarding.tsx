@@ -22,18 +22,20 @@ import {
   User,
   Award,
   Layers,
+  Search,
 } from 'lucide-react';
 import { useAuth } from '../../../auth/context/AuthContext';
 import { api } from '../../../services/api/client';
 import type { CompanyFormData, CompanyRepresentativeEntry } from '../../types/onboarding';
 import { EMPTY_COMPANY_FORM } from '../../types/onboarding';
+import { CompanyVerificationDiagnosticCard } from '../../../components/company/CompanyVerificationDiagnosticCard';
 import styles from '../student/StudentOnboarding.module.css';
 
 const STEPS = [
   { label: 'Corporate Identity', sub: 'Legal name & headquarters', icon: Building2 },
   { label: 'Talent Acquisition', sub: 'HR leads & hiring models', icon: Users },
   { label: 'Recruitment Criteria', sub: 'Skills, degrees & CGPA', icon: Code2 },
-  { label: 'Review & Verify', sub: 'Submit for Super Admin review', icon: ShieldCheck },
+  { label: 'Review & Verify', sub: 'MCA & Live Grounded Verification', icon: ShieldCheck },
 ];
 
 const COMPANY_TYPES = [
@@ -128,12 +130,132 @@ export function CompanyOnboarding() {
     phone: '',
   });
 
+  const [cinLookupLoading, setCinLookupLoading] = useState(false);
+  const [mcaFoundData, setMcaFoundData] = useState<any>(null);
+  const [cinLookupMsg, setCinLookupMsg] = useState<{ text: string; isError?: boolean } | null>(null);
+  const [verificationResult, setVerificationResult] = useState<any>(null);
+
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [step]);
 
+  useEffect(() => {
+    // Load from sessionStorage if verified during registration
+    try {
+      const storedVerified = sessionStorage.getItem('beyon_verified_company_data');
+      if (storedVerified) {
+        const v = JSON.parse(storedVerified);
+        setForm((prev) => ({
+          ...prev,
+          companyName: v.companyName || v.legalName || prev.companyName,
+          cin: v.cin || prev.cin,
+          state: v.state || prev.state,
+          city: v.city || prev.city,
+          website: v.officialWebsite || prev.website,
+          officialEmail: v.corporateEmail || v.officialEmail || prev.officialEmail,
+          phone: v.contactPhone || prev.phone,
+          industry: v.industry || prev.industry,
+          representatives: v.representativeName
+            ? [
+                {
+                  name: v.representativeName,
+                  designation: 'Head of Talent Acquisition & University Relations',
+                  email: v.corporateEmail || v.officialEmail || prev.officialEmail,
+                  phone: v.contactPhone || '',
+                },
+              ]
+            : prev.representatives,
+        }));
+      }
+    } catch {
+      // ignore JSON parse error
+    }
+
+    api.get<any>('/profile').then((res) => {
+      const p = res?.companyProfile?.profile;
+      if (p) {
+        setForm((prev) => ({
+          ...prev,
+          companyName: p.companyName || prev.companyName,
+          cin: p.cin || prev.cin,
+          state: p.state || prev.state,
+          city: p.city || prev.city,
+          website: p.website || prev.website,
+          officialEmail: p.officialEmail || prev.officialEmail,
+        }));
+      }
+    }).catch(() => {});
+  }, []);
+
   const update = <K extends keyof CompanyFormData>(key: K, value: CompanyFormData[K]) => {
     setForm((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const updatePrimaryRep = (key: keyof CompanyRepresentativeEntry, val: string) => {
+    setForm((prev) => {
+      const reps = [...(prev.representatives || [])];
+      if (reps.length === 0) {
+        reps.push({
+          name: '',
+          designation: 'Head of University Relations',
+          email: prev.officialEmail || '',
+          phone: prev.phone || '',
+        });
+      }
+      reps[0] = { ...reps[0], [key]: val };
+      return { ...prev, representatives: reps };
+    });
+  };
+
+  const handleCinLookup = async () => {
+    const rawCin = (form.cin || '').trim().toUpperCase();
+    if (!rawCin) {
+      setCinLookupMsg({ text: 'Please enter a 21-character Corporate Identification Number (CIN).', isError: true });
+      return;
+    }
+    const cinRegex = /^[LUlu][0-9]{5}[A-Za-z]{2}[0-9]{4}[A-Za-z]{3}[0-9]{6}$/;
+    if (!cinRegex.test(rawCin)) {
+      setCinLookupMsg({
+        text: 'Invalid CIN format. Standard 21-character CIN required (e.g. U72900KA1981PLC004246).',
+        isError: true,
+      });
+      return;
+    }
+
+    setCinLookupLoading(true);
+    setCinLookupMsg(null);
+    try {
+      const res: any = await api.get(`/company/verification/mca/lookup/${rawCin}`);
+      if (res && res.found) {
+        setMcaFoundData(res);
+        setCinLookupMsg({
+          text: `Verified MCA Entity: "${res.companyName}" (${res.status || 'Active'}). Details auto-populated.`,
+          isError: false,
+        });
+        update('cin', rawCin);
+        if (res.companyName) update('companyName', res.companyName);
+        if (res.state) update('state', res.state);
+        if (res.category && COMPANY_TYPES.includes(res.category)) {
+          update('companyType', res.category);
+        }
+        if (res.officialWebsite && !form.website) {
+          update('website', res.officialWebsite);
+        }
+      } else {
+        setMcaFoundData(null);
+        setCinLookupMsg({
+          text: res?.message || 'CIN not found in MCA database. You may still proceed, but registration will be flagged for manual review.',
+          isError: true,
+        });
+      }
+    } catch {
+      setCinLookupMsg({
+        text: 'Failed to query MCA Registry. Please verify your CIN number.',
+        isError: true,
+      });
+    } finally {
+      setCinLookupLoading(false);
+    }
   };
 
   const toggleHiringProgram = (prog: string) => {
@@ -196,6 +318,14 @@ export function CompanyOnboarding() {
   const validateStep = (): boolean => {
     setError('');
     if (step === 0) {
+      if (!form.cin || !form.cin.trim()) {
+        setError('Corporate Identification Number (CIN) is required.');
+        return false;
+      }
+      if (form.cin.trim().length !== 21) {
+        setError('Company CIN must be exactly 21 characters (e.g. U72900KA1981PLC004246).');
+        return false;
+      }
       if (!form.companyName.trim()) {
         setError('Corporate Legal Name is required.');
         return false;
@@ -280,16 +410,20 @@ export function CompanyOnboarding() {
     setLoading(true);
     setError('');
     try {
-      await api.post('/onboarding/company', {
+      const res: any = await api.post('/onboarding/company', {
         ...form,
         minCgpa,
         preferredDegrees: selectedDegrees,
         eligibleBatches: selectedBatches,
       });
       await refreshProfileStatus();
-      navigate('/onboarding/complete');
-    } catch {
-      setError('We could not submit your company profile. Please check your connection and try again.');
+      if (res && res.checks) {
+        setVerificationResult(res);
+      } else {
+        navigate('/company/home');
+      }
+    } catch (err: any) {
+      setError(err?.message || 'We could not submit your company profile. Please check your connection and try again.');
     } finally {
       setLoading(false);
     }
@@ -311,9 +445,9 @@ export function CompanyOnboarding() {
           </div>
         </Link>
         <div className={styles.headerRight}>
-          <div className={styles.rewardBadge}>
-            <ShieldCheck size={14} color="#b45309" />
-            <span>Super Admin Verification Queue</span>
+          <div className={styles.rewardBadge} style={{ background: '#f0fdf4', borderColor: '#bbf7d0', color: '#166534' }}>
+            <ShieldCheck size={14} color="#166534" />
+            <span>MCA &amp; Live Registry Verified</span>
           </div>
           <div className={styles.stepIndicatorBadge}>
             <span className={styles.stepHighlight}>Step {step + 1}</span> of {STEPS.length} ({progressPercent}%)
@@ -454,6 +588,103 @@ export function CompanyOnboarding() {
 
               <div className={styles.fieldsGrid}>
                 <div className={`${styles.fieldGroup} ${styles.fieldGroupFull}`}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                    <label className={styles.fieldLabel} htmlFor="compCin" style={{ margin: 0 }}>
+                      <Building2 size={13} /> Corporate Identification Number (CIN) <span className={styles.requiredAsterisk}>*</span>
+                    </label>
+                    <span style={{ fontSize: '0.74rem', color: form.cin?.length === 21 ? '#15803d' : '#64748b', fontWeight: 600 }}>
+                      {form.cin?.length || 0}/21 Characters
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <input
+                      id="compCin"
+                      type="text"
+                      maxLength={21}
+                      placeholder="e.g., U72900KA1981PLC004246"
+                      value={form.cin}
+                      onChange={(e) => update('cin', e.target.value.toUpperCase().trim())}
+                      className={styles.textInput}
+                      style={{ fontFamily: 'monospace', letterSpacing: '0.05em', textTransform: 'uppercase' }}
+                    />
+                    <button
+                      type="button"
+                      onClick={handleCinLookup}
+                      disabled={cinLookupLoading || !form.cin}
+                      style={{
+                        padding: '0 18px',
+                        background: '#1c2d81',
+                        color: '#ffffff',
+                        border: 'none',
+                        fontSize: '0.82rem',
+                        fontWeight: 700,
+                        cursor: cinLookupLoading || !form.cin ? 'not-allowed' : 'pointer',
+                        whiteSpace: 'nowrap',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                      }}
+                    >
+                      <Search size={14} />
+                      <span>{cinLookupLoading ? 'Verifying...' : 'Verify with MCA'}</span>
+                    </button>
+                  </div>
+                  <span className={styles.fieldHint}>
+                    Official 21-character MCA registry code (Listing + Industry + State + Year + Class + RegNum)
+                  </span>
+
+                  {cinLookupMsg && (
+                    <div
+                      style={{
+                        marginTop: '8px',
+                        padding: '8px 12px',
+                        fontSize: '0.8rem',
+                        fontWeight: 600,
+                        background: cinLookupMsg.isError ? '#fef2f2' : '#f0fdf4',
+                        border: `1px solid ${cinLookupMsg.isError ? '#fecaca' : '#bbf7d0'}`,
+                        color: cinLookupMsg.isError ? '#b91c1c' : '#166534',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                      }}
+                    >
+                      {cinLookupMsg.isError ? <AlertCircle size={14} /> : <Check size={14} />}
+                      <span>{cinLookupMsg.text}</span>
+                    </div>
+                  )}
+
+                  {mcaFoundData && (
+                    <div
+                      style={{
+                        marginTop: '8px',
+                        padding: '10px 14px',
+                        background: '#f8fafc',
+                        border: '1px solid #cbd5e1',
+                        fontSize: '0.78rem',
+                        color: '#334155',
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+                        gap: '8px',
+                      }}
+                    >
+                      <div>
+                        <strong style={{ color: '#0f172a' }}>MCA Entity:</strong> {mcaFoundData.companyName}
+                      </div>
+                      <div>
+                        <strong style={{ color: '#0f172a' }}>Legal Status:</strong>{' '}
+                        <span style={{ color: '#15803d', fontWeight: 700 }}>{mcaFoundData.status || 'Active'}</span>
+                      </div>
+                      <div>
+                        <strong style={{ color: '#0f172a' }}>State:</strong> {mcaFoundData.state || 'N/A'}
+                      </div>
+                      <div>
+                        <strong style={{ color: '#0f172a' }}>Category:</strong> {mcaFoundData.category || 'N/A'}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div className={`${styles.fieldGroup} ${styles.fieldGroupFull}`}>
                   <label className={styles.fieldLabel} htmlFor="compName">
                     <Building2 size={13} /> Corporate Legal Name <span className={styles.requiredAsterisk}>*</span>
                   </label>
@@ -522,34 +753,6 @@ export function CompanyOnboarding() {
                   </select>
                 </div>
 
-                <div className={styles.fieldGroup}>
-                  <label className={styles.fieldLabel} htmlFor="compEmail">
-                    <Mail size={13} /> Official Corporate Email <span className={styles.requiredAsterisk}>*</span>
-                  </label>
-                  <input
-                    id="compEmail"
-                    type="email"
-                    placeholder="e.g., campus-hiring@microsoft.com"
-                    value={form.officialEmail}
-                    onChange={(e) => update('officialEmail', e.target.value)}
-                    className={styles.textInput}
-                  />
-                </div>
-
-                <div className={styles.fieldGroup}>
-                  <label className={styles.fieldLabel} htmlFor="compPhone">
-                    <Phone size={13} /> Corporate Contact Phone <span className={styles.requiredAsterisk}>*</span>
-                  </label>
-                  <input
-                    id="compPhone"
-                    type="tel"
-                    placeholder="e.g., +91 80 6789 1234"
-                    value={form.phone}
-                    onChange={(e) => update('phone', e.target.value)}
-                    className={styles.textInput}
-                  />
-                </div>
-
                 <div className={`${styles.fieldGroup} ${styles.fieldGroupFull}`}>
                   <label className={styles.fieldLabel} htmlFor="compWeb">
                     <Globe size={13} /> Official Corporate Website URL <span className={styles.requiredAsterisk}>*</span>
@@ -557,11 +760,82 @@ export function CompanyOnboarding() {
                   <input
                     id="compWeb"
                     type="url"
-                    placeholder="e.g., https://careers.microsoft.com"
+                    placeholder="e.g., https://www.infosys.com or https://careers.infosys.com"
                     value={form.website}
                     onChange={(e) => update('website', e.target.value)}
                     className={styles.textInput}
                   />
+                  <span className={styles.fieldHint}>
+                    Root domain must match authorized representative corporate email domain
+                  </span>
+                </div>
+
+                <div className={styles.fieldGroup}>
+                  <label className={styles.fieldLabel} htmlFor="repName">
+                    <User size={13} /> Representative Full Name <span className={styles.requiredAsterisk}>*</span>
+                  </label>
+                  <input
+                    id="repName"
+                    type="text"
+                    placeholder="e.g., Priya Sharma"
+                    value={form.representatives?.[0]?.name || ''}
+                    onChange={(e) => updatePrimaryRep('name', e.target.value)}
+                    className={styles.textInput}
+                  />
+                  <span className={styles.fieldHint}>Authorized Talent Acquisition or HR leader</span>
+                </div>
+
+                <div className={styles.fieldGroup}>
+                  <label className={styles.fieldLabel} htmlFor="repDesig">
+                    Representative Designation <span className={styles.requiredAsterisk}>*</span>
+                  </label>
+                  <input
+                    id="repDesig"
+                    type="text"
+                    placeholder="e.g., Lead Technical Recruiter / Head of Campus Hiring"
+                    value={form.representatives?.[0]?.designation || ''}
+                    onChange={(e) => updatePrimaryRep('designation', e.target.value)}
+                    className={styles.textInput}
+                  />
+                  <span className={styles.fieldHint}>Corporate role title</span>
+                </div>
+
+                <div className={styles.fieldGroup}>
+                  <label className={styles.fieldLabel} htmlFor="compEmail">
+                    <Mail size={13} /> Corporate Email <span className={styles.requiredAsterisk}>*</span>
+                  </label>
+                  <input
+                    id="compEmail"
+                    type="email"
+                    placeholder="e.g., priya.sharma@infosys.com"
+                    value={form.officialEmail}
+                    onChange={(e) => {
+                      update('officialEmail', e.target.value);
+                      updatePrimaryRep('email', e.target.value);
+                    }}
+                    className={styles.textInput}
+                  />
+                  <span className={styles.fieldHint}>
+                    Must be official corporate domain (public mail providers blocked)
+                  </span>
+                </div>
+
+                <div className={styles.fieldGroup}>
+                  <label className={styles.fieldLabel} htmlFor="compPhone">
+                    <Phone size={13} /> Representative Contact Phone <span className={styles.requiredAsterisk}>*</span>
+                  </label>
+                  <input
+                    id="compPhone"
+                    type="tel"
+                    placeholder="e.g., +91 98765 43210"
+                    value={form.phone}
+                    onChange={(e) => {
+                      update('phone', e.target.value);
+                      updatePrimaryRep('phone', e.target.value);
+                    }}
+                    className={styles.textInput}
+                  />
+                  <span className={styles.fieldHint}>Direct contact number for verification calls</span>
                 </div>
 
                 <div className={`${styles.fieldGroup} ${styles.fieldGroupFull}`}>
@@ -1036,132 +1310,188 @@ export function CompanyOnboarding() {
                   <ShieldCheck size={20} />
                 </div>
                 <div className={styles.sectionTitleGroup}>
-                  <h2 className={styles.sectionTitle}>4. Review Credentials &amp; Super Admin Verification</h2>
+                  <h2 className={styles.sectionTitle}>4. Review Credentials &amp; Verification Diagnostics</h2>
                   <p className={styles.sectionSubtitle}>
-                    Review your corporate profile details before final submission for Super Admin platform authorization.
+                    {verificationResult
+                      ? 'Automated 7-check company genuineness and representative authorization evaluation.'
+                      : 'Review your corporate profile details before final submission for Super Admin platform authorization.'}
                   </p>
                 </div>
               </div>
 
-              <div className={styles.rewardCallout}>
-                <div className={styles.rewardCalloutIcon}>
-                  <ShieldCheck size={24} />
-                </div>
+              {verificationResult ? (
                 <div>
-                  <h4 className={styles.rewardCalloutTitle}>Super Administrator Corporate Verification Protocol</h4>
-                  <p className={styles.rewardCalloutText}>
-                    Upon submission, your corporate account enters <code>PENDING_SUPER_ADMIN_VERIFICATION</code>. The Super Administrator (`superadmin@beyon.io`) inspects your corporate domain, CIN registration, and talent leadership before authorizing campus placement drives and candidate pipeline access.
-                  </p>
-                </div>
-              </div>
+                  <CompanyVerificationDiagnosticCard
+                    data={verificationResult}
+                    allowDocumentUpload={!verificationResult.isVerified}
+                    onUploadSuccess={async () => {
+                      try {
+                        const st: any = await api.get('/company/verification/status');
+                        if (st) setVerificationResult(st);
+                      } catch {}
+                    }}
+                  />
 
-              <div className={styles.reviewGrid}>
-                <div className={styles.reviewCard}>
-                  <div className={styles.reviewCardHeader}>
-                    <span className={styles.reviewCardTitle}>
-                      <Building2 size={13} /> Corporate Identity
-                    </span>
-                    <button type="button" onClick={() => setStep(0)} className={styles.editLinkBtn}>
-                      Edit
-                    </button>
-                  </div>
-                  <div className={styles.reviewRowsList}>
-                    <div className={styles.reviewRow}>
-                      <span className={styles.reviewLabel}>Company Name</span>
-                      <span className={styles.reviewValue}>{form.companyName}</span>
-                    </div>
-                    <div className={styles.reviewRow}>
-                      <span className={styles.reviewLabel}>Type &amp; Industry</span>
-                      <span className={styles.reviewValue}>{form.companyType} &middot; {form.industry}</span>
-                    </div>
-                    <div className={styles.reviewRow}>
-                      <span className={styles.reviewLabel}>Scale</span>
-                      <span className={styles.reviewValue}>{form.companySize}</span>
-                    </div>
-                    <div className={styles.reviewRow}>
-                      <span className={styles.reviewLabel}>Official Email</span>
-                      <span className={styles.reviewValue}>{form.officialEmail}</span>
-                    </div>
-                    <div className={styles.reviewRow}>
-                      <span className={styles.reviewLabel}>Location</span>
-                      <span className={styles.reviewValue}>{form.city}, {form.state}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className={styles.reviewCard}>
-                  <div className={styles.reviewCardHeader}>
-                    <span className={styles.reviewCardTitle}>
-                      <Code2 size={13} /> Recruitment Criteria
-                    </span>
-                    <button type="button" onClick={() => setStep(2)} className={styles.editLinkBtn}>
-                      Edit
-                    </button>
-                  </div>
-                  <div className={styles.reviewRowsList}>
-                    <div className={styles.reviewRow}>
-                      <span className={styles.reviewLabel}>Cutoff CGPA</span>
-                      <span className={styles.reviewValue}>{minCgpa} CGPA</span>
-                    </div>
-                    <div className={styles.reviewRow}>
-                      <span className={styles.reviewLabel}>Target Batches</span>
-                      <span className={styles.reviewValue}>{selectedBatches.join(', ')}</span>
-                    </div>
-                    <div className={styles.reviewRow}>
-                      <span className={styles.reviewLabel}>Degrees</span>
-                      <span className={styles.reviewValue}>{selectedDegrees.join(', ')}</span>
-                    </div>
-                    <div className={styles.reviewRow}>
-                      <span className={styles.reviewLabel}>Tech Skills</span>
-                      <span className={styles.reviewValue}>{form.skills?.length || 0} Core Skills</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className={styles.reviewCard} style={{ gridColumn: '1 / -1' }}>
-                  <div className={styles.reviewCardHeader}>
-                    <span className={styles.reviewCardTitle}>
-                      <Users size={13} /> Talent Acquisition Leadership
-                    </span>
-                    <button type="button" onClick={() => setStep(1)} className={styles.editLinkBtn}>
-                      Edit
-                    </button>
-                  </div>
-                  <div className={styles.reviewRowsList}>
-                    <div className={styles.reviewRow}>
-                      <span className={styles.reviewLabel}>Head of University Relations</span>
-                      <span className={styles.reviewValue}>
-                        {form.representatives?.[0]?.name} ({form.representatives?.[0]?.email})
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '20px' }}>
+                    <button
+                      type="button"
+                      onClick={() => navigate('/company/home')}
+                      style={{
+                        padding: '10px 24px',
+                        background: verificationResult.isVerified ? '#15803d' : '#1c2d81',
+                        color: '#ffffff',
+                        fontWeight: 700,
+                        border: 'none',
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                      }}
+                    >
+                      <span>
+                        {verificationResult.isVerified
+                          ? 'Proceed to Industry Dashboard'
+                          : 'Continue to Corporate Portal (Pending Review)'}
                       </span>
-                    </div>
-                    <div className={styles.reviewRow}>
-                      <span className={styles.reviewLabel}>Campus Programs</span>
-                      <span className={styles.reviewValue}>{form.hiringTypes?.join('; ')}</span>
-                    </div>
-                    <div className={styles.reviewRow}>
-                      <span className={styles.reviewLabel}>Appointed Recruiters</span>
-                      <span className={styles.reviewValue}>{form.representatives?.length || 0} Team Members</span>
-                    </div>
+                      <ChevronRight size={16} />
+                    </button>
                   </div>
                 </div>
-              </div>
+              ) : (
+                <>
+                  <div className={styles.rewardCallout}>
+                    <div className={styles.rewardCalloutIcon}>
+                      <ShieldCheck size={24} />
+                    </div>
+                    <div>
+                      <h4 className={styles.rewardCalloutTitle}>Automated 7-Check Verification &amp; Super Admin Protocol</h4>
+                      <p className={styles.rewardCalloutText}>
+                        Upon submission, our automated engine validates your 21-digit CIN against the Ministry of Corporate Affairs (MCA) database, checks active legal entity standing, ensures corporate domain usage, and verifies website and email ownership match. Accounts meeting all 7 checks are forwarded to the Super Admin review queue for mandatory manual authorization before full platform activation.
+                      </p>
+                    </div>
+                  </div>
 
-              <label style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', cursor: 'pointer', background: '#ffffff', padding: '16px', border: '1px solid #cbd5e1' }}>
-                <input
-                  type="checkbox"
-                  checked={agreeTerms}
-                  onChange={(e) => setAgreeTerms(e.target.checked)}
-                  style={{ width: '18px', height: '18px', marginTop: '2px', cursor: 'pointer', accentColor: '#1c2d81' }}
-                />
-                <span style={{ fontSize: '0.84rem', color: '#334155', lineHeight: 1.5 }}>
-                  I certify that the corporate identity, official email domains, hiring models, and talent acquisition representatives provided are authentic and authorized for Super Admin verification and campus placement drive scheduling.
-                </span>
-              </label>
+                  <div className={styles.reviewGrid}>
+                    <div className={styles.reviewCard}>
+                      <div className={styles.reviewCardHeader}>
+                        <span className={styles.reviewCardTitle}>
+                          <Building2 size={13} /> Corporate Identity &amp; CIN
+                        </span>
+                        <button type="button" onClick={() => setStep(0)} className={styles.editLinkBtn}>
+                          Edit
+                        </button>
+                      </div>
+                      <div className={styles.reviewRowsList}>
+                        <div className={styles.reviewRow}>
+                          <span className={styles.reviewLabel}>Corporate CIN</span>
+                          <span className={styles.reviewValue} style={{ fontFamily: 'monospace', fontWeight: 700 }}>
+                            {form.cin || 'Not Provided'}
+                          </span>
+                        </div>
+                        <div className={styles.reviewRow}>
+                          <span className={styles.reviewLabel}>Company Name</span>
+                          <span className={styles.reviewValue}>{form.companyName}</span>
+                        </div>
+                        <div className={styles.reviewRow}>
+                          <span className={styles.reviewLabel}>Official Website</span>
+                          <span className={styles.reviewValue}>{form.website}</span>
+                        </div>
+                        <div className={styles.reviewRow}>
+                          <span className={styles.reviewLabel}>Corporate Email</span>
+                          <span className={styles.reviewValue}>{form.officialEmail}</span>
+                        </div>
+                        <div className={styles.reviewRow}>
+                          <span className={styles.reviewLabel}>Type &amp; Industry</span>
+                          <span className={styles.reviewValue}>{form.companyType} &middot; {form.industry}</span>
+                        </div>
+                        <div className={styles.reviewRow}>
+                          <span className={styles.reviewLabel}>Location</span>
+                          <span className={styles.reviewValue}>{form.city}, {form.state}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className={styles.reviewCard}>
+                      <div className={styles.reviewCardHeader}>
+                        <span className={styles.reviewCardTitle}>
+                          <Code2 size={13} /> Recruitment Criteria
+                        </span>
+                        <button type="button" onClick={() => setStep(2)} className={styles.editLinkBtn}>
+                          Edit
+                        </button>
+                      </div>
+                      <div className={styles.reviewRowsList}>
+                        <div className={styles.reviewRow}>
+                          <span className={styles.reviewLabel}>Cutoff CGPA</span>
+                          <span className={styles.reviewValue}>{minCgpa} CGPA</span>
+                        </div>
+                        <div className={styles.reviewRow}>
+                          <span className={styles.reviewLabel}>Target Batches</span>
+                          <span className={styles.reviewValue}>{selectedBatches.join(', ')}</span>
+                        </div>
+                        <div className={styles.reviewRow}>
+                          <span className={styles.reviewLabel}>Degrees</span>
+                          <span className={styles.reviewValue}>{selectedDegrees.join(', ')}</span>
+                        </div>
+                        <div className={styles.reviewRow}>
+                          <span className={styles.reviewLabel}>Tech Skills</span>
+                          <span className={styles.reviewValue}>{form.skills?.length || 0} Core Skills</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className={styles.reviewCard} style={{ gridColumn: '1 / -1' }}>
+                      <div className={styles.reviewCardHeader}>
+                        <span className={styles.reviewCardTitle}>
+                          <Users size={13} /> Authorized Representative &amp; Talent Leadership
+                        </span>
+                        <button type="button" onClick={() => setStep(1)} className={styles.editLinkBtn}>
+                          Edit
+                        </button>
+                      </div>
+                      <div className={styles.reviewRowsList}>
+                        <div className={styles.reviewRow}>
+                          <span className={styles.reviewLabel}>Primary Representative</span>
+                          <span className={styles.reviewValue}>
+                            {form.representatives?.[0]?.name || 'Not specified'} &mdash; {form.representatives?.[0]?.designation || 'Representative'}
+                          </span>
+                        </div>
+                        <div className={styles.reviewRow}>
+                          <span className={styles.reviewLabel}>Contact Email &amp; Phone</span>
+                          <span className={styles.reviewValue}>
+                            {form.officialEmail} &middot; {form.phone}
+                          </span>
+                        </div>
+                        <div className={styles.reviewRow}>
+                          <span className={styles.reviewLabel}>Campus Programs</span>
+                          <span className={styles.reviewValue}>{form.hiringTypes?.join('; ')}</span>
+                        </div>
+                        <div className={styles.reviewRow}>
+                          <span className={styles.reviewLabel}>Appointed Recruiters</span>
+                          <span className={styles.reviewValue}>{form.representatives?.length || 0} Team Members</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <label style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', cursor: 'pointer', background: '#ffffff', padding: '16px', border: '1px solid #cbd5e1' }}>
+                    <input
+                      type="checkbox"
+                      checked={agreeTerms}
+                      onChange={(e) => setAgreeTerms(e.target.checked)}
+                      style={{ width: '18px', height: '18px', marginTop: '2px', cursor: 'pointer', accentColor: '#1c2d81' }}
+                    />
+                    <span style={{ fontSize: '0.84rem', color: '#334155', lineHeight: 1.5 }}>
+                      I certify that the corporate identity, 21-digit CIN, official corporate domain, and designated talent acquisition leadership provided are legally valid and authorized for enterprise campus recruitment on the Beyon platform.
+                    </span>
+                  </label>
+                </>
+              )}
             </div>
           )}
 
           <div className={styles.navigationFooter}>
-            {step > 0 ? (
+            {step > 0 && !verificationResult ? (
               <button type="button" onClick={handlePrev} className={styles.backButton}>
                 <ChevronLeft size={16} />
                 <span>Previous Step</span>
@@ -1177,6 +1507,8 @@ export function CompanyOnboarding() {
                 <span>Continue to {STEPS[step + 1].label}</span>
                 <ChevronRight size={16} />
               </button>
+            ) : verificationResult ? (
+              <div />
             ) : (
               <button
                 type="button"
@@ -1186,11 +1518,11 @@ export function CompanyOnboarding() {
                 style={{ background: '#15803d', borderColor: '#15803d' }}
               >
                 {loading ? (
-                  <span>Submitting Credentials...</span>
+                  <span>Executing Verification Engine...</span>
                 ) : (
                   <>
                     <ShieldCheck size={18} />
-                    <span>Submit for Super Admin Verification</span>
+                    <span>Run Verification &amp; Submit</span>
                   </>
                 )}
               </button>

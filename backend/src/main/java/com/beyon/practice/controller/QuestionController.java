@@ -16,9 +16,11 @@ import java.util.UUID;
 public class QuestionController {
 
     private final QuestionBankService questionBankService;
+    private final org.springframework.jdbc.core.JdbcTemplate jdbcTemplate;
 
-    public QuestionController(QuestionBankService questionBankService) {
+    public QuestionController(QuestionBankService questionBankService, org.springframework.jdbc.core.JdbcTemplate jdbcTemplate) {
         this.questionBankService = questionBankService;
+        this.jdbcTemplate = jdbcTemplate;
     }
 
     @GetMapping
@@ -28,12 +30,12 @@ public class QuestionController {
             @RequestParam(required = false) String difficulty,
             @RequestParam(required = false) String search,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
+            @RequestParam(defaultValue = "100") int size) {
+        if (skillId != null) {
+            return ResponseEntity.ok(ApiResponse.ok(questionBankService.getQuestionsBySkillFiltered(skillId, search, difficulty, size)));
+        }
         if (search != null && !search.isBlank()) {
             return ResponseEntity.ok(ApiResponse.ok(questionBankService.searchQuestions(search, size)));
-        }
-        if (skillId != null) {
-            return ResponseEntity.ok(ApiResponse.ok(questionBankService.getQuestionsBySkill(skillId, size)));
         }
         if (topicId != null) {
             return ResponseEntity.ok(ApiResponse.ok(questionBankService.getQuestionsByTopic(topicId, size)));
@@ -42,6 +44,19 @@ public class QuestionController {
             return ResponseEntity.ok(ApiResponse.ok(questionBankService.getQuestionsByDifficulty(difficulty, size)));
         }
         return ResponseEntity.ok(ApiResponse.ok(questionBankService.getPublishedQuestions(page, size)));
+    }
+
+    @PostMapping("/recommend-for-skill")
+    public ResponseEntity<ApiResponse<List<Question>>> recommendForSkill(@RequestBody java.util.Map<String, String> body) {
+        String skillIdStr = body.get("skillId");
+        String skillName = body.get("skillName");
+        String level = body.get("level");
+        if (skillIdStr == null || skillIdStr.isBlank()) {
+            return ResponseEntity.badRequest().body(ApiResponse.error("skillId is required"));
+        }
+        UUID skillId = UUID.fromString(skillIdStr);
+        List<Question> questions = questionBankService.recommendAndSeedQuestionsForSkill(skillId, skillName, level);
+        return ResponseEntity.ok(ApiResponse.ok(questions));
     }
 
     @GetMapping("/{id}")
@@ -63,9 +78,12 @@ public class QuestionController {
     public ResponseEntity<ApiResponse<java.util.Map<String, Long>>> getStats() {
         java.util.Map<String, Long> stats = new java.util.HashMap<>();
         stats.put("total", questionBankService.countPublished());
+        stats.put("beginner", questionBankService.countByDifficulty("BEGINNER"));
         stats.put("easy", questionBankService.countByDifficulty("EASY"));
         stats.put("medium", questionBankService.countByDifficulty("MEDIUM"));
         stats.put("hard", questionBankService.countByDifficulty("HARD"));
+        stats.put("advanced", questionBankService.countByDifficulty("ADVANCED"));
+        stats.put("expert", questionBankService.countByDifficulty("EXPERT"));
         return ResponseEntity.ok(ApiResponse.ok(stats));
     }
 
@@ -80,13 +98,33 @@ public class QuestionController {
         }
         q.setTitle((String) body.getOrDefault("title", "Untitled Question"));
         q.setDescription((String) body.getOrDefault("description", ""));
-        q.setQuestionType((String) body.getOrDefault("questionType", "MCQ"));
+
+        String qType = (String) body.getOrDefault("questionType", "SINGLE_CHOICE");
+        q.setQuestionType(qType);
         q.setDifficulty((String) body.getOrDefault("difficulty", "MEDIUM"));
         q.setExplanation((String) body.get("explanation"));
         q.setExpectedOutput((String) body.get("expectedOutput"));
         q.setCodeTemplate((String) body.get("codeTemplate"));
         q.setStatus("ACTIVE");
         q.setEvaluationMethod("EXACT_MATCH");
+
+        String creatorEmail = "skillcontent@beyon.io";
+        UUID creatorId = null;
+        try {
+            org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+            if (auth != null && auth.getPrincipal() instanceof com.beyon.identity.security.JwtUserDetails userDetails) {
+                if (userDetails.getEmail() != null) {
+                    creatorEmail = userDetails.getEmail();
+                }
+                if (userDetails.getUserId() != null) {
+                    creatorId = UUID.fromString(userDetails.getUserId());
+                }
+            }
+        } catch (Exception ignored) {}
+
+        if (creatorId != null) {
+            q.setCreatedBy(creatorId);
+        }
 
         java.util.List<java.util.Map<String, Object>> rawOptions = (java.util.List<java.util.Map<String, Object>>) body.get("options");
         java.util.List<QuestionOption> options = new java.util.ArrayList<>();
@@ -103,7 +141,246 @@ public class QuestionController {
         }
 
         Question saved = questionBankService.createFullQuestion(q, options, null);
+
+        // Record governance audit log in admin_audit_log
+        try {
+            jdbcTemplate.update(
+                "INSERT INTO admin_audit_log (id, admin_id, action, target_type, target_id, details, ip_address, created_at) " +
+                "VALUES (UUID(), ?, ?, 'QUESTION', ?, ?, '127.0.0.1', NOW())",
+                creatorEmail,
+                "QUESTION_CREATED_" + saved.getQuestionType(),
+                saved.getId().toString(),
+                "{\"title\":\"" + saved.getTitle().replace("\"", "\\\"") + "\",\"type\":\"" + saved.getQuestionType() + "\"}"
+            );
+        } catch (Exception ignored) {}
+
         return ResponseEntity.ok(ApiResponse.ok(saved, "Question created successfully"));
+    }
+
+    @PostMapping("/batch")
+    public ResponseEntity<ApiResponse<java.util.Map<String, Object>>> createQuestionsBatch(@RequestBody Object payload) {
+        String defaultSkillIdStr = null;
+        java.util.List<java.util.Map<String, Object>> rawQuestions = new java.util.ArrayList<>();
+
+        if (payload instanceof java.util.Map<?, ?> mapPayload) {
+            if (mapPayload.get("skillId") != null) {
+                defaultSkillIdStr = mapPayload.get("skillId").toString();
+            }
+            Object qList = mapPayload.get("questions");
+            if (qList instanceof java.util.List<?> list) {
+                for (Object item : list) {
+                    if (item instanceof java.util.Map<?, ?> m) {
+                        rawQuestions.add((java.util.Map<String, Object>) m);
+                    }
+                }
+            }
+        } else if (payload instanceof java.util.List<?> list) {
+            for (Object item : list) {
+                if (item instanceof java.util.Map<?, ?> m) {
+                    rawQuestions.add((java.util.Map<String, Object>) m);
+                }
+            }
+        }
+
+        if (rawQuestions.isEmpty()) {
+            return ResponseEntity.badRequest().body(ApiResponse.error("Questions array cannot be empty"));
+        }
+
+        UUID defaultSkillId = (defaultSkillIdStr != null && !defaultSkillIdStr.isBlank()) ? UUID.fromString(defaultSkillIdStr) : null;
+
+        String creatorEmail = "skillcontent@beyon.io";
+        UUID creatorId = null;
+        try {
+            org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+            if (auth != null && auth.getPrincipal() instanceof com.beyon.identity.security.JwtUserDetails userDetails) {
+                if (userDetails.getEmail() != null) {
+                    creatorEmail = userDetails.getEmail();
+                }
+                if (userDetails.getUserId() != null) {
+                    creatorId = UUID.fromString(userDetails.getUserId());
+                }
+            }
+        } catch (Exception ignored) {}
+
+        java.util.List<Question> savedQuestions = new java.util.ArrayList<>();
+        int successCount = 0;
+
+        for (java.util.Map<String, Object> qMap : rawQuestions) {
+            try {
+                Question q = new Question();
+                if (qMap.get("skillId") != null && !qMap.get("skillId").toString().isBlank()) {
+                    q.setSkillId(UUID.fromString(qMap.get("skillId").toString()));
+                } else if (defaultSkillId != null) {
+                    q.setSkillId(defaultSkillId);
+                }
+
+                if (qMap.get("topicId") != null && !qMap.get("topicId").toString().isBlank()) {
+                    q.setTopicId(UUID.fromString(qMap.get("topicId").toString()));
+                }
+
+                q.setTitle((String) qMap.getOrDefault("title", "Untitled Question"));
+                q.setDescription((String) qMap.getOrDefault("description", ""));
+
+                String qType = (String) qMap.getOrDefault("questionType", "SINGLE_CHOICE");
+                q.setQuestionType(qType);
+                q.setDifficulty((String) qMap.getOrDefault("difficulty", "MEDIUM"));
+                q.setExplanation((String) qMap.get("explanation"));
+                q.setExpectedOutput((String) qMap.get("expectedOutput"));
+                q.setCodeTemplate((String) qMap.get("codeTemplate"));
+                q.setStatus("ACTIVE");
+                q.setEvaluationMethod("EXACT_MATCH");
+
+                if (creatorId != null) {
+                    q.setCreatedBy(creatorId);
+                }
+
+                java.util.List<QuestionOption> options = new java.util.ArrayList<>();
+                Object rawOptionsObj = qMap.get("options");
+                if (rawOptionsObj == null) {
+                    rawOptionsObj = qMap.get("choices");
+                }
+                if (rawOptionsObj instanceof java.util.List<?> rawOptionsList) {
+                    int order = 1;
+                    for (Object optObj : rawOptionsList) {
+                        if (optObj instanceof java.util.Map<?, ?> ro) {
+                            QuestionOption opt = new QuestionOption();
+                            String text = ro.get("optionText") != null ? ro.get("optionText").toString() : (ro.get("text") != null ? ro.get("text").toString() : "");
+                            opt.setOptionText(text);
+                            boolean isCorrect = Boolean.TRUE.equals(ro.get("isCorrect")) || Boolean.TRUE.equals(ro.get("correct"));
+                            opt.setCorrect(isCorrect);
+                            opt.setDisplayOrder(order++);
+                            if (ro.get("explanation") != null) opt.setExplanation(ro.get("explanation").toString());
+                            options.add(opt);
+                        }
+                    }
+                }
+
+                Question saved = questionBankService.createFullQuestion(q, options, null);
+                savedQuestions.add(saved);
+                successCount++;
+            } catch (Exception ignored) {}
+        }
+
+        // Record governance audit log
+        try {
+            jdbcTemplate.update(
+                "INSERT INTO admin_audit_log (id, admin_id, action, target_type, target_id, details, ip_address, created_at) " +
+                "VALUES (UUID(), ?, 'QUESTION_BATCH_IMPORT', 'QUESTION_BATCH', ?, ?, '127.0.0.1', NOW())",
+                creatorEmail,
+                defaultSkillId != null ? defaultSkillId.toString() : "GLOBAL",
+                "{\"importedCount\":" + successCount + ",\"totalSubmitted\":" + rawQuestions.size() + "}"
+            );
+        } catch (Exception ignored) {}
+
+        java.util.Map<String, Object> result = new java.util.HashMap<>();
+        result.put("importedCount", successCount);
+        result.put("totalSubmitted", rawQuestions.size());
+        result.put("questions", savedQuestions);
+
+        return ResponseEntity.ok(ApiResponse.ok(result, "Successfully imported " + successCount + " questions"));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<ApiResponse<Question>> updateQuestion(
+            @PathVariable UUID id,
+            @RequestBody java.util.Map<String, Object> body) {
+        Question update = new Question();
+        if (body.get("skillId") != null && !body.get("skillId").toString().isBlank()) {
+            update.setSkillId(UUID.fromString((String) body.get("skillId")));
+        }
+        if (body.get("topicId") != null && !body.get("topicId").toString().isBlank()) {
+            update.setTopicId(UUID.fromString((String) body.get("topicId")));
+        }
+        if (body.get("title") != null) update.setTitle((String) body.get("title"));
+        if (body.get("description") != null) update.setDescription((String) body.get("description"));
+        if (body.get("questionType") != null) update.setQuestionType((String) body.get("questionType"));
+        if (body.get("difficulty") != null) update.setDifficulty((String) body.get("difficulty"));
+        if (body.get("explanation") != null) update.setExplanation((String) body.get("explanation"));
+        if (body.get("expectedOutput") != null) update.setExpectedOutput((String) body.get("expectedOutput"));
+        if (body.get("codeTemplate") != null) update.setCodeTemplate((String) body.get("codeTemplate"));
+        if (body.get("solution") != null) update.setSolution((String) body.get("solution"));
+        if (body.get("status") != null) update.setStatus((String) body.get("status"));
+        if (body.get("evaluationMethod") != null) update.setEvaluationMethod((String) body.get("evaluationMethod"));
+
+        String userEmail = "skillcontent@beyon.io";
+        UUID userId = null;
+        boolean isAdmin = true;
+        try {
+            org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+            if (auth != null && auth.getPrincipal() instanceof com.beyon.identity.security.JwtUserDetails userDetails) {
+                if (userDetails.getEmail() != null) userEmail = userDetails.getEmail();
+                if (userDetails.getUserId() != null) userId = UUID.fromString(userDetails.getUserId());
+                isAdmin = userDetails.isSuperAdmin()
+                        || "CONTENT_ADMIN".equalsIgnoreCase(userDetails.getRole())
+                        || "PLATFORM_ADMIN".equalsIgnoreCase(userDetails.getRole())
+                        || "QUESTION_SETTER".equalsIgnoreCase(userDetails.getRole());
+            }
+        } catch (Exception ignored) {}
+
+        java.util.List<java.util.Map<String, Object>> rawOptions = (java.util.List<java.util.Map<String, Object>>) body.get("options");
+        java.util.List<QuestionOption> options = null;
+        if (rawOptions != null) {
+            options = new java.util.ArrayList<>();
+            int order = 1;
+            for (java.util.Map<String, Object> ro : rawOptions) {
+                QuestionOption opt = new QuestionOption();
+                opt.setOptionText((String) ro.getOrDefault("optionText", ""));
+                opt.setCorrect(Boolean.TRUE.equals(ro.get("isCorrect")) || Boolean.TRUE.equals(ro.get("correct")));
+                opt.setDisplayOrder(order++);
+                if (ro.get("explanation") != null) opt.setExplanation((String) ro.get("explanation"));
+                options.add(opt);
+            }
+        }
+
+        Question saved = questionBankService.updateFullQuestion(id, update, options, null, userId, isAdmin);
+
+        try {
+            jdbcTemplate.update(
+                "INSERT INTO admin_audit_log (id, admin_id, action, target_type, target_id, details, ip_address, created_at) " +
+                "VALUES (UUID(), ?, 'QUESTION_UPDATED', 'QUESTION', ?, ?, '127.0.0.1', NOW())",
+                userEmail,
+                saved.getId().toString(),
+                "{\"title\":\"" + saved.getTitle().replace("\"", "\\\"") + "\",\"type\":\"" + saved.getQuestionType() + "\"}"
+            );
+        } catch (Exception ignored) {}
+
+        return ResponseEntity.ok(ApiResponse.ok(saved, "Question updated successfully"));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ApiResponse<Void>> deleteQuestion(@PathVariable UUID id) {
+        String userEmail = "skillcontent@beyon.io";
+        UUID userId = null;
+        boolean isAdmin = true;
+        try {
+            org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+            if (auth != null && auth.getPrincipal() instanceof com.beyon.identity.security.JwtUserDetails userDetails) {
+                if (userDetails.getEmail() != null) userEmail = userDetails.getEmail();
+                if (userDetails.getUserId() != null) userId = UUID.fromString(userDetails.getUserId());
+                isAdmin = userDetails.isSuperAdmin()
+                        || "CONTENT_ADMIN".equalsIgnoreCase(userDetails.getRole())
+                        || "PLATFORM_ADMIN".equalsIgnoreCase(userDetails.getRole())
+                        || "QUESTION_SETTER".equalsIgnoreCase(userDetails.getRole());
+            }
+        } catch (Exception ignored) {}
+
+        Question existing = questionBankService.getQuestion(id);
+        String title = existing.getTitle();
+        String qType = existing.getQuestionType();
+
+        questionBankService.deleteQuestion(id, userId, isAdmin);
+
+        try {
+            jdbcTemplate.update(
+                "INSERT INTO admin_audit_log (id, admin_id, action, target_type, target_id, details, ip_address, created_at) " +
+                "VALUES (UUID(), ?, 'QUESTION_DELETED', 'QUESTION', ?, ?, '127.0.0.1', NOW())",
+                userEmail,
+                id.toString(),
+                "{\"title\":\"" + (title != null ? title.replace("\"", "\\\"") : "") + "\",\"type\":\"" + (qType != null ? qType : "") + "\"}"
+            );
+        } catch (Exception ignored) {}
+
+        return ResponseEntity.ok(ApiResponse.ok(null, "Question deleted successfully"));
     }
 }
 

@@ -296,6 +296,13 @@ public class AssessmentSessionService {
             List<UUID> shuffled = new ArrayList<>(uniqueIds);
             Collections.shuffle(shuffled);
 
+            int targetCount = (session.getTotalQuestions() != null && session.getTotalQuestions() > 0)
+                    ? session.getTotalQuestions() : shuffled.size();
+            if (shuffled.size() > targetCount) {
+                shuffled = shuffled.subList(0, targetCount);
+            }
+            session.setTotalQuestions(shuffled.size());
+
             questionOrderRepository.deleteBySessionId(sessionId);
             questionOrderRepository.flush();
 
@@ -308,6 +315,31 @@ public class AssessmentSessionService {
                 orderEntities.add(order);
             }
             questionOrderRepository.saveAll(orderEntities);
+        } else if (session.getOpportunityId() != null) {
+            List<com.beyon.practice.model.Question> oppQuestions = questionRepository.findByTagsContainingOrderByCreatedAtAsc("opportunity:" + session.getOpportunityId());
+            if (!oppQuestions.isEmpty()) {
+                List<com.beyon.practice.model.Question> shuffled = new ArrayList<>(oppQuestions);
+                Collections.shuffle(shuffled);
+                int targetCount = (session.getTotalQuestions() != null && session.getTotalQuestions() > 0)
+                        ? session.getTotalQuestions() : shuffled.size();
+                if (shuffled.size() > targetCount) {
+                    shuffled = shuffled.subList(0, targetCount);
+                }
+                session.setTotalQuestions(shuffled.size());
+
+                questionOrderRepository.deleteBySessionId(sessionId);
+                questionOrderRepository.flush();
+
+                List<AssessmentQuestionOrder> orderEntities = new ArrayList<>();
+                for (int i = 0; i < shuffled.size(); i++) {
+                    AssessmentQuestionOrder order = new AssessmentQuestionOrder();
+                    order.setSessionId(sessionId);
+                    order.setQuestionId(shuffled.get(i).getId());
+                    order.setSortOrder(i + 1);
+                    orderEntities.add(order);
+                }
+                questionOrderRepository.saveAll(orderEntities);
+            }
         }
 
         audit(sessionId, session.getStudentId(), "START", "Assessment started", null, null, null);
@@ -809,6 +841,53 @@ public class AssessmentSessionService {
 
     public AssessmentSession getAssessmentSession(UUID sessionId) {
         return sessionRepository.findById(sessionId).orElse(null);
+    }
+
+    public List<Map<String, Object>> getSessionQuestions(UUID sessionId) {
+        AssessmentSession session = sessionRepository.findById(sessionId)
+                .orElseThrow(() -> new RuntimeException("Session not found"));
+
+        List<AssessmentQuestionOrder> orders = questionOrderRepository.findBySessionIdOrderBySortOrder(sessionId);
+        List<com.beyon.practice.model.Question> questions = new ArrayList<>();
+
+        if (!orders.isEmpty()) {
+            for (AssessmentQuestionOrder ord : orders) {
+                questionRepository.findById(ord.getQuestionId()).ifPresent(questions::add);
+            }
+        } else if (session.getOpportunityId() != null) {
+            questions = questionRepository.findByTagsContainingOrderByCreatedAtAsc("opportunity:" + session.getOpportunityId());
+            if (questions.isEmpty()) {
+                int qCount = session.getTotalQuestions() != null && session.getTotalQuestions() > 0 ? session.getTotalQuestions() : 20;
+                questions = questionRepository.findByStatusOrderByCreatedAtDesc("PUBLISHED", org.springframework.data.domain.PageRequest.of(0, qCount));
+            }
+        } else {
+            int qCount = session.getTotalQuestions() != null && session.getTotalQuestions() > 0 ? session.getTotalQuestions() : 20;
+            questions = questionRepository.findByStatusOrderByCreatedAtDesc("PUBLISHED", org.springframework.data.domain.PageRequest.of(0, qCount));
+        }
+
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (com.beyon.practice.model.Question q : questions) {
+            Map<String, Object> qMap = new LinkedHashMap<>();
+            qMap.put("id", q.getId());
+            qMap.put("title", q.getTitle());
+            qMap.put("description", q.getDescription());
+            qMap.put("questionType", q.getQuestionType());
+            qMap.put("difficulty", q.getDifficulty());
+            qMap.put("explanation", q.getExplanation());
+
+            List<com.beyon.practice.model.QuestionOption> options = questionOptionRepository.findByQuestionIdOrderByDisplayOrder(q.getId());
+            List<Map<String, Object>> optList = new ArrayList<>();
+            for (com.beyon.practice.model.QuestionOption opt : options) {
+                Map<String, Object> optMap = new LinkedHashMap<>();
+                optMap.put("id", opt.getId());
+                optMap.put("optionText", opt.getOptionText());
+                optMap.put("displayOrder", opt.getDisplayOrder());
+                optList.add(optMap);
+            }
+            qMap.put("options", optList);
+            result.add(qMap);
+        }
+        return result;
     }
 }
 

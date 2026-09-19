@@ -102,24 +102,52 @@ async def analyze_mobile_frame(req: MobileFrameRequest):
                     bbox=obj.get("bbox")
                 ))
 
-        if yolo_persons > 0:
+        # Filter distinct head candidates with spatial separation (> 12% width)
+        distinct_heads = []
+        for hc in head_candidates:
+            is_distinct = True
+            for dh in distinct_heads:
+                dist = np.hypot(hc["center"][0] - dh["center"][0], hc["center"][1] - dh["center"][1])
+                if dist < 0.12 * w:
+                    is_distinct = False
+                    break
+            if is_distinct:
+                distinct_heads.append(hc)
+
+        if yolo_persons >= 2:
             person_count = yolo_persons
-            if person_count >= 2:
-                # Require genuine multiple persons
+            events.append(DetectionEvent(
+                eventType="MULTIPLE_PEOPLE",
+                confidence=0.94,
+                cameraSource="MOBILE_SIDE",
+                metadata={"count": person_count, "source": "yolo"}
+            ))
+        elif yolo_persons == 1:
+            person_count = 1
+            if len(distinct_heads) >= 2:
+                person_count = max(len(distinct_heads), 2)
                 events.append(DetectionEvent(
                     eventType="MULTIPLE_PEOPLE",
-                    confidence=0.94,
+                    confidence=0.92,
                     cameraSource="MOBILE_SIDE",
-                    metadata={"count": person_count}
+                    metadata={"count": person_count, "source": "cv_head_regions"}
                 ))
         else:
-            person_count = 0
-            if len(contours) > 0:
-                total_skin_area = sum(cv2.contourArea(c) for c in contours)
-                # If skin is detected (face, neck, hands on keyboard/desk), the candidate is present
-                if total_skin_area > 0.015 * (w * h):
-                    person_count = 1
-                    detected_objects.append(DetectedObject(label="person", confidence=0.90))
+            if len(distinct_heads) >= 2:
+                person_count = len(distinct_heads)
+                events.append(DetectionEvent(
+                    eventType="MULTIPLE_PEOPLE",
+                    confidence=0.91,
+                    cameraSource="MOBILE_SIDE",
+                    metadata={"count": person_count, "source": "cv_head_regions"}
+                ))
+                detected_objects.append(DetectedObject(label="person", confidence=0.91))
+                detected_objects.append(DetectedObject(label="person", confidence=0.88))
+            elif len(distinct_heads) == 1 or (len(contours) > 0 and sum(cv2.contourArea(c) for c in contours) > 0.015 * (w * h)):
+                person_count = 1
+                detected_objects.append(DetectedObject(label="person", confidence=0.90))
+            else:
+                person_count = 0
 
         candidate_absent = (person_count == 0)
         if candidate_absent:

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { practiceApi, questionApi } from '../services/practiceApi';
 import { useAuth } from '../../auth/context/AuthContext';
+import { getRoleTier } from '../../auth/types/auth';
 import type { Question } from '../types/practice';
 import { PlusCircle, ArrowRight, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import styles from './PracticePages.module.css';
@@ -17,7 +18,7 @@ export function PracticePage() {
   const [pageSize, setPageSize] = useState(25);
   const [stats, setStats] = useState({ total: 412, easy: 174, medium: 177, hard: 61 });
 
-  const isStaffOrAdmin = user?.role === 'ADMIN' || user?.role === 'INSTITUTION' || user?.role === 'COMPANY';
+  const isStaffOrAdmin = user ? getRoleTier(user.role) !== 'STUDENT' : false;
 
   const load = useCallback(async () => {
     setLoading(true);

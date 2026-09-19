@@ -12,8 +12,11 @@ import {
   ChevronLeft,
   ChevronRight,
   Sparkles,
+  ShieldCheck,
 } from 'lucide-react';
 import styles from './AdminSidebar.module.css';
+
+import { useAuth } from '../auth/context/AuthContext';
 
 interface AdminSidebarProps {
   mobileOpen?: boolean;
@@ -27,32 +30,132 @@ export function AdminSidebar({
   collapsed = false,
   onToggleCollapse,
 }: AdminSidebarProps) {
-  const navSections = [
-    {
-      title: 'Platform Command',
-      items: [
-        { to: '/admin/home', icon: LayoutDashboard, label: 'Command Center' },
-        { to: '/admin/dashboard', icon: Activity, label: 'Platform Telemetry' },
-      ],
-    },
-    {
-      title: 'Ecosystem & Governance',
-      items: [
-        { to: '/admin/users', icon: Users, label: 'User & Role Registry' },
-        { to: '/admin/institutions', icon: Building2, label: 'Accreditation Queue' },
-        { to: '/admin/companies', icon: Briefcase, label: 'Corporate Approvals' },
-        { to: '/admin/questions', icon: HelpCircle, label: 'Question Bank (357)' },
-      ],
-    },
-    {
-      title: 'Integrity & Economy',
-      items: [
-        { to: '/admin/economy', icon: Coins, label: 'Coin Economy Ledger' },
-        { to: '/admin/moderation', icon: ShieldAlert, label: 'Content Moderation' },
-        { to: '/admin/feedback', icon: FileText, label: 'Feedback & Reports' },
-      ],
-    },
-  ];
+  const { user } = useAuth();
+  const userRole = user?.role || 'PLATFORM_ADMIN';
+
+  const getAdminNavSections = () => {
+    if (userRole === 'VERIFICATION_ADMIN') {
+      return [
+        {
+          title: 'Verification Center',
+          items: [
+            { to: '/admin/institutions', icon: Building2, label: 'Accreditation Queue' },
+            { to: '/admin/companies', icon: Briefcase, label: 'Corporate Approvals' },
+            { to: '/admin/users', icon: Users, label: 'Student Verifications' },
+          ],
+        },
+      ];
+    }
+
+    if (userRole === 'QUESTION_SETTER') {
+      return [
+        {
+          title: 'Question Authoring',
+          items: [
+            { to: '/admin/questions', icon: HelpCircle, label: 'Question Bank' },
+            { to: '/admin/questions/create', icon: Sparkles, label: 'Post / Create Question' },
+            { to: '/admin/skills', icon: Activity, label: 'Skill Taxonomy' },
+            { to: '/admin/home', icon: LayoutDashboard, label: 'Command Center' },
+          ],
+        },
+      ];
+    }
+
+    if (userRole === 'MODERATION_ADMIN') {
+      return [
+        {
+          title: 'Trust & Safety',
+          items: [
+            { to: '/admin/moderation', icon: ShieldAlert, label: 'Content Moderation' },
+            { to: '/admin/feedback', icon: FileText, label: 'Abuse Reports & Tickets' },
+            { to: '/admin/reports', icon: FileText, label: 'Incident History' },
+          ],
+        },
+      ];
+    }
+
+    if (userRole === 'ANALYTICS_ADMIN') {
+      return [
+        {
+          title: 'Platform Intelligence',
+          items: [
+            { to: '/admin/home', icon: LayoutDashboard, label: 'Executive Telemetry' },
+            { to: '/admin/dashboard', icon: Activity, label: 'Platform Trends' },
+            { to: '/admin/reports', icon: FileText, label: 'System Reports' },
+          ],
+        },
+      ];
+    }
+
+    if (userRole === 'CONTENT_ADMIN') {
+      return [
+        {
+          title: 'Question & Content Authoring',
+          items: [
+            { to: '/admin/questions', icon: HelpCircle, label: 'Question Bank' },
+            { to: '/admin/questions/create', icon: Sparkles, label: 'Post / Create Question' },
+            { to: '/admin/home', icon: LayoutDashboard, label: 'Content Overview' },
+          ],
+        },
+        {
+          title: 'Skill Taxonomy & Mapping',
+          items: [
+            { to: '/admin/skills', icon: Activity, label: 'Skill Taxonomy' },
+            { to: '/admin/skills/graph', icon: FileText, label: 'Skill Graph' },
+          ],
+        },
+      ];
+    }
+
+    if (userRole === 'INSTITUTION_MANAGER') {
+      return [
+        {
+          title: 'Institution Onboarding',
+          items: [
+            { to: '/institution-manager/onboard', icon: Building2, label: 'Add College & AICTE' },
+            { to: '/admin/institutions', icon: ShieldCheck, label: 'Accredited Institutions' },
+          ],
+        },
+      ];
+    }
+
+    // Default: PLATFORM_ADMIN / SUPER_ADMIN / ADMIN (Full platform governance)
+    return [
+      {
+        title: 'Platform Command',
+        items: [
+          { to: '/admin/home', icon: LayoutDashboard, label: 'Command Center' },
+          { to: '/admin/dashboard', icon: Activity, label: 'Platform Telemetry' },
+        ],
+      },
+      {
+        title: 'Ecosystem & Governance',
+        items: [
+          { to: '/institution-manager/onboard', icon: Building2, label: 'AICTE College Onboarding' },
+          { to: '/admin/institution-managers', icon: Users, label: 'Institution Managers' },
+          { to: '/admin/institutions', icon: Building2, label: 'Institutions Roster' },
+          { to: '/admin/companies', icon: Briefcase, label: 'Corporate Approvals' },
+          { to: '/admin/users', icon: Users, label: 'User & Role Registry' },
+          { to: '/admin/questions', icon: HelpCircle, label: 'Question Bank' },
+          { to: '/admin/questions/create', icon: Sparkles, label: 'Post / Create Question' },
+          { to: '/admin/skills', icon: Activity, label: 'Skill Taxonomy' },
+          { to: '/admin/skills/graph', icon: FileText, label: 'Skill Graph' },
+        ],
+      },
+      {
+        title: 'Integrity & Security',
+        items: [
+          { to: '/admin/audit-logs', icon: ShieldCheck, label: 'Security Audit Trail' },
+          { to: '/admin/economy', icon: Coins, label: 'Coin Economy Ledger' },
+          { to: '/admin/moderation', icon: ShieldAlert, label: 'Content Moderation' },
+          { to: '/admin/feedback', icon: FileText, label: 'Feedback & Reports' },
+          { to: '/admin/reports', icon: FileText, label: 'System Reports' },
+        ],
+      },
+    ];
+  };
+
+  const navSections = getAdminNavSections();
 
   return (
     <aside

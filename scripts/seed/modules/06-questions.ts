@@ -415,7 +415,7 @@ const REAL_QUESTIONS: QuestionDef[] = [
 ];
 
 export async function seedQuestions(cfg: SeedConfig): Promise<void> {
-  console.log("\n❓ Seeding comprehensive authentic question bank...");
+  console.log("\n[SEED] Seeding comprehensive authentic question bank...");
 
   await ensureSkillIds();
 
@@ -466,6 +466,6 @@ export async function seedQuestions(cfg: SeedConfig): Promise<void> {
   doltBatch(stmts, 100);
   doltBatch(optionStmts, 200);
 
-  console.log(`  ✅ Successfully seeded ${questionIds.length} authentic technical questions with full options`);
+  console.log(`  [OK] Successfully seeded ${questionIds.length} authentic technical questions with full options`);
 }
 

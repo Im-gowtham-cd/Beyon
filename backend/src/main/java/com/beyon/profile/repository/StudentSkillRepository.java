@@ -7,6 +7,7 @@ import java.util.UUID;
 
 public interface StudentSkillRepository extends JpaRepository<StudentSkill, UUID> {
     List<StudentSkill> findByUserId(UUID userId);
+    java.util.Optional<StudentSkill> findByUserIdAndSkillNameIgnoreCase(UUID userId, String skillName);
     boolean existsByUserIdAndSkillNameIgnoreCase(UUID userId, String skillName);
     void deleteByUserId(UUID userId);
 }

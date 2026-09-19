@@ -1,5 +1,6 @@
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { getRoleTier } from '../types/auth';
 
 export function ProtectedRoute() {
   const { authenticated, loading, user, profileStatus } = useAuth();
@@ -20,6 +21,13 @@ export function ProtectedRoute() {
 
   const path = location.pathname;
 
+  if (user?.mustChangePassword) {
+    if (path === '/auth/force-change-password' || path === '/force-change-password') {
+      return <Outlet />;
+    }
+    return <Navigate to="/auth/force-change-password" replace />;
+  }
+
   if (profileStatus === 'REJECTED' || user?.status === 'REJECTED') {
     if (path !== '/account-rejected') {
       return <Navigate to="/account-rejected" replace />;
@@ -34,16 +42,30 @@ export function ProtectedRoute() {
     return <Outlet />;
   }
 
-  if (path.startsWith('/onboarding/')) {
+  const tier = getRoleTier(user?.role);
+  const isProfileIncomplete = profileStatus === 'INCOMPLETE' || user?.profileStatus === 'INCOMPLETE';
+
+  if (isProfileIncomplete) {
+    if (tier === 'SUPER_ADMIN') {
+      return <Outlet />;
+    }
+    const onboardingTier = tier.toLowerCase();
+    if (path !== `/onboarding/${onboardingTier}`) {
+      return <Navigate to={`/onboarding/${onboardingTier}`} replace />;
+    }
     return <Outlet />;
   }
 
-  if (profileStatus === 'INCOMPLETE') {
-    const role = user?.role?.toLowerCase();
-    if (role) {
-      return <Navigate to={`/onboarding/${role}`} replace />;
+  if (path === '/onboarding/complete') {
+    return <Outlet />;
+  }
+
+  // Mandatory Skill Assessment Gate for Students
+  if (tier === 'STUDENT' && !user?.hasCompletedAssessment) {
+    if (path !== '/onboarding/skill-assessment' && path !== '/student/skill-assessment') {
+      return <Navigate to="/onboarding/skill-assessment" replace />;
     }
-    return <Navigate to="/login" replace />;
+    return <Outlet />;
   }
 
   if (
@@ -52,6 +74,12 @@ export function ProtectedRoute() {
     profileStatus === 'PENDING_COMPANY_VERIFICATION' ||
     profileStatus === 'PENDING_VERIFICATION'
   ) {
+    if (tier === 'COMPANY' && (path.startsWith('/company') || path.startsWith('/onboarding/company'))) {
+      return <Outlet />;
+    }
+    if (tier === 'INSTITUTION' && (path.startsWith('/institution') || path.startsWith('/onboarding/institution'))) {
+      return <Outlet />;
+    }
     if (!path.startsWith('/verification-pending')) {
       return <Navigate to="/verification-pending" replace />;
     }

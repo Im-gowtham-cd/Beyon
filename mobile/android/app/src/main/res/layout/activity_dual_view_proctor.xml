@@ -344,7 +344,7 @@
                 android:id="@+id/tvServerHost"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Server Gateway: 10.1.36.24:8085 (Tap to change)"
+                android:text="Server Gateway: 10.1.32.243:8085 (Tap to change)"
                 android:textColor="@color/text_muted"
                 android:textSize="10sp" />
         </LinearLayout>

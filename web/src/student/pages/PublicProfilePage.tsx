@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
+import { Award } from 'lucide-react';
 import { api } from '../../services/api/client';
 import type { StudentProfile, StudentSkill, StudentProject, StudentCertification, StudentLink } from '../types/studentProfile';
 import styles from './StudentProfilePage.module.css';
@@ -57,6 +58,16 @@ export function PublicProfilePage() {
   }
 
   const { profile, skills, projects, certifications, links } = data;
+  const fullName = [profile.firstName, profile.middleName, profile.lastName].filter(Boolean).join(' ')
+    || profile.username
+    || 'Student';
+  const initials = fullName
+    .split(' ')
+    .filter(Boolean)
+    .map(w => w[0])
+    .slice(0, 2)
+    .join('')
+    .toUpperCase() || 'ST';
 
   return (
     <div className={styles.page}>
@@ -65,11 +76,11 @@ export function PublicProfilePage() {
           <div className={styles.avatar}>
             {profile.profilePhotoUrl ? (
               <img src={profile.profilePhotoUrl} alt="Profile" />
-            ) : (profile.username || 'S').substring(0, 2).toUpperCase()}
+            ) : initials}
           </div>
         </div>
         <div className={styles.infoSection}>
-          <h1 className={styles.name}>{profile.username || 'Student'}</h1>
+          <h1 className={styles.name}>{fullName}</h1>
           <p className={styles.subtitle}>
             {profile.degree ? `${profile.degree}${profile.department ? ` - ${profile.department}` : ''}` : ''}
           </p>
@@ -123,7 +134,7 @@ export function PublicProfilePage() {
           <div className={styles.grid2}>
             {certifications.map(c => (
               <div key={c.id} className={styles.certCard}>
-                <div className={styles.certIcon}>🏆</div>
+                <div className={styles.certIcon}><Award size={18} color="#ca8a04" /></div>
                 <div className={styles.certInfo}>
                   <p className={styles.certName}>{c.name}</p>
                   {c.issuingOrg && <p className={styles.certOrg}>{c.issuingOrg}</p>}

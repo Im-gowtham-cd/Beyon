@@ -4,22 +4,34 @@
   "workspaces": [
     "web",
     "desktop",
+    "workbench",
     "mobile",
     "packages/*"
   ],
   "scripts": {
+    "dev": "bun run dev:web",
     "dev:web": "bun run --filter @beyon/web dev",
     "dev:desktop": "bun run --filter @beyon/desktop dev",
+    "dev:workbench": "bun run --filter @beyon/workbench dev",
+    "workbench": "bun run dev:workbench",
+    "start:workbench": "bun run dev:workbench",
+    "build:workbench": "bun run --filter @beyon/workbench build",
     "dev:mobile": "bun run --filter @beyon/mobile start",
-    "dev:backend": "cd backend && ./mvnw spring-boot:run \"-Dspring-boot.run.profiles=dev\"",
+    "dev:backend": "bun run scripts/run-backend.ts",
     "start": "bun run dev:all",
-    "dev:dolt": "dolt sql-server --host=127.0.0.1 --port=3306 2>&1",
+    "start:web": "bun run dev:web",
+    "start:backend": "bun run scripts/run-backend.ts",
+    "start:all": "bun run scripts/dev-all.ts",
+    "dev:dolt": "dolt sql-server --host=127.0.0.1 --port=3306 --loglevel=warning",
     "dev:ai": "cd ai-service && python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000",
-    "dev:all": "bun run dev:web & bun run dev:backend & bun run dev:ai",
+    "dev:all": "bun run scripts/dev-all.ts",
+    "test:web": "bun run --filter @beyon/web test",
+    "test:backend": "bun run scripts/run-backend.ts test",
+    "test:all": "bun run test:web && bun run test:backend",
     "build:web": "bun run --filter @beyon/web build",
     "build:desktop": "bun run --filter @beyon/desktop build:renderer",
     "build:all": "bun run build:web && bun run build:desktop",
-    "typecheck:all": "bun run --filter @beyon/web typecheck && bun run --filter @beyon/desktop typecheck && bun run --filter @beyon/mobile typecheck",
+    "typecheck:all": "bun run --filter @beyon/web typecheck && bun run --filter @beyon/desktop typecheck && bun run --filter @beyon/workbench typecheck && bun run --filter @beyon/mobile typecheck",
     "seed": "cd scripts/seed && bun run seed.ts full",
     "seed:base": "cd scripts/seed && bun run seed.ts base",
     "seed:full": "cd scripts/seed && bun run seed.ts full",
@@ -27,6 +39,7 @@
     "seed:recruitment": "cd scripts/seed && bun run seed.ts recruitment",
     "seed:community": "cd scripts/seed && bun run seed.ts community",
     "seed:validate": "cd scripts/seed && bun run seed.ts validate",
-    "seed:reset": "cd scripts/seed && bun run seed.ts reset"
+    "seed:reset": "cd scripts/seed && bun run seed.ts reset",
+    "dev:floci": "bun run scripts/dev-floci.ts"
   }
 }

@@ -15,6 +15,7 @@ import {
   ChevronLeft,
   ChevronRight,
   ShieldCheck,
+  Activity,
 } from 'lucide-react';
 import styles from './InstitutionSidebar.module.css';
 
@@ -52,43 +53,132 @@ export function InstitutionSidebar({
     loadStats();
   }, []);
 
-  const navSections = [
-    {
-      title: 'Campus Command',
-      items: [
-        { to: '/institution/home', icon: LayoutDashboard, label: 'Executive Dashboard' },
-        { to: '/institution/analytics', icon: LineChart, label: 'Institutional Analytics' },
+  const userRole = user?.role || 'INSTITUTION_ADMIN';
+
+  const getInstitutionNavSections = () => {
+    if (userRole === 'INSTITUTION_VIEWER') {
+      return [
         {
-          to: '/institution/drives',
-          icon: Briefcase,
-          label: 'Placement Drives',
-          badge: activeDrivesCount > 0 ? `${activeDrivesCount} Active` : undefined,
-          badgeType: 'primary',
+          title: 'Institutional Overview',
+          items: [
+            { to: '/institution/home', icon: LayoutDashboard, label: 'Overview Dashboard' },
+            { to: '/institution/monitoring', icon: Activity, label: 'Student Monitoring Hub', badge: 'Live', badgeType: 'primary' },
+            { to: '/institution/analytics', icon: LineChart, label: 'Analytics & Trends' },
+            { to: '/institution/students', icon: Users, label: 'Student Directory' },
+            { to: '/institution/placements', icon: Award, label: 'Placement Reports' },
+          ],
         },
-      ],
-    },
-    {
-      title: 'Student Cohorts & Verification',
-      items: [
+      ];
+    }
+
+    if (userRole === 'INSTITUTION_FACULTY' || userRole === 'INSTITUTION_COORDINATOR') {
+      return [
         {
-          to: '/institution/students',
-          icon: Users,
-          label: 'Student Cohort Roster',
-          badge: enrolledCount > 0 ? `${enrolledCount}` : undefined,
-          badgeType: 'gold',
+          title: 'Department Academic Hub',
+          items: [
+            { to: '/institution/home', icon: LayoutDashboard, label: 'Faculty Dashboard' },
+            { to: '/institution/faculty-hub', icon: GraduationCap, label: 'Academician Industry Hub (FDP & Sabbaticals)', badge: '6 Open', badgeType: 'primary' },
+            { to: '/institution/monitoring', icon: Activity, label: 'Cohort Monitoring & Telemetry', badge: 'Live', badgeType: 'primary' },
+            { to: '/institution/students', icon: Users, label: 'Department Students', badge: enrolledCount > 0 ? `${enrolledCount}` : undefined, badgeType: 'gold' },
+            { to: '/institution/curriculum', icon: BookOpen, label: 'Curriculum & Skill Gaps' },
+            { to: '/institution/analytics', icon: LineChart, label: 'Academic Performance' },
+          ],
         },
-        { to: '/institution/placements', icon: Award, label: 'Placement Records & Offers' },
-        { to: '/institution/curriculum', icon: BookOpen, label: 'Skill Matrix & Tracks' },
-      ],
-    },
-    {
-      title: 'Institution Hub',
-      items: [
-        { to: '/institution/profile', icon: Building2, label: 'Institution Profile' },
-        { to: '/institution/messages', icon: MessageSquare, label: 'Recruiter Outreach' },
-      ],
-    },
-  ];
+      ];
+    }
+
+    if (userRole === 'INSTITUTION_PLACEMENT_OFFICER') {
+      return [
+        {
+          title: 'Placement Operations',
+          items: [
+            { to: '/institution/home', icon: LayoutDashboard, label: 'Placement Dashboard' },
+            { to: '/institution/monitoring', icon: Activity, label: 'Candidate Monitoring Hub', badge: 'Telemetry', badgeType: 'primary' },
+            { to: '/institution/drives', icon: Briefcase, label: 'Campus Drives', badge: activeDrivesCount > 0 ? `${activeDrivesCount} Active` : undefined, badgeType: 'primary' },
+            { to: '/institution/students', icon: Users, label: 'Eligible Candidates', badge: enrolledCount > 0 ? `${enrolledCount}` : undefined, badgeType: 'gold' },
+            { to: '/institution/placements', icon: Award, label: 'Placement Outcomes & Offers' },
+          ],
+        },
+        {
+          title: 'Industry Outreach',
+          items: [
+            { to: '/institution/faculty-hub', icon: GraduationCap, label: 'Faculty Industry Hub' },
+            { to: '/institution/analytics', icon: LineChart, label: 'Placement Analytics' },
+            { to: '/institution/messages', icon: MessageSquare, label: 'Corporate Connections' },
+          ],
+        },
+      ];
+    }
+
+    if (userRole === 'DEPARTMENT_PLACEMENT_INCHARGE') {
+      return [
+        {
+          title: 'Department Placement Hub',
+          items: [
+            { to: '/institution/hierarchy', icon: Users, label: 'Department Student Cohort' },
+            { to: '/institution/monitoring', icon: Activity, label: 'Cohort Live Monitoring' },
+            { to: '/institution/students', icon: GraduationCap, label: 'Candidate Directory' },
+            { to: '/institution/curriculum', icon: BookOpen, label: 'Curriculum & Skills' },
+          ],
+        },
+      ];
+    }
+
+    // Default: INSTITUTION_ADMIN / PRINCIPAL / PLACEMENT_COORDINATOR / INSTITUTION
+    return [
+      {
+        title: 'Campus Command',
+        items: [
+          { to: '/institution/home', icon: LayoutDashboard, label: 'Executive Dashboard' },
+          { to: '/institution/hierarchy', icon: Building2, label: 'Staff & Department Hierarchy' },
+          { to: '/institution/faculty-hub', icon: GraduationCap, label: 'Academician Industry Hub', badge: 'New', badgeType: 'primary' },
+          { to: '/institution/analytics', icon: LineChart, label: 'Institutional Analytics' },
+          {
+            to: '/institution/drives',
+            icon: Briefcase,
+            label: 'Placement Drives',
+            badge: activeDrivesCount > 0 ? `${activeDrivesCount} Active` : undefined,
+            badgeType: 'primary',
+          },
+        ],
+      },
+      {
+        title: 'Cohort Surveillance & Monitoring',
+        items: [
+          {
+            to: '/institution/monitoring',
+            icon: Activity,
+            label: 'Student Monitoring Hub',
+            badge: 'Live',
+            badgeType: 'primary',
+          },
+        ],
+      },
+      {
+        title: 'Student Cohorts & Verification',
+        items: [
+          {
+            to: '/institution/students',
+            icon: Users,
+            label: 'Student Cohort Roster',
+            badge: enrolledCount > 0 ? `${enrolledCount}` : undefined,
+            badgeType: 'gold',
+          },
+          { to: '/institution/placements', icon: Award, label: 'Placement Records & Offers' },
+          { to: '/institution/curriculum', icon: BookOpen, label: 'Skill Matrix & Tracks' },
+        ],
+      },
+      {
+        title: 'Institution Hub',
+        items: [
+          { to: '/institution/profile', icon: Building2, label: 'Institution Profile & Settings' },
+          { to: '/institution/messages', icon: MessageSquare, label: 'Recruiter Outreach' },
+        ],
+      },
+    ];
+  };
+
+  const navSections = getInstitutionNavSections();
 
   const instName = user?.name || 'Institution Partner';
   const initials =

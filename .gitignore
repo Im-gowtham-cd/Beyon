@@ -130,4 +130,25 @@ sql-server.info
 .freebuff
 presentation/
 
-backend\uploads\evidence
+# ─── Local Services & Emulators ───────────────────────────────
+floci-data/
+dolt-data/
+# ─── Uploads & Cloud Storage Artifacts ─────────────────────────
+uploads/
+**/uploads/
+**/uploads/**
+backend/uploads/
+
+# ─── Machine Learning Model Weights ─────────────────────────────
+*.pt
+*.pth
+*.onnx
+*.bin
+
+# ─── Datasets & Raw Data Dumps ─────────────────────────────────
+dataset/
+dataset/**
+**/dataset/**
+*.csv
+*.tsv
+*.parquet

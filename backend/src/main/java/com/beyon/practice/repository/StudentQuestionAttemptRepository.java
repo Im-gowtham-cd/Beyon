@@ -20,5 +20,10 @@ public interface StudentQuestionAttemptRepository extends JpaRepository<StudentQ
 
     @Query("SELECT a FROM StudentQuestionAttempt a WHERE a.studentId = :studentId AND a.correct = true AND a.questionId IN (SELECT q.id FROM Question q WHERE q.difficulty = :difficulty)")
     List<StudentQuestionAttempt> findSolvedByDifficulty(@Param("studentId") UUID studentId, @Param("difficulty") String difficulty);
+
+    @Query("SELECT DISTINCT a.questionId FROM StudentQuestionAttempt a WHERE a.studentId = :studentId")
+    List<UUID> findAttemptedQuestionIdsByStudentId(@Param("studentId") UUID studentId);
+
+    long countByStudentIdAndQuestionId(UUID studentId, UUID questionId);
 }
 

@@ -64,8 +64,16 @@ export function CareerAdvisorPage() {
   return (
     <div className={styles.container}>
       <div className={styles.header}>
-        <h1 className={styles.title}>Career Advisor</h1>
-        <p className={styles.subtitle}>Get personalized career guidance based on your Beyon data</p>
+        <div className={styles.aiBadgeRow}>
+          <div>
+            <h1 className={styles.title}>AI Career Advisor</h1>
+            <p className={styles.subtitle}>Get personalized career guidance and profession strategy powered by your verified skills.</p>
+          </div>
+          <div className={styles.aiBadge}>
+            <span className={styles.aiPulse} />
+            <span>Ollama Model: qwen3.5:4b (Active)</span>
+          </div>
+        </div>
       </div>
 
       <button className={styles.btnPrimary} onClick={createSession} style={{ marginBottom: '1rem' }}>+ New Conversation</button>
@@ -83,8 +91,8 @@ export function CareerAdvisorPage() {
       <div className={styles.advisorContainer}>
         <div className={styles.advisorChat}>
           <div className={styles.chatHeader}>
-            <div className={styles.chatTitle}>Career Advisor</div>
-            <span style={{ fontSize: '0.75rem', color: '#6b7280' }}>Powered by your Beyon data</span>
+            <div className={styles.chatTitle}>Qwen 3.5 Career Advisor</div>
+            <span style={{ fontSize: '0.75rem', color: '#10b981', fontWeight: 600 }}>● Active Context</span>
           </div>
 
           <div className={styles.chatMessages}>

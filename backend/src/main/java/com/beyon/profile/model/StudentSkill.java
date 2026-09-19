@@ -33,6 +33,21 @@ public class StudentSkill {
     @Column(nullable = false)
     private boolean verified = false;
 
+    @Column(precision = 5, scale = 2)
+    private java.math.BigDecimal score;
+
+    @Column(name = "questions_tested")
+    private Integer questionsTested = 0;
+
+    @Column(name = "questions_correct")
+    private Integer questionsCorrect = 0;
+
+    @Column(name = "last_assessed_at")
+    private Instant lastAssessedAt;
+
+    @Column(name = "retest_available_at")
+    private Instant retestAvailableAt;
+
     @Column(nullable = false, updatable = false)
     private Instant createdAt = Instant.now();
 
@@ -56,6 +71,16 @@ public class StudentSkill {
     public void setSource(String source) { this.source = source; }
     public boolean isVerified() { return verified; }
     public void setVerified(boolean verified) { this.verified = verified; }
+    public java.math.BigDecimal getScore() { return score; }
+    public void setScore(java.math.BigDecimal score) { this.score = score; }
+    public Integer getQuestionsTested() { return questionsTested; }
+    public void setQuestionsTested(Integer questionsTested) { this.questionsTested = questionsTested; }
+    public Integer getQuestionsCorrect() { return questionsCorrect; }
+    public void setQuestionsCorrect(Integer questionsCorrect) { this.questionsCorrect = questionsCorrect; }
+    public Instant getLastAssessedAt() { return lastAssessedAt; }
+    public void setLastAssessedAt(Instant lastAssessedAt) { this.lastAssessedAt = lastAssessedAt; }
+    public Instant getRetestAvailableAt() { return retestAvailableAt; }
+    public void setRetestAvailableAt(Instant retestAvailableAt) { this.retestAvailableAt = retestAvailableAt; }
     public Instant getCreatedAt() { return createdAt; }
     public Instant getUpdatedAt() { return updatedAt; }
 }

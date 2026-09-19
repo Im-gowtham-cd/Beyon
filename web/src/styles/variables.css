@@ -107,6 +107,9 @@
   --fs-3xl: 1.85rem;
   --fs-4xl: 2.25rem;
 
+  --nav-utility: 34px;
+  --nav-main: 70px;
+  --nav-height: calc(var(--nav-utility) + var(--nav-main));
   --sidebar-width: 270px;
   --sidebar-collapsed-width: 76px;
   --topbar-height: 56px;

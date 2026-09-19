@@ -1,278 +1,479 @@
 # Beyon
 
-**AI-Powered Unified Campus-to-Career Ecosystem & Secure Assessment Platform**
+**Enterprise-Grade AI-Powered Academia-Industry Collaboration Portal & DualView Proctoring Platform**
 
-Beyon connects students, institutions, and enterprise recruiters through competency engineering, 109-node skill taxonomy intelligence, live computer vision proctored assessments, and automated placement pipelines.
+Beyon is an all-in-one centralized platform designed to bridge the structural disconnect between university curricula and contemporary industry expectations. The platform establishes an integrated ecosystem connecting **Students**, **Academicians/Universities**, and **Enterprise Industry Partners** through verified competency tracking, interactive learning roadmaps, high-stakes assessments with AI-powered computer vision proctoring, an academician industry sabbatical hub, centralized student credential vaulting, and post-selection internship lifecycle management.
 
 ---
 
-## System Architecture
+## Table of Contents
+
+1. [Platform Mission & Capabilities](#platform-mission--capabilities)
+   - [For Students (Campus-to-Career Acceleration)](#1-for-students-campus-to-career-acceleration)
+   - [For Academicians & Faculty (Industry Collaboration Hub)](#2-for-academicians--faculty-industry-collaboration-hub)
+   - [For Institutions & Universities (Cohort & Placement Governance)](#3-for-institutions--universities-cohort--placement-governance)
+   - [For Corporate Recruiters & Industry (Verified Talent Acquisition)](#4-for-corporate-recruiters--industry-verified-talent-acquisition)
+2. [Comprehensive System Architecture Diagrams](#comprehensive-system-architecture-diagrams)
+   - [High-Level Multi-Tier System Architecture (Mermaid)](#high-level-multi-tier-system-architecture-mermaid)
+   - [High-Level Ecosystem Block Diagram (ASCII)](#high-level-ecosystem-block-diagram-ascii)
+   - [DualView 360-Degree AI Proctoring Architecture](#dualview-360-degree-ai-proctoring-architecture)
+   - [End-to-End Collaboration & Lifecycle Flow](#end-to-end-collaboration--lifecycle-flow)
+3. [Core Technical Innovations](#core-technical-innovations)
+   - [109-Node Competency Graph & Skill Taxonomy](#1-109-node-competency-graph--skill-taxonomy)
+   - [DualView 360-Degree AI Proctoring Engine](#2-dualview-360-degree-ai-proctoring-engine)
+   - [Hardware Lockdown Assessment Client](#3-hardware-lockdown-assessment-client)
+   - [Structured Cryptographic Evidence Storage Hierarchy](#4-structured-cryptographic-evidence-storage-hierarchy)
+   - [Institutional Bulk Student Roster Importer](#5-institutional-bulk-student-roster-importer)
+   - [Student Centralized Document Vault](#6-student-centralized-document-vault)
+   - [Internship Milestone Tracker & Verifiable Completion Certification](#7-internship-milestone-tracker--verifiable-completion-certification)
+4. [Technology Stack & Technical Trade-Offs](#technology-stack--technical-trade-offs)
+5. [Monorepo Workspace Layout](#monorepo-workspace-layout)
+6. [Database Schema & Migration Architecture](#database-schema--migration-architecture)
+7. [Installation & Developer Setup](#installation--developer-setup)
+   - [Prerequisites](#prerequisites)
+   - [One-Command Multi-Service Orchestrator (`bun run dev:all`)](#one-command-multi-service-orchestrator-bun-run-devall)
+   - [Individual Service Commands](#individual-service-commands)
+   - [Environment Configuration](#environment-configuration)
+8. [Default Test Accounts & Credentials](#default-test-accounts--credentials)
+9. [Quality Assurance & Verification](#quality-assurance--verification)
+10. [License](#license)
+
+---
+
+## Platform Mission & Capabilities
+
+A major barrier in higher education is the misalignment between academic instruction and industry standards:
+- Students struggle to identify skill requirements, validate practical proficiencies, and track internship progress.
+- Academicians lack visibility into industry projects, corporate research grants, and real-world sabbatical exposure.
+- Industry faces prohibitive recruitment overheads, fraudulent online assessment practices, and unverified resumes.
+
+Beyon solves this through a unified collaborative platform:
+
+### 1. For Students (Campus-to-Career Acceleration)
+- **109-Node Competency Graph**: Interactive dependency mapping across programming languages, system architecture, cloud DevOps, databases, and AI/ML.
+- **Level-by-Level Question Arena**: Comprehensive authentic question bank spanning Quantitative Aptitude, Logical Reasoning, Verbal Ability, Coding, and System Design across Beginner, Easy, Medium, Hard, and Expert levels.
+- **Centralized Document Vault**: Encrypted repository for uploading, previewing, and managing semester transcripts, official grade cards, resumes, and signed internship reports.
+- **Internship Progress Logbook**: 12-week deliverable tracking with pull request evidence links, hours logged, and mentor evaluations.
+- **Cryptographically Verifiable Certification**: Completion certificates featuring SHA-256 digital signatures, QR verification codes, and one-click Digital Portfolio export.
+- **Gamified Practice Economy**: Real-time XP, Beyon Coins, daily challenge streaks, and peer leaderboards.
+
+### 2. For Academicians & Faculty (Industry Collaboration Hub)
+- **Faculty Development Programs (FDPs)**: Upskilling programs co-hosted with enterprise technology partners.
+- **Industrial Sabbaticals**: 3 to 6-month corporate residency placements for faculty practical exposure.
+- **Corporate Consultancy Projects**: Industry-sponsored technical problem statements directly accessible for faculty collaboration.
+- **Joint Research & Development Grants**: Collaborative grant applications with corporate funding, milestones, and institutional No-Objection Certificate (NOC) endorsement workflows.
+- **Proposals & Grants Dashboard**: Real-time status tracking for faculty applications and corporate agreements.
+
+### 3. For Institutions & Universities (Cohort & Placement Governance)
+- **Bulk Student Roster Importer**: Mass onboarding engine supporting CSV and JSON datasets with live schema validation, template download, and automated placement drive authorization.
+- **Academic Verification Queue**: Real-time student identity authentication, CGPA verification, and placement eligibility controls.
+- **Campus Placement Drive Management**: Orchestration of on-campus and virtual hiring drives, scheduling, and student application pipelines.
+- **Accreditation & Placement Analytics**: Real-time metrics on departmental placement percentages, average CTC offerings, and institutional skill gap indices.
+
+### 4. For Corporate Recruiters & Industry (Verified Talent Acquisition)
+- **Targeted Opportunity Publishing**: Posting of full-time engineering roles, industrial sabbaticals, and internships with granular skill filters.
+- **DualView 360-Degree AI Proctoring**: Multi-camera assessment monitoring (laptop webcam + mobile side-angle QR stream) with zero video streaming bandwidth overhead.
+- **Hardware-Enforced Desktop Lockdown**: Electron-powered fullscreen kiosk environment blocking keyboard chords, task switching, and secondary monitors.
+- **Cryptographic Evidence Audit Trail**: Tamper-proof evidence snapshots stored by test name and student ID for forensic recruitment review.
+- **Post-Internship Performance Review**: Structured 5-dimensional intern evaluation (Architecture, Code Quality, Velocity, Communication, Ownership) and Pre-Placement Offer (PPO) issuance.
+
+---
+
+## Comprehensive System Architecture Diagrams
+
+### High-Level Multi-Tier System Architecture (Mermaid)
+
+```mermaid
+graph TB
+    subgraph CLIENT_TIER["CLIENT ACCESS TIER"]
+        WebPortal["React 19 SPA (Vite + TS)\n[Port :5173]\nStudent • Recruiter • Institution • Faculty"]
+        DesktopApp["Electron 43 Lockdown Client\n[Hardware Kiosk + Windows Hook Guard]\nAnti-Alt-Tab • Multi-Monitor Lockout"]
+        MobileStream["Mobile Side-Camera Streamer\n[Ephemeral QR WebRTC / HTTP Feed]\n45°-90° Desk & Hands Angle"]
+        AndroidNative["Native Android Application\n[Kotlin + Material 3 + OkHttp]\nSDK 34 Client"]
+    end
+
+    subgraph INGRESS["INGRESS & SECURITY GATEWAY"]
+        APIGateway["Spring Cloud Gateway / Reverse Proxy\nJWT RS256 Bearer • CORS • Rate Limiting"]
+    end
+
+    subgraph APPLICATION_TIER["CORE MICROSERVICES TIER"]
+        SpringBootCore["Spring Boot 3.4 Core Engine\n[Port :8085 - Java 21 Virtual Threads]\n├── Identity & RBAC Engine\n├── Assessment & Timer Synchronizer\n├── Skill Taxonomy & Graph Navigator\n├── Faculty Industry Collaboration Hub\n├── Document Vault & File Service\n├── Bulk Student Roster Importer\n└── Recruitment Pipeline & PPO Manager"]
+        
+        FastAPIService["FastAPI AI Computer Vision Service\n[Port :8000 - Python 3.11 + PyTorch]\n├── YOLO11 Nano Object & Device Detector\n├── Multi-Person & Cell Phone Detection\n├── Secondary Monitor & Bezel Classifier\n└── CNN Behavioral Gaze & Cheat Scorer"]
+    end
+
+    subgraph TELEMETRY["REAL-TIME TELEMETRY & CACHE"]
+        RedisStore["Upstash Redis Cluster\n[Port :6379]\nSession Tokens • Rate Limits • Live Leaderboards"]
+        SSEStream["Server-Sent Events (SSE) Bus\nReal-time Incident Push to Recruiter Dashboard"]
+    end
+
+    subgraph PERSISTENCE["DATA & STORAGE PERSISTENCE TIER"]
+        RelationalDB["Primary Relational Database\n[Port :3306 - PostgreSQL 17 / Dolt SQL]\n91+ Tables • 28 Flyway Migrations • B-Tree Indexes"]
+        MongoAudit["MongoDB Document Store\n[Port :27017]\nHigh-Volume Proctoring Telemetry & Audit Logs"]
+        EvidenceStorage["Local Encrypted Evidence Store\n[uploads/evidence/{test}/{student}/]\nCryptographic Violation JPG Snapshots"]
+        DocumentStore["Student Document Storage\n[uploads/documents/{category}/{student}/]\nAES-256 Encrypted Transcripts & Resumes"]
+    end
+
+    WebPortal -->|HTTPS / REST| APIGateway
+    DesktopApp -->|REST + IPC Bridge| APIGateway
+    MobileStream -->|Frame Stream| FastAPIService
+    AndroidNative -->|REST API| APIGateway
+
+    APIGateway --> SpringBootCore
+    SpringBootCore <--> FastAPIService
+
+    SpringBootCore --> RedisStore
+    SpringBootCore --> SSEStream
+    SSEStream --> WebPortal
+
+    SpringBootCore --> RelationalDB
+    SpringBootCore --> MongoAudit
+    SpringBootCore --> EvidenceStorage
+    SpringBootCore --> DocumentStore
+```
+
+---
+
+### High-Level Ecosystem Block Diagram (ASCII)
 
 ```
-                                    BEYON MONOREPO
-                                          │
-    ┌───────────────────────────┬─────────┴──────────┬───────────────────────────┐
-    ▼                           ▼                    ▼                           ▼
-WEB APPLICATION        DESKTOP LOCKDOWN APP    NATIVE ANDROID APP       REACT NATIVE CLIENT
-(React 19, TS 6, Vite) (Electron 43, React 19) (Kotlin, Android 34)     (Cross-Platform)
-4 Role Portals         Hardware Kiosk Lock     Material 3, OkHttp       Practice, Taxonomy,
-50+ Dynamic Routes     AI Proctoring (600ms)   10.0.2.2 Direct Gateway  Opportunities, Badges
-    │                           │                    │                           │
-    └───────────────────────────┼────────────────────┴───────────────────────────┘
+                                      BEYON ECOSYSTEM
+                                             │
+    ┌───────────────────────────┬────────────┴───────────┬───────────────────────────┐
+    ▼                           ▼                        ▼                           ▼
+WEB APPLICATION        DESKTOP LOCKDOWN APP      NATIVE ANDROID APP         MOBILE STREAMER
+(React 19, TS 6, Vite) (Electron 43, React 19)   (Kotlin, Android 34)       (Camera QR Pair)
+• Student Workspace    • Hardware Kiosk Lock     • Student Mobile Client    • WebRTC / Frame Stream
+• Faculty Hub          • Windows API Intercept   • Offline Review Cache     • 45° Side AI Feed
+• Recruiter Portal     • 250ms Edge CV Loop      • Push Notifications       • Desk & Screen Coverage
+• Institution Portal   • Multi-Monitor Blocker   • Native Camera Auth       • Zero App Install
+    │                           │                        │                           │
+    └───────────────────────────┼────────────────────────┴───────────────────────────┘
                                 ▼
-                   HTTPS / REST API / JWT BEARER
+                   HTTPS / REST API / JWT BEARER / SSE
                                 │
     ┌───────────────────────────┴───────────────────────────────────────────────┐
     ▼                                                                           ▼
-SPRING BOOT API GATEWAY (:8085)                                     FASTAPI AI SERVICE (:8000)
-Java 21, Spring Security 6, Hibernate 6, JJWT                       Python 3.11, Uvicorn, Pydantic
-├── Identity & Auth (JWT, BCrypt, Refresh)                          ├── NLP Text Analysis
-├── 109 Skills Taxonomy & Graph Matrix                              ├── Skill Embedding Vectors
-├── Practice MCQ Arena & Coin Economy (⚡)                          ├── Adaptive Challenge Engine
-├── Desktop Assessment Orchestrator                                 └── Opportunity Matching AI
-├── Recruitment Pipeline & Candidate Intelligence
-├── Institution Batch Analytics & Placement Drives
-└── Social Feed, Discussions & Verifications
+SPRING BOOT CORE GATEWAY (:8085)                                    FASTAPI AI SERVICE (:8000)
+Java 21, Spring Security 6, Hibernate 6, JJWT                       Python 3.11, PyTorch, YOLO11, OpenCV
+├── Identity & RBAC (STUDENT, COMPANY, INSTITUTION, ADMIN)          ├── YOLO11 Nano Object & Device Detector
+├── Academician Hub (FDPs, Sabbaticals, Research Grants)            ├── Mobile Phone & Device Classifier
+├── DualView Session Orchestration & SSE Incident Push              ├── Second Person Recognition Engine
+├── Centralized Document Vault & Verification Service               ├── CNN Behavioral Cheat Detector
+├── 109-Node Skill Graph & Competency Matrix                        ├── Skin Blob Presence Fallback
+├── Bulk Student Roster CSV/JSON Ingestion Engine                   └── Vector Matching Engine
+└── Internship Logbook, Milestone Review & Certificate Engine
                                 │
     ┌───────────────────────────┼───────────────────────────┬───────────────────┐
     ▼                           ▼                           ▼                   ▼
-POSTGRESQL 17 / DOLT        MONGODB ATLAS              UPSTASH REDIS      CLOUD STORAGE
-(Supabase Prod / Dolt Dev)  (:27017)                   (:6379)            (Supabase / Appwrite)
-91+ Tables, 27 Flyway Migr  Proctoring Telemetry Logs  Session Cache      Resume PDFs, Proofs,
-60+ Composite Indexes       Submission Payloads        Leaderboards       Verified Certificates
+RELATIONAL DB (PORT 3306)   DOCUMENT STORE             UPSTASH REDIS       ENCRYPTED STORAGE
+PostgreSQL 17 / Dolt SQL    MongoDB Atlas (:27017)     (:6379)             uploads/evidence/
+91+ Tables, 28 Flyway Migr  Telemetry Log Streams      Rate Limiting       uploads/documents/
+Composite B-Tree Indexes    Audit Trails               Leaderboard Cache   SHA-256 Signatures
 ```
 
 ---
 
-## Technology Stack
-
-| Layer | Technologies & Frameworks |
-|---|---|
-| **Web Frontend** | React 19.2, TypeScript 6.0, Vite 8.2, React Router DOM v7.18, Lucide React, CSS Modules, Vitest |
-| **Desktop Lockdown** | Electron 43.4, React 19, TypeScript 7.0, Vite 8, WebRTC, Web Audio API, Canvas Computer Vision |
-| **Mobile App (Native)** | Kotlin 1.8, Android SDK 34 (Android Studio), ViewBinding, Material 3, OkHttp 4.12, Gson, Coroutines |
-| **Mobile App (Cross-Platform)** | React Native, Expo, TypeScript, React Context |
-| **Backend API Gateway** | Java 21, Spring Boot 3.4.1, Spring Security 6, Spring Data JPA, Hibernate 6, JJWT 0.12, Flyway, Maven |
-| **AI Microservice** | Python 3.11+, FastAPI 0.115+, Uvicorn, Pydantic v2 |
-| **Primary Relational DB** | PostgreSQL 17 (Supabase hosted) / Dolt MySQL 3306 (Git-versioned SQL for local dev) |
-| **Document Store** | MongoDB Atlas (:27017) for telemetry, proctoring streams, high-volume event logs |
-| **Cache & Real-Time** | Upstash Redis (:6379) with Lettuce connection pooling, sliding window rate limiting |
-| **Object Storage** | Supabase Storage / Appwrite Cloud Storage for resumes, verification artifacts, certificates |
-| **Monorepo & Tooling** | Bun Workspaces, Concurrently, Oxlint, Vitest, JUnit 5, Mockito |
-
----
-
-## Key Modules & Platform Features
-
-### 1. Student Portal (`RoleGuard['STUDENT']`)
-- **Practice Arena & Gamification**: 300+ MCQ, SQL & algorithmic challenges with instant technical explanations.
-- **Coin & XP Economy**: Daily streak tracker, XP score levels, and Beyon Coins (⚡) ledger.
-- **109 Verified Skill Taxonomy**: Multi-domain matrix (GPU & CUDA, Triton, Distributed Systems, Raft, LLM Fine-Tuning, vLLM).
-- **Career Roadmap & Advisor**: Dynamic gap analysis, prerequisites graph, and context-aware career chat advisor.
-- **Placement & Opportunities**: Direct 1-click applications with eligibility matching scores.
-- **Digital Portfolio**: Verifiable credentials with cryptographic certificate lookup (`/verify/:certificateNumber`).
-- **Community Hub**: Personalized feed, discussions, mentorship pairings, and collaborative project teams.
-
-### 2. Desktop Assessment Client & Real-Time AI Proctoring
-- **Kiosk Mode Lock**: Hardware-accelerated fullscreen enforcement, task switcher intercept, minimize prevention (auto-restore <50ms).
-- **Biometric Skin Chrominance Filter**: Normalized $YC_bC_r$ color space analysis ($Y \in [35, 235], C_b \in [75, 130], C_r \in [130, 175]$) to eliminate background false positives.
-- **Face Presence / Absence Detection**: Auto-terminates exam after 3 seconds of continuous face absence (`CRITICAL_ABSENCE_AUTO_TERMINATION`).
-- **Acoustic Speech & Noise Detection**: 512-bin Fast Fourier Transform (FFT) Web Audio analyzer detecting room chatter and speech frequencies ($100\text{Hz} - 2500\text{Hz}$, RMS $>0.035$).
-- **Mobile Phone / Device Detection**: Lower-viewport Sobel edge gradient density ($|\Delta\text{Lum}| > 50$) combined with high-contrast screen/bezel clustering.
-- **Multi-Person Quadrant Scan**: Peripheral quadrant pixel distribution flagging unauthorized persons entering frame.
-- **System Diagnostics Suite**: Automated pre-exam check for Camera, Microphone, Screen Capture, Network Latency, and Single Display status.
-
-### 3. Native Android Application (`@beyon/mobile`)
-- **Native Android Studio Project** (`mobile/android`) targeting Android SDK 34 with Kotlin and ViewBinding.
-- **Bottom Navigation**: Interactive Home, Practice MCQ Arena, 109 Skills Matrix, Job Opportunities, and Candidate Profile.
-- **Direct Backend Gateway**: `BackendTunnel.kt` using OkHttp coroutines communicating directly with `http://10.0.2.2:8085/api/v1` (native Android host mapping).
-- **Desktop Lockdown Integration**: In-app token generation and 1-click session token copy for the Desktop Lockdown Exam Client.
-
-### 4. Recruiter & Company Portal (`RoleGuard['COMPANY', 'ADMIN']`)
-- **Candidate Intelligence**: Multi-parameter candidate matching engine (skills, CGPA, verified test scores).
-- **Assessment Builder**: Custom test creation with configurable timing, cutoffs, and proctoring strictness.
-- **Recruitment Funnel**: Applications $\rightarrow$ Proctored Assessment $\rightarrow$ Shortlist $\rightarrow$ Interview Scorecards $\rightarrow$ Offer.
-- **Analytics Dashboard**: Department pass rates, candidate skill distributions, and hiring velocity.
-
-### 5. Institution Portal (`RoleGuard['INSTITUTION', 'ADMIN']`)
-- **Student Cohort Management**: Academic batch performance, skill progress, and placement eligibility tracking.
-- **Placement Drive Coordination**: Campus recruitment drive scheduling and company eligibility management.
-- **Curriculum Alignment Analytics**: Real-time industry skill demand vs. institution curriculum coverage.
-
----
-
-## Monorepo Project Structure
+### DualView 360-Degree AI Proctoring Architecture
 
 ```
-├── backend/                             # Spring Boot 3.4 API Server
++---------------------------------------------------------------------------------------+
+|                             BEYON DUALVIEW PROCTORING ENGINE                          |
++---------------------------------------------------------------------------------------+
+|                                                                                       |
+|  [Frontal Laptop Cam]  ──(250ms)─► Skin Segmentation ─► Gaze/Absence Streak (2.0s)    |
+|  [Internal Microphone] ──(250ms)─► 512-bin FFT Audio ─► RMS > 0.07 / Voice > 35 Hz    |
+|  [Mobile QR Cam (45°)] ──(1.5s)──► YOLO11 Neural Net ─► Cell Phone / Second Person    |
+|                                                                                       |
+|                                          │                                            |
+|                                          ▼                                            |
+|                             [RULE ENGINE EVALUATOR]                                   |
+|                                          │                                            |
+|             ┌────────────────────────────┴────────────────────────────┐               |
+|             ▼                                                         ▼               |
+|   Category == SECOND_PERSON ?                               Category != SECOND_PERSON |
+|   ├─ Incident Strike 1: Final Warning Notice Modal          ├─ Warning Notice Modal   |
+|   └─ Incident Strike 2: IMMEDIATE EXAM TERMINATION          │  (Looking Away, Sound)  |
+|                         (Auto-submits session)              └─ Isolated 12s Debounce  |
+|                                                                (Non-terminating)      |
+|                                          │                                            |
+|                                          ▼                                            |
+|                    [EVIDENCE STORAGE & AUDIT ARCHIVE]                                 |
+|                    uploads/evidence/{test_name}/{student_name}/                       |
+|                    ├── LOOKING_AWAY_1741249842890.jpg                                 |
+|                    ├── PHONE_DETECTED_1741249868774.jpg                               |
+|                    └── SECOND_PERSON_1741249855102.jpg                                |
++---------------------------------------------------------------------------------------+
+```
+
+---
+
+### End-to-End Collaboration & Lifecycle Flow
+
+```
++---------------------------------------------------------------------------------------+
+|                   END-TO-END ACADEMIA-INDUSTRY COLLABORATION LIFECYCLE                |
++---------------------------------------------------------------------------------------+
+|                                                                                       |
+|  1. ONBOARDING & VERIFICATION                                                         |
+|     Institution Admin ──(Bulk CSV/JSON Importer)──► Mass-Enrolls Student Cohort       |
+|     Student ──────────► Uploads Transcripts & Resume to Encrypted Document Vault     |
+|     Institution ──────► Authenticates Academic Record & Grants Placement Eligibility |
+|                                                                                       |
+|  2. FACULTY-INDUSTRY ENGAGEMENT                                                       |
+|     Enterprise Partner ──► Publishes FDPs, Sabbaticals & Industrial Research Grants   |
+|     Academician ─────────► Applies with Proposal, CV & Institutional NOC Endorsement  |
+|     Enterprise ──────────► Approves Proposal & Funds Collaborative Project            |
+|                                                                                       |
+|  3. COMPETENCY EVALUATION & SECURE TESTING                                            |
+|     Student ──────────► Practices Aptitude, Reasoning & Domain Competency Graph       |
+|     Enterprise ───────► Publishes Hiring Opportunity with Assessment Requirements     |
+|     Student ──────────► Takes High-Stakes Exam via Desktop Lockdown + DualView AI     |
+|     System ───────────► Generates Forensic Proctoring Report & Candidate Match Score  |
+|                                                                                       |
+|  4. INTERNSHIP LOGBOOK & CERTIFICATION                                                |
+|     Candidate ────────► Selected for Corporate Internship                             |
+|     Intern ───────────► Submits Weekly Milestones, Deliverables & Code Evidence Links |
+|     Industry Mentor ──► Reviews Code, Logs Feedback & Awards 5-Star Ratings           |
+|     Final Review ─────► 5-Dimension Competency Assessment + PPO Recommendation        |
+|     Certification ────► Verifiable Certificate Issued with QR Code & SHA-256 Hash     |
+|                                                                                       |
++---------------------------------------------------------------------------------------+
+```
+
+---
+
+## Core Technical Innovations
+
+### 1. 109-Node Competency Graph & Skill Taxonomy
+- **Multi-Dimensional Graph**: Eliminates simplistic resume keyword matching in favor of structured prerequisite trees across Core Engineering, Systems, Distributed Tech, Cloud/DevOps, Database Architecture, and AI/ML.
+- **Level-by-Level Question Progression**: Authentic questions distributed across five difficulty tiers (Beginner, Easy, Medium, Hard, Expert).
+- **Aptitude & Soft Skills Suite**: Production-grade question bank covering Quantitative Aptitude, Logical Reasoning, Verbal Communication, Agile Methodologies, Team Leadership, and Conflict Resolution.
+
+### 2. DualView 360-Degree AI Proctoring Engine
+- **Frontal Laptop Evaluation**: 250ms high-speed evaluation cycle utilizing normalized $YC_bC_r$ skin chrominance segmentation and centroid vector tracking for gaze deviation detection.
+- **Acoustic Speech Analysis**: 512-bin Fast Fourier Transform (FFT) Web Audio context calculating root-mean-square energy and voice-band frequencies.
+- **Mobile Side-Cam via QR Pairing**: Zero-install browser camera streamer placed at 45° to 90° angle capturing candidate hands, desk surface, and monitor perimeter.
+- **YOLO11 Nano Inference**: Detects mobile devices, secondary external monitors, and unauthorized secondary individuals in under 50ms.
+- **Strict Multi-Tier Policy Engine**: Only confirmed secondary persons terminate the session upon second occurrence; looking away, ambient sounds, and device notices trigger non-terminating warnings with isolated 12-second category cooldowns.
+
+### 3. Hardware Lockdown Assessment Client
+- **Kiosk Isolation**: Electron 43 desktop wrapper invoking native Windows API hooks (`user32.dll`) to intercept `Alt+Tab`, `Win+Tab`, `Alt+F4`, and `Ctrl+Alt+Del`.
+- **Anti-Minimize Guardian**: Automatically forces fullscreen focus in under 50ms upon window blur or minimize attempts.
+- **Multi-Monitor Guard**: Identifies external secondary displays and prevents assessment entry until extra monitors are disconnected.
+- **Isolated IPC Preload Bridge**: Context isolation strictly enforced with zero Node.js integration inside the renderer process.
+
+### 4. Structured Cryptographic Evidence Storage Hierarchy
+- Automatically captures forensic JPG snapshots upon proctoring alerts and stores them under a sanitized directory structure:
+  ```
+  backend/uploads/evidence/<Test_Name>/<Student_Name>/<VIOLATION_TYPE>_<TIMESTAMP>.jpg
+  ```
+- Serves audit logs securely via role-protected REST endpoints (`GET /api/v1/evidence/**`) for enterprise recruiters and institution heads.
+
+### 5. Institutional Bulk Student Roster Importer
+- Built into the Institution Workspace (`/institution/students`).
+- Ingests CSV or JSON cohorts with live schema validation:
+  - Required check: `RollNumber`, `FullName`, `Email`, `Department`, `BatchYear`.
+  - Regex email verification (`/^[^\s@]+@[^\s@]+\.[^\s@]+$/`).
+  - Numeric CGPA verification (`0.0 <= CGPA <= 10.0`).
+- Generates downloadable standard CSV templates.
+- Features real-time validation metric cards (Total Detected, Valid Profiles Ready, Validation Issues) and an interactive preview table before committing.
+
+### 6. Student Centralized Document Vault
+- Built into the Student Workspace (`/student/documents`).
+- Categorized cloud storage:
+  - `RESUMES`: Professional CVs and portfolios.
+  - `ACADEMIC_TRANSCRIPTS`: Official semester marksheets and degree certificates.
+  - `INTERNSHIP_DOCUMENTS`: Signed offer letters and industrial project reports.
+  - `GOVERNMENT_IDS`: Institutional and national identity cards.
+- Drag-and-drop uploader supporting PDF, PNG, and JPG files up to 10MB, with inline preview modals, download handlers, and verification status indicators.
+
+### 7. Internship Milestone Tracker & Verifiable Completion Certification
+- Built into the Student Workspace (`/student/internship-tracking`).
+- **12-Week Milestone Tracker**: Logbook for weekly objectives, deliverables, challenges/solutions, pull request links, and hours logged.
+- **Industry Mentor Feedback**: 5-star mentor ratings and qualitative reviews for each milestone.
+- **Final Competency Assessment**: Radar evaluation across 5 dimensions (System Architecture, Code Quality, Delivery Velocity, Collaborative Communication, Engineering Ownership) and Pre-Placement Offer (PPO) recommendations.
+- **Digital Completion Certificate**: Cryptographically verifiable certificate equipped with verification hash, SHA-256 fingerprint, QR code, and Digital Portfolio export.
+
+---
+
+## Technology Stack & Technical Trade-Offs
+
+| Component | Technology | Alternative Considered | Engineering Rationale |
+|---|---|---|---|
+| **Core API Server** | **Java 21 + Spring Boot 3.4** | Node.js Express / Django | Virtual Threads (Project Loom) handle high-concurrency exam telemetry without blocking event loops. Declarative `@Transactional` integrity guarantees zero state corruption. |
+| **AI Vision Service** | **Python 3.11 + FastAPI + YOLO11** | TensorFlow.js in Node | Sub-50ms inference per frame using C++ PyTorch bindings and Ultralytics YOLO11 Nano neural network. |
+| **Web Frontend** | **React 19 + TypeScript + Vite 8** | Next.js SSR / Angular | SPA architecture delivers instantaneous transitions across 50+ role-guarded routes with zero runtime SSR overhead. |
+| **Desktop Lockdown** | **Electron 43 + React 19** | Browser Fullscreen / Tauri | Native OS hooks (`user32.dll`) intercept system shortcuts, multi-monitor dragging, and screen recorders that browser APIs cannot block. |
+| **Primary Database** | **PostgreSQL 17 / Dolt SQL** | MongoDB / Firebase | ACID compliance across 91+ relational tables. Dolt SQL provides Git-like versioning and rollback capabilities for test fixtures. |
+| **Incident Telemetry** | **Server-Sent Events (SSE)** | WebSockets / Polling | Unidirectional HTTP/2 multiplexing reduces server connection overhead by 80% while retaining auto-reconnection via `Last-Event-ID`. |
+| **Edge Video Model** | **Hybrid Edge-CV + Snapshot** | 100% Video Streaming | Continuous 1080p streaming for 10,000 students requires ~30 Gbps; Beyon evaluates frames on-device and transmits only lightweight telemetry signals and targeted evidence snapshots. |
+
+---
+
+## Monorepo Workspace Layout
+
+```
+d:/SIH/26044/
+├── backend/                             # Spring Boot 3.4 API Server (Port 8085)
 │   ├── src/main/java/com/beyon/
-│   │   ├── identity/                    # JWT, BCrypt, Auth filter, User models
+│   │   ├── identity/                    # User authentication, JWT filter, RBAC
 │   │   ├── profile/                     # Student, Company, Institution profiles
-│   │   ├── practice/                    # Question bank, Practice sessions, Coins, Streaks
-│   │   ├── assessment/                  # Lockdown test orchestration, Timer sync
-│   │   ├── intelligence/                # Matching engine, Career advisor, Skill graphs
-│   │   ├── recruitment/                 # Job opportunities, Applications, Scorecards
-│   │   ├── institution/                 # Batch management, Placement drives, Analytics
-│   │   ├── community/                   # Feed, Discussions, Direct messages, Mentorship
-│   │   ├── platform/                    # Health probes, Audit logs, Redis cache, Rate limits
-│   │   └── config/                      # Spring Security, CORS, Redis, JPA configuration
+│   │   ├── practice/                    # Question bank, Challenges, Coins, Streaks
+│   │   ├── assessment/                  # DualView proctoring, Evidence storage, Timer
+│   │   ├── intelligence/                # Matching engine, Career roadmap, Taxonomy
+│   │   ├── recruitment/                 # Job opportunities, Applications, Funnels
+│   │   ├── institution/                 # Cohort analytics, Placement drives, Faculty Hub
+│   │   ├── community/                   # Posts, Comments, Discussions, Mentorship
+│   │   └── config/                      # Security, CORS, Redis, JPA configuration
 │   └── src/main/resources/
-│       └── db/migration/                # 27 Flyway SQL migrations (V1–V27)
-├── web/                                 # React 19 SPA (Vite + TypeScript)
+│       └── db/migration/                # 28 Flyway SQL migrations (V1–V28)
+├── web/                                 # React 19 SPA (Vite + TypeScript) (Port 5173)
 │   └── src/
-│       ├── app/                         # App routing (50+ routes, RoleGuard)
-│       ├── components/                  # UI components, Layouts, Navigation
-│       ├── services/api/                # Centralized typed HTTP client (api.get/post)
-│       ├── student/                     # Student ecosystem & portfolio
-│       ├── company/                     # Recruiter portal & assessment builder
-│       └── institution/                 # University dashboard & placement drives
+│       ├── app/                         # App routing (50+ pages, RoleGuard)
+│       ├── components/                  # Design tokens, Navbar, Modals
+│       ├── student/                     # Practice arena, Roadmap, Portfolio, Document Vault
+│       ├── company/                     # Candidate pipeline, Proctoring reports
+│       ├── institution/                 # Faculty Hub, Placement drives, Bulk Roster Importer
+│       └── recruitment/                 # Internship tracking, Milestone logbook
 ├── desktop/                             # Electron 43 Desktop Lockdown App
 │   └── src/
-│       ├── main/                        # Kiosk lock, Anti-minimize, Media permissions
-│       ├── preload/                     # Secure window.beyon IPC bridge
-│       └── renderer/                    # 8-step Exam lifecycle & AI Proctoring engine
+│       ├── main/                        # Kiosk lock, Display queries, Window guard
+│       ├── preload/                     # window.beyon IPC bridge
+│       └── renderer/                    # Exam client & 250ms CV proctoring engine
 ├── mobile/                              # Mobile Applications Workspace
-│   ├── android/                         # Native Android Studio Gradle Project (Kotlin, SDK 34)
-│   │   └── app/src/main/
-│   │       ├── java/com/beyon/app/      # MainActivity, Fragments, BackendTunnel
-│   │       └── res/                     # Native XML layouts, Drawables, Bottom nav
-│   ├── src/                             # React Native / Expo cross-platform client
-│   └── run-android.ts                   # 1-command emulator build & launcher script
-├── ai-service/                          # FastAPI Python AI Microservice
-│   └── app/                             # NLP, LLM adaptation, Skill embedding endpoints
-├── packages/                            # Shared Monorepo Packages
-│   ├── shared-types/                    # Cross-platform TypeScript contracts (ApiResponse<T>)
-│   └── shared-config/                   # Shared tsconfig base
-└── scripts/seed/                        # Deterministic Database Seeder (Dolt / MySQL / Postgres)
+│   ├── android/                         # Native Android Studio project (Kotlin, SDK 34)
+│   └── src/                             # React Native / Expo cross-platform client
+├── ai-service/                          # FastAPI Python AI Microservice (Port 8000)
+│   ├── app/routers/                     # Mobile & laptop frame analysis endpoints
+│   ├── app/services/                    # YOLO11 detector, CNN cheat classifier
+│   └── yolo11n.pt                       # Ultralytics neural network model weights
+└── scripts/                             # Orchestration & Seeding Scripts
+    ├── dev-all.ts                       # Unified multi-service runner
+    ├── run-backend.ts                   # Cross-platform Spring Boot runner
+    └── seed/                            # Database seeders (Taxonomy, Questions, Profiles)
 ```
 
 ---
 
-## Database Architecture (27 Flyway Migrations, 91+ Tables)
+## Database Schema & Migration Architecture
 
-| Migration | Domain | Key Tables & Entities |
+The relational schema spans **91+ tables** managed via **28 Flyway Migrations**:
+
+| Migration | Domain | Key Entities & Purpose |
 |---|---|---|
 | **V1** | Identity & Auth | `users`, `email_verifications`, `password_reset_tokens`, `refresh_tokens` |
-| **V2 – V4** | Profiles | `student_profiles`, `skills`, `certifications`, `projects`, `education`, `experience` |
-| **V5** | Skill Taxonomy | 109 Verified skill taxonomy nodes, domains, topics, subtopics |
-| **V6** | Question Bank | `questions`, `options`, `test_cases`, `code_stubs`, `attempts` |
-| **V7** | Placement & Drives | `institutions`, `placement_drives`, `companies`, `college_affiliations` |
+| **V2 – V4** | Profiles & Taxonomy | `student_profiles`, `skills`, `certifications`, `projects`, `education` |
+| **V5** | Skill Taxonomy | 109 Verified skill taxonomy nodes, domain relations, topics |
+| **V6** | Question Bank | `questions`, `question_options`, `question_test_cases`, `attempts` |
+| **V7** | Placement Drives | `institutions`, `placement_drives`, `companies`, `college_affiliations` |
 | **V8** | Assessment Engine | `assessment_sessions`, `session_questions`, `candidate_answers`, `proctoring_policies` |
-| **V9, V9_1, V16** | Intelligence & Matching | `matching_scores`, `career_paths`, `skill_gaps`, `interview_rounds`, `scorecards` |
-| **V10, V11, V18** | Community & Social | `posts`, `comments`, `channels`, `direct_messages`, `reputation_badges`, `teams` |
-| **V12, V20** | Performance & Audit | 60+ Composite performance indexes, `audit_logs`, privacy consent records |
-| **V15, V17, V21, V24** | Gamification & Growth | `coin_wallets`, `transactions`, `streaks`, `achievements`, `verifiable_credentials` |
-| **V26 – V27** | Production Schemas | Consolidated MySQL / Dolt / PostgreSQL schema synchronization |
+| **V9, V16, V22** | Recruitment Intelligence | `matching_scores`, `career_paths`, `skill_gaps`, `interview_scorecards` |
+| **V10, V18** | Social & Community | `posts`, `comments`, `channels`, `direct_messages`, `reputation_badges` |
+| **V12, V20** | Performance & Audit | 60+ Composite B-Tree indexes, `audit_logs`, privacy consent records |
+| **V15, V21, V24** | Gamification & Credentialing | `coin_wallets`, `transactions`, `streaks`, `verifiable_credentials` |
+| **V26 – V27** | Production Sync | DualView proctoring tables, consolidated cross-engine schema parity |
+| **V28** | Assessment Governance | Re-attempt authorization requests, institutional approval workflows |
 
 ---
 
-## Local Development & Quick Start
+## Installation & Developer Setup
 
 ### Prerequisites
-- **Bun** `>=1.1.0` (or Node.js `>=20`)
-- **Java JDK 21** & Maven
-- **Android Studio** & Android SDK 34 (for mobile)
-- **Python 3.11+** (for AI microservice)
-- **Docker** (optional, for local PostgreSQL / MongoDB / Redis)
+- **Bun** `>= 1.1.0` (or Node.js `>= 20`)
+- **Java JDK 21** & Maven 3.9+
+- **Python 3.11+** with PyTorch & OpenCV
+- **Dolt** (for local versioned SQL server) or **PostgreSQL 17**
+- **Android Studio** & Android SDK 34 (optional, for native Android app)
 
-### 1. Installation
+### 1. Clone & Install
 ```bash
 # Clone the repository
 git clone https://github.com/Im-gowtham-cd/Beyon.git
 cd Beyon
 
-# Install all workspace dependencies
+# Install all monorepo dependencies
 bun install
 ```
 
-### 2. Running Services
+### 2. Environment Configuration
+Create a `.env` file in the root directory (or use default development fallbacks):
+```env
+DATABASE_URL=jdbc:mysql://127.0.0.1:3306/beyon
+DATABASE_USERNAME=root
+DATABASE_PASSWORD=
+JWT_SECRET=beyon-dev-secret-key-change-in-production-minimum-32-chars
+AI_SERVICE_URL=http://localhost:8000
+SERVER_PORT=8085
+```
 
+### 3. One-Command Multi-Service Orchestrator (`bun run dev:all`)
+Start all services (**Dolt SQL**, **Floci AWS Mock**, **Spring Boot Backend**, **FastAPI AI**, and **React Web**) concurrently with a single command:
 ```bash
-# 🌐 Start Web Portal (localhost:5173)
-bun run dev:web
-
-# ⚡ Start Spring Boot Backend API (localhost:8085)
-bun run dev:backend
-
-# 🖥️ Start Desktop Lockdown Client (Electron)
-bun run dev:desktop
-
-# 📱 Start Native Android Mobile App (Builds APK & Launches Android Studio Emulator)
-bun run dev:mobile
-
-# 🤖 Start FastAPI AI Microservice (localhost:8000)
-bun run dev:ai
-
-# 🗃️ Start Local Dolt SQL Server (localhost:3306)
-bun run dev:dolt
-
-# 🚀 Start All Services Concurrently
 bun run dev:all
 ```
+- Automatically performs pre-flight port checks.
+- Color-coded prefixes for each service (`[dolt]`, `[floci]`, `[backend]`, `[ai]`, `[web]`).
+- Clean multi-process shutdown on `Ctrl+C`.
 
----
-
-## 🔐 Test Accounts & Quick Login Credentials
-
-All test accounts share the universal password: **`BeyonTest!2026#Super`**
-
-| Portal | URL Path | Login Email | Role | Notes |
-|---|---|---|:---:|---|
-| **Super Admin Portal** | `http://localhost:5173/admin/home` | `superadmin@example.beyon.test` | `ADMIN` | Full root access, metrics & audit log |
-| **Institution (TPO) Portal** | `http://localhost:5173/institution/home` | `institution.admin@example.beyon.test` | `INSTITUTION` | Campus drives, student batch roster |
-| **Corporate Recruiter Portal** | `http://localhost:5173/company/home` | `recruiter@example.beyon.test` | `COMPANY` | Microsoft IDC recruiter, pipeline |
-| **Student Workspace** | `http://localhost:5173/student/home` | `student.strong@example.beyon.test` | `STUDENT` | High performer, CGPA 9.10, verified |
-| **Direct Messaging Hub** | `http://localhost:5173/institution/messages` | `institution.admin@example.beyon.test` | Cross-Role | Real-time chat across all roles |
-
-> For the complete directory of personas, exam candidates, college admins, and recruiters, see [docs/TEST_ACCOUNTS.md](docs/TEST_ACCOUNTS.md).
-
----
-
-## Database Seeding Commands
-
+### 4. Individual Service Commands
+If running services in dedicated terminals:
 ```bash
-# Seed complete dataset with integrity validation
-bun run seed:full
+# 1. Start Dolt SQL Server (Port 3306)
+dolt sql-server --host=127.0.0.1 --port=3306
 
-# Seed specific modules
-bun run seed:base           # Fixed test accounts, institutions, companies, taxonomy
-bun run seed:assessment     # Question bank (MCQ, SQL, Coding) & assessments
-bun run seed:recruitment    # Jobs, internships, drives, applications
-bun run seed:community      # Feed posts, discussions, notifications
+# 2. Start FastAPI AI Vision Service (Port 8000)
+bun run dev:ai
 
-# Validate referential integrity
-bun run seed:validate
+# 3. Start Spring Boot Core API (Port 8085)
+bun run dev:backend
 
-# Reset test seed data
-bun run seed:reset
+# 4. Start React Web Portal (Port 5173)
+bun run dev:web
+
+# 5. Start Desktop Lockdown Application
+cd desktop && bun run dev
 ```
 
 ---
 
-## Quality Assurance & Testing
+## Default Test Accounts & Credentials
+
+All development test accounts share the universal password: **`BeyonTest!2026#Super`**
+
+| Portal | URL Path | Login Email | Role |
+|---|---|---|:---:|
+| **Super Admin Portal** | `http://localhost:5173/admin/home` | `superadmin@example.beyon.test` | `ADMIN` |
+| **Institution (TPO) Portal** | `http://localhost:5173/institution/home` | `institution.admin@example.beyon.test` | `INSTITUTION` |
+| **Faculty Industry Hub** | `http://localhost:5173/institution/faculty-hub` | `institution.admin@example.beyon.test` | `INSTITUTION` |
+| **Corporate Recruiter Portal** | `http://localhost:5173/company/home` | `recruiter@example.beyon.test` | `COMPANY` |
+| **Student Workspace** | `http://localhost:5173/student/home` | `student.strong@example.beyon.test` | `STUDENT` |
+| **Internship Logbook** | `http://localhost:5173/student/internship-tracking` | `student.strong@example.beyon.test` | `STUDENT` |
+| **Student Document Vault** | `http://localhost:5173/student/documents` | `student.strong@example.beyon.test` | `STUDENT` |
+
+---
+
+## Quality Assurance & Verification
 
 ```bash
-# Run typechecking across all workspaces (web, desktop, mobile)
-bun run typecheck:all
+# Typecheck React Web Application (Strict TypeScript Check)
+bun run --filter @beyon/web typecheck
 
-# Run frontend unit tests (Vitest)
+# Run Frontend Unit Tests (Vitest)
 cd web && bun run test
 
-# Run backend unit & integration tests (JUnit 5 + Mockito)
+# Run Backend Tests (JUnit 5 + Mockito)
 cd backend && ./mvnw test
 
-# Build production bundles for all platforms
-bun run build:all
+# Seed Curated Technical, Aptitude & Soft Skills Questions
+bun run scripts/seed/seed-real-questions.ts
+
+# Compile Production Electron Desktop App
+cd desktop && bun run build
 ```
-
----
-
-## Security & Privacy Compliance
-- **Stateless JWT Authentication**: 15-minute access tokens with cryptographic signatures and automatic refresh token rotation.
-- **Hardware Lockdown & Anti-Cheating**: Window capture isolation, devtools block, keyboard shortcut suppression, and automatic minimize recovery.
-- **Privacy & GDPR Controls**: Zero webcam transmission over the wire — biometric analysis is executed 100% on-device via WebAssembly/Canvas and Web Audio FFT.
 
 ---
 
 ## License
+
 Proprietary — **Beyon Platform 2026**. All Rights Reserved.

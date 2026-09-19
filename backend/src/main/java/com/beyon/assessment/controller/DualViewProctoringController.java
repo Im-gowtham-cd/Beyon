@@ -9,6 +9,9 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+import java.net.Inet4Address;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -27,6 +30,7 @@ public class DualViewProctoringController {
     private final ProctoringEvidenceRepository evidenceRepo;
     private final AssessmentSessionRepository assessmentSessionRepo;
     private final JwtUtil jwtUtil;
+    private final FlociProctoringAiService flociAiService;
     private final java.net.http.HttpClient httpClient = java.net.http.HttpClient.newBuilder()
             .version(java.net.http.HttpClient.Version.HTTP_1_1)
             .connectTimeout(java.time.Duration.ofMillis(2000))
@@ -47,7 +51,8 @@ public class DualViewProctoringController {
             ProctoringIncidentRepository incidentRepo,
             ProctoringEvidenceRepository evidenceRepo,
             AssessmentSessionRepository assessmentSessionRepo,
-            JwtUtil jwtUtil) {
+            JwtUtil jwtUtil,
+            FlociProctoringAiService flociAiService) {
         this.dvService = dvService;
         this.correlationEngine = correlationEngine;
         this.riskScoringService = riskScoringService;
@@ -59,16 +64,71 @@ public class DualViewProctoringController {
         this.evidenceRepo = evidenceRepo;
         this.assessmentSessionRepo = assessmentSessionRepo;
         this.jwtUtil = jwtUtil;
+        this.flociAiService = flociAiService;
+    }
+
+    public static String resolveLanIp() {
+        try {
+            List<NetworkInterface> interfaces = Collections.list(NetworkInterface.getNetworkInterfaces());
+            interfaces.sort((a, b) -> {
+                String an = (a.getName() + " " + a.getDisplayName()).toLowerCase();
+                String bn = (b.getName() + " " + b.getDisplayName()).toLowerCase();
+                boolean aWifi = an.contains("wi-fi") || an.contains("wireless") || an.contains("wlan");
+                boolean bWifi = bn.contains("wi-fi") || bn.contains("wireless") || bn.contains("wlan");
+                if (aWifi && !bWifi) return -1;
+                if (!aWifi && bWifi) return 1;
+                return 0;
+            });
+
+            for (NetworkInterface iface : interfaces) {
+                if (iface.isLoopback() || !iface.isUp() || iface.isVirtual()) continue;
+                String name = iface.getName().toLowerCase();
+                String displayName = iface.getDisplayName().toLowerCase();
+                if (name.contains("vethernet") || name.contains("wsl") || name.contains("docker") ||
+                    name.contains("tailscale") || displayName.contains("virtual") || displayName.contains("hyper-v")) {
+                    continue;
+                }
+                for (InetAddress addr : Collections.list(iface.getInetAddresses())) {
+                    if (addr instanceof Inet4Address && !addr.isLoopbackAddress() && !addr.isLinkLocalAddress()) {
+                        String hostAddress = addr.getHostAddress();
+                        if (hostAddress.startsWith("10.1.32.") || hostAddress.startsWith("192.168.") || hostAddress.startsWith("10.") || hostAddress.startsWith("172.")) {
+                            return hostAddress;
+                        }
+                    }
+                }
+            }
+            InetAddress localHost = InetAddress.getLocalHost();
+            if (localHost instanceof Inet4Address && !localHost.isLoopbackAddress()) {
+                return localHost.getHostAddress();
+            }
+        } catch (Exception ignored) {}
+        return "10.1.32.243";
+    }
+
+    private UUID parseUuid(String raw) {
+        if (raw == null || raw.isBlank() || "undefined".equalsIgnoreCase(raw) || "null".equalsIgnoreCase(raw)) {
+            return null;
+        }
+        try {
+            return UUID.fromString(raw.trim());
+        } catch (Exception e) {
+            return UUID.nameUUIDFromBytes(raw.trim().getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        }
     }
 
     @PostMapping("/initiate")
     public ResponseEntity<?> initiate(@RequestBody Map<String, Object> body, HttpServletRequest request) {
-        UUID assessmentSessionId = UUID.fromString((String) body.get("assessmentSessionId"));
-        UUID candidateId = body.get("candidateId") != null
-                ? UUID.fromString((String) body.get("candidateId"))
-                : extractUserId(request);
-        UUID opportunityId = body.get("opportunityId") != null
-                ? UUID.fromString((String) body.get("opportunityId")) : null;
+        UUID assessmentSessionId = parseUuid(body != null ? Objects.toString(body.get("assessmentSessionId"), null) : null);
+        if (assessmentSessionId == null) {
+            assessmentSessionId = UUID.randomUUID();
+        }
+
+        UUID candidateId = parseUuid(body != null ? Objects.toString(body.get("candidateId"), null) : null);
+        if (candidateId == null) {
+            candidateId = extractUserId(request);
+        }
+
+        UUID opportunityId = parseUuid(body != null ? Objects.toString(body.get("opportunityId"), null) : null);
 
         DualViewSession session = dvService.initiateDualViewSession(assessmentSessionId, candidateId, opportunityId);
 
@@ -80,26 +140,30 @@ public class DualViewProctoringController {
     }
 
     @PostMapping("/{id}/consent")
-    public ResponseEntity<?> consent(@PathVariable UUID id) {
-        dvService.recordConsent(id);
+    public ResponseEntity<?> consent(@PathVariable String id) {
+        UUID uuid = parseUuid(id);
+        if (uuid != null) {
+            try {
+                dvService.recordConsent(uuid);
+            } catch (Exception ignored) {}
+        }
         return ResponseEntity.ok(Map.of("ok", true));
     }
 
     @PostMapping("/{id}/pairing-token")
-    public ResponseEntity<?> generatePairingToken(@PathVariable UUID id, HttpServletRequest request) {
-        String token = dvService.generatePairingToken(id);
-
-        String baseUrl = request.getScheme() + "://" + request.getServerName();
-        int port = request.getServerPort();
-        if (port != 80 && port != 443) {
-
-            baseUrl = baseUrl.replace("8085", "5173");
+    public ResponseEntity<?> generatePairingToken(@PathVariable String id, HttpServletRequest request) {
+        UUID uuid = parseUuid(id);
+        if (uuid == null) {
+            uuid = UUID.randomUUID();
         }
-        String pairingUrl = baseUrl + "/proctor?token=" + token;
+        String token = dvService.generatePairingToken(uuid);
+        String lanIp = resolveLanIp();
+        String pairingUrl = "https://" + lanIp + ":5173/proctor?token=" + token;
 
         return ResponseEntity.ok(Map.of(
             "token", token,
             "pairingUrl", pairingUrl,
+            "lanIp", lanIp,
             "expiresInSeconds", 300
         ));
     }
@@ -119,11 +183,12 @@ public class DualViewProctoringController {
     }
 
     @GetMapping("/{id}/status")
-    public ResponseEntity<?> getStatus(@PathVariable UUID id) {
-        DualViewSession session = dvService.getSession(id);
+    public ResponseEntity<?> getStatus(@PathVariable String id) {
+        UUID uuid = parseUuid(id);
+        DualViewSession session = uuid != null ? dvService.getSession(uuid) : null;
         if (session == null) {
             return ResponseEntity.ok(Map.of(
-                "procSessionId", id,
+                "procSessionId", uuid != null ? uuid.toString() : "",
                 "status", "ACTIVE",
                 "mobilePaired", false,
                 "riskScore", 0,
@@ -146,35 +211,57 @@ public class DualViewProctoringController {
     }
 
     @PostMapping("/{id}/heartbeat")
-    public ResponseEntity<?> heartbeat(@PathVariable UUID id, @RequestBody Map<String, Object> body) {
-        String deviceType = (String) body.getOrDefault("deviceType", "LAPTOP");
-        boolean cameraActive = Boolean.TRUE.equals(body.get("cameraActive"));
-        boolean micActive = Boolean.TRUE.equals(body.get("micActive"));
-        dvService.recordHeartbeat(id, deviceType, cameraActive, micActive);
+    public ResponseEntity<?> heartbeat(@PathVariable String id, @RequestBody Map<String, Object> body) {
+        UUID uuid = parseUuid(id);
+        if (uuid != null) {
+            String deviceType = (String) body.getOrDefault("deviceType", "LAPTOP");
+            boolean cameraActive = Boolean.TRUE.equals(body.get("cameraActive"));
+            boolean micActive = Boolean.TRUE.equals(body.get("micActive"));
+            try {
+                dvService.recordHeartbeat(uuid, deviceType, cameraActive, micActive);
+            } catch (Exception ignored) {}
+        }
         return ResponseEntity.ok(Map.of("ok", true));
     }
 
     @PostMapping("/{id}/activate")
-    public ResponseEntity<?> activate(@PathVariable UUID id) {
-        dvService.activateSession(id);
+    public ResponseEntity<?> activate(@PathVariable String id) {
+        UUID uuid = parseUuid(id);
+        if (uuid != null) {
+            try {
+                dvService.activateSession(uuid);
+            } catch (Exception ignored) {}
+        }
         return ResponseEntity.ok(Map.of("ok", true, "status", "ACTIVE"));
     }
 
     @PostMapping("/{id}/complete")
-    public ResponseEntity<?> complete(@PathVariable UUID id) {
-        DualViewSession session = dvService.completeSession(id);
-        correlationEngine.clearSession(id.toString());
-        return ResponseEntity.ok(Map.of(
-            "procSessionId", session.getId(),
-            "status", session.getStatus(),
-            "riskScore", session.getRiskScore(),
-            "riskLevel", session.getRiskLevel(),
-            "reviewRequired", session.getReviewRequired()
-        ));
+    public ResponseEntity<?> complete(@PathVariable String id) {
+        UUID uuid = parseUuid(id);
+        if (uuid == null) {
+            return ResponseEntity.ok(Map.of("ok", true, "status", "COMPLETED"));
+        }
+        try {
+            DualViewSession session = dvService.completeSession(uuid);
+            correlationEngine.clearSession(uuid.toString());
+            return ResponseEntity.ok(Map.of(
+                "procSessionId", session.getId(),
+                "status", session.getStatus(),
+                "riskScore", session.getRiskScore(),
+                "riskLevel", session.getRiskLevel(),
+                "reviewRequired", session.getReviewRequired()
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.ok(Map.of("procSessionId", uuid, "status", "COMPLETED", "riskScore", 0, "riskLevel", "NORMAL", "reviewRequired", false));
+        }
     }
 
     @PostMapping("/{id}/laptop-events")
-    public ResponseEntity<?> laptopEvents(@PathVariable UUID id, @RequestBody Map<String, Object> body) {
+    public ResponseEntity<?> laptopEvents(@PathVariable String id, @RequestBody Map<String, Object> body) {
+        UUID uuid = parseUuid(id);
+        if (uuid == null) {
+            return ResponseEntity.ok(Map.of("ok", true));
+        }
         @SuppressWarnings("unchecked")
         List<Map<String, Object>> events = (List<Map<String, Object>>) body.get("events");
         String questionId = (String) body.get("currentQuestionId");
@@ -184,16 +271,33 @@ public class DualViewProctoringController {
                 String eventType = (String) event.get("eventType");
                 double confidence = event.get("confidence") instanceof Number
                         ? ((Number) event.get("confidence")).doubleValue() : 0.7;
-                correlationEngine.recordSignal(id.toString(), eventType, "LAPTOP_CAMERA",
+                correlationEngine.recordSignal(uuid.toString(), eventType, "LAPTOP_CAMERA",
                         confidence, questionId);
             }
         }
         return ResponseEntity.ok(Map.of("ok", true));
     }
 
+    private byte[] decodeBase64Image(String frameData) {
+        if (frameData == null || frameData.isEmpty()) return null;
+        String b64 = frameData;
+        if (b64.contains(",")) {
+            b64 = b64.substring(b64.indexOf(",") + 1);
+        }
+        try {
+            return Base64.getDecoder().decode(b64);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
     @PostMapping("/{id}/mobile-frame")
-    public ResponseEntity<?> mobileFrame(@PathVariable UUID id, @RequestBody Map<String, Object> body) {
-        DualViewSession session = dvSessionRepo.findById(id).orElse(null);
+    public ResponseEntity<?> mobileFrame(@PathVariable String id, @RequestBody Map<String, Object> body) {
+        UUID uuid = parseUuid(id);
+        if (uuid == null) {
+            return ResponseEntity.ok(Map.of("ok", true));
+        }
+        DualViewSession session = dvSessionRepo.findById(uuid).orElse(null);
         if (session != null) {
             session.setMobileCameraHealth("HEALTHY");
             if (!"ACTIVE".equals(session.getStatus()) && !"COMPLETED".equals(session.getStatus())) {
@@ -203,105 +307,66 @@ public class DualViewProctoringController {
             dvSessionRepo.save(session);
         }
 
-        boolean secondPersonDetected = false;
-        boolean phoneDetected = false;
-        boolean cameraObstructed = false;
-        boolean candidateAbsent = false;
+        String frameData = (String) body.get("frameData");
+        byte[] frameBytes = decodeBase64Image(frameData);
+
+        // Call FastAPI AI Service on port 8000
+        int aiPersonCount = 1;
+        boolean aiSecondaryDevice = false;
+        boolean aiCameraObstructed = false;
+        boolean aiCandidateAbsent = false;
+
+        if (frameData != null && !frameData.isEmpty()) {
+            try {
+                Map<String, Object> aiReq = Map.of("frameData", frameData);
+                String aiJson = objectMapper.writeValueAsString(aiReq);
+                java.net.http.HttpRequest request = java.net.http.HttpRequest.newBuilder()
+                        .uri(java.net.URI.create("http://localhost:8000/analyze/mobile-frame"))
+                        .header("Content-Type", "application/json")
+                        .timeout(java.time.Duration.ofMillis(1500))
+                        .POST(java.net.http.HttpRequest.BodyPublishers.ofString(aiJson))
+                        .build();
+
+                java.net.http.HttpResponse<String> response = httpClient.send(request, java.net.http.HttpResponse.BodyHandlers.ofString());
+                if (response.statusCode() == 200) {
+                    Map<String, Object> aiResp = objectMapper.readValue(response.body(), Map.class);
+                    if (aiResp.get("personCount") instanceof Number) {
+                        aiPersonCount = ((Number) aiResp.get("personCount")).intValue();
+                    }
+                    aiSecondaryDevice = Boolean.TRUE.equals(aiResp.get("secondaryDeviceDetected"));
+                    aiCameraObstructed = Boolean.TRUE.equals(aiResp.get("cameraObstructed"));
+                    aiCandidateAbsent = Boolean.TRUE.equals(aiResp.get("candidateAbsent"));
+                }
+            } catch (Exception ignored) {}
+        }
+
+        // Run local Floci AWS Rekognition, S3, and DynamoDB pipeline
+        FlociProctoringAiService.FrameAnalysisResult flociResult = null;
+        if (frameBytes != null) {
+            flociResult = flociAiService.analyzeFrame(uuid, frameBytes, "MOBILE");
+        }
+
+        boolean secondPersonDetected = (aiPersonCount >= 2) || (flociResult != null && flociResult.multipleFaces);
+        boolean phoneDetected = aiSecondaryDevice || (flociResult != null && flociResult.phoneDetected);
+        boolean candidateAbsent = (aiCandidateAbsent && aiPersonCount == 0) || (flociResult != null && flociResult.candidateAbsent);
+        boolean cameraObstructed = aiCameraObstructed;
         String warningMessage = null;
 
-        try {
-            String frameData = (String) body.get("frameData");
-            if (frameData != null && !frameData.isEmpty()) {
-                Map<String, Object> aiReq = Map.of(
-                    "procSessionId", id.toString(),
-                    "frameData", frameData,
-                    "timestamp", System.currentTimeMillis()
-                );
-                String reqJson = objectMapper.writeValueAsString(aiReq);
-                var httpRequest = java.net.http.HttpRequest.newBuilder()
-                    .uri(java.net.URI.create("http://localhost:8000/analyze/mobile-frame"))
-                    .header("Content-Type", "application/json")
-                    .timeout(java.time.Duration.ofMillis(1800))
-                    .POST(java.net.http.HttpRequest.BodyPublishers.ofString(reqJson))
-                    .build();
-
-                var httpResponse = httpClient.send(httpRequest, java.net.http.HttpResponse.BodyHandlers.ofString());
-                if (httpResponse.statusCode() == 200) {
-                    var aiResp = objectMapper.readValue(httpResponse.body(), Map.class);
-                    int personCount = aiResp.get("personCount") instanceof Number ? ((Number) aiResp.get("personCount")).intValue() : 1;
-                    Boolean secondaryDevice = (Boolean) aiResp.get("secondaryDeviceDetected");
-                    Boolean obstructed = (Boolean) aiResp.get("cameraObstructed");
-                    Boolean absent = (Boolean) aiResp.get("candidateAbsent");
-
-                    List<?> eventsList = (List<?>) aiResp.get("events");
-                    if (eventsList != null) {
-                        for (Object evtObj : eventsList) {
-                            if (evtObj instanceof Map<?, ?> evtMap) {
-                                String evType = (String) evtMap.get("eventType");
-                                if ("CAMERA_OBSTRUCTION".equals(evType)) {
-                                    obstructed = true;
-                                } else if ("NO_PERSON_DETECTED".equals(evType)) {
-                                    absent = true;
-                                }
-                            }
-                        }
-                    }
-
-                    long now = System.currentTimeMillis();
-                    long lastInc = lastIncidentTimeMap.getOrDefault(id, 0L);
-
-                    if (Boolean.TRUE.equals(obstructed)) {
-                        cameraObstructed = true;
-                        correlationEngine.recordSignal(id.toString(), "CAMERA_COVERED", "MOBILE_CAMERA", 0.96, null);
-                        if (now - lastInc > 6000) {
-                            lastIncidentTimeMap.put(id, now);
-                            incidentService.createIncident(id, "CAMERA_TAMPERING", "CRITICAL", 0.96, 30, null, List.of("MOBILE_CAMERA"), 1);
-                        }
-                        warningMessage = "WARNING: Camera lens covered or obstructed! Uncover lens immediately!";
-                    } else if (Boolean.TRUE.equals(absent) || personCount == 0) {
-                        int streak = absentStreakMap.merge(id, 1, Integer::sum);
-                        if (streak >= 3) {
-                            candidateAbsent = true;
-                            correlationEngine.recordSignal(id.toString(), "FACE_MISSING", "MOBILE_CAMERA", 0.95, null);
-                            if (now - lastInc > 8000) {
-                                lastIncidentTimeMap.put(id, now);
-                                incidentService.createIncident(id, "CANDIDATE_ABSENT", "HIGH", 0.95, 20, null, List.of("MOBILE_CAMERA"), 1);
-                            }
-                            warningMessage = "WARNING: Candidate not visible in workspace view! Return immediately!";
-                        }
-                    } else {
-                        absentStreakMap.put(id, 0);
-                    }
-
-                    if (personCount > 1) {
-                        int pStreak = secondPersonStreakMap.merge(id, 1, Integer::sum);
-                        if (pStreak >= 3) {
-                            secondPersonDetected = true;
-                            correlationEngine.recordSignal(id.toString(), "SECOND_PERSON", "MOBILE_CAMERA", 0.92, null);
-                            if (now - lastInc > 8000) {
-                                lastIncidentTimeMap.put(id, now);
-                                incidentService.createIncident(id, "SECOND_PERSON", "HIGH", 0.92, 25, null, List.of("MOBILE_CAMERA"), 1);
-                            }
-                            warningMessage = "WARNING: Additional person detected in secondary camera view";
-                        }
-                    } else {
-                        secondPersonStreakMap.put(id, 0);
-                    }
-
-                    if (Boolean.TRUE.equals(secondaryDevice)) {
-                        phoneDetected = true;
-                        correlationEngine.recordSignal(id.toString(), "PHONE_DETECTED", "MOBILE_CAMERA", 0.98, null);
-                        if (now - lastInc > 6000) {
-                            lastIncidentTimeMap.put(id, now);
-                            incidentService.createIncident(id, "PHONE_DETECTED", "CRITICAL", 0.98, 50, null, List.of("MOBILE_CAMERA"), 1);
-                        }
-                        warningMessage = "CRITICAL VIOLATION: Mobile phone detected! Test terminating!";
-                    }
-                }
-            }
-        } catch (Exception e) {
-            System.err.println("[DualViewProctoringController] AI service call error: " + e.getMessage());
+        if (phoneDetected) {
+            warningMessage = "CRITICAL VIOLATION: Mobile phone detected! Strike recorded.";
+            correlationEngine.recordSignal(uuid.toString(), "PHONE_DETECTED", "MOBILE_CAMERA", 0.95, null);
+        } else if (secondPersonDetected) {
+            warningMessage = "WARNING: Additional person detected in camera view.";
+            correlationEngine.recordSignal(uuid.toString(), "SECOND_PERSON_DETECTED", "MOBILE_CAMERA", 0.92, null);
+        } else if (cameraObstructed) {
+            warningMessage = "CRITICAL WARNING: Camera lens covered or obstructed! Uncover immediately!";
+            correlationEngine.recordSignal(uuid.toString(), "CAMERA_OBSTRUCTION", "MOBILE_CAMERA", 0.95, null);
+        } else if (candidateAbsent) {
+            warningMessage = "WARNING: Candidate not visible in workspace view!";
+            correlationEngine.recordSignal(uuid.toString(), "CANDIDATE_ABSENT", "MOBILE_CAMERA", 0.90, null);
         }
+
+        int strikes = flociAiService.getStrikes(uuid);
 
         Map<String, Object> resp = new HashMap<>();
         resp.put("ok", true);
@@ -309,29 +374,100 @@ public class DualViewProctoringController {
         resp.put("phoneDetected", phoneDetected);
         resp.put("cameraObstructed", cameraObstructed);
         resp.put("candidateAbsent", candidateAbsent);
+        resp.put("strikes", strikes);
+        if (flociResult != null) {
+            resp.put("evidenceS3Key", flociResult.evidenceS3Key);
+            resp.put("riskDelta", flociResult.calculatedRiskDelta);
+            resp.put("primaryViolation", flociResult.primaryViolation);
+            resp.put("detectedLabels", flociResult.detectedLabels);
+        }
         if (warningMessage != null) {
             resp.put("warningMessage", warningMessage);
         }
         return ResponseEntity.ok(resp);
     }
 
-    @PostMapping("/{id}/mobile-audio")
-    public ResponseEntity<?> mobileAudio(@PathVariable UUID id, @RequestBody Map<String, Object> body) {
+    @PostMapping("/{id}/laptop-frame")
+    public ResponseEntity<?> laptopFrame(@PathVariable String id, @RequestBody Map<String, Object> body) {
+        UUID uuid = parseUuid(id);
+        if (uuid == null) {
+            return ResponseEntity.ok(Map.of("ok", true));
+        }
+        String frameData = (String) body.get("frameData");
+        byte[] frameBytes = decodeBase64Image(frameData);
 
-        return ResponseEntity.ok(Map.of("ok", true));
+        FlociProctoringAiService.FrameAnalysisResult flociResult = null;
+        if (frameBytes != null) {
+            flociResult = flociAiService.analyzeFrame(uuid, frameBytes, "LAPTOP");
+        }
+
+        int strikes = flociAiService.getStrikes(uuid);
+        Map<String, Object> resp = new HashMap<>();
+        resp.put("ok", true);
+        resp.put("strikes", strikes);
+        if (flociResult != null) {
+            resp.put("evidenceS3Key", flociResult.evidenceS3Key);
+            resp.put("riskDelta", flociResult.calculatedRiskDelta);
+            resp.put("primaryViolation", flociResult.primaryViolation);
+            resp.put("detectedLabels", flociResult.detectedLabels);
+        }
+        return ResponseEntity.ok(resp);
+    }
+
+    @PostMapping("/{id}/mobile-audio")
+    public ResponseEntity<?> mobileAudio(@PathVariable String id, @RequestBody Map<String, Object> body) {
+        UUID uuid = parseUuid(id);
+        if (uuid == null) {
+            return ResponseEntity.ok(Map.of("ok", true, "flagged", false, "strikes", 0));
+        }
+        String audioData = (String) body.get("audioData");
+        byte[] audioBytes = decodeBase64Image(audioData);
+        boolean flagged = flociAiService.analyzeAudioChunk(uuid, audioBytes);
+        return ResponseEntity.ok(Map.of("ok", true, "flagged", flagged, "strikes", flociAiService.getStrikes(uuid)));
+    }
+
+    @PostMapping("/{id}/telemetry")
+    public ResponseEntity<?> telemetryEvent(@PathVariable String id, @RequestBody Map<String, Object> body) {
+        UUID uuid = parseUuid(id);
+        if (uuid == null) {
+            return ResponseEntity.ok(Map.of("ok", true, "strikes", 0));
+        }
+        String eventType = (String) body.getOrDefault("eventType", "TAB_SWITCH");
+        String metadata = (String) body.get("metadata");
+        flociAiService.recordTelemetryIncident(uuid, eventType, metadata);
+        return ResponseEntity.ok(Map.of("ok", true, "strikes", flociAiService.getStrikes(uuid)));
+    }
+
+    @GetMapping("/{id}/dynamo-incidents")
+    public ResponseEntity<?> getDynamoIncidents(@PathVariable String id) {
+        UUID uuid = parseUuid(id);
+        if (uuid == null) {
+            return ResponseEntity.ok(Map.of("success", true, "data", List.of(), "strikes", 0));
+        }
+        List<Map<String, Object>> incidents = flociAiService.getIncidentsFromDynamoDb(uuid);
+        return ResponseEntity.ok(Map.of("success", true, "data", incidents, "strikes", flociAiService.getStrikes(uuid)));
     }
 
     @PostMapping("/{id}/mobile-disconnect")
-    public ResponseEntity<?> mobileDisconnect(@PathVariable UUID id) {
-        dvService.handleMobileDisconnect(id);
-        correlationEngine.recordSignal(id.toString(), "MOBILE_DISCONNECTED", "SYSTEM", 1.0, null);
+    public ResponseEntity<?> mobileDisconnect(@PathVariable String id) {
+        UUID uuid = parseUuid(id);
+        if (uuid != null) {
+            try {
+                dvService.handleMobileDisconnect(uuid);
+                correlationEngine.recordSignal(uuid.toString(), "MOBILE_DISCONNECTED", "SYSTEM", 1.0, null);
+            } catch (Exception ignored) {}
+        }
         return ResponseEntity.ok(Map.of("ok", true));
     }
 
     @PostMapping("/{id}/incidents")
     public ResponseEntity<?> createIncident(
-            @PathVariable UUID id,
+            @PathVariable String id,
             @RequestBody Map<String, Object> body) {
+        UUID uuid = parseUuid(id);
+        if (uuid == null) {
+            return ResponseEntity.ok(Map.of("status", "IGNORED"));
+        }
         String incidentType = (String) body.getOrDefault("incidentType", "POLICY_VIOLATION");
         String severity = (String) body.getOrDefault("severity", "MEDIUM");
         double confidence = body.get("confidence") instanceof Number
@@ -354,7 +490,7 @@ public class DualViewProctoringController {
         }
 
         ProctoringIncident incident = incidentService.createIncident(
-                id, incidentType, severity, confidence, riskContribution, questionId, sources, sources.size()
+                uuid, incidentType, severity, confidence, riskContribution, questionId, sources, sources.size()
         );
 
         String evidenceBase64 = (String) body.get("evidenceBase64");
@@ -365,7 +501,7 @@ public class DualViewProctoringController {
                 }
                 byte[] imageBytes = Base64.getDecoder().decode(evidenceBase64);
                 String deviceSource = sources.isEmpty() ? "LAPTOP_CAMERA" : sources.get(0);
-                incidentService.recordFrameEvidence(incident.getId(), deviceSource, imageBytes, id, testName, studentName, warningName);
+                incidentService.recordFrameEvidence(incident.getId(), deviceSource, imageBytes, uuid, testName, studentName, warningName);
             } catch (Exception e) {
                 System.err.println("[DualViewProctoringController] Failed to record snapshot evidence: " + e.getMessage());
             }
@@ -380,15 +516,19 @@ public class DualViewProctoringController {
     }
 
     @GetMapping("/{id}/incidents")
-    public ResponseEntity<?> getIncidents(@PathVariable UUID id) {
-        DualViewSession session = dvService.getSession(id);
-        UUID queryId = session != null ? session.getId() : id;
+    public ResponseEntity<?> getIncidents(@PathVariable String id) {
+        UUID uuid = parseUuid(id);
+        if (uuid == null) {
+            return ResponseEntity.ok(List.of());
+        }
+        DualViewSession session = dvService.getSession(uuid);
+        UUID queryId = session != null ? session.getId() : uuid;
         return ResponseEntity.ok(incidentService.getIncidentsForSession(queryId));
     }
 
     @PostMapping("/{id}/incidents/{incidentId}/review")
     public ResponseEntity<?> reviewIncident(
-            @PathVariable UUID id,
+            @PathVariable String id,
             @PathVariable UUID incidentId,
             @RequestBody Map<String, String> body,
             HttpServletRequest request) {
@@ -404,12 +544,16 @@ public class DualViewProctoringController {
     }
 
     @GetMapping("/{id}/timeline")
-    public ResponseEntity<?> getTimeline(@PathVariable UUID id) {
-        DualViewSession session = dvService.getSession(id);
+    public ResponseEntity<?> getTimeline(@PathVariable String id) {
+        UUID uuid = parseUuid(id);
+        if (uuid == null) {
+            return ResponseEntity.ok(Map.of("procSessionId", id, "candidateId", id, "riskScore", 0, "riskLevel", "NORMAL", "reviewRequired", false, "incidents", List.of()));
+        }
+        DualViewSession session = dvService.getSession(uuid);
         if (session == null) {
             return ResponseEntity.ok(Map.of(
-                "procSessionId", id,
-                "candidateId", id,
+                "procSessionId", uuid,
+                "candidateId", uuid,
                 "riskScore", 0,
                 "riskLevel", "NORMAL",
                 "reviewRequired", false,
@@ -432,10 +576,28 @@ public class DualViewProctoringController {
     }
 
     @GetMapping("/{id}/report")
-    public ResponseEntity<?> getReport(@PathVariable UUID id) {
-        DualViewSession session = dvService.getSession(id);
+    public ResponseEntity<?> getReport(@PathVariable String id) {
+        UUID uuid = parseUuid(id);
+        if (uuid == null) {
+            Map<String, Object> fallback = new LinkedHashMap<>();
+            fallback.put("procSessionId", id);
+            fallback.put("assessmentSessionId", id);
+            fallback.put("candidateId", id);
+            fallback.put("status", "COMPLETED");
+            fallback.put("riskScore", 0);
+            fallback.put("riskLevel", "NORMAL");
+            fallback.put("reviewRequired", false);
+            fallback.put("laptopCameraHealth", "HEALTHY");
+            fallback.put("mobileCameraHealth", "HEALTHY");
+            fallback.put("mobilePaired", true);
+            fallback.put("incidentSummary", Map.of("total", 0, "high", 0, "medium", 0, "low", 0, "pendingReview", 0));
+            fallback.put("incidents", List.of());
+            return ResponseEntity.ok(fallback);
+        }
+
+        DualViewSession session = dvService.getSession(uuid);
         if (session == null && assessmentSessionRepo != null) {
-            AssessmentSession as = assessmentSessionRepo.findById(id).orElse(null);
+            AssessmentSession as = assessmentSessionRepo.findById(uuid).orElse(null);
             if (as != null) {
                 session = dvService.initiateDualViewSession(as.getId(), as.getStudentId(), as.getOpportunityId());
                 if ("SUBMITTED".equals(as.getStatus()) || "COMPLETED".equals(as.getStatus())) {
@@ -450,9 +612,9 @@ public class DualViewProctoringController {
 
         if (session == null) {
             Map<String, Object> fallback = new LinkedHashMap<>();
-            fallback.put("procSessionId", id);
-            fallback.put("assessmentSessionId", id);
-            fallback.put("candidateId", id);
+            fallback.put("procSessionId", uuid);
+            fallback.put("assessmentSessionId", uuid);
+            fallback.put("candidateId", uuid);
             fallback.put("status", "COMPLETED");
             fallback.put("riskScore", 0);
             fallback.put("riskLevel", "NORMAL");

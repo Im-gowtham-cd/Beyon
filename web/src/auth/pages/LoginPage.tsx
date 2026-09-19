@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { authApi } from '../services/authApi';
+import { getRoleTier, getRoleDashboardPath } from '../types/auth';
 import type { ApiError } from '../../services/api/client';
 import styles from './LoginPage.module.css';
 
@@ -51,6 +52,12 @@ export function LoginPage() {
       const response = await authApi.login({ email, password });
       login(response.accessToken, response.user);
 
+      if (response.user.mustChangePassword) {
+        showToast('First login detected: Mandatory password change required.');
+        navigate('/auth/force-change-password');
+        return;
+      }
+
       const profileStatus = response.user.profileStatus;
       const accountStatus = response.user.status;
 
@@ -64,18 +71,26 @@ export function LoginPage() {
         return;
       }
 
+      const tier = getRoleTier(response.user.role);
+
       if (profileStatus === 'INCOMPLETE') {
-        const role = response.user.role.toLowerCase();
-        navigate(`/onboarding/${role}`);
+        if (tier === 'SUPER_ADMIN') {
+          navigate('/admin/home');
+          return;
+        }
+        const onboardingTier = tier.toLowerCase();
+        navigate(`/onboarding/${onboardingTier}`);
         return;
       }
 
       if (
-        profileStatus === 'PENDING_SUPER_ADMIN_VERIFICATION' ||
-        accountStatus === 'PENDING_SUPER_ADMIN_VERIFICATION' ||
-        profileStatus === 'PENDING_INSTITUTION_VERIFICATION' ||
-        profileStatus === 'PENDING_COMPANY_VERIFICATION' ||
-        accountStatus === 'PENDING_VERIFICATION'
+        tier !== 'INSTITUTION' &&
+        tier !== 'COMPANY' &&
+        (profileStatus === 'PENDING_SUPER_ADMIN_VERIFICATION' ||
+          accountStatus === 'PENDING_SUPER_ADMIN_VERIFICATION' ||
+          profileStatus === 'PENDING_INSTITUTION_VERIFICATION' ||
+          profileStatus === 'PENDING_COMPANY_VERIFICATION' ||
+          accountStatus === 'PENDING_VERIFICATION')
       ) {
         navigate('/verification-pending');
         return;
@@ -83,13 +98,8 @@ export function LoginPage() {
 
       showToast('Login successful! Redirecting...');
       setTimeout(() => {
-        const roleRoutes: Record<string, string> = {
-          STUDENT: '/student/home',
-          INSTITUTION: '/institution/home',
-          COMPANY: '/company/home',
-          ADMIN: '/admin/home',
-        };
-        navigate(roleRoutes[response.user.role] || '/student/home');
+        const destination = getRoleDashboardPath(response.user.role, response.user.tier);
+        navigate(destination);
       }, 1000);
     } catch (err) {
       const apiErr = err as ApiError;

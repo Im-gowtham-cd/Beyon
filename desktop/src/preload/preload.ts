@@ -10,6 +10,9 @@ contextBridge.exposeInMainWorld('beyon', {
     getToken: () => ipcRenderer.invoke('auth:get-token'),
     setToken: (token: string) => ipcRenderer.invoke('auth:set-token', token),
     clearToken: () => ipcRenderer.invoke('auth:clear-token'),
+    onLaunchParams: (callback: (params: Record<string, string>) => void) => {
+      ipcRenderer.on('auth:launch-params', (_event, params) => callback(params));
+    },
   },
   assessment: {
     enterFullscreen: () => ipcRenderer.invoke('assessment:enter-fullscreen'),
@@ -21,6 +24,7 @@ contextBridge.exposeInMainWorld('beyon', {
     enableKeyboardShortcuts: () => ipcRenderer.invoke('assessment:enable-shortcuts'),
     getSystemInfo: () => ipcRenderer.invoke('assessment:system-info'),
     getDeviceInfo: () => ipcRenderer.invoke('assessment:device-info'),
+    getLocalIp: () => ipcRenderer.invoke('assessment:local-ip'),
   },
   proctoring: {
     onFullscreenChange: (callback: (isFullscreen: boolean) => void) => {

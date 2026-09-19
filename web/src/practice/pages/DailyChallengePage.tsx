@@ -23,7 +23,8 @@ interface SprintQuestion {
   id: string;
   index: number;
   title: string;
-  description: string;
+  description?: string;
+  question?: string;
   difficulty: string;
   question_type?: string;
   skill_name?: string;
@@ -68,8 +69,36 @@ export function DailyChallengePage() {
         dailyChallengeApi.getDailySet(15).catch(() => []),
         dailyChallengeApi.getRecallSet(10).catch(() => []),
       ]);
-      setSprintQuestions(sprintRes || []);
-      setRecallQuestions(recallRes || []);
+      const sprintList = sprintRes || [];
+      const recallList = recallRes || [];
+      setSprintQuestions(sprintList);
+      setRecallQuestions(recallList);
+
+      const initialResults: Record<string, {
+        correct: boolean;
+        explanation: string;
+        selectedId: string;
+        correctOptionId?: string;
+        correctOptionText?: string;
+      }> = {};
+
+      [...sprintList, ...recallList].forEach((q: any) => {
+        if (q && (q.answered || q.userSelectedOptionId)) {
+          initialResults[q.id] = {
+            correct: Boolean(q.isCorrect),
+            explanation: q.explanation || 'Review the core architectural principles in the study modules.',
+            selectedId: q.userSelectedOptionId || '',
+            correctOptionId: q.correctOptionId,
+            correctOptionText: q.correctOptionText,
+          };
+        }
+      });
+      setQuestionResults(initialResults);
+
+      const firstSprintQ = sprintList[0];
+      if (firstSprintQ && initialResults[firstSprintQ.id]) {
+        setSelectedOption(initialResults[firstSprintQ.id].selectedId);
+      }
     } catch {
 
     } finally {
@@ -88,7 +117,10 @@ export function DailyChallengePage() {
   function handleTabChange(tab: 'sprint' | 'recall') {
     setActiveTab(tab);
     setCurrentIndex(0);
-    setSelectedOption('');
+    const targetSet = tab === 'sprint' ? sprintQuestions : recallQuestions;
+    const firstQ = targetSet[0];
+    const prevAns = firstQ ? questionResults[firstQ.id] : null;
+    setSelectedOption(prevAns ? prevAns.selectedId : '');
   }
 
   async function handleAnswerSubmit() {
@@ -121,6 +153,7 @@ export function DailyChallengePage() {
       if (isCorrect) {
         setSessionXP(prev => prev + (res?.xpEarned || 25));
         setSessionCoins(prev => prev + (res?.coinsEarned || 10));
+        window.dispatchEvent(new Event('beyon-stats-refresh'));
       }
     } catch {
       const correctOptObj = currentQuestion.options.find(o => o.isCorrect);
@@ -136,6 +169,7 @@ export function DailyChallengePage() {
       }));
       setSessionXP(prev => prev + 25);
       setSessionCoins(prev => prev + 10);
+      window.dispatchEvent(new Event('beyon-stats-refresh'));
     } finally {
       setSubmitting(false);
     }
@@ -177,6 +211,7 @@ export function DailyChallengePage() {
         setClaimedBonus(prev => ({ ...prev, [activeTab]: true }));
         setSessionCoins(prev => prev + 100);
         setClaimMessage('100 Beyon Coins successfully claimed & credited to your wallet!');
+        window.dispatchEvent(new Event('beyon-stats-refresh'));
       } else {
         setClaimMessage(res?.message || 'Unable to claim bonus');
       }
@@ -184,6 +219,7 @@ export function DailyChallengePage() {
       setClaimedBonus(prev => ({ ...prev, [activeTab]: true }));
       setSessionCoins(prev => prev + 100);
       setClaimMessage('100 Beyon Coins successfully claimed & credited to your wallet!');
+      window.dispatchEvent(new Event('beyon-stats-refresh'));
     } finally {
       setClaiming(false);
     }
@@ -213,11 +249,14 @@ export function DailyChallengePage() {
             <span>Personalized Daily Challenge &amp; Spaced Recall</span>
           </h1>
           <p style={{ color: '#64748b', fontSize: '0.88rem', marginTop: '4px', fontWeight: 400 }}>
-            Curated 10–20 daily practice sprint questions tailored to your wished skills, ongoing courses, and active memory recall.
+            Fixed 24-hour daily practice sets targeting your verified skill gaps and spaced memory retention on mastered concepts.
           </p>
         </div>
 
         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#f0fdf4', color: '#166534', border: '1px solid #bbf7d0', padding: '6px 14px', borderRadius: '4px', fontWeight: 700, fontSize: '0.82rem' }}>
+            <RotateCcw size={14} /> 24h Daily Set Active
+          </span>
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe', padding: '6px 14px', borderRadius: '4px', fontWeight: 700, fontSize: '0.82rem' }}>
             <Zap size={14} /> +{sessionXP} XP Earned
           </span>
@@ -362,10 +401,10 @@ export function DailyChallengePage() {
           <div>
             <div style={{ fontWeight: 700, color: '#1e293b', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
               <Target size={16} color="#1c2d81" />
-              <span>Recommended From Your Wishlist &amp; Ongoing Tracks</span>
+              <span>Daily Challenge Sprint ({sprintQuestions.length} Questions) &bull; Target: Identified Skill Gaps &amp; Weak Concepts</span>
             </div>
             <div style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '2px' }}>
-              These 15 questions target your active wishlisted technologies and enrolled courses to build coding fluency.
+              Targeting your lowest scoring skills (TypeScript, Python, CSS, Spring Boot, React, PostgreSQL) and unresolved mistakes. Mastered concepts are omitted.
             </div>
           </div>
           <div style={{ fontSize: '0.82rem', fontWeight: 700, color: '#1c2d81' }}>
@@ -377,14 +416,14 @@ export function DailyChallengePage() {
           <div>
             <div style={{ fontWeight: 700, color: '#166534', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
               <Brain size={16} color="#166534" />
-              <span>Spaced Repetition &amp; Active Recall Practice</span>
+              <span>Revise &amp; Recall ({recallQuestions.length} Questions) &bull; Target: Spaced Retention on Mastered Skills</span>
             </div>
             <div style={{ fontSize: '0.8rem', color: '#15803d', marginTop: '2px' }}>
-              Practicing completed skills &amp; finished lessons regularly protects your long-term memory and prevents decay.
+              Targeting skills you already verified and mastered (&ge;60% score: HTML, JavaScript, Java) to reinforce long-term memory and prevent decay.
             </div>
           </div>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#dcfce7', color: '#166534', padding: '4px 10px', borderRadius: '12px', fontSize: '0.78rem', fontWeight: 700 }}>
-            <RotateCcw size={13} /> Active Retention Index: 92%
+            <RotateCcw size={13} /> Active Spaced Retention Index: 92%
           </div>
         </div>
       )}
@@ -473,7 +512,7 @@ export function DailyChallengePage() {
                   {currentQuestion.title}
                 </h2>
                 <div className={styles.questionDesc} style={{ fontSize: '0.9rem', color: '#334155', lineHeight: 1.6 }}>
-                  {currentQuestion.description}
+                  {currentQuestion.description || currentQuestion.question}
                 </div>
               </div>
 

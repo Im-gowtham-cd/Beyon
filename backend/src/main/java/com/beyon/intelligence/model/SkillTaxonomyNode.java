@@ -7,8 +7,13 @@ import java.util.UUID;
 @Entity
 @Table(name = "skill_taxonomy_nodes")
 public class SkillTaxonomyNode {
-    @Id @GeneratedValue(strategy = GenerationType.UUID) private UUID id;
-    @Column(name = "parent_id") private UUID parentId;
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(columnDefinition = "varchar(36)")
+    private UUID id;
+
+    @Column(name = "parent_id", columnDefinition = "varchar(36)")
+    private UUID parentId;
     @Column(nullable = false, length = 200) private String name;
     @Column(nullable = false, unique = true, length = 200) private String slug;
     @Column(columnDefinition = "text") private String description;

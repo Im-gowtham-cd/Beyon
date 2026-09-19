@@ -1,0 +1,334 @@
+package com.beyon.intelligence.client;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.MediaType;
+import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestClient;
+
+import java.util.*;
+
+/**
+ * HTTP client connecting the Spring Boot core backend to the FastAPI AI Intelligence service.
+ * Supports personalized gap-closing recommendations, sprint questions, and skill onboarding.
+ */
+@Component
+public class AiIntelligenceClient {
+
+    private static final Logger log = LoggerFactory.getLogger(AiIntelligenceClient.class);
+    private final RestClient restClient;
+
+    public AiIntelligenceClient(@Value("${beyon.ai-service.url:http://localhost:8000}") String aiServiceUrl) {
+        log.info("Initializing AiIntelligenceClient with endpoint: {}", aiServiceUrl);
+        this.restClient = RestClient.builder()
+                .baseUrl(aiServiceUrl)
+                .build();
+    }
+
+    /**
+     * Request strictly personalized recommendations closing this student's specific gaps.
+     * Enforces anti-popular course filtering at the AI engine layer.
+     */
+    public Map<String, Object> getPersonalizedRecommendations(
+            String studentId,
+            String targetRole,
+            Map<String, Object> studentSkills,
+            List<Map<String, Object>> roleRequirements,
+            List<String> completedCourseIds,
+            int maxRecommendations
+    ) {
+        try {
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("student_id", studentId);
+            payload.put("target_role", targetRole != null ? targetRole : "Software Engineer");
+            payload.put("student_skills", studentSkills != null ? studentSkills : Collections.emptyMap());
+            payload.put("role_requirements", roleRequirements != null ? roleRequirements : Collections.emptyList());
+            payload.put("completed_course_ids", completedCourseIds != null ? completedCourseIds : Collections.emptyList());
+            payload.put("max_recommendations", maxRecommendations > 0 ? maxRecommendations : 5);
+
+            return restClient.post()
+                    .uri("/api/v1/intelligence/recommendations/personalized")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(payload)
+                    .retrieve()
+                    .body(new ParameterizedTypeReference<Map<String, Object>>() {});
+        } catch (Exception e) {
+            log.warn("Failed to get personalized recommendations from AI service: {}", e.getMessage());
+            return Collections.emptyMap();
+        }
+    }
+
+    /**
+     * Request targeted daily sprint questions closing the student's highest priority gaps.
+     */
+    public Map<String, Object> getPersonalizedDailyQuestions(
+            String studentId,
+            String targetRole,
+            Map<String, Object> studentSkills,
+            List<Map<String, Object>> roleRequirements,
+            int questionCount
+    ) {
+        try {
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("student_id", studentId);
+            payload.put("target_role", targetRole != null ? targetRole : "Software Engineer");
+            payload.put("student_skills", studentSkills != null ? studentSkills : Collections.emptyMap());
+            payload.put("role_requirements", roleRequirements != null ? roleRequirements : Collections.emptyList());
+            payload.put("question_count", questionCount > 0 ? questionCount : 5);
+
+            return restClient.post()
+                    .uri("/api/v1/intelligence/daily-questions/personalized")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(payload)
+                    .retrieve()
+                    .body(new ParameterizedTypeReference<Map<String, Object>>() {});
+        } catch (Exception e) {
+            log.warn("Failed to get daily questions from AI service: {}", e.getMessage());
+            return Collections.emptyMap();
+        }
+    }
+
+    /**
+     * Call the multi-factor skill gap calculation engine.
+     */
+    public Map<String, Object> analyzeSkillGaps(
+            String studentId,
+            String targetRole,
+            Map<String, Object> studentSkills,
+            List<Map<String, Object>> roleRequirements,
+            List<String> studentInterests
+    ) {
+        try {
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("student_id", studentId);
+            payload.put("target_role", targetRole != null ? targetRole : "Software Engineer");
+            payload.put("student_skills", studentSkills != null ? studentSkills : Collections.emptyMap());
+            payload.put("role_requirements", roleRequirements != null ? roleRequirements : Collections.emptyList());
+            payload.put("student_interests", studentInterests != null ? studentInterests : Collections.emptyList());
+
+            return restClient.post()
+                    .uri("/api/v1/intelligence/skill-gap/analyze")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(payload)
+                    .retrieve()
+                    .body(new ParameterizedTypeReference<Map<String, Object>>() {});
+        } catch (Exception e) {
+            log.warn("Failed to analyze skill gaps via AI service: {}", e.getMessage());
+            return Collections.emptyMap();
+        }
+    }
+
+    /**
+     * Submit question attempt telemetry for adaptive mastery and confidence updating.
+     */
+    public Map<String, Object> processAttempt(
+            String studentId,
+            String skillName,
+            String subtopic,
+            boolean isCorrect,
+            int timeSpentSeconds,
+            double currentProficiency,
+            double currentConfidence
+    ) {
+        try {
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("student_id", studentId);
+            payload.put("skill_name", skillName);
+            payload.put("subtopic", subtopic);
+            payload.put("is_correct", isCorrect);
+            payload.put("time_spent_seconds", timeSpentSeconds);
+            payload.put("current_proficiency", currentProficiency);
+            payload.put("current_confidence", currentConfidence);
+
+            return restClient.post()
+                    .uri("/api/v1/intelligence/adaptive/submit-attempt")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(payload)
+                    .retrieve()
+                    .body(new ParameterizedTypeReference<Map<String, Object>>() {});
+        } catch (Exception e) {
+            log.warn("Failed to process attempt telemetry via AI service: {}", e.getMessage());
+            return Collections.emptyMap();
+        }
+    }
+
+    /**
+     * Deep AI Skill Gap & Profession Career Roadmap analysis powered by Ollama qwen3.5:4b.
+     */
+    public Map<String, Object> generateAiSkillGapAnalysis(
+            String studentId,
+            String targetProfession,
+            Map<String, Object> studentSkills,
+            List<Map<String, Object>> calculatedGaps,
+            List<String> studentInterests
+    ) {
+        try {
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("student_id", studentId != null ? studentId : "");
+            payload.put("target_profession", targetProfession != null ? targetProfession : "Software Engineer");
+            payload.put("student_skills", studentSkills != null ? studentSkills : Collections.emptyMap());
+            payload.put("gaps", calculatedGaps != null ? calculatedGaps : Collections.emptyList());
+            payload.put("student_interests", studentInterests != null ? studentInterests : Collections.emptyList());
+
+            return restClient.post()
+                    .uri("/api/v1/intelligence/skill-gap/ai-analysis")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(payload)
+                    .retrieve()
+                    .body(new ParameterizedTypeReference<Map<String, Object>>() {});
+        } catch (Exception e) {
+            log.warn("Failed to generate AI skill gap analysis via AI service: {}", e.getMessage());
+            return Collections.emptyMap();
+        }
+    }
+
+    /**
+     * Interactive Career Advisory chat powered by Ollama qwen3.5:4b.
+     */
+    public Map<String, Object> chatWithAiAdvisor(
+            String studentId,
+            String targetProfession,
+            Map<String, Object> studentSkills,
+            List<Map<String, String>> chatHistory,
+            String question
+    ) {
+        try {
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("student_id", studentId != null ? studentId : "");
+            payload.put("target_profession", targetProfession != null ? targetProfession : "Software Engineer");
+            payload.put("student_skills", studentSkills != null ? studentSkills : Collections.emptyMap());
+            payload.put("chat_history", chatHistory != null ? chatHistory : Collections.emptyList());
+            payload.put("question", question != null ? question : "");
+
+            return restClient.post()
+                    .uri("/api/v1/intelligence/advisor/chat")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(payload)
+                    .retrieve()
+                    .body(new ParameterizedTypeReference<Map<String, Object>>() {});
+        } catch (Exception e) {
+            log.warn("Failed to chat with AI advisor via AI service: {}", e.getMessage());
+            return Collections.emptyMap();
+        }
+    }
+
+    /**
+     * Request 15 Daily Challenge Sprint questions based on candidate's learned skills,
+     * company role relevance, and lagged concepts tailored to skill level.
+     */
+    public Map<String, Object> getDailyChallengeSprint(
+            String studentId,
+            String targetRole,
+            List<String> learnedSkills,
+            List<String> laggedConcepts,
+            String skillLevel,
+            int questionCount
+    ) {
+        try {
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("student_id", studentId);
+            payload.put("target_role", targetRole != null ? targetRole : "Full-Stack Software Engineer");
+            payload.put("learned_skills", learnedSkills != null ? learnedSkills : Collections.emptyList());
+            payload.put("lagged_concepts", laggedConcepts != null ? laggedConcepts : Collections.emptyList());
+            payload.put("skill_level", skillLevel != null ? skillLevel : "INTERMEDIATE");
+            payload.put("question_count", questionCount > 0 ? questionCount : 15);
+
+            return restClient.post()
+                    .uri("/api/v1/intelligence/daily-challenge/sprint")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(payload)
+                    .retrieve()
+                    .body(new ParameterizedTypeReference<Map<String, Object>>() {});
+        } catch (Exception e) {
+            log.warn("Failed to get Daily Challenge Sprint from AI service: {}", e.getMessage());
+            return Collections.emptyMap();
+        }
+    }
+
+    /**
+     * Request 10 Revise & Recall questions based on what candidate is currently learning,
+     * directly targeting lagged concepts and failed questions for active recall.
+     */
+    public Map<String, Object> getReviseRecall(
+            String studentId,
+            List<String> currentlyLearningSkills,
+            List<String> laggedConcepts,
+            List<Map<String, Object>> incorrectQuestions,
+            String skillLevel,
+            int questionCount
+    ) {
+        try {
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("student_id", studentId);
+            payload.put("currently_learning_skills", currentlyLearningSkills != null ? currentlyLearningSkills : Collections.emptyList());
+            payload.put("lagged_concepts", laggedConcepts != null ? laggedConcepts : Collections.emptyList());
+            payload.put("incorrect_questions", incorrectQuestions != null ? incorrectQuestions : Collections.emptyList());
+            payload.put("skill_level", skillLevel != null ? skillLevel : "INTERMEDIATE");
+            payload.put("question_count", questionCount > 0 ? questionCount : 10);
+
+            return restClient.post()
+                    .uri("/api/v1/intelligence/daily-challenge/recall")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(payload)
+                    .retrieve()
+                    .body(new ParameterizedTypeReference<Map<String, Object>>() {});
+        } catch (Exception e) {
+            log.warn("Failed to get Revise & Recall set from AI service: {}", e.getMessage());
+            return Collections.emptyMap();
+        }
+    }
+
+    /**
+     * Look up and auto-extract institution details based on AICTE Permanent Institute ID
+     * using google_search from google.adk.tools in the AI service.
+     */
+    public Map<String, Object> lookupAicteInstitution(String aicteId, String institutionName, String city, String state) {
+        try {
+            return restClient.get()
+                    .uri(uriBuilder -> uriBuilder
+                            .path("/api/v1/institution/aicte-lookup")
+                            .queryParam("code", aicteId != null ? aicteId.trim() : "")
+                            .queryParam("institution_name", institutionName != null ? institutionName : "")
+                            .queryParam("city", city != null ? city : "")
+                            .queryParam("state", state != null ? state : "")
+                            .build())
+                    .retrieve()
+                    .body(new ParameterizedTypeReference<Map<String, Object>>() {});
+        } catch (Exception e) {
+            log.warn("Failed to lookup AICTE institution from AI service: {}", e.getMessage());
+            return Collections.emptyMap();
+        }
+    }
+
+    public Map<String, Object> lookupAicteInstitution(String aicteId) {
+        return lookupAicteInstitution(aicteId, null, null, null);
+    }
+
+    /**
+     * Look up and auto-extract corporate company details based on MCA Corporate Identification Number (CIN)
+     * using google_search from google.adk.tools in the AI service.
+     */
+    public Map<String, Object> lookupCinCompany(String cin, String companyName, String city, String state) {
+        try {
+            return restClient.get()
+                    .uri(uriBuilder -> uriBuilder
+                            .path("/api/v1/company/cin-lookup")
+                            .queryParam("cin", cin != null ? cin.trim().toUpperCase() : "")
+                            .queryParam("company_name", companyName != null ? companyName : "")
+                            .queryParam("city", city != null ? city : "")
+                            .queryParam("state", state != null ? state : "")
+                            .build())
+                    .retrieve()
+                    .body(new ParameterizedTypeReference<Map<String, Object>>() {});
+        } catch (Exception e) {
+            log.warn("Failed to lookup CIN corporate details from AI service: {}", e.getMessage());
+            return Collections.emptyMap();
+        }
+    }
+
+    public Map<String, Object> lookupCinCompany(String cin) {
+        return lookupCinCompany(cin, null, null, null);
+    }
+}

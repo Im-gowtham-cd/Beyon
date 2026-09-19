@@ -238,19 +238,29 @@ export function CreateOpportunityPage() {
     status: 'PUBLISHED',
   });
 
+  const [isVerified, setIsVerified] = useState<boolean>(true);
+
   useEffect(() => {
     async function loadActiveInstitutions() {
       setLoadingInstitutions(true);
       try {
         const token = localStorage.getItem('beyon_token') || localStorage.getItem('beyon_access_token');
-        const res = await fetch('/api/v1/opportunities/active-institutions', {
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-        });
+        const headers: HeadersInit = token ? { Authorization: `Bearer ${token}` } : {};
+        const [res, verifRes] = await Promise.all([
+          fetch('/api/v1/opportunities/active-institutions', { headers }),
+          fetch('/api/v1/company/verification/status', { headers }).catch(() => null),
+        ]);
         if (res.ok) {
           const data = await res.json();
           if (Array.isArray(data.data)) {
             setActiveInstitutions(data.data);
             setSelectedInstIds(data.data.map((i: ActiveInstitution) => i.id));
+          }
+        }
+        if (verifRes && verifRes.ok) {
+          const v = await verifRes.json();
+          if (v.data) {
+            setIsVerified(v.data.isVerified || v.data.overallStatus === 'VERIFIED');
           }
         }
       } catch {
@@ -506,6 +516,10 @@ export function CreateOpportunityPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (!isVerified) {
+      setError('Corporate verification required: Your account is pending Super Admin review. Publishing drives is locked.');
+      return;
+    }
     if (!form.title.trim()) {
       setError('Job / Placement drive title is required.');
       return;
@@ -644,6 +658,48 @@ export function CreateOpportunityPage() {
 
   return (
     <div className={styles.container}>
+      {!isVerified && (
+        <div
+          style={{
+            padding: '16px 20px',
+            background: '#fffbeb',
+            border: '1px solid #fde68a',
+            borderLeft: '4px solid #b45309',
+            marginBottom: '20px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '12px',
+            flexWrap: 'wrap',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <AlertCircle size={20} color="#b45309" />
+            <div>
+              <div style={{ fontWeight: 800, color: '#92400e', fontSize: '0.9rem' }}>
+                Corporate Verification Required
+              </div>
+              <div style={{ fontSize: '0.82rem', color: '#b45309', marginTop: '2px' }}>
+                Your enterprise account must satisfy the 7-check automated verification and Super Admin review before publishing opportunities.
+              </div>
+            </div>
+          </div>
+          <Link
+            to="/company/home"
+            style={{
+              padding: '6px 14px',
+              background: '#b45309',
+              color: '#ffffff',
+              fontSize: '0.8rem',
+              fontWeight: 700,
+              textDecoration: 'none',
+            }}
+          >
+            Review Verification Status
+          </Link>
+        </div>
+      )}
+
       <div className={styles.headerRow}>
         <div>
           <Link to="/company/opportunities" className={styles.backLink}>

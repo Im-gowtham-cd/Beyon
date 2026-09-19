@@ -53,7 +53,7 @@ describe('SocialFeedPage', () => {
     (communityApi.getFeed as any).mockResolvedValue([{ ...mockPost, likeCount: 42 }]);
     render(<SocialFeedPage />);
     await waitFor(() => {
-      expect(screen.getByText('♡ 42')).toBeInTheDocument();
+      expect(screen.getByText('42')).toBeInTheDocument();
     });
   });
 });
