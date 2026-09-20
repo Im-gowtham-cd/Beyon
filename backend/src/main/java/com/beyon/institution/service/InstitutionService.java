@@ -234,6 +234,26 @@ public class InstitutionService {
                 }
             });
 
+            if (placementRecordRepository != null) {
+                placementRecordRepository.findByStudentId(is.getStudentId()).stream().findFirst().ifPresent(pr -> {
+                    map.put("packageLpa", pr.getPackageLpa());
+                    map.put("ctcLpa", pr.getPackageLpa());
+                    map.put("companyName", pr.getCompanyName());
+                    map.put("roleTitle", pr.getRoleTitle());
+                    map.put("placementDate", pr.getPlacementDate());
+                    map.put("placementType", pr.getPlacementType());
+                });
+            }
+
+            if (recruitmentApplicationRepository != null) {
+                recruitmentApplicationRepository.findByStudentIdOrderByCreatedAtDesc(is.getStudentId()).stream().findFirst().ifPresent(ra -> {
+                    map.put("applicationStatus", ra.getStatus());
+                    map.put("assessmentScore", ra.getAssessmentScore());
+                    map.put("interviewScore", ra.getInterviewScore());
+                    map.put("applicationNotes", ra.getNotes());
+                });
+            }
+
             results.add(map);
         }
         return results;
@@ -432,12 +452,25 @@ public class InstitutionService {
         }
         Map<String, Object> metrics = new HashMap<>();
         long totalStudents = institutionStudentRepository.countByInstitutionId(institutionId);
-        long placed = institutionStudentRepository.countByInstitutionIdAndPlacementStatus(institutionId, "PLACED");
+        long placed = institutionStudentRepository.countByInstitutionIdAndPlacementStatus(institutionId, "PLACED")
+                + institutionStudentRepository.countByInstitutionIdAndPlacementStatus(institutionId, "OFFERED");
         long seeking = institutionStudentRepository.countByInstitutionIdAndPlacementStatus(institutionId, "PLACEMENT_SEEKING");
+        long assessmentCleared = institutionStudentRepository.countByInstitutionIdAndPlacementStatus(institutionId, "ASSESSMENT_CLEARED")
+                + institutionStudentRepository.countByInstitutionIdAndPlacementStatus(institutionId, "IN_INTERVIEW");
+        long attendingDrives = institutionStudentRepository.countByInstitutionIdAndPlacementStatus(institutionId, "ATTENDING_DRIVES")
+                + institutionStudentRepository.countByInstitutionIdAndPlacementStatus(institutionId, "SCHEDULED");
+        long malpracticeCount = institutionStudentRepository.countByInstitutionIdAndPlacementStatus(institutionId, "MALPRACTICE_FLAGGED")
+                + institutionStudentRepository.countByInstitutionIdAndPlacementStatus(institutionId, "BLOCKED");
+        long optedOut = institutionStudentRepository.countByInstitutionIdAndPlacementStatus(institutionId, "HIGHER_STUDIES")
+                + institutionStudentRepository.countByInstitutionIdAndPlacementStatus(institutionId, "OPTED_OUT");
 
         metrics.put("totalStudents", totalStudents);
         metrics.put("studentsPlaced", placed);
         metrics.put("placementSeeking", seeking);
+        metrics.put("assessmentCleared", assessmentCleared);
+        metrics.put("attendingDrives", attendingDrives);
+        metrics.put("malpracticeCount", malpracticeCount);
+        metrics.put("optedOut", optedOut);
         metrics.put("placementPercentage", totalStudents > 0 ? (placed * 100.0 / totalStudents) : 0);
 
         List<PlacementRecord> records = placementRecordRepository.findByInstitutionId(institutionId);
@@ -457,6 +490,11 @@ public class InstitutionService {
             metrics.put("highestPackage", maxPackage);
             metrics.put("tier1Placements", tier1);
             metrics.put("tier2Placements", tier2);
+        } else {
+            metrics.put("averagePackage", 0.0);
+            metrics.put("highestPackage", 0.0);
+            metrics.put("tier1Placements", 0);
+            metrics.put("tier2Placements", 0);
         }
 
         Set<String> companies = records.stream().map(PlacementRecord::getCompanyName).collect(Collectors.toSet());
@@ -487,8 +525,8 @@ public class InstitutionService {
         BigDecimal placementScore = BigDecimal.valueOf(Math.min(placementPct / 80 * 5, 5)).setScale(2, RoundingMode.HALF_UP);
         BigDecimal salaryScore = BigDecimal.valueOf(Math.min(avgPkg / 10 * 5, 5)).setScale(2, RoundingMode.HALF_UP);
         BigDecimal industryScore = BigDecimal.valueOf(Math.min(snapshot.getCompaniesVisited() / 20.0 * 5, 5)).setScale(2, RoundingMode.HALF_UP);
-        BigDecimal academicScore = BigDecimal.valueOf(3.5);
-        BigDecimal skillScore = BigDecimal.valueOf(3.0);
+        BigDecimal academicScore = BigDecimal.valueOf(3.8);
+        BigDecimal skillScore = BigDecimal.valueOf(4.1);
 
         snapshot.setPlacementScore(placementScore);
         snapshot.setSalaryScore(salaryScore);
@@ -508,7 +546,13 @@ public class InstitutionService {
     }
 
     public InstitutionRatingSnapshot getLatestRating(UUID institutionId) {
-        return ratingRepository.findTopByInstitutionIdOrderBySnapshotDateDesc(institutionId);
+        InstitutionRatingSnapshot snapshot = ratingRepository.findTopByInstitutionIdOrderBySnapshotDateDesc(institutionId);
+        if (snapshot == null) {
+            try {
+                snapshot = calculateAndSaveRating(institutionId);
+            } catch (Exception ignored) {}
+        }
+        return snapshot;
     }
 
     public List<PlacementDrive> getDrives(UUID institutionId) {

@@ -49,8 +49,10 @@ public class InstitutionRatingSnapshot {
     @Column(precision = 8, scale = 2)
     private BigDecimal highestPackage;
 
+    @Column(name = "tier1_count")
     private Integer tier1Count = 0;
 
+    @Column(name = "tier2_count")
     private Integer tier2Count = 0;
 
     private Integer companiesVisited = 0;
