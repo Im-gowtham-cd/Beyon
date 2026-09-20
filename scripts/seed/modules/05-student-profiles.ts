@@ -52,7 +52,7 @@ const PERSONA_SKILL_MAP: Record<string, PersonaSkillConfig[]> = {
     { skillName: "Machine Learning", category: "AI / Machine Learning", score: 88, proficiency: "ADVANCED", verified: true },
     { skillName: "Deep Learning", category: "AI / Machine Learning", score: 82, proficiency: "ADVANCED", verified: true },
     { skillName: "SQL", category: "Database", score: 75, proficiency: "INTERMEDIATE", verified: true },
-    { skillName: "Data Structures & Algorithms", category: "DSA", score: 72, proficiency: "INTERMEDIATE", verified: true },
+    { skillName: "DSA", category: "DSA", score: 72, proficiency: "INTERMEDIATE", verified: true },
   ],
   F: [
     { skillName: "C", category: "Languages", score: 82, proficiency: "ADVANCED", verified: true },
@@ -74,43 +74,17 @@ export async function seedStudentProfiles(cfg: SeedConfig): Promise<void> {
   const projectStmts: string[] = [];
   const streakStmts: string[] = [];
   const practiceStatsStmts: string[] = [];
+  const gapStmts: string[] = [];
 
   const kecInstUserId = institutionUserIds["INST_KEC"] || toUUID("beyon-inst-user-inst_kec");
 
   // 1. Seed Fixed Demo Students (e.g. Gowtham C D - Roll 23CSR068)
-  const gowthamId = toUUID("gowtham-student-0001");
-  profileStmts.push(
-    `INSERT INTO student_profiles
-      (id, user_id, first_name, last_name, registration_number, aicte_code, institution,
-       department, degree, academic_year, graduation_year, cgpa, phone, gender,
-       preferred_job_roles, preferred_industries, preferred_locations,
-       verification_status, completion_pct, has_completed_assessment,
-       created_at, updated_at)
-     VALUES (
-      ${esc(gowthamId)}, ${esc(gowthamId)}, 'Gowtham', 'C D', '23CSR068', '1-4251711', 'Kongu Engineering College',
-      'CSE', 'B.E', '4th Year', 2027, 8.85, '9003538951', 'MALE',
-      'Full-Stack Software Engineer,Cloud Architect', 'Software,FinTech,AI', 'Bangalore,Chennai,Coimbatore',
-      'VERIFIED', 100, 1, NOW(), NOW()
-     )
-     ON DUPLICATE KEY UPDATE registration_number='23CSR068', cgpa=8.85, verification_status='VERIFIED';`
-  );
+  const gowthamIds = [
+    toUUID("gowtham-student-0001"),
+    toUUID("gowtham-student-0002"),
+    "1853170b-89ad-41ec-b73d-14109608e84c",
+  ];
 
-  walletStmts.push(
-    `INSERT INTO coin_wallets (id, student_id, balance, total_earned, total_spent, created_at, updated_at)
-     VALUES (${esc(toUUID("wallet-gowtham"))}, ${esc(gowthamId)}, 2450, 2950, 500, NOW(), NOW())
-     ON DUPLICATE KEY UPDATE balance=2450, total_earned=2950, total_spent=500;`
-  );
-
-  instStudentStmts.push(
-    `INSERT INTO institution_students
-      (id, institution_id, student_id, department, batch, admission_year, graduation_year, placement_status, verified, created_at, updated_at)
-     VALUES (
-      ${esc(toUUID("inst-student-gowtham"))}, ${esc(kecInstUserId)}, ${esc(gowthamId)}, 'CSE', '2023-2027', 2023, 2027, 'PLACEMENT_SEEKING', 1, NOW(), NOW()
-     )
-     ON DUPLICATE KEY UPDATE placement_status='PLACEMENT_SEEKING', verified=1;`
-  );
-
-  // Seed Gowtham's full 9 core skills
   const gowthamSkills = [
     { name: "HTML", cat: "Technical", score: 80, prof: "INTERMEDIATE" },
     { name: "JavaScript", cat: "Technical", score: 82, prof: "INTERMEDIATE" },
@@ -122,12 +96,87 @@ export async function seedStudentProfiles(cfg: SeedConfig): Promise<void> {
     { name: "Spring Boot", cat: "Backend", score: 40, prof: "INTERMEDIATE" },
     { name: "TypeScript", cat: "Languages", score: 10, prof: "BEGINNER" },
   ];
-  for (const sk of gowthamSkills) {
-    const sId = toUUID(`skill-gowtham-${sk.name.toLowerCase()}`);
-    skillStmts.push(
-      `INSERT INTO student_skills (id, user_id, skill_name, category, proficiency, verified, source, created_at, updated_at)
-       VALUES (${esc(sId)}, ${esc(gowthamId)}, ${esc(sk.name)}, ${esc(sk.cat)}, ${esc(sk.prof)}, 1, 'ASSESSMENT_VERIFIED', NOW(), NOW())
-       ON DUPLICATE KEY UPDATE proficiency=${esc(sk.prof)}, verified=1;`
+
+  for (const gowthamId of gowthamIds) {
+    profileStmts.push(
+      `INSERT INTO student_profiles
+        (id, user_id, first_name, last_name, registration_number, aicte_code, institution,
+         department, degree, academic_year, graduation_year, cgpa, phone, gender,
+         preferred_job_roles, preferred_industries, preferred_locations,
+         verification_status, completion_pct, has_completed_assessment,
+         created_at, updated_at)
+       VALUES (
+        ${esc(toUUID(`sp-${gowthamId}`))}, ${esc(gowthamId)}, 'Gowtham', 'C D', '23CSR068', '1-4251711', 'Kongu Engineering College',
+        'CSE', 'B.E', '4th Year', 2027, 8.85, '9003538951', 'MALE',
+        'Full-Stack Software Engineer,Cloud Architect', 'Software,FinTech,AI', 'Bangalore,Chennai,Coimbatore',
+        'VERIFIED', 100, 1, NOW(), NOW()
+       )
+       ON DUPLICATE KEY UPDATE registration_number='23CSR068', cgpa=8.85, verification_status='VERIFIED', completion_pct=100, has_completed_assessment=1;`
+    );
+
+    walletStmts.push(
+      `INSERT INTO coin_wallets (id, student_id, balance, total_earned, total_spent, created_at, updated_at)
+       VALUES (${esc(toUUID(`wallet-${gowthamId}`))}, ${esc(gowthamId)}, 2450, 2950, 500, NOW(), NOW())
+       ON DUPLICATE KEY UPDATE balance=2450, total_earned=2950, total_spent=500;`
+    );
+
+    instStudentStmts.push(
+      `INSERT INTO institution_students
+        (id, institution_id, student_id, department, batch, admission_year, graduation_year, placement_status, verified, created_at, updated_at)
+       VALUES (
+        ${esc(toUUID(`inst-student-${gowthamId}`))}, ${esc(kecInstUserId)}, ${esc(gowthamId)}, 'CSE', '2023-2027', 2023, 2027, 'PLACEMENT_SEEKING', 1, NOW(), NOW()
+       )
+       ON DUPLICATE KEY UPDATE department='CSE', batch='2023-2027', placement_status='PLACEMENT_SEEKING', verified=1;`
+    );
+
+    for (const sk of gowthamSkills) {
+      const sId = toUUID(`skill-${gowthamId}-${sk.name.toLowerCase()}`);
+      skillStmts.push(
+        `INSERT INTO student_skills (id, user_id, skill_name, category, proficiency, score, verified, source, created_at, updated_at)
+         VALUES (${esc(sId)}, ${esc(gowthamId)}, ${esc(sk.name)}, ${esc(sk.cat)}, ${esc(sk.prof)}, ${sk.score}, 1, 'ASSESSMENT_VERIFIED', NOW(), NOW())
+         ON DUPLICATE KEY UPDATE proficiency=${esc(sk.prof)}, score=${sk.score}, verified=1;`
+      );
+    }
+
+    // Projects for Gowtham
+    const pId1 = toUUID(`proj-${gowthamId}-1`);
+    projectStmts.push(
+      `INSERT INTO student_projects (id, user_id, name, role, description, technologies, github_url, created_at)
+       VALUES (${esc(pId1)}, ${esc(gowthamId)}, 'Academia-Industry Collaboration Portal', 'Lead Architect & Full-Stack Engineer',
+               'Enterprise multi-tenant collaboration platform with dolt database versioning, proctoring telemetry, and real-time placement monitoring.',
+               'TypeScript, React, Spring Boot, PostgreSQL, Docker', 'https://github.com/gowtham/academia-industry-portal', NOW())
+       ON DUPLICATE KEY UPDATE name='Academia-Industry Collaboration Portal';`
+    );
+
+    const statId = toUUID(`pstat-${gowthamId}`);
+    practiceStatsStmts.push(
+      `INSERT INTO student_practice_stats
+        (id, student_id, total_attempted, total_solved, easy_solved, medium_solved, hard_solved, current_streak, longest_streak, last_practice_date, total_time_seconds, updated_at)
+       VALUES (${esc(statId)}, ${esc(gowthamId)}, 142, 126, 60, 48, 18, 14, 45, CURDATE(), 25400, NOW())
+       ON DUPLICATE KEY UPDATE total_attempted=142, total_solved=126, current_streak=14;`
+    );
+
+    // Skill Gaps for Gowtham (TypeScript 10%, Spring Boot 40%)
+    const gapTsId = toUUID(`gap-${gowthamId}-ts`);
+    gapStmts.push(
+      `INSERT INTO skill_gaps
+        (id, student_id, required_skill_id, current_level, required_level, gap_severity, recommendation, estimated_effort_hours, created_at)
+       VALUES (
+        ${esc(gapTsId)}, ${esc(gowthamId)}, 'd15a5206-a73e-48fb-89b8-e5168a9dd0ca', 'BEGINNER (10%)', 'ADVANCED (80%)', 'CRITICAL',
+        'Complete TypeScript Strict Typing & Generics architecture sprints. Prioritize immediately.', 25, NOW()
+       )
+       ON DUPLICATE KEY UPDATE current_level='BEGINNER (10%)', gap_severity='CRITICAL';`
+    );
+
+    const gapSbId = toUUID(`gap-${gowthamId}-sb`);
+    gapStmts.push(
+      `INSERT INTO skill_gaps
+        (id, student_id, required_skill_id, current_level, required_level, gap_severity, recommendation, estimated_effort_hours, created_at)
+       VALUES (
+        ${esc(gapSbId)}, ${esc(gowthamId)}, 'a8c2f3fe-5e52-4aaa-8a46-3a8627d62b89', 'INTERMEDIATE (40%)', 'ADVANCED (75%)', 'MODERATE',
+        'Study Spring Boot JPA Transaction Isolation and Distributed Messaging with Kafka.', 18, NOW()
+       )
+       ON DUPLICATE KEY UPDATE current_level='INTERMEDIATE (40%)', gap_severity='MODERATE';`
     );
   }
 
@@ -148,12 +197,12 @@ export async function seedStudentProfiles(cfg: SeedConfig): Promise<void> {
          verification_status, completion_pct, has_completed_assessment,
          created_at, updated_at)
        VALUES (
-        ${esc(userId)}, ${esc(userId)}, ${esc(fName)}, ${esc(lName)}, ${esc(meta.rollNo)}, '1-4251711', 'Kongu Engineering College',
+        ${esc(toUUID(`sp-${userId}`))}, ${esc(userId)}, ${esc(fName)}, ${esc(lName)}, ${esc(meta.rollNo)}, '1-4251711', 'Kongu Engineering College',
         ${esc(meta.deptCode)}, 'B.E', ${esc(meta.academicYear)}, 2027, ${cgpa}, 'MALE',
         'Software Engineer,Full-Stack Developer,Data Engineer', 'Information Technology,Software', 'Bangalore,Chennai,Coimbatore',
         'VERIFIED', 100, 1, NOW(), NOW()
        )
-       ON DUPLICATE KEY UPDATE registration_number=${esc(meta.rollNo)}, cgpa=${cgpa};`
+       ON DUPLICATE KEY UPDATE registration_number=${esc(meta.rollNo)}, cgpa=${cgpa}, verification_status='VERIFIED';`
     );
 
     walletStmts.push(
@@ -169,7 +218,7 @@ export async function seedStudentProfiles(cfg: SeedConfig): Promise<void> {
         ${esc(toUUID(`inst-student-${userId}`))}, ${esc(kecInstUserId)}, ${esc(userId)}, ${esc(meta.deptCode)},
         '2023-2027', 2023, 2027, 'PLACEMENT_SEEKING', 1, NOW(), NOW()
        )
-       ON DUPLICATE KEY UPDATE placement_status='PLACEMENT_SEEKING', verified=1;`
+       ON DUPLICATE KEY UPDATE department=${esc(meta.deptCode)}, batch='2023-2027', placement_status='PLACEMENT_SEEKING', verified=1;`
     );
 
     // Seed persona skills
@@ -177,9 +226,9 @@ export async function seedStudentProfiles(cfg: SeedConfig): Promise<void> {
     for (const psk of personaSkills) {
       const sId = toUUID(`skill-${userId}-${psk.skillName.toLowerCase()}`);
       skillStmts.push(
-        `INSERT INTO student_skills (id, user_id, skill_name, category, proficiency, verified, source, created_at, updated_at)
-         VALUES (${esc(sId)}, ${esc(userId)}, ${esc(psk.skillName)}, ${esc(psk.category)}, ${esc(psk.proficiency)}, ${psk.verified ? 1 : 0}, 'ASSESSMENT_VERIFIED', NOW(), NOW())
-         ON DUPLICATE KEY UPDATE proficiency=${esc(psk.proficiency)}, verified=${psk.verified ? 1 : 0};`
+        `INSERT INTO student_skills (id, user_id, skill_name, category, proficiency, score, verified, source, created_at, updated_at)
+         VALUES (${esc(sId)}, ${esc(userId)}, ${esc(psk.skillName)}, ${esc(psk.category)}, ${esc(psk.proficiency)}, ${psk.score}, ${psk.verified ? 1 : 0}, 'ASSESSMENT_VERIFIED', NOW(), NOW())
+         ON DUPLICATE KEY UPDATE proficiency=${esc(psk.proficiency)}, score=${psk.score}, verified=${psk.verified ? 1 : 0};`
       );
     }
 
@@ -209,12 +258,9 @@ export async function seedStudentProfiles(cfg: SeedConfig): Promise<void> {
   doltBatch(skillStmts);
   doltBatch(projectStmts);
   doltBatch(practiceStatsStmts);
+  if (gapStmts.length > 0) doltBatch(gapStmts);
 
   console.log(`  ✅ ${profileStmts.length} student profiles and wallets seeded`);
-  console.log(`  ✅ ${skillStmts.length} verified candidate skills seeded across 6 personas`);
+  console.log(`  ✅ ${skillStmts.length} verified candidate skills with scores seeded across 6 personas`);
   console.log(`  ✅ ${instStudentStmts.length} student records linked to KEC institutional roster`);
 }
-
-
-
-

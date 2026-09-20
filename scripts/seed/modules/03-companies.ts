@@ -21,7 +21,7 @@ export async function seedCompanies(): Promise<void> {
 
     userStmts.push(
       `INSERT IGNORE INTO users (id, email, password_hash, display_name, role, status, email_verified, profile_status, created_at, updated_at)
-       VALUES (${esc(userId)}, ${esc(officialEmail)}, 'SEEDED_NO_AUTH', ${esc(comp.name)}, 'COMPANY', 'ACTIVE', 1, 'COMPLETED', NOW(), NOW());`
+       VALUES (${esc(userId)}, ${esc(officialEmail)}, '$2b$10$s3855CduR4SV7tOdnQB0BObl.fIaBDOkvW7PJZWvh27Lv5pK3sLYO', ${esc(comp.name)}, 'COMPANY', 'ACTIVE', 1, 'COMPLETED', NOW(), NOW());`
     );
 
     profileStmts.push(

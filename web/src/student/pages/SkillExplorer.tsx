@@ -544,7 +544,7 @@ export function SkillExplorer() {
           {filteredWeakConcepts.map((item: any, idx: number) => {
             const accuracy = typeof item.accuracy === 'number' ? item.accuracy : 20.0;
             const steps = item.improvementSteps || [];
-            const cardKey = item.conceptKey || `${item.skillName}-${idx}`;
+            const cardKey = `${item.skillName}-${item.conceptKey || 'concept'}-${idx}`;
             const isExpanded = expandedRemediations[cardKey] ?? (idx === 0);
 
             return (
@@ -647,9 +647,9 @@ export function SkillExplorer() {
                       paddingTop: '10px',
                       borderTop: '1px solid #fee2e2'
                     }}>
-                      {steps.map((step: any) => (
+                      {steps.map((step: any, stepIdx: number) => (
                         <div
-                          key={step.stepNumber}
+                          key={`step-${cardKey}-${step.stepNumber || stepIdx}`}
                           style={{
                             background: '#f8fafc',
                             border: '1px solid #e2e8f0',

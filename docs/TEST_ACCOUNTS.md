@@ -1,55 +1,62 @@
-# Beyon — Test Accounts
+# Beyon — Test & Platform Accounts Reference
 
-> [!CAUTION]
-> These are TEST credentials for development/staging ONLY.
-> Never use in production. Never commit real passwords to version control.
+> [!TIP]
+> **Unified Access**: All accounts in this document and across the local Dolt database use your authentic account password. You can log into any role using the email listed below with your standard account password.
+> For the complete breakdown across all 14 departments and organizations, refer to [ACCOUNT_ACCESS_GUIDE.md](file:///d:/SIH/26044/docs/ACCOUNT_ACCESS_GUIDE.md).
 
-## Platform Admins
+---
 
-| Role | Email | Password |
-|------|-------|----------|
-| Super Admin | superadmin@example.beyon.test | BeyonTest!2026#Super |
-| Admin | admin@example.beyon.test | BeyonTest!2026#Admin |
-| Moderator | moderator@example.beyon.test | BeyonTest!2026#Moderator |
+## 1. Platform Admins
 
-## Students
+| Role | Email | Dashboard Route |
+| :--- | :--- | :--- |
+| **Super Admin** | `superadmin@beyon.io` / `superadmin@example.beyon.test` | `/admin/overview` |
+| **Verification Admin** | `verifier@beyon.io` | `/admin/verifications` |
+| **Content Admin** | `skillcontent@beyon.io` | `/admin/content` |
+| **Question Setter** | `questionsetter@beyon.io` | `/admin/questions` |
+| **Moderator** | `supportadmin@beyon.io` / `moderator@example.beyon.test` | `/admin/moderation` |
+| **Analytics Admin** | `analytics@beyon.io` | `/admin/analytics` |
 
-| Role | Email | Password | Notes |
-|------|-------|----------|-------|
-| Student (Strong) | student.strong@example.beyon.test | BeyonTest!2026#Student1 | Persona A: High performer, CGPA 9.1, 2450 coins |
-| Student (Weak) | student.weak@example.beyon.test | BeyonTest!2026#Student2 | Persona C: Low performer, CGPA 6.4, 80 coins |
-| Student (Placement Willing) | student.placement@example.beyon.test | BeyonTest!2026#Student3 | Persona B: Average, campus placement eligible |
-| Student (Independent) | student.independent@example.beyon.test | BeyonTest!2026#Student4 | Persona D: Not seeking campus placement |
-| Student (Incomplete Profile) | student.incomplete@example.beyon.test | BeyonTest!2026#Student5 | Unverified email, minimal profile data |
+---
 
-## Exam Candidates
+## 2. Students & Candidates
 
-| Email | Password | Assessment State |
-|-------|----------|-----------------|
-| exam.candidate1@example.beyon.test | BeyonTest!2026#Exam1 | READY (eligible, 1000 coins) |
-| exam.candidate2@example.beyon.test | BeyonTest!2026#Exam2 | BLOCKED (ineligible CGPA) |
-| exam.candidate3@example.beyon.test | BeyonTest!2026#Exam3 | INSUFFICIENT_COINS (50 coins, needs 250) |
-| exam.candidate4@example.beyon.test | BeyonTest!2026#Exam4 | IN_PROGRESS |
-| exam.candidate5@example.beyon.test | BeyonTest!2026#Exam5 | SUBMITTED |
+| Role / Persona | Email | Notes |
+| :--- | :--- | :--- |
+| **Gowtham C D (Primary)** | `gowthamcd.23cse@kongu.edu` | Roll: `23CSR068`, CSE 4th Year, 9 Verified Skills (HTML 80%, JS 82%, Spring Boot 40%, TS 10%), CGPA 8.85 |
+| **Gowtham C D (Secondary)** | `gowthamcdstudies@gmail.com` | Verified student profile |
+| **Kowshik P** | `kowshikp.23cse@kongu.edu` | Preserved student profile |
+| **Harishkannan N** | `harishkannann.23cse@kongu.edu` | Preserved student profile |
+| **Student (Strong)** | `student.strong@example.beyon.test` | Persona A: High performer, CGPA 9.1, 2450 coins |
+| **Student (Placement Willing)** | `student.placement@example.beyon.test` | Persona B: Solid performer, campus placement eligible |
+| **Student (Growth Track)** | `student.weak@example.beyon.test` | Persona C: Foundational skills, identifying skill gaps |
+| **Student (Independent)** | `student.independent@example.beyon.test` | Persona D: Direct off-campus & freelance interest |
+| **Student (Incomplete Profile)** | `student.incomplete@example.beyon.test` | Persona E: Unverified email / minimal profile |
 
-## Company
+---
 
-| Role | Email | Password |
-|------|-------|----------|
-| Company Recruiter | recruiter@example.beyon.test | BeyonTest!2026#Recruiter |
-| Company Admin | company.admin@example.beyon.test | BeyonTest!2026#Company |
+## 3. Institution & Academic Leadership
 
-## Institution
+| Role | Email | Notes |
+| :--- | :--- | :--- |
+| **Institution Admin** | `institution.admin@example.beyon.test` | Real-time monitoring across 471 students & 21 placement drives |
+| **Kongu Engineering College** | `konguengineeringcollege@kongu.edu` | Official institutional account |
+| **KEC Principal** | `principal.test@kongu.edu` / `principal@kongu.edu` | Institutional monitoring & oversight portal |
+| **KEC Coordinator** | `coord.test@kongu.edu` | Placement & department coordination portal |
+| **CSE Faculty In-Charge** | `incharge.cse@kongu.edu` | CSE department skill analytics & student tracking |
+| **Placement Officer** | `placement@example.beyon.test` | Placement drive creation & applicant shortlisting |
+| **Faculty (Demo)** | `faculty@example.beyon.test` | Faculty mentoring & evaluation view |
 
-| Role | Email | Password |
-|------|-------|----------|
-| Institution Admin | institution.admin@example.beyon.test | BeyonTest!2026#Institution |
-| Placement Officer | placement@example.beyon.test | BeyonTest!2026#Placement |
-| Faculty | faculty@example.beyon.test | BeyonTest!2026#Faculty |
+---
 
-## Other Roles
+## 4. Company & Recruiters
 
-| Role | Email | Password |
-|------|-------|----------|
-| Mentor | mentor@example.beyon.test | BeyonTest!2026#Mentor |
-| Alumni | alumni@example.beyon.test | BeyonTest!2026#Alumni |
+| Organization | Email | Verification Status |
+| :--- | :--- | :--- |
+| **Infosys** | `recruiter@infosys.com` | ✅ Corporate Verified |
+| **Grito** | `gotm@grito.in` | ✅ Corporate Verified |
+| **Soliton Technologies** | `soliton.recruitment@gmail.com` | ✅ Verified Enterprise |
+| **Zoho Corporation** | `recruitment@www.zoho.com` | ✅ Enterprise Recruiter |
+| **Mr. Cooper Group** | `recruitment@www.mrcooper.com` | ✅ FinTech Recruiter |
+| **Presidio** | `recruitment@www.presidio.com` | ✅ Cloud Solutions Recruiter |
+| **Beyon Demo Recruiter** | `recruiter@example.beyon.test` | ✅ Test Recruiter |

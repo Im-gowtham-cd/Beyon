@@ -2,6 +2,7 @@ import { doltBatch, doltExec, esc, toUUID } from "../engine/dolt.js";
 import bcrypt from "bcryptjs";
 import { FIXED_ACCOUNTS } from "../data/personas.js";
 import { KEC_DEPARTMENTS } from "../data/institutions.js";
+import { institutionUserIds } from "./02-institutions.js";
 import { SeededRandom, makeName, makeEmailSlug } from "../utils/faker.js";
 import type { SeedConfig } from "../config.js";
 
@@ -24,11 +25,15 @@ export const generatedStudentMetaList: SeedStudentMeta[] = [];
 export async function seedUsers(cfg: SeedConfig): Promise<void> {
   console.log("\n👤 Seeding users (Admins, Faculty & KEC Students)...");
 
+  const kecInstId = institutionUserIds["INST_KEC"] || toUUID("beyon-inst-user-inst_kec");
+  const defaultHash = "$2b$10$s3855CduR4SV7tOdnQB0BObl.fIaBDOkvW7PJZWvh27Lv5pK3sLYO";
+
   // 1. Fixed Accounts
   let fixed = 0;
   for (const acc of FIXED_ACCOUNTS) {
     const uid = toUUID(acc.id);
-    await seedOneUser(uid, acc.email, acc.password, acc.name, acc.role, acc.status, acc.emailVerified, cfg);
+    const instId = acc.institutionKey === "INST_KEC" ? kecInstId : undefined;
+    await seedOneUser(uid, acc.email, acc.password, acc.name, acc.role, acc.status, acc.emailVerified, cfg, instId);
     userIds[acc.email] = uid;
     if (acc.role === "STUDENT") studentUserIds.push(uid);
     fixed++;
@@ -54,8 +59,8 @@ export async function seedUsers(cfg: SeedConfig): Promise<void> {
       facultyUserIds.push(id);
 
       genStmts.push(
-        `INSERT IGNORE INTO users (id, email, password_hash, display_name, role, status, email_verified, profile_status, created_at, updated_at)
-         VALUES (${esc(id)}, ${esc(email)}, 'SEEDED_NO_AUTH', ${esc(facultyName)}, 'FACULTY', 'ACTIVE', 1, 'COMPLETED',
+        `INSERT IGNORE INTO users (id, email, password_hash, display_name, role, institution_id, status, email_verified, profile_status, created_at, updated_at)
+         VALUES (${esc(id)}, ${esc(email)}, ${esc(defaultHash)}, ${esc(facultyName)}, 'FACULTY', ${esc(kecInstId)}, 'ACTIVE', 1, 'COMPLETED',
                  DATE_SUB(NOW(), INTERVAL 365 DAY), NOW());`
       );
       facultyCount++;
@@ -91,8 +96,8 @@ export async function seedUsers(cfg: SeedConfig): Promise<void> {
 
       const daysAgo = rng.int(10, 360);
       genStmts.push(
-        `INSERT IGNORE INTO users (id, email, password_hash, display_name, role, status, email_verified, profile_status, created_at, updated_at)
-         VALUES (${esc(id)}, ${esc(email)}, 'SEEDED_NO_AUTH', ${esc(full)}, 'STUDENT', 'ACTIVE', 1, 'COMPLETED',
+        `INSERT IGNORE INTO users (id, email, password_hash, display_name, role, institution_id, status, email_verified, profile_status, created_at, updated_at)
+         VALUES (${esc(id)}, ${esc(email)}, ${esc(defaultHash)}, ${esc(full)}, 'STUDENT', ${esc(kecInstId)}, 'ACTIVE', 1, 'COMPLETED',
                  DATE_SUB(NOW(), INTERVAL ${daysAgo} DAY), NOW());`
       );
       studentCount++;
@@ -113,16 +118,15 @@ async function seedOneUser(
   role: string,
   status: string,
   emailVerified: boolean,
-  cfg: SeedConfig
+  cfg: SeedConfig,
+  institutionId?: string
 ): Promise<void> {
-  const passwordHash = password === "SEEDED_NO_AUTH" ? "SEEDED_NO_AUTH" : bcrypt.hashSync(password, 10);
+  const passwordHash = "$2b$10$s3855CduR4SV7tOdnQB0BObl.fIaBDOkvW7PJZWvh27Lv5pK3sLYO";
   doltExec(
-    `INSERT INTO users (id, email, password_hash, display_name, role, status, email_verified, profile_status, created_at, updated_at)
+    `INSERT INTO users (id, email, password_hash, display_name, role, institution_id, status, email_verified, profile_status, created_at, updated_at)
      VALUES (${esc(id)}, ${esc(email)}, ${esc(passwordHash)},
-             ${esc(name)}, ${esc(role)}, ${esc(status)}, ${emailVerified ? 1 : 0}, ${status === "ACTIVE" ? "'COMPLETED'" : "'INCOMPLETE'"},
+             ${esc(name)}, ${esc(role)}, ${institutionId ? esc(institutionId) : "NULL"}, ${esc(status)}, ${emailVerified ? 1 : 0}, ${status === "ACTIVE" ? "'COMPLETED'" : "'INCOMPLETE'"},
              DATE_SUB(NOW(), INTERVAL 365 DAY), NOW())
-     ON DUPLICATE KEY UPDATE password_hash = ${esc(passwordHash)}, status = ${esc(status)}, email_verified = ${emailVerified ? 1 : 0};`
+     ON DUPLICATE KEY UPDATE password_hash = ${esc(passwordHash)}, institution_id = ${institutionId ? esc(institutionId) : "institution_id"}, status = ${esc(status)}, email_verified = ${emailVerified ? 1 : 0};`
   );
 }
-
-
