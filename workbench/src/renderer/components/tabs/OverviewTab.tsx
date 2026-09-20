@@ -7,6 +7,7 @@ interface OverviewTabProps {
   clusterHealth: ClusterHealthData | null;
   counts: {
     doltTables: number;
+    redisKeys?: number;
     s3Buckets: number;
     sqsQueues: number;
     dynamoTables: number;
@@ -24,7 +25,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
       <div className="tab-header">
         <div className="tab-header-left">
           <h1>Cluster Topology & Infrastructure</h1>
-          <p>Real-time telemetry and state inspection for local Dolt, Floci AWS services, and AI runtimes</p>
+          <p>Real-time telemetry and state inspection for local Dolt, Redis KV cache, Floci AWS services, and AI runtimes</p>
         </div>
       </div>
 
@@ -40,6 +41,21 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
           <div style={{ marginTop: '12px' }}>
             <span className={`badge ${clusterHealth?.dolt.online ? 'badge-emerald' : 'badge-rose'}`}>
               {clusterHealth?.dolt.online ? `ONLINE (${clusterHealth.dolt.latencyMs}ms)` : 'OFFLINE'}
+            </span>
+          </div>
+        </div>
+
+        {/* Redis Database */}
+        <div className="metric-card">
+          <div className="metric-card-top">
+            <span className="metric-title">Redis Cache & KV</span>
+            <Database size={18} className="text-rose" />
+          </div>
+          <div className="metric-value">{counts.redisKeys ?? 0} <span style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>keys</span></div>
+          <div className="metric-subtitle">Port 6379 | DB 0 | In-Memory Fast Cache</div>
+          <div style={{ marginTop: '12px' }}>
+            <span className={`badge ${clusterHealth?.redis?.online ? 'badge-emerald' : 'badge-rose'}`}>
+              {clusterHealth?.redis?.online ? `ONLINE (${clusterHealth.redis.latencyMs}ms)` : 'OFFLINE'}
             </span>
           </div>
         </div>
@@ -134,6 +150,25 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                   <td>
                     <button onClick={() => onNavigate('dolt-studio')} className="action-btn primary" style={{ padding: '4px 10px', fontSize: '11px' }}>
                       Table Studio <ArrowRight size={11} />
+                    </button>
+                  </td>
+                </tr>
+                <tr>
+                  <td style={{ fontWeight: 600 }}>Redis Key-Value Cache</td>
+                  <td>In-Memory Cache & Session Store</td>
+                  <td>6379</td>
+                  <td>127.0.0.1:6379</td>
+                  <td>{clusterHealth?.redis?.online ? `${clusterHealth.redis.latencyMs} ms` : '-'}</td>
+                  <td>
+                    {clusterHealth?.redis?.online ? (
+                      <span className="badge badge-emerald"><CheckCircle2 size={12} style={{ marginRight: '4px' }} /> ONLINE</span>
+                    ) : (
+                      <span className="badge badge-rose"><XCircle size={12} style={{ marginRight: '4px' }} /> UNREACHABLE</span>
+                    )}
+                  </td>
+                  <td>
+                    <button onClick={() => onNavigate('redis-studio')} className="action-btn primary" style={{ padding: '4px 10px', fontSize: '11px' }}>
+                      Redis Studio <ArrowRight size={11} />
                     </button>
                   </td>
                 </tr>

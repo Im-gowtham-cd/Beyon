@@ -4,6 +4,7 @@ import { Sidebar, TabKey } from './components/Sidebar';
 import { OverviewTab } from './components/tabs/OverviewTab';
 import { DoltStudioTab } from './components/tabs/DoltStudioTab';
 import { DoltGitTab } from './components/tabs/DoltGitTab';
+import { RedisStudioTab } from './components/tabs/RedisStudioTab';
 import { FlociS3Tab } from './components/tabs/FlociS3Tab';
 import { FlociSqsTab } from './components/tabs/FlociSqsTab';
 import { FlociDynamoTab } from './components/tabs/FlociDynamoTab';
@@ -16,6 +17,7 @@ export const App: React.FC = () => {
   const [clusterHealth, setClusterHealth] = useState<ClusterHealthData | null>(null);
   const [counts, setCounts] = useState({
     doltTables: 0,
+    redisKeys: 0,
     s3Buckets: 0,
     sqsQueues: 0,
     dynamoTables: 0,
@@ -39,9 +41,10 @@ export const App: React.FC = () => {
     if (!window.workbenchApi) return;
     setRefreshing(true);
     try {
-      const [health, tablesRes, s3Res, sqsRes, dynamoRes] = await Promise.allSettled([
+      const [health, tablesRes, redisRes, s3Res, sqsRes, dynamoRes] = await Promise.allSettled([
         window.workbenchApi.getClusterHealth(),
         window.workbenchApi.getDoltTables(),
+        window.workbenchApi.getRedisStatus(),
         window.workbenchApi.listS3Buckets(),
         window.workbenchApi.listSqsQueues(),
         window.workbenchApi.listDynamoTables(),
@@ -53,6 +56,7 @@ export const App: React.FC = () => {
 
       setCounts({
         doltTables: tablesRes.status === 'fulfilled' && tablesRes.value.success ? tablesRes.value.tables.length : 0,
+        redisKeys: redisRes.status === 'fulfilled' && redisRes.value.success ? redisRes.value.totalKeys : 0,
         s3Buckets: s3Res.status === 'fulfilled' && s3Res.value.success ? s3Res.value.buckets.length : 0,
         sqsQueues: sqsRes.status === 'fulfilled' && sqsRes.value.success ? sqsRes.value.queues.length : 0,
         dynamoTables: dynamoRes.status === 'fulfilled' && dynamoRes.value.success ? dynamoRes.value.tables.length : 0,
@@ -105,6 +109,8 @@ export const App: React.FC = () => {
           {activeTab === 'dolt-studio' && <DoltStudioTab />}
 
           {activeTab === 'dolt-git' && <DoltGitTab />}
+
+          {activeTab === 'redis-studio' && <RedisStudioTab />}
 
           {activeTab === 'floci-s3' && <FlociS3Tab />}
 

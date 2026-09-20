@@ -506,16 +506,292 @@ ipcMain.handle('floci:events:put-event', async (_event, { source, detailType, de
 });
 
 // ==========================================
+// IPC: REDIS DATABASE ENGINE & KEY-VALUE STORE
+// ==========================================
+
+function parseResp(buf: Buffer): { result: any; remaining: Buffer } | undefined {
+  if (buf.length === 0) return undefined;
+  const str = buf.toString('utf-8');
+  const type = str[0];
+
+  if (type === '+') {
+    const idx = str.indexOf('\r\n');
+    if (idx === -1) return undefined;
+    return { result: str.slice(1, idx), remaining: buf.subarray(idx + 2) };
+  } else if (type === '-') {
+    const idx = str.indexOf('\r\n');
+    if (idx === -1) return undefined;
+    throw new Error(str.slice(1, idx));
+  } else if (type === ':') {
+    const idx = str.indexOf('\r\n');
+    if (idx === -1) return undefined;
+    return { result: parseInt(str.slice(1, idx), 10), remaining: buf.subarray(idx + 2) };
+  } else if (type === '$') {
+    const crlfIdx = str.indexOf('\r\n');
+    if (crlfIdx === -1) return undefined;
+    const len = parseInt(str.slice(1, crlfIdx), 10);
+    if (len === -1) return { result: null, remaining: buf.subarray(crlfIdx + 2) };
+    const dataStart = crlfIdx + 2;
+    if (buf.length < dataStart + len + 2) return undefined;
+    const resultStr = buf.subarray(dataStart, dataStart + len).toString('utf-8');
+    return { result: resultStr, remaining: buf.subarray(dataStart + len + 2) };
+  } else if (type === '*') {
+    const crlfIdx = str.indexOf('\r\n');
+    if (crlfIdx === -1) return undefined;
+    const count = parseInt(str.slice(1, crlfIdx), 10);
+    if (count === -1) return { result: null, remaining: buf.subarray(crlfIdx + 2) };
+    let currentBuf = buf.subarray(crlfIdx + 2);
+    const arr: any[] = [];
+    for (let i = 0; i < count; i++) {
+      const item = parseResp(currentBuf);
+      if (!item) return undefined;
+      arr.push(item.result);
+      currentBuf = item.remaining;
+    }
+    return { result: arr, remaining: currentBuf };
+  }
+  return { result: str.trim(), remaining: Buffer.alloc(0) };
+}
+
+function executeRedisRaw(command: string[]): Promise<any> {
+  return new Promise((resolve, reject) => {
+    const socket = new net.Socket();
+    let responseData = Buffer.alloc(0);
+    let settled = false;
+
+    socket.setTimeout(2500);
+
+    socket.on('connect', () => {
+      let resp = `*${command.length}\r\n`;
+      for (const arg of command) {
+        const str = String(arg);
+        resp += `$${Buffer.byteLength(str)}\r\n${str}\r\n`;
+      }
+      socket.write(resp);
+    });
+
+    socket.on('data', (chunk) => {
+      const chunkBuf = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+      responseData = Buffer.concat([responseData, chunkBuf]);
+      try {
+        const parsed = parseResp(responseData);
+        if (parsed !== undefined) {
+          settled = true;
+          socket.destroy();
+          resolve(parsed.result);
+        }
+      } catch (err) {
+        settled = true;
+        socket.destroy();
+        reject(err);
+      }
+    });
+
+    socket.on('timeout', () => {
+      if (!settled) {
+        settled = true;
+        socket.destroy();
+        reject(new Error('Redis timeout (2500ms)'));
+      }
+    });
+
+    socket.on('error', (err) => {
+      if (!settled) {
+        settled = true;
+        socket.destroy();
+        reject(err);
+      }
+    });
+
+    socket.on('close', () => {
+      if (!settled) {
+        settled = true;
+        try {
+          const parsed = parseResp(responseData);
+          resolve(parsed ? parsed.result : responseData.toString());
+        } catch {
+          resolve(responseData.toString());
+        }
+      }
+    });
+
+    socket.connect(6379, '127.0.0.1');
+  });
+}
+
+ipcMain.handle('redis:status', async () => {
+  try {
+    const [ping, dbsize, infoRaw] = await Promise.all([
+      executeRedisRaw(['PING']),
+      executeRedisRaw(['DBSIZE']),
+      executeRedisRaw(['INFO']),
+    ]);
+
+    const info: Record<string, string> = {};
+    if (typeof infoRaw === 'string') {
+      for (const line of infoRaw.split('\n')) {
+        const parts = line.trim().split(':');
+        if (parts.length === 2) {
+          info[parts[0]] = parts[1];
+        }
+      }
+    }
+
+    return {
+      success: true,
+      online: ping === 'PONG',
+      dbsize: typeof dbsize === 'number' ? dbsize : 0,
+      version: info['redis_version'] || '7.2',
+      usedMemory: info['used_memory_human'] || '1.2M',
+      uptimeDays: info['uptime_in_days'] || '0',
+      connectedClients: info['connected_clients'] || '1',
+      totalKeys: typeof dbsize === 'number' ? dbsize : 0,
+    };
+  } catch (err: any) {
+    return {
+      success: false,
+      online: false,
+      error: err.message,
+      dbsize: 0,
+      version: 'N/A',
+      usedMemory: '0B',
+      uptimeDays: '0',
+      connectedClients: '0',
+      totalKeys: 0,
+    };
+  }
+});
+
+ipcMain.handle('redis:keys', async (_event, pattern = '*') => {
+  try {
+    const rawKeys = await executeRedisRaw(['KEYS', pattern || '*']);
+    const keys = Array.isArray(rawKeys) ? rawKeys : [];
+
+    const keyDetails = await Promise.all(
+      keys.slice(0, 100).map(async (k: string) => {
+        try {
+          const [type, ttl] = await Promise.all([
+            executeRedisRaw(['TYPE', k]),
+            executeRedisRaw(['TTL', k]),
+          ]);
+          return {
+            key: k,
+            type: typeof type === 'string' ? type.toUpperCase() : 'STRING',
+            ttl: typeof ttl === 'number' ? ttl : -1,
+          };
+        } catch {
+          return { key: k, type: 'STRING', ttl: -1 };
+        }
+      })
+    );
+
+    return { success: true, keys: keyDetails, totalCount: keys.length };
+  } catch (err: any) {
+    return { success: false, error: err.message, keys: [], totalCount: 0 };
+  }
+});
+
+ipcMain.handle('redis:get-value', async (_event, key: string) => {
+  try {
+    const [typeRaw, ttl] = await Promise.all([
+      executeRedisRaw(['TYPE', key]),
+      executeRedisRaw(['TTL', key]),
+    ]);
+    const type = typeof typeRaw === 'string' ? typeRaw.toLowerCase() : 'string';
+
+    let value: any = null;
+    if (type === 'string') {
+      value = await executeRedisRaw(['GET', key]);
+    } else if (type === 'hash') {
+      const rawHash = await executeRedisRaw(['HGETALL', key]);
+      if (Array.isArray(rawHash)) {
+        const hashObj: Record<string, string> = {};
+        for (let i = 0; i < rawHash.length; i += 2) {
+          hashObj[rawHash[i]] = rawHash[i + 1];
+        }
+        value = hashObj;
+      } else {
+        value = rawHash;
+      }
+    } else if (type === 'list') {
+      value = await executeRedisRaw(['LRANGE', key, '0', '-1']);
+    } else if (type === 'set') {
+      value = await executeRedisRaw(['SMEMBERS', key]);
+    } else if (type === 'zset') {
+      value = await executeRedisRaw(['ZRANGE', key, '0', '-1', 'WITHSCORES']);
+    } else {
+      value = await executeRedisRaw(['GET', key]);
+    }
+
+    return {
+      success: true,
+      key,
+      type: type.toUpperCase(),
+      ttl: typeof ttl === 'number' ? ttl : -1,
+      value,
+    };
+  } catch (err: any) {
+    return { success: false, error: err.message, value: null };
+  }
+});
+
+ipcMain.handle('redis:set-value', async (_event, { key, value, ttl }: { key: string; value: string; ttl?: number }) => {
+  try {
+    let res;
+    if (ttl && ttl > 0) {
+      res = await executeRedisRaw(['SET', key, value, 'EX', String(ttl)]);
+    } else {
+      res = await executeRedisRaw(['SET', key, value]);
+    }
+    return { success: true, result: res };
+  } catch (err: any) {
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle('redis:delete-key', async (_event, key: string) => {
+  try {
+    const res = await executeRedisRaw(['DEL', key]);
+    return { success: true, deleted: res };
+  } catch (err: any) {
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle('redis:flush-db', async () => {
+  try {
+    const res = await executeRedisRaw(['FLUSHDB']);
+    return { success: true, result: res };
+  } catch (err: any) {
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle('redis:execute-command', async (_event, cmdStr: string) => {
+  try {
+    const parts = cmdStr.trim().match(/(?:[^\s"]+|"[^"]*")+/g) || [];
+    const cleanArgs = parts.map((p) => p.replace(/^"|"$/g, ''));
+    if (cleanArgs.length === 0) {
+      return { success: false, error: 'Empty command' };
+    }
+    const res = await executeRedisRaw(cleanArgs);
+    return { success: true, result: res };
+  } catch (err: any) {
+    return { success: false, error: err.message };
+  }
+});
+
+// ==========================================
 // IPC: SYSTEM CLUSTER HEALTH & AI ENGINE
 // ==========================================
 
 ipcMain.handle('system:health', async () => {
-  const [dolt, floci, ai, backend, mongo] = await Promise.all([
+  const [dolt, floci, ai, backend, redis] = await Promise.all([
     checkTcpPort('127.0.0.1', 3306),
     checkTcpPort('127.0.0.1', 4566),
     checkTcpPort('127.0.0.1', 8000),
     checkTcpPort('127.0.0.1', 8085),
-    checkTcpPort('127.0.0.1', 27017),
+    checkTcpPort('127.0.0.1', 6379),
   ]);
 
   let aiCapabilities: string[] = [];
@@ -534,7 +810,7 @@ ipcMain.handle('system:health', async () => {
     floci: { ...floci, port: 4566, service: 'Floci AWS Cloud Emulator' },
     ai: { ...ai, port: 8000, service: 'FastAPI AI Engine (Qwen 3.5:4b)', capabilities: aiCapabilities },
     backend: { ...backend, port: 8085, service: 'Spring Boot Backend API' },
-    mongo: { ...mongo, port: 27017, service: 'MongoDB Telemetry Store' },
+    redis: { ...redis, port: 6379, service: 'Redis Cache & KV Store' },
     timestamp: new Date().toISOString(),
   };
 });
@@ -567,3 +843,4 @@ ipcMain.handle('ai:test-endpoint', async (_event, { path: endpointPath, method =
     };
   }
 });
+

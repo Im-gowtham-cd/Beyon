@@ -15,6 +15,7 @@ export type TabKey =
   | 'overview'
   | 'dolt-studio'
   | 'dolt-git'
+  | 'redis-studio'
   | 'floci-s3'
   | 'floci-sqs'
   | 'floci-dynamo'
@@ -27,6 +28,7 @@ interface SidebarProps {
   setActiveTab: (tab: TabKey) => void;
   counts: {
     doltTables: number;
+    redisKeys: number;
     s3Buckets: number;
     sqsQueues: number;
     dynamoTables: number;
@@ -71,6 +73,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <GitBranch size={16} />
           <span>Dolt Git History</span>
         </div>
+      </div>
+
+      <div className="nav-group-title">In-Memory Cache & KV</div>
+      <div
+        className={`nav-item ${activeTab === 'redis-studio' ? 'active' : ''}`}
+        onClick={() => setActiveTab('redis-studio')}
+      >
+        <div className="nav-item-left">
+          <Database size={16} color="#ef4444" />
+          <span>Redis Studio</span>
+        </div>
+        <span className="nav-badge" style={{ color: '#ef4444', borderColor: '#ef444440' }}>{counts.redisKeys} keys</span>
       </div>
 
       <div className="nav-group-title">Floci AWS Cloud</div>

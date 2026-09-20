@@ -14,7 +14,8 @@ export interface ClusterHealthData {
   floci: ClusterServiceHealth;
   ai: ClusterServiceHealth;
   backend: ClusterServiceHealth;
-  mongo: ClusterServiceHealth;
+  redis?: ClusterServiceHealth;
+  mongo?: ClusterServiceHealth;
   timestamp: string;
 }
 
@@ -55,6 +56,14 @@ export const Header: React.FC<HeaderProps> = ({
           <Database size={13} />
           <span>Dolt (3306)</span>
           {clusterHealth?.dolt.online && <span className="badge-gold" style={{ fontSize: '10px', padding: '1px 5px', borderRadius: '3px' }}>{clusterHealth.dolt.latencyMs}ms</span>}
+        </div>
+
+        {/* Redis Status */}
+        <div className={`status-pill ${clusterHealth?.redis?.online ? 'online' : 'offline'}`}>
+          <span className={`status-indicator ${clusterHealth?.redis?.online ? 'online' : 'offline'}`} />
+          <Database size={13} />
+          <span>Redis (6379)</span>
+          {clusterHealth?.redis?.online && <span className="badge-gold" style={{ fontSize: '10px', padding: '1px 5px', borderRadius: '3px' }}>{clusterHealth.redis.latencyMs}ms</span>}
         </div>
 
         {/* Floci Status */}

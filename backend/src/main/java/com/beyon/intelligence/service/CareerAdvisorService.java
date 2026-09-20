@@ -25,6 +25,7 @@ public class CareerAdvisorService {
     private final SkillRepository skillRepo;
     private final AiIntelligenceClient aiClient;
     private final StudentProfileRepository profileRepo;
+    private final com.beyon.profile.repository.StudentSkillRepository studentSkillRepo;
 
     @Autowired
     public CareerAdvisorService(AdvisorChatSessionRepository sessionRepo,
@@ -34,7 +35,8 @@ public class CareerAdvisorService {
                                  CareerPathSkillRepository pathSkillRepo,
                                  SkillRepository skillRepo,
                                  @Autowired(required = false) AiIntelligenceClient aiClient,
-                                 @Autowired(required = false) StudentProfileRepository profileRepo) {
+                                 @Autowired(required = false) StudentProfileRepository profileRepo,
+                                 @Autowired(required = false) com.beyon.profile.repository.StudentSkillRepository studentSkillRepo) {
         this.sessionRepo = sessionRepo;
         this.messageRepo = messageRepo;
         this.graphRepo = graphRepo;
@@ -43,6 +45,7 @@ public class CareerAdvisorService {
         this.skillRepo = skillRepo;
         this.aiClient = aiClient;
         this.profileRepo = profileRepo;
+        this.studentSkillRepo = studentSkillRepo;
     }
 
     public CareerAdvisorService(AdvisorChatSessionRepository sessionRepo,
@@ -51,7 +54,7 @@ public class CareerAdvisorService {
                                  CareerPathRepository careerPathRepo,
                                  CareerPathSkillRepository pathSkillRepo,
                                  SkillRepository skillRepo) {
-        this(sessionRepo, messageRepo, graphRepo, careerPathRepo, pathSkillRepo, skillRepo, null, null);
+        this(sessionRepo, messageRepo, graphRepo, careerPathRepo, pathSkillRepo, skillRepo, null, null, null);
     }
 
     public AdvisorChatSession createSession(UUID studentId) {
@@ -96,12 +99,30 @@ public class CareerAdvisorService {
                     }
                 }
 
-                List<StudentSkillGraph> graph = graphRepo.findByStudentIdOrderByProficiencyPctDesc(studentId);
                 Map<String, Object> skillsMap = new LinkedHashMap<>();
+                if (studentSkillRepo != null) {
+                    var studentSkills = studentSkillRepo.findByUserId(studentId);
+                    for (var ss : studentSkills) {
+                        Map<String, Object> sm = new LinkedHashMap<>();
+                        sm.put("proficiency", ss.getProficiency() != null ? ss.getProficiency() : "INTERMEDIATE");
+                        sm.put("category", ss.getCategory() != null ? ss.getCategory() : "Technical");
+                        sm.put("verified", ss.isVerified());
+                        sm.put("score", ss.getScore() != null ? ss.getScore() : 75);
+                        skillsMap.put(ss.getSkillName(), sm);
+                    }
+                }
+
+                List<StudentSkillGraph> graph = graphRepo.findByStudentIdOrderByProficiencyPctDesc(studentId);
                 for (StudentSkillGraph g : graph) {
                     Skill s = skillRepo.findById(g.getSkillId()).orElse(null);
                     String sName = s != null ? s.getName() : "Skill";
-                    skillsMap.put(sName, g.getLevel());
+                    if (!skillsMap.containsKey(sName)) {
+                        Map<String, Object> sm = new LinkedHashMap<>();
+                        sm.put("proficiency", g.getLevel());
+                        sm.put("percentage", g.getProficiencyPct());
+                        sm.put("verified", g.getVerified());
+                        skillsMap.put(sName, sm);
+                    }
                 }
 
                 List<AdvisorChatMessage> previousMsgs = messageRepo.findBySessionIdOrderByCreatedAtAsc(sessionId);
