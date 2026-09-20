@@ -1,6 +1,7 @@
 import { doltBatch, esc, escNum, doltQuery, toUUID } from "../engine/dolt.js";
 import { COMPANIES } from "../data/companies.js";
 import { companyUserIds } from "./03-companies.js";
+import { institutionUserIds } from "./02-institutions.js";
 import { testIds } from "./07-assessments.js";
 import { SeededRandom } from "../utils/faker.js";
 import type { SeedConfig } from "../config.js";
@@ -8,118 +9,118 @@ import type { SeedConfig } from "../config.js";
 export const opportunityIds: string[] = [];
 export const driveIds: string[] = [];
 
-async function ensureCompanyIds(): Promise<void> {
-  if (Object.keys(companyUserIds).length > 0) return;
-  const rows = doltQuery("SELECT id FROM users WHERE role='COMPANY'");
-  let i = 0;
-  for (const row of rows) {
-    (companyUserIds as any)[`COMP_${String(i + 1).padStart(4, "0")}`] = row.id;
-    i++;
-  }
-  if (testIds.length === 0) {
-    const trows = doltQuery("SELECT id FROM tests LIMIT 20");
-    for (const r of trows) testIds.push(r.id);
-  }
-}
-
-const JOB_TITLES = [
-  "Frontend Developer", "Backend Developer", "Full Stack Developer", "Java Developer",
-  "Python Developer", "Data Analyst", "Data Scientist", "ML Engineer",
-  "DevOps Engineer", "Cloud Engineer", "QA Engineer", "Software Engineer",
-  "Senior Java Developer", "Junior JavaScript Developer", "Java Spring Engineer",
-  "Database Administrator", "Cybersecurity Engineer", "Android Developer", "Flutter Developer",
-  "Node.js Backend Engineer", "React Frontend Engineer", "Python ML Engineer",
-];
-
-const OPTY_TYPES = ["FULL_TIME", "FULL_TIME", "FULL_TIME", "INTERNSHIP", "INTERNSHIP", "CONTRACT"] as const;
-const STATUSES = ["PUBLISHED", "PUBLISHED", "PUBLISHED", "CLOSING_SOON", "CLOSED"] as const;
-
 export async function seedOpportunities(cfg: SeedConfig): Promise<void> {
-  console.log("\n💼 Seeding opportunities & drives...");
-
-  await ensureCompanyIds();
+  console.log("\n💼 Seeding KEC placement drives, internships & opportunities...");
 
   const rng = new SeededRandom(cfg.seed + 4000);
   const optyStmts: string[] = [];
   const driveStmts: string[] = [];
 
-  const compKeys = Object.keys(companyUserIds);
+  const kecInstUserId = institutionUserIds["INST_KEC"] || toUUID("beyon-inst-user-inst_kec");
 
-  for (let i = 0; i < cfg.counts.jobs; i++) {
-    const compKey = compKeys[i % compKeys.length];
-    const compUserId = companyUserIds[compKey];
-    const comp = COMPANIES.find(c => c.key === compKey);
-    const id = toUUID(`beyon-opty-${i}`);
-    opportunityIds.push(id);
+  for (let i = 0; i < COMPANIES.length; i++) {
+    const comp = COMPANIES[i];
+    const compUserId = companyUserIds[comp.key];
+    if (!compUserId) continue;
 
-    const title = rng.pick(JOB_TITLES);
-    const optyType = rng.pick(OPTY_TYPES);
-    const status = rng.pick(STATUSES);
-    const minCgpa = rng.float(6.0, 8.0);
-    const coinCost = rng.pick([0, 50, 100, 150, 250, 500]);
-    const testId = rng.bool(0.6) && testIds.length > 0 ? rng.pick(testIds) : null;
-    const skills = comp ? rng.pickN(comp.hiringSkills, 2).join(",") : "SKILL_JAVA,SKILL_SQL";
-    const isRemote = rng.bool(0.4) ? 1 : 0;
+    // 1. Campus Drive Opportunity
+    const optyId = toUUID(`beyon-opty-${comp.key.toLowerCase()}-campus`);
+    opportunityIds.push(optyId);
 
-    const daysAgo = rng.int(10, 350);
-    const updatedDaysAgo = Math.max(0, daysAgo - rng.int(0, 15));
+    const title = comp.key === "COMP_SOLITON" ? "Embedded Software Engineer"
+      : comp.key === "COMP_ZOHO" ? "Software Development Engineer (SDE-1)"
+      : comp.key === "COMP_MRCOOPER" ? "Full Stack Cloud Engineer"
+      : comp.key === "COMP_FOURKITES" ? "Python Backend & Logistics Architect"
+      : comp.key === "COMP_PRESIDIO" ? "Cloud Solutions & DevOps Engineer"
+      : comp.key === "COMP_CODINGMART" ? "Full-Stack Node/React Engineer"
+      : `${comp.industry} Associate Engineer`;
+
+    const skillsStr = comp.hiringSkills.join(",");
+    const testId = testIds.length > 0 ? testIds[i % testIds.length] : null;
 
     optyStmts.push(
-      `INSERT IGNORE INTO company_opportunities
+      `INSERT INTO company_opportunities
         (id, company_user_id, title, description, opportunity_type, location, is_remote,
          min_cgpa, required_skills, min_beyon_coins, assessment_id, status, created_at, updated_at)
        VALUES (
-         ${esc(id)}, ${esc(compUserId)},
+         ${esc(optyId)}, ${esc(compUserId)},
          ${esc(title)},
-         ${esc(`${title} position at a leading technology company. Strong problem-solving and communication skills required.`)},
-         ${esc(optyType)},
-         ${esc(comp?.city ?? "Bangalore")},
-         ${isRemote},
-         ${escNum(Math.round(minCgpa * 100) / 100)},
-         ${esc(skills)},
-         ${coinCost},
+         ${esc(`${title} role at ${comp.name}. Looking for strong engineering problem solving, core fundamentals and system proficiency.`)},
+         'FULL_TIME',
+         ${esc(comp.city)},
+         0,
+         ${comp.tier === "TIER_1" ? 7.50 : 6.50},
+         ${esc(skillsStr)},
+         100,
          ${esc(testId)},
-         ${esc(status)},
-         DATE_SUB(NOW(), INTERVAL ${daysAgo} DAY),
-         DATE_SUB(NOW(), INTERVAL ${updatedDaysAgo} DAY)
-       );`
+         'PUBLISHED',
+         DATE_SUB(NOW(), INTERVAL 60 DAY),
+         NOW()
+       )
+       ON DUPLICATE KEY UPDATE title=${esc(title)}, required_skills=${esc(skillsStr)};`
     );
-  }
 
-  for (let i = 0; i < 25; i++) {
-    const compKey = compKeys[i % compKeys.length];
-    const compUserId = companyUserIds[compKey];
-    const optyId = opportunityIds[i % opportunityIds.length];
-    const instUserId = toUUID(`beyon-inst-user-beyon-inst-inst_${String(i % 25 + 1).padStart(4, "0")}`);
-    const driveId = toUUID(`beyon-drive-${i}`);
+    // 2. Internship Opportunity
+    const internOptyId = toUUID(`beyon-opty-${comp.key.toLowerCase()}-intern`);
+    opportunityIds.push(internOptyId);
+
+    optyStmts.push(
+      `INSERT INTO company_opportunities
+        (id, company_user_id, title, description, opportunity_type, location, is_remote,
+         min_cgpa, required_skills, min_beyon_coins, assessment_id, status, created_at, updated_at)
+       VALUES (
+         ${esc(internOptyId)}, ${esc(compUserId)},
+         ${esc(`${comp.name} Graduate Engineering Intern`)},
+         ${esc(`6-month fast-track engineering internship at ${comp.name} with PPO conversion.`)},
+         'INTERNSHIP',
+         ${esc(comp.city)},
+         1,
+         7.00,
+         ${esc(skillsStr)},
+         50,
+         ${esc(testId)},
+         'PUBLISHED',
+         DATE_SUB(NOW(), INTERVAL 45 DAY),
+         NOW()
+       )
+       ON DUPLICATE KEY UPDATE title=${esc(`${comp.name} Graduate Engineering Intern`)};`
+    );
+
+    // 3. On-Campus Placement Drive for KEC
+    const driveId = toUUID(`beyon-drive-${comp.key.toLowerCase()}-kec`);
     driveIds.push(driveId);
 
-    const driveDate = new Date();
-    driveDate.setDate(driveDate.getDate() + rng.int(-180, 60));
-    const driveDateStr = driveDate.toISOString().split("T")[0];
-
-    const status = rng.pick(["PENDING", "ACTIVE", "COMPLETED", "ACTIVE"]);
-    const daysAgo = rng.int(20, 340);
+    const eligibleDepts = comp.key === "COMP_SOLITON" ? "CSE,ECE,EIE,MTS"
+      : comp.key === "COMP_ZOHO" ? "CSE,IT,AIDS,AIML,CSD,ECE,EEE"
+      : comp.key === "COMP_MRCOOPER" ? "CSE,IT,AIDS,CSD"
+      : "CSE,IT,AIDS,AIML,CSD,ECE,EEE,MECH,MTS,AUTO";
 
     driveStmts.push(
-      `INSERT IGNORE INTO placement_drives
-        (id, opportunity_id, institution_id, company_user_id, title, description, status,
-         eligible_student_count, drive_date, created_at, updated_at)
+      `INSERT INTO placement_drives
+        (id, opportunity_id, institution_id, company_user_id, title, description, status, eligible_student_count, applied_count, assessed_count, shortlisted_count, interviewed_count, selected_count, drive_date, package_lpa, created_at, updated_at)
        VALUES (
-         ${esc(driveId)}, ${esc(optyId)}, ${esc(instUserId)}, ${esc(compUserId)},
-         ${esc(`Enterprise Campus Placement Drive ${i + 1}`)},
-         'Campus recruitment and skill evaluation drive for eligible candidates.',
-         ${esc(status)}, ${rng.int(20, 200)}, ${esc(driveDateStr)},
-         DATE_SUB(NOW(), INTERVAL ${daysAgo} DAY),
+         ${esc(driveId)}, ${esc(optyId)}, ${esc(kecInstUserId)}, ${esc(compUserId)},
+         ${esc(`${comp.name} On-Campus Recruitment Drive 2026-27`)},
+         ${esc(`Annual campus hiring drive for ${comp.name} targeting KEC engineering graduates across ${eligibleDepts}.`)},
+         'REGISTRATION_OPEN',
+         ${rng.int(150, 400)},
+         ${rng.int(80, 180)},
+         ${rng.int(50, 120)},
+         ${rng.int(20, 50)},
+         ${rng.int(10, 25)},
+         ${rng.int(5, 15)},
+         DATE_ADD(CURDATE(), INTERVAL ${rng.int(5, 30)} DAY),
+         ${comp.tier === "TIER_1" ? 14.50 : 8.50},
+         DATE_SUB(NOW(), INTERVAL 20 DAY),
          NOW()
-       );`
+       )
+       ON DUPLICATE KEY UPDATE title=${esc(`${comp.name} On-Campus Recruitment Drive 2026-27`)};`
     );
   }
 
-  doltBatch(optyStmts, 50);
+  doltBatch(optyStmts);
   doltBatch(driveStmts);
 
-  console.log(`  ✅ ${optyStmts.length} job/internship opportunities`);
-  console.log(`  ✅ ${driveStmts.length} placement drives`);
+  console.log(`  ✅ ${opportunityIds.length} job & internship opportunities seeded`);
+  console.log(`  ✅ ${driveIds.length} KEC campus placement drives seeded`);
 }
-

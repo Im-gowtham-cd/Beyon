@@ -1,24 +1,25 @@
 import { doltBatch, esc, escNum, toUUID } from "../engine/dolt.js";
-import { INSTITUTIONS, DEPARTMENTS_PER_INSTITUTION } from "../data/institutions.js";
+import { INSTITUTIONS, KEC_DEPARTMENTS } from "../data/institutions.js";
 
 export const institutionUserIds: Record<string, string> = {};
-
 export const institutionProfileIds: Record<string, string> = {};
+export const departmentIds: Record<string, string> = {};
 
 export async function seedInstitutions(): Promise<void> {
-  console.log("\n🏛️  Seeding institutions...");
+  console.log("\n🏛️  Seeding institutions and academic departments...");
 
   const userStmts: string[] = [];
   const profileStmts: string[] = [];
-  const repStmts: string[] = [];
+  const deptStmts: string[] = [];
 
   for (const inst of INSTITUTIONS) {
-
     const userId = toUUID(`beyon-inst-user-${inst.key.toLowerCase()}`);
     institutionUserIds[inst.key] = userId;
     institutionProfileIds[inst.key] = userId;
 
-    const adminEmail = `admin@${inst.code.toLowerCase()}.beyon.test`;
+    const adminEmail = inst.key === "INST_KEC" 
+      ? "principal@kongu.edu" 
+      : `admin@${inst.code.toLowerCase()}.beyon.test`;
 
     userStmts.push(
       `INSERT IGNORE INTO users (id, email, password_hash, display_name, role, status, email_verified, profile_status, created_at, updated_at)
@@ -35,18 +36,39 @@ export async function seedInstitutions(): Promise<void> {
          ${esc(adminEmail)}, ${esc(inst.website)}, 'India', ${esc(inst.state)}, ${esc(inst.city)},
          ${esc(inst.accreditation)}, ${esc(inst.accreditationGrade)}, ${escNum(inst.established)},
          ${escNum(inst.placementRate)}, ${escNum(inst.avgPackage)}, ${escNum(inst.highestPackage)},
-         ${escNum(inst.totalStudents)}, 85, NOW(), NOW()
+         ${escNum(inst.totalStudents)}, 100, NOW(), NOW()
        );`
     );
+
+    // If KEC, seed all 14 official departments
+    if (inst.key === "INST_KEC") {
+      for (const dept of KEC_DEPARTMENTS) {
+        const deptId = toUUID(`beyon-dept-kec-${dept.code.toLowerCase()}`);
+        departmentIds[dept.code] = deptId;
+
+        deptStmts.push(
+          `INSERT INTO institution_departments
+            (id, institution_id, department_code, department_name, description, created_at, updated_at)
+           VALUES (
+            ${esc(deptId)}, ${esc(userId)}, ${esc(dept.code)}, ${esc(dept.name)},
+            ${esc(dept.description)}, NOW(), NOW()
+           )
+           ON DUPLICATE KEY UPDATE department_name=${esc(dept.name)}, description=${esc(dept.description)};`
+        );
+      }
+    }
   }
 
   doltBatch(userStmts);
   doltBatch(profileStmts);
+  if (deptStmts.length > 0) doltBatch(deptStmts);
 
   console.log(`  ✅ ${INSTITUTIONS.length} institutions seeded`);
+  console.log(`  ✅ ${KEC_DEPARTMENTS.length} official KEC departments seeded`);
 }
 
 export function getInstitutionUserId(key: string): string | null {
   return institutionUserIds[key] ?? null;
 }
+
 

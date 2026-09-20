@@ -14,40 +14,94 @@ export interface InstitutionSeed {
   highestPackage: number;
   totalStudents: number;
   tier: "ELITE" | "STRONG" | "AVERAGE" | "WEAK" | "NEW";
+  dataSource: "PUBLIC_REFERENCE" | "SYNTHETIC_DEMO";
 }
 
-export const INSTITUTIONS: InstitutionSeed[] = [
+export interface DepartmentSeed {
+  code: string;
+  name: string;
+  shortName: string;
+  programme: string;
+  degree: string;
+  description: string;
+  targetStudents: number;
+  hodName: string;
+}
 
-  { key: "INST_0001", name: "Beyon Institute of Technology", code: "BIT001", type: "Engineering College", city: "Chennai", state: "Tamil Nadu", website: "https://bit.beyon.test", established: 1995, accreditation: "NAAC", accreditationGrade: "A++", placementRate: 94.2, avgPackage: 12.5, highestPackage: 48.0, totalStudents: 4200, tier: "ELITE" },
-  { key: "INST_0002", name: "Apex College of Engineering", code: "ACE001", type: "Engineering College", city: "Bangalore", state: "Karnataka", website: "https://ace.beyon.test", established: 1990, accreditation: "NAAC", accreditationGrade: "A+", placementRate: 91.8, avgPackage: 10.8, highestPackage: 42.0, totalStudents: 3800, tier: "ELITE" },
-  { key: "INST_0003", name: "National Institute of Applied Sciences", code: "NIAS001", type: "Institute of Technology", city: "Hyderabad", state: "Andhra Pradesh", website: "https://nias.beyon.test", established: 1988, accreditation: "NAAC", accreditationGrade: "A+", placementRate: 89.5, avgPackage: 11.2, highestPackage: 45.0, totalStudents: 5000, tier: "ELITE" },
-  { key: "INST_0004", name: "Premier School of Computing", code: "PSC001", type: "College of Technology", city: "Pune", state: "Maharashtra", website: "https://psc.beyon.test", established: 1992, accreditation: "NAAC", accreditationGrade: "A", placementRate: 87.4, avgPackage: 9.6, highestPackage: 36.0, totalStudents: 3200, tier: "ELITE" },
-  { key: "INST_0005", name: "Vega University of Engineering", code: "VUE001", type: "University", city: "Coimbatore", state: "Tamil Nadu", website: "https://vue.beyon.test", established: 1985, accreditation: "NAAC", accreditationGrade: "A", placementRate: 85.0, avgPackage: 8.9, highestPackage: 32.0, totalStudents: 6000, tier: "ELITE" },
-
-  { key: "INST_0006", name: "Zenith College of Engineering", code: "ZCE001", type: "Engineering College", city: "Chennai", state: "Tamil Nadu", website: "https://zce.beyon.test", established: 2000, accreditation: "NAAC", accreditationGrade: "A", placementRate: 78.3, avgPackage: 7.2, highestPackage: 28.0, totalStudents: 2800, tier: "STRONG" },
-  { key: "INST_0007", name: "Nexus Institute of Technology", code: "NIT001", type: "Engineering College", city: "Madurai", state: "Tamil Nadu", website: "https://nit.beyon.test", established: 1998, accreditation: "NAAC", accreditationGrade: "B+", placementRate: 75.1, avgPackage: 6.8, highestPackage: 24.0, totalStudents: 2400, tier: "STRONG" },
-  { key: "INST_0008", name: "Horizon Institute of Science", code: "HIS001", type: "Autonomous College", city: "Trichy", state: "Tamil Nadu", website: "https://his.beyon.test", established: 2001, accreditation: "NAAC", accreditationGrade: "B+", placementRate: 72.8, avgPackage: 6.2, highestPackage: 22.0, totalStudents: 2200, tier: "STRONG" },
-  { key: "INST_0009", name: "Prism College of Technology", code: "PCT001", type: "Engineering College", city: "Mysore", state: "Karnataka", website: "https://pct.beyon.test", established: 2003, accreditation: "NAAC", accreditationGrade: "B+", placementRate: 70.4, avgPackage: 6.0, highestPackage: 20.0, totalStudents: 1800, tier: "STRONG" },
-  { key: "INST_0010", name: "Skyline College of Engineering", code: "SCE001", type: "Engineering College", city: "Salem", state: "Tamil Nadu", website: "https://sce.beyon.test", established: 2002, accreditation: "NAAC", accreditationGrade: "B", placementRate: 68.9, avgPackage: 5.8, highestPackage: 18.0, totalStudents: 1600, tier: "STRONG" },
-  { key: "INST_0011", name: "Sigma Institute of Applied Technology", code: "SIAT001", type: "Engineering College", city: "Visakhapatnam", state: "Andhra Pradesh", website: "https://siat.beyon.test", established: 1999, accreditation: "NAAC", accreditationGrade: "B+", placementRate: 74.2, avgPackage: 6.5, highestPackage: 23.0, totalStudents: 2100, tier: "STRONG" },
-  { key: "INST_0012", name: "Pinnacle School of Engineering", code: "PSE001", type: "Engineering College", city: "Erode", state: "Tamil Nadu", website: "https://pse.beyon.test", established: 2004, accreditation: "NAAC", accreditationGrade: "B", placementRate: 66.1, avgPackage: 5.5, highestPackage: 16.0, totalStudents: 1400, tier: "STRONG" },
-
-  { key: "INST_0013", name: "Orbit College of Engineering", code: "OCE001", type: "Engineering College", city: "Tiruppur", state: "Tamil Nadu", website: "https://oce.beyon.test", established: 2006, accreditation: "NAAC", accreditationGrade: "B", placementRate: 58.4, avgPackage: 4.8, highestPackage: 14.0, totalStudents: 1200, tier: "AVERAGE" },
-  { key: "INST_0014", name: "Pioneer Institute of Computing", code: "PIC001", type: "Engineering College", city: "Vellore", state: "Tamil Nadu", website: "https://pic.beyon.test", established: 2005, accreditation: "NAAC", accreditationGrade: "B", placementRate: 55.7, avgPackage: 4.5, highestPackage: 12.0, totalStudents: 1100, tier: "AVERAGE" },
-  { key: "INST_0015", name: "Vector College of Technology", code: "VCT001", type: "Engineering College", city: "Hubli", state: "Karnataka", website: "https://vct.beyon.test", established: 2007, accreditation: "NAAC", accreditationGrade: "B", placementRate: 52.1, avgPackage: 4.2, highestPackage: 11.0, totalStudents: 950, tier: "AVERAGE" },
-  { key: "INST_0016", name: "Radiant Institute of Engineering", code: "RIE001", type: "Engineering College", city: "Guntur", state: "Andhra Pradesh", website: "https://rie.beyon.test", established: 2008, accreditation: "NAAC", accreditationGrade: "B", placementRate: 50.0, avgPackage: 4.0, highestPackage: 10.0, totalStudents: 900, tier: "AVERAGE" },
-  { key: "INST_0017", name: "Quantum College of Engineering", code: "QCE001", type: "Engineering College", city: "Belgaum", state: "Karnataka", website: "https://qce.beyon.test", established: 2006, accreditation: "NAAC", accreditationGrade: "C", placementRate: 48.3, avgPackage: 3.8, highestPackage: 9.5, totalStudents: 850, tier: "AVERAGE" },
-  { key: "INST_0018", name: "Matrix Institute of Technology", code: "MIT001", type: "Engineering College", city: "Tirupati", state: "Andhra Pradesh", website: "https://mit.beyon.test", established: 2009, accreditation: "NAAC", accreditationGrade: "C", placementRate: 46.5, avgPackage: 3.6, highestPackage: 9.0, totalStudents: 800, tier: "AVERAGE" },
-  { key: "INST_0019", name: "Luminary School of Computing", code: "LSC001", type: "Autonomous College", city: "Mangalore", state: "Karnataka", website: "https://lsc.beyon.test", established: 2010, accreditation: "NAAC", accreditationGrade: "C", placementRate: 44.2, avgPackage: 3.4, highestPackage: 8.5, totalStudents: 750, tier: "AVERAGE" },
-  { key: "INST_0020", name: "Pulse College of Engineering", code: "PCE001", type: "Engineering College", city: "Vijayawada", state: "Andhra Pradesh", website: "https://pce.beyon.test", established: 2008, accreditation: "NAAC", accreditationGrade: "C", placementRate: 42.8, avgPackage: 3.2, highestPackage: 8.0, totalStudents: 700, tier: "AVERAGE" },
-
-  { key: "INST_0021", name: "Ember Institute of Technology", code: "EIT001", type: "Engineering College", city: "Chennai", state: "Tamil Nadu", website: "https://eit.beyon.test", established: 2012, accreditation: "NAAC", accreditationGrade: "C", placementRate: 32.1, avgPackage: 2.8, highestPackage: 6.0, totalStudents: 500, tier: "WEAK" },
-  { key: "INST_0022", name: "Crescent School of Technology", code: "CST001", type: "Engineering College", city: "Coimbatore", state: "Tamil Nadu", website: "https://cst.beyon.test", established: 2013, accreditation: "NAAC", accreditationGrade: "C", placementRate: 28.4, avgPackage: 2.5, highestPackage: 5.5, totalStudents: 420, tier: "WEAK" },
-  { key: "INST_0023", name: "Ridge College of Engineering", code: "RCE001", type: "Engineering College", city: "Madurai", state: "Tamil Nadu", website: "https://rce.beyon.test", established: 2014, accreditation: "NAAC", accreditationGrade: "C", placementRate: 24.7, avgPackage: 2.2, highestPackage: 5.0, totalStudents: 380, tier: "WEAK" },
-
-  { key: "INST_0024", name: "Nova Institute of Computing", code: "NIC001", type: "Engineering College", city: "Bangalore", state: "Karnataka", website: "https://nic.beyon.test", established: 2020, accreditation: "NAAC", accreditationGrade: "PENDING", placementRate: 15.0, avgPackage: 2.0, highestPackage: 4.5, totalStudents: 200, tier: "NEW" },
-  { key: "INST_0025", name: "Dawn College of Technology", code: "DCT001", type: "Engineering College", city: "Hyderabad", state: "Andhra Pradesh", website: "https://dct.beyon.test", established: 2022, accreditation: "NAAC", accreditationGrade: "PENDING", placementRate: 0.0, avgPackage: 0.0, highestPackage: 0.0, totalStudents: 150, tier: "NEW" },
+export const KEC_DEPARTMENTS: DepartmentSeed[] = [
+  { code: "CSE", name: "Computer Science and Engineering", shortName: "CSE", programme: "B.E Computer Science and Engineering", degree: "B.E", description: "Department of Computer Science & Engineering with NBA tier-1 accreditation, AI/Cloud excellence centers", targetStudents: 80, hodName: "Dr. R. Thangarajan" },
+  { code: "IT", name: "Information Technology", shortName: "IT", programme: "B.Tech Information Technology", degree: "B.Tech", description: "Department of Information Technology focusing on Cloud, Full-stack and Distributed Systems", targetStudents: 50, hodName: "Dr. S. Anandamurugan" },
+  { code: "AIDS", name: "Artificial Intelligence and Data Science", shortName: "AI&DS", programme: "B.Tech Artificial Intelligence and Data Science", degree: "B.Tech", description: "Data science, Big data analytics and intelligent cognitive data systems", targetStudents: 35, hodName: "Dr. P. Natesan" },
+  { code: "AIML", name: "Artificial Intelligence and Machine Learning", shortName: "AI&ML", programme: "B.Tech Artificial Intelligence and Machine Learning", degree: "B.Tech", description: "Deep learning, Neural networks, NLP and autonomous intelligence engineering", targetStudents: 30, hodName: "Dr. K. Sangeetha" },
+  { code: "CSD", name: "Computer Science and Design", shortName: "CSD", programme: "B.E Computer Science and Design", degree: "B.E", description: "Computing systems, UI/UX architecture, Game design and interactive digital technology", targetStudents: 25, hodName: "Dr. N. Shanthi" },
+  { code: "ECE", name: "Electronics and Communication Engineering", shortName: "ECE", programme: "B.E Electronics and Communication Engineering", degree: "B.E", description: "VLSI design, Embedded systems, Signal processing and wireless telecommunication", targetStudents: 60, hodName: "Dr. M. Joseph Auxilius Jude" },
+  { code: "EEE", name: "Electrical and Electronics Engineering", shortName: "EEE", programme: "B.E Electrical and Electronics Engineering", degree: "B.E", description: "Smart grids, Power electronics, Electric vehicles and industrial automation drives", targetStudents: 40, hodName: "Dr. S. Albert Alexander" },
+  { code: "MECH", name: "Mechanical Engineering", shortName: "MECH", programme: "B.E Mechanical Engineering", degree: "B.E", description: "Robotics, CAD/CAM/CAE, Thermal systems and Industry 4.0 manufacturing", targetStudents: 40, hodName: "Dr. R. Rajasekar" },
+  { code: "MTS", name: "Mechatronics Engineering", shortName: "MTS", programme: "B.E Mechatronics Engineering", degree: "B.E", description: "Robotics, Automation, Sensors, Actuators and cyber-physical systems engineering", targetStudents: 20, hodName: "Dr. B. Meenakshipriya" },
+  { code: "CIVIL", name: "Civil Engineering", shortName: "CIVIL", programme: "B.E Civil Engineering", degree: "B.E", description: "Structural engineering, Geotechnical, Environmental & smart city infrastructure", targetStudents: 20, hodName: "Dr. P. S. Kothai" },
+  { code: "EIE", name: "Electronics and Instrumentation Engineering", shortName: "EIE", programme: "B.E Electronics and Instrumentation Engineering", degree: "B.E", description: "Process automation, Industrial instrumentation and IoT control systems", targetStudents: 15, hodName: "Dr. U. S. Ragupathy" },
+  { code: "CHEM", name: "Chemical Engineering", shortName: "CHEM", programme: "B.Tech Chemical Engineering", degree: "B.Tech", description: "Process engineering, Reaction engineering and biochemical technologies", targetStudents: 15, hodName: "Dr. K. Kannan" },
+  { code: "FOOD", name: "Food Technology", shortName: "FOOD", programme: "B.Tech Food Technology", degree: "B.Tech", description: "Food processing, Bioprocess engineering and quality assurance standards", targetStudents: 10, hodName: "Dr. R. Baskar" },
+  { code: "AUTO", name: "Automobile Engineering", shortName: "AUTO", programme: "B.E Automobile Engineering", degree: "B.E", description: "Vehicle dynamics, Powertrain systems, EV battery tech and chassis design", targetStudents: 15, hodName: "Dr. C. Jegadheesan" },
 ];
 
-export const DEPARTMENTS_PER_INSTITUTION = ["CSE", "IT", "ECE", "EEE", "MECH", "CIVIL", "AIDS", "AIML"];
+export const INSTITUTIONS: InstitutionSeed[] = [
+  {
+    key: "INST_KEC",
+    name: "Kongu Engineering College",
+    code: "1-4251711",
+    type: "Autonomous Engineering College",
+    city: "Perundurai",
+    state: "Tamil Nadu",
+    website: "https://kongu.ac.in/",
+    established: 1984,
+    accreditation: "NAAC A++, NBA Tier-1, AICTE Approved, Autonomous",
+    accreditationGrade: "A++",
+    placementRate: 94.2,
+    avgPackage: 6.2,
+    highestPackage: 40.0,
+    totalStudents: 8500,
+    tier: "ELITE",
+    dataSource: "PUBLIC_REFERENCE",
+  },
+  {
+    key: "INST_0001",
+    name: "Beyon Institute of Technology",
+    code: "BIT001",
+    type: "Engineering College",
+    city: "Chennai",
+    state: "Tamil Nadu",
+    website: "https://bit.beyon.test",
+    established: 1995,
+    accreditation: "NAAC",
+    accreditationGrade: "A++",
+    placementRate: 94.2,
+    avgPackage: 12.5,
+    highestPackage: 48.0,
+    totalStudents: 4200,
+    tier: "ELITE",
+    dataSource: "SYNTHETIC_DEMO",
+  },
+  {
+    key: "INST_0002",
+    name: "Apex College of Engineering",
+    code: "ACE001",
+    type: "Engineering College",
+    city: "Bangalore",
+    state: "Karnataka",
+    website: "https://ace.beyon.test",
+    established: 1990,
+    accreditation: "NAAC",
+    accreditationGrade: "A+",
+    placementRate: 91.8,
+    avgPackage: 10.8,
+    highestPackage: 42.0,
+    totalStudents: 3800,
+    tier: "ELITE",
+    dataSource: "SYNTHETIC_DEMO",
+  },
+];
+
+export const DEPARTMENTS_PER_INSTITUTION = KEC_DEPARTMENTS.map((d) => d.code);
+
 
