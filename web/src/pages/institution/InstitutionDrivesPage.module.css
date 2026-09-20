@@ -338,6 +338,46 @@
   border: 1px solid #cbd5e1;
 }
 
+.statusRejected,
+.statusUnauthorized {
+  background: #fee2e2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+}
+
+.rejectionAlertBox {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  padding: 10px 12px;
+  font-size: 0.76rem;
+  color: #991b1b;
+  line-height: 1.45;
+}
+
+.btnReject {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: #ffffff;
+  color: #b91c1c;
+  font-size: 0.82rem;
+  font-weight: 700;
+  border: 1px solid #fca5a5;
+  border-radius: 0px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btnReject:hover {
+  background: #fef2f2;
+  border-color: #f87171;
+}
+
 .packageBanner {
   display: flex;
   align-items: center;

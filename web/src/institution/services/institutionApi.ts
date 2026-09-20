@@ -37,6 +37,7 @@ export const institutionApi = {
   getRating: () => api.get<InstitutionRating>('/institution/rating'),
   getDrives: () => api.get<PlacementDrive[]>('/institution/drives'),
   approveDrive: (driveId: string) => api.post<PlacementDrive>(`/institution/drives/${driveId}/approve`),
+  rejectDrive: (driveId: string, reason?: string) => api.post<PlacementDrive>(`/institution/drives/${driveId}/reject`, { reason }),
   getDriveApplications: (driveId: string) => api.get<any[]>(`/institution/drives/${driveId}/applications`),
 };
 

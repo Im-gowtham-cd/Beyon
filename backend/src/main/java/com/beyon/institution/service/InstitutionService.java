@@ -737,6 +737,23 @@ public class InstitutionService {
             throw new ForbiddenException("Not your institution's drive");
         }
         drive.setStatus("APPROVED");
+        drive.setRejectionReason(null);
+        return placementDriveRepository.save(drive);
+    }
+
+    @Transactional
+    public PlacementDrive rejectDrive(UUID driveId, UUID institutionId, String reason) {
+        PlacementDrive drive = placementDriveRepository.findById(driveId)
+                .orElseThrow(() -> new ResourceNotFoundException("Drive not found"));
+        if (!drive.getInstitutionId().equals(institutionId)) {
+            throw new ForbiddenException("Not your institution's drive");
+        }
+        drive.setStatus("REJECTED");
+        if (reason != null && !reason.isBlank()) {
+            drive.setRejectionReason(reason);
+        } else {
+            drive.setRejectionReason("Not authorized by institution placement governance committee.");
+        }
         return placementDriveRepository.save(drive);
     }
 

@@ -124,6 +124,16 @@ public class InstitutionController {
         return ResponseEntity.ok(ApiResponse.ok(institutionService.approveDrive(driveId, instId)));
     }
 
+    @PostMapping("/drives/{driveId}/reject")
+    public ResponseEntity<ApiResponse<PlacementDrive>> rejectDrive(
+            Authentication auth,
+            @PathVariable UUID driveId,
+            @RequestBody(required = false) Map<String, String> body) {
+        UUID instId = extractInstitutionId(auth);
+        String reason = body != null ? body.get("reason") : null;
+        return ResponseEntity.ok(ApiResponse.ok(institutionService.rejectDrive(driveId, instId, reason)));
+    }
+
     @GetMapping("/drives/{driveId}/applications")
     public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getDriveApplications(
             Authentication auth,

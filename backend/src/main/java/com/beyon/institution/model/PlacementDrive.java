@@ -86,29 +86,32 @@ public class PlacementDrive {
     public LocalDate getDriveDate() { return driveDate; }
     public void setDriveDate(LocalDate driveDate) { this.driveDate = driveDate; }
 
+    @Column(name = "drive_type", length = 50)
+    private String driveType = "ON_CAMPUS";
+
+    @Column(name = "package_lpa", precision = 6, scale = 2)
+    private java.math.BigDecimal packageLpa = java.math.BigDecimal.valueOf(12.0);
+
+    @Column(name = "eligible_batch", length = 100)
+    private String eligibleBatch = "2026 Batch";
+
+    @Column(name = "eligible_depts", length = 500)
+    private String eligibleDepts = "All Streams";
+
+    @Column(name = "min_cgpa", precision = 4, scale = 2)
+    private java.math.BigDecimal minCgpa = java.math.BigDecimal.valueOf(7.0);
+
+    @Column(name = "location", length = 200)
+    private String location = "Campus / Hybrid";
+
+    @Column(name = "rejection_reason", length = 500)
+    private String rejectionReason;
+
     @Transient
     private String companyName;
 
     @Transient
     private String role;
-
-    @Transient
-    private String driveType = "ON_CAMPUS";
-
-    @Column(precision = 6, scale = 2)
-    private java.math.BigDecimal packageLpa = java.math.BigDecimal.valueOf(12.0);
-
-    @Transient
-    private String eligibleBatch = "2026";
-
-    @Transient
-    private String eligibleDepts = "All Streams";
-
-    @Transient
-    private java.math.BigDecimal minCgpa = java.math.BigDecimal.valueOf(7.0);
-
-    @Transient
-    private String location = "Campus / Hybrid";
 
     @Transient
     private String interviewDate = "Scheduled on Confirmation";
@@ -122,23 +125,26 @@ public class PlacementDrive {
     public String getRole() { return role != null ? role : title; }
     public void setRole(String role) { this.role = role; }
 
-    public String getDriveType() { return driveType; }
+    public String getDriveType() { return driveType != null ? driveType : "ON_CAMPUS"; }
     public void setDriveType(String driveType) { this.driveType = driveType; }
 
     public java.math.BigDecimal getPackageLpa() { return packageLpa; }
     public void setPackageLpa(java.math.BigDecimal packageLpa) { this.packageLpa = packageLpa; }
 
-    public String getEligibleBatch() { return eligibleBatch; }
+    public String getEligibleBatch() { return eligibleBatch != null ? eligibleBatch : "2026 Batch"; }
     public void setEligibleBatch(String eligibleBatch) { this.eligibleBatch = eligibleBatch; }
 
-    public String getEligibleDepts() { return eligibleDepts; }
+    public String getEligibleDepts() { return eligibleDepts != null ? eligibleDepts : "All Streams"; }
     public void setEligibleDepts(String eligibleDepts) { this.eligibleDepts = eligibleDepts; }
 
-    public java.math.BigDecimal getMinCgpa() { return minCgpa; }
+    public java.math.BigDecimal getMinCgpa() { return minCgpa != null ? minCgpa : java.math.BigDecimal.valueOf(7.0); }
     public void setMinCgpa(java.math.BigDecimal minCgpa) { this.minCgpa = minCgpa; }
 
-    public String getLocation() { return location; }
+    public String getLocation() { return location != null ? location : "Campus / Hybrid"; }
     public void setLocation(String location) { this.location = location; }
+
+    public String getRejectionReason() { return rejectionReason; }
+    public void setRejectionReason(String rejectionReason) { this.rejectionReason = rejectionReason; }
 
     public String getInterviewDate() { return interviewDate; }
     public void setInterviewDate(String interviewDate) { this.interviewDate = interviewDate; }
