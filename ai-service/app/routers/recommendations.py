@@ -12,7 +12,11 @@ from app.services.daily_question_engine import (
 )
 from app.services.adaptive_learning import process_question_attempt
 from app.services.new_skill_onboarding import onboard_new_skill
-from app.services.ollama_client import analyze_skill_gaps_for_profession, chat_with_career_advisor
+from app.services.ollama_client import (
+    analyze_skill_gaps_for_profession,
+    chat_with_career_advisor,
+    generate_ai_skill_recommendations
+)
 
 router = APIRouter(prefix="/api/v1/intelligence", tags=["Intelligence"])
 
@@ -212,4 +216,46 @@ async def get_revise_recall(req: ReviseRecallRequest):
         skill_level=req.skill_level,
         question_count=req.question_count
     )
+
+
+class AiSkillAdvisorRequest(BaseModel):
+    student_id: Optional[str] = None
+    current_skills: List[Dict[str, Any]] = []
+    weak_concepts: List[Dict[str, Any]] = []
+    target_role: Optional[str] = "Full Stack Software Engineer"
+    target_company: Optional[str] = None
+    blocked_drives: List[Dict[str, Any]] = []
+    candidate_skills: List[Dict[str, Any]] = []
+    limit: int = 8
+
+
+@router.post("/recommendations/ai-skill-advisor")
+async def get_ai_skill_recommendations_endpoint(req: Optional[AiSkillAdvisorRequest] = None):
+    """
+    Generates deep, articulate skill recommendations powered by Ollama Qwen 3.5 (4B),
+    explaining explicitly WHY each skill is suggested based on:
+    - Current verified skills & proficiencies
+    - Diagnosed concept weaknesses & failure patterns
+    - Target company & role benchmarks
+    - Blocked campus recruitment drives & missing competencies.
+    """
+    if req is None:
+        req = AiSkillAdvisorRequest()
+    recommendations = await generate_ai_skill_recommendations(
+        student_skills=req.current_skills,
+        weak_concepts=req.weak_concepts,
+        target_role=req.target_role,
+        target_company=req.target_company,
+        blocked_drives=req.blocked_drives,
+        candidate_skills=req.candidate_skills,
+        limit=req.limit
+    )
+    return {
+        "student_id": req.student_id,
+        "target_role": req.target_role,
+        "target_company": req.target_company,
+        "total_recommendations": len(recommendations),
+        "recommendations": recommendations
+    }
+
 

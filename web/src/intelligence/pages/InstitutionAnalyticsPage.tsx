@@ -4,7 +4,6 @@ import {
   GraduationCap,
   RefreshCw,
   Building2,
-  AlertCircle,
   CheckCircle2,
   Clock,
   ShieldAlert,
@@ -209,7 +208,7 @@ export function InstitutionAnalyticsPage() {
     return filteredStudents.slice(start, start + pageSize);
   }, [filteredStudents, currentPage]);
 
-  const getStatusBadge = (status: string, s: any) => {
+  const getStatusBadge = (status: string, _s?: any) => {
     switch (status) {
       case 'PLACED':
       case 'OFFERED':

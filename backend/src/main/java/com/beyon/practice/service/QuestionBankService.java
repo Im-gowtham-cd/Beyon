@@ -516,5 +516,9 @@ public class QuestionBankService {
     public long countByDifficulty(String difficulty) {
         return questionRepository.countPublishedByDifficulty(difficulty);
     }
+
+    public long countByDifficulties(List<String> difficulties) {
+        return questionRepository.countPublishedByDifficultyIn(difficulties);
+    }
 }
 

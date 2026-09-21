@@ -11,13 +11,10 @@ import {
   ChevronRight,
   X,
   ShieldCheck,
-  ShieldAlert,
   AlertTriangle,
   RefreshCw,
   Ban,
   Clock,
-  MapPin,
-  GraduationCap,
 } from 'lucide-react';
 import { institutionApi, recruitmentApi } from '../../institution/services/institutionApi';
 import styles from './InstitutionDrivesPage.module.css';

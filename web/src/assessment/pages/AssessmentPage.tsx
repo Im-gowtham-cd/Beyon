@@ -14,10 +14,10 @@ import {
   X,
   Layers,
   Award,
-  Lock,
   BookOpen,
 } from 'lucide-react';
 import { taxonomyApi, studentLearningApi } from '../../student/services/taxonomyApi';
+import { studentProfileApi } from '../../student/services/studentProfileApi';
 import styles from './AssessmentPage.module.css';
 
 export function AssessmentPage() {
@@ -25,6 +25,8 @@ export function AssessmentPage() {
   const [testAttempts, setTestAttempts] = useState<any[]>([]);
   const [skillsList, setSkillsList] = useState<any[]>([]);
   const [learningTopicsList, setLearningTopicsList] = useState<any[]>([]);
+  const [profileSkillsList, setProfileSkillsList] = useState<any[]>([]);
+  const [unlockedDirectTestIds, setUnlockedDirectTestIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'available' | 'completed'>('available');
   const [selectedTestForLaunch, setSelectedTestForLaunch] = useState<any | null>(null);
@@ -36,16 +38,18 @@ export function AssessmentPage() {
       try {
         const token = localStorage.getItem('beyon_token') || localStorage.getItem('beyon_access_token');
         const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
-        const [tRes, aRes, skillsRes, topicsRes] = await Promise.all([
+        const [tRes, aRes, skillsRes, topicsRes, profileSkillsRes] = await Promise.all([
           fetch('/api/v1/tests', { headers }).then(r => r.json()).catch(() => ({ data: [] })),
           fetch('/api/v1/tests/my-attempts', { headers }).then(r => r.json()).catch(() => ({ data: [] })),
           taxonomyApi.getSkills().catch(() => []),
           studentLearningApi.getTopics().catch(() => []),
+          studentProfileApi.getSkills().catch(() => []),
         ]);
         setAvailableTests(Array.isArray(tRes.data) ? tRes.data : []);
         setTestAttempts(Array.isArray(aRes.data) ? aRes.data : []);
         setSkillsList(skillsRes || []);
         setLearningTopicsList(topicsRes || []);
+        setProfileSkillsList(profileSkillsRes || []);
       } catch {
         setAvailableTests([]);
         setTestAttempts([]);
@@ -58,40 +62,95 @@ export function AssessmentPage() {
 
   function getSkillProgressForTest(test: any) {
     const title = (test.title || '').toLowerCase();
+    const testDesc = (test.description || '').toLowerCase();
+
+    // 1. Check if this is an Open Benchmark / Foundational Assessment
+    const isOpenBenchmark = 
+      title.includes('data structures') ||
+      title.includes('problem solving') ||
+      title.includes('benchmark') ||
+      title.includes('general') ||
+      title.includes('aptitude') ||
+      test.difficulty === 'EASY' ||
+      test.testType === 'BENCHMARK' ||
+      test.category === 'GENERAL';
+
+    // 2. Find matching taxonomy skill
     const matchedSkill = skillsList.find(s => {
       const sName = s.name.toLowerCase();
-      return title.includes(sName) || sName.includes(title.split(' ')[0]);
+      return title.includes(sName) || testDesc.includes(sName);
     });
 
-    if (!matchedSkill) {
-      return {
-        skill: null,
-        progressPercent: 0,
-        completedCount: 0,
-        totalCount: 2,
-        is100Percent: false,
-        skillSlug: 'java',
-      };
-    }
+    // 3. Check if student has verified profile skill in this domain (must have >= 60% score to auto-unlock)
+    const profileSkill = profileSkillsList.find(ps => {
+      const psName = (ps.skillName || '').toLowerCase();
+      if (!psName) return false;
+      return title.includes(psName) || (matchedSkill && matchedSkill.name.toLowerCase() === psName);
+    });
 
-    const skillTopicsCount = matchedSkill.topicCount && matchedSkill.topicCount > 0 ? matchedSkill.topicCount : 2;
-    const completedCount = learningTopicsList.filter(lt =>
+    const isScorePass = profileSkill && Number(profileSkill.score ?? 0) >= 60;
+    const isScoreGap = profileSkill && Number(profileSkill.score ?? 0) < 60;
+
+    const skillTopicsCount = matchedSkill?.topicCount && matchedSkill.topicCount > 0 ? matchedSkill.topicCount : 3;
+    const completedCount = matchedSkill ? learningTopicsList.filter(lt =>
       (lt.skillId === matchedSkill.id || lt.topicName?.toLowerCase().includes(matchedSkill.name.toLowerCase())) &&
       lt.status === 'COMPLETED'
-    ).length;
+    ).length : 0;
 
     const progressPercent = Math.min(100, Math.round((completedCount / skillTopicsCount) * 100));
-    const is100Percent = progressPercent >= 100;
+    
+    // An assessment is unlocked if:
+    // a) Student has passed verified competency (score >= 60%), OR
+    // b) It is an open benchmark / easy assessment, OR
+    // c) Student finished 100% of the learning topics, OR
+    // d) Student explicitly unblocks it for direct challenge
+    const isDirectlyChallenged = unlockedDirectTestIds.has(test.id);
+    const isUnlocked = isScorePass || (isOpenBenchmark && !isScoreGap) || progressPercent >= 100 || isDirectlyChallenged;
+
+    let unlockReason = '';
+    let statusTier: 'READY' | 'GAP_LOCKED' | 'ROADMAP_LOCKED' = 'READY';
+
+    if (isDirectlyChallenged) {
+      unlockReason = 'Direct Challenge Mode Active • Assessment Unlocked';
+      statusTier = 'READY';
+    } else if (isScorePass) {
+      unlockReason = `Verified Competency (${profileSkill.skillName} ${Number(profileSkill.score).toFixed(0)}%) • Ready to Take Assessment`;
+      statusTier = 'READY';
+    } else if (isScoreGap) {
+      unlockReason = `Skill Gap Detected (${profileSkill.skillName} ${Number(profileSkill.score).toFixed(0)}%) • Complete Learning Roadmap to Unlock`;
+      statusTier = 'GAP_LOCKED';
+    } else if (isOpenBenchmark && progressPercent >= 50) {
+      unlockReason = 'Open Foundational Benchmark • Available for Direct Assessment';
+      statusTier = 'READY';
+    } else if (progressPercent >= 100) {
+      unlockReason = '100% Roadmap Mastered • Assessment Unlocked';
+      statusTier = 'READY';
+    } else {
+      unlockReason = `Roadmap in Progress (${completedCount}/${skillTopicsCount} Topics) • Complete Skill Track to Unlock`;
+      statusTier = 'ROADMAP_LOCKED';
+    }
 
     return {
       skill: matchedSkill,
       progressPercent,
       completedCount,
       totalCount: skillTopicsCount,
-      is100Percent,
-      skillSlug: matchedSkill.slug,
+      isUnlocked,
+      unlockReason,
+      statusTier,
+      isVerifiedSkill: isScorePass,
+      isOpenBenchmark,
+      skillSlug: matchedSkill?.slug || (profileSkill?.skillName ? profileSkill.skillName.toLowerCase().replace(/\s+/g, '-') : 'java'),
     };
   }
+
+  const handleUnlockDirectly = (testId: string) => {
+    setUnlockedDirectTestIds(prev => {
+      const next = new Set(prev);
+      next.add(testId);
+      return next;
+    });
+  };
 
   const handleLaunchDesktop = (test: any) => {
     setSelectedTestForLaunch(test);
@@ -280,7 +339,7 @@ export function AssessmentPage() {
             {availableTests.map((t: any) => {
               const diffColor = t.difficulty === 'EASY' ? '#0284c7' : t.difficulty === 'HARD' ? '#dc2626' : '#d97706';
               const skillProgress = getSkillProgressForTest(t);
-              const isUnlocked = skillProgress.is100Percent;
+              const isUnlocked = skillProgress.isUnlocked;
 
               return (
                 <div
@@ -342,7 +401,7 @@ export function AssessmentPage() {
                         padding: '8px 12px',
                       }}
                     >
-                      <ShieldCheck size={14} /> 🔓 100% Skill Mastered &bull; Assessment Unlocked
+                      <ShieldCheck size={14} /> 🔓 {skillProgress.unlockReason}
                     </div>
                   ) : (
                     <div
@@ -360,11 +419,22 @@ export function AssessmentPage() {
                       }}
                     >
                       <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
-                        <Lock size={13} /> Locked &mdash; Requires 100% Skill Roadmap
+                        <BookOpen size={13} /> Roadmap in Progress ({skillProgress.progressPercent}%)
                       </span>
-                      <span style={{ color: '#d97706', fontWeight: 800 }}>
-                        {skillProgress.completedCount}/{skillProgress.totalCount} Lessons ({skillProgress.progressPercent}%)
-                      </span>
+                      <button
+                        onClick={() => handleUnlockDirectly(t.id)}
+                        style={{
+                          background: '#1c2d81',
+                          color: '#ffffff',
+                          border: 'none',
+                          padding: '3px 8px',
+                          fontSize: '0.70rem',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        ⚡ Challenge Now
+                      </button>
                     </div>
                   )}
 
@@ -394,53 +464,74 @@ export function AssessmentPage() {
                   </div>
 
                   {isUnlocked ? (
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: '10px' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: '8px' }}>
+                        <button
+                          onClick={() => handleLaunchDesktop(t)}
+                          style={{
+                            height: '40px',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '8px',
+                            padding: '0 16px',
+                            background: '#1c2d81',
+                            color: '#ffffff',
+                            border: 'none',
+                            borderRadius: '0px',
+                            fontSize: '0.84rem',
+                            fontWeight: 800,
+                            cursor: 'pointer',
+                            transition: 'background 0.15s ease',
+                          }}
+                        >
+                          <Laptop size={15} />
+                          <span>Launch in Desktop App</span>
+                        </button>
+                        <button
+                          onClick={() => handleCopyToken(t.id)}
+                          style={{
+                            height: '40px',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '6px',
+                            padding: '0 14px',
+                            background: '#f8fafc',
+                            color: '#1c2d81',
+                            border: '1px solid #cbd5e1',
+                            borderRadius: '0px',
+                            fontSize: '0.8rem',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                          }}
+                          title="Copy Session Token"
+                        >
+                          <Copy size={14} /> Token
+                        </button>
+                      </div>
                       <button
                         onClick={() => handleLaunchDesktop(t)}
                         style={{
-                          height: '40px',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: '8px',
-                          padding: '0 18px',
-                          background: '#1c2d81',
-                          color: '#ffffff',
-                          border: 'none',
-                          borderRadius: '0px',
-                          fontSize: '0.84rem',
-                          fontWeight: 800,
-                          cursor: 'pointer',
-                          transition: 'background 0.15s ease',
-                        }}
-                      >
-                        <Laptop size={15} />
-                        <span>Launch in Desktop App</span>
-                      </button>
-                      <button
-                        onClick={() => handleCopyToken(t.id)}
-                        style={{
-                          height: '40px',
+                          height: '32px',
                           display: 'inline-flex',
                           alignItems: 'center',
                           justifyContent: 'center',
                           gap: '6px',
-                          padding: '0 14px',
-                          background: '#f8fafc',
-                          color: '#1c2d81',
-                          border: '1px solid #cbd5e1',
+                          background: '#eff6ff',
+                          color: '#1e40af',
+                          border: '1px solid #bfdbfe',
                           borderRadius: '0px',
-                          fontSize: '0.8rem',
+                          fontSize: '0.78rem',
                           fontWeight: 700,
                           cursor: 'pointer',
                         }}
-                        title="Copy Session Token"
                       >
-                        <Copy size={14} /> Token
+                        <Target size={13} /> View Exam Launch Passcode &amp; Web Mode
                       </button>
                     </div>
                   ) : (
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: '10px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: '8px' }}>
                       <Link
                         to={skillProgress.skillSlug ? `/student/skills/${skillProgress.skillSlug}` : '/student/skills'}
                         style={{
@@ -460,10 +551,10 @@ export function AssessmentPage() {
                         }}
                       >
                         <BookOpen size={14} />
-                        <span>Study Skill Roadmap ({skillProgress.progressPercent}%)</span>
+                        <span>Study Skill Roadmap</span>
                       </Link>
                       <button
-                        disabled
+                        onClick={() => handleUnlockDirectly(t.id)}
                         style={{
                           height: '40px',
                           display: 'inline-flex',
@@ -471,17 +562,17 @@ export function AssessmentPage() {
                           justifyContent: 'center',
                           gap: '6px',
                           padding: '0 14px',
-                          background: '#f1f5f9',
-                          color: '#94a3b8',
-                          border: '1px solid #e2e8f0',
+                          background: '#fed601',
+                          color: '#0f172a',
+                          border: 'none',
                           borderRadius: '0px',
                           fontSize: '0.8rem',
-                          fontWeight: 700,
-                          cursor: 'not-allowed',
+                          fontWeight: 800,
+                          cursor: 'pointer',
                         }}
-                        title="Complete 100% of all lessons to unlock the exam"
+                        title="Unlock test for direct attempt"
                       >
-                        <Lock size={13} /> Locked
+                        ⚡ Unlock &amp; Test
                       </button>
                     </div>
                   )}

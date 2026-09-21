@@ -26,6 +26,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+            .headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()))
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
@@ -56,6 +57,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/v1/questions/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/practice/questions").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/practice/questions/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/practice/bank-stats").permitAll()
                 .requestMatchers("/api/v1/practice/**").authenticated()
                 .requestMatchers("/api/v1/coins/**").authenticated()
                 .requestMatchers("/api/v1/daily-challenge/**").authenticated()

@@ -541,3 +541,238 @@ async def synthesize_targeted_questions_with_qwen(
     return []
 
 
+def generate_fallback_skill_recommendations(
+    student_skills: List[Dict[str, Any]],
+    weak_concepts: List[Dict[str, Any]],
+    target_role: Optional[str],
+    target_company: Optional[str],
+    blocked_drives: List[Dict[str, Any]],
+    candidate_skills: List[Dict[str, Any]],
+    limit: int = 8
+) -> List[Dict[str, Any]]:
+    """Deterministic, high-quality multi-factor recommendation generator."""
+    current_skill_names = {s.get("skillName", s.get("name", "")).lower() for s in student_skills}
+    weak_skill_names = {w.get("skillName", "").lower() for w in weak_concepts}
+    
+    # Map blocked drive missing skills
+    blocked_drive_map: Dict[str, List[str]] = {}
+    for d in blocked_drives:
+        d_title = d.get("title", "Campus Recruitment Drive")
+        d_pkg = d.get("packageLpa")
+        d_label = f"{d_title} (₹{d_pkg} LPA)" if d_pkg else d_title
+        missing = d.get("missingSkills", [])
+        if isinstance(missing, str):
+            missing = [m.trim() for m in missing.split(",") if m.strip()]
+        for m in missing:
+            m_norm = m.lower().strip()
+            blocked_drive_map.setdefault(m_norm, []).append(d_label)
+
+    results = []
+    
+    # Priority skills knowledge map
+    SKILL_INTEL = {
+        "c++": {
+            "synergy": "Drive Unblocker",
+            "reason": "Crucial requirement for low-level memory management and core systems engineering in upcoming campus recruitment drives."
+        },
+        "rust": {
+            "synergy": "Drive Unblocker",
+            "reason": "Required for memory-safe concurrency and modern distributed infrastructure in high-compensation core systems drives."
+        },
+        "distributed systems": {
+            "synergy": "Core Systems",
+            "reason": "Mandatory architectural competency for high-concurrency enterprise and systems engineering placement rounds."
+        },
+        "aws": {
+            "synergy": "Cloud Unblocker",
+            "reason": "Directly unlocks Tier-1 cloud consultancy drives while complementing your existing backend services."
+        },
+        "kubernetes": {
+            "synergy": "DevOps Essential",
+            "reason": "Required for container orchestration and production infrastructure across modern cloud recruitment drives."
+        },
+        "terraform": {
+            "synergy": "Infrastructure as Code",
+            "reason": "Essential for automated enterprise cloud provisioning; closes critical eligibility requirements for cloud solutions drives."
+        },
+        "next.js": {
+            "synergy": "Fullstack Leap",
+            "reason": "Builds on your active React and TypeScript competencies with server-side rendering and edge routing for enterprise web apps."
+        },
+        "node.js": {
+            "synergy": "Backend Synergy",
+            "reason": "Expands your JavaScript/TypeScript frontend mastery into unified full-stack server architecture and microservices."
+        },
+        "system design": {
+            "synergy": "SDE Tier-1",
+            "reason": "High-impact interview competency for senior campus placement tiers, building upon your Java and database foundations."
+        },
+        "redis": {
+            "synergy": "High-Throughput Caching",
+            "reason": "Accelerates your Spring Boot & PostgreSQL backend with in-memory caching and distributed session management."
+        },
+        "docker": {
+            "synergy": "DevOps Foundation",
+            "reason": "Containerizes your microservices stack to ensure reproducible production deployments across all hiring benchmarks."
+        },
+        "fastapi": {
+            "synergy": "Modern Python Backend",
+            "reason": "Leverages your Python skills with asynchronous, high-performance REST APIs and automated OpenAPI schemas."
+        }
+    }
+
+    for c in candidate_skills:
+        c_name = c.get("name", "")
+        c_slug = c.get("slug", c_name.lower().replace(" ", ""))
+        c_norm = c_name.lower()
+        
+        if c_norm in current_skill_names:
+            continue
+
+        score = 50
+        unblocked = blocked_drive_map.get(c_norm, [])
+        for k, d_list in blocked_drive_map.items():
+            if k in c_norm or c_norm in k:
+                for d in d_list:
+                    if d not in unblocked:
+                        unblocked.append(d)
+
+        intel = SKILL_INTEL.get(c_norm)
+        synergy_tag = intel["synergy"] if intel else "Skill Expansion"
+        base_reason = intel["reason"] if intel else f"High-demand industry technology expanding your engineering versatility."
+
+        # Boost if unblocking drives
+        if unblocked:
+            score += 45
+            synergy_tag = "Drive Unblocker"
+            reason = f"Directly unblocks eligibility for {', '.join(unblocked[:2])}. {base_reason}"
+        elif c_norm in weak_skill_names:
+            score += 30
+            synergy_tag = "Remediation Catalyst"
+            reason = f"Bridges diagnosed concept weaknesses and strengthens foundational syntax mastery. {base_reason}"
+        elif target_role and target_role.lower() in base_reason.lower():
+            score += 25
+            synergy_tag = "Role Essential"
+            reason = f"Primary competency for {target_role} roles. {base_reason}"
+        else:
+            reason = base_reason
+
+        results.append({
+            "skill": c,
+            "skill_name": c_name,
+            "score": score,
+            "synergy_tag": synergy_tag,
+            "reason": reason,
+            "unblocked_drives": unblocked,
+            "domain": c.get("category", "Engineering")
+        })
+
+    results.sort(key=lambda x: x["score"], reverse=True)
+    return results[:limit]
+
+
+async def generate_ai_skill_recommendations(
+    student_skills: List[Dict[str, Any]],
+    weak_concepts: List[Dict[str, Any]],
+    target_role: Optional[str],
+    target_company: Optional[str],
+    blocked_drives: List[Dict[str, Any]],
+    candidate_skills: List[Dict[str, Any]],
+    limit: int = 8
+) -> List[Dict[str, Any]]:
+    """
+    Generates intelligent, highly articulate skill recommendations using Ollama Qwen 3.5 (4B),
+    explicitly explaining WHY each skill is recommended based on:
+    1) Current verified skills
+    2) Diagnosed weak concepts
+    3) Target role and company
+    4) Blocked campus drives and missing requirements.
+    """
+    fallback_recs = generate_fallback_skill_recommendations(
+        student_skills, weak_concepts, target_role, target_company,
+        blocked_drives, candidate_skills, limit
+    )
+
+    current_str = ", ".join([f"{s.get('skillName', s.get('name', ''))} ({s.get('proficiency', 'INTERMEDIATE')})" for s in student_skills[:10]])
+    weak_str = ", ".join([f"{w.get('skillName', '')} ({w.get('conceptTitle', '')})" for w in weak_concepts[:5]])
+    drives_str = "; ".join([
+        f"{d.get('title', '')} (₹{d.get('packageLpa', 12)} LPA - Missing: {d.get('missingSkills', [])})"
+        for d in blocked_drives[:4]
+    ])
+    candidate_names = [c.get("name", "") for c in candidate_skills[:20]]
+
+    prompt_instruction = (
+        f"Analyze the student's profile and recommend the top {limit} skills from candidate list: {', '.join(candidate_names)}.\n"
+        f"Student Profile:\n"
+        f"- Current Verified Skills: {current_str or 'None'}\n"
+        f"- Diagnosed Weak Concepts: {weak_str or 'None'}\n"
+        f"- Target Career Role: {target_role or 'Full Stack Software Engineer'}\n"
+        f"- Target Company Stack: {target_company or 'Enterprise Tech'}\n"
+        f"- Blocked Campus Recruitment Drives: {drives_str or 'None'}\n\n"
+        f"For each recommended skill, provide:\n"
+        f"1. 'skill_name': exact matching name from candidate list\n"
+        f"2. 'synergy_tag': short punchy tag like 'Drive Unblocker', 'Role Essential', 'Remediation Catalyst', 'Fullstack Leap', 'Core Systems'\n"
+        f"3. 'reason': articulate 1-2 sentence explanation clearly explaining WHY this skill is recommended, how it unblocks specific campus drives, bridges weak concepts, or synergizes with their current skills\n"
+        f"4. 'unblocked_drives': array of drive names it helps unlock (if any)"
+    )
+
+    system_prompt = (
+        "You are an expert Chief AI Career Advisor and Technical Placement Director. "
+        "Return ONLY a valid JSON object with key 'recommendations' containing an array of recommendation objects. "
+        "Each object must have 'skill_name', 'synergy_tag', 'reason', and 'unblocked_drives'."
+    )
+
+    assistant_prefill = (
+        f"<think>\n"
+        f"Synthesizing {limit} personalized skill recommendations connecting {current_str} and blocked drives.\n"
+        f"</think>\n"
+    )
+
+    payload = {
+        "model": OLLAMA_MODEL,
+        "messages": [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": prompt_instruction},
+            {"role": "assistant", "content": assistant_prefill}
+        ],
+        "stream": False,
+        "options": {
+            "num_ctx": 2048,
+            "num_predict": 850,
+            "temperature": 0.2
+        }
+    }
+
+    try:
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            resp = await client.post(f"{OLLAMA_URL}/api/chat", json=payload)
+            if resp.status_code == 200:
+                data = resp.json()
+                msg = data.get("message", {})
+                content = msg.get("content", "").strip()
+                parsed = clean_and_repair_json(content)
+                raw_recs = parsed.get("recommendations", [])
+                if isinstance(raw_recs, list) and len(raw_recs) > 0:
+                    enriched = []
+                    for r in raw_recs:
+                        s_name = r.get("skill_name", "")
+                        matched_cand = next((c for c in candidate_skills if c.get("name", "").lower() == s_name.lower()), None)
+                        if matched_cand:
+                            enriched.append({
+                                "skill": matched_cand,
+                                "skill_name": matched_cand.get("name", s_name),
+                                "score": 90,
+                                "synergy_tag": r.get("synergy_tag", "AI Matched"),
+                                "reason": r.get("reason", "Strategically aligns with your engineering goals."),
+                                "unblocked_drives": r.get("unblocked_drives", []),
+                                "domain": matched_cand.get("category", "Engineering")
+                            })
+                    if len(enriched) >= 3:
+                        return enriched[:limit]
+    except Exception as e:
+        logger.warning(f"Ollama skill recommendation note: {e}. Falling back to multi-factor engine.")
+
+    return fallback_recs
+
+
+

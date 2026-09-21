@@ -19,6 +19,7 @@ const COLORS: Record<string, string> = {
   dolt: '\x1b[34m',    // Blue
   floci: '\x1b[35m',   // Magenta
   backend: '\x1b[32m', // Green
+  ollama: '\x1b[36m',  // Cyan
   ai: '\x1b[33m',      // Yellow
   web: '\x1b[36m',     // Cyan
   reset: '\x1b[0m',
@@ -270,6 +271,26 @@ async function main() {
     throw new Error('Spring Boot Backend failed to become ready on port 8085 within 300s');
   }
   logService('backend', `${COLORS.bold}[SUCCESS] Step 3/5 Complete: Backend Service is ONLINE.${COLORS.reset}\n`);
+
+  // Optional: Check or Start Ollama LLM Service (Port 11434)
+  const ollamaRunning = await checkPort(11434);
+  if (ollamaRunning) {
+    logService('ollama', 'Ollama LLM service is already running on http://127.0.0.1:11434 (Qwen 3.5 4B)');
+  } else {
+    try {
+      logService('ollama', 'Starting Ollama background LLM service on http://127.0.0.1:11434...');
+      startService({
+        name: 'ollama',
+        color: 'ollama',
+        cwd: rootDir,
+        command: 'ollama',
+        args: ['serve'],
+      });
+      await waitForPort(11434, 5000);
+    } catch {
+      logService('ollama', 'Notice: Ollama not found on PATH or failed to start. AI Service will use heuristic fallback.');
+    }
+  }
 
   // 4. Step 4/5: Start FastAPI AI Service (Strict Sequential Wait)
   logService('ai', '[4/5] Starting FastAPI AI Service on http://0.0.0.0:8000...');

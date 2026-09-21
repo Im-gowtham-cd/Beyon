@@ -9,6 +9,15 @@ export interface RecommendedSkillItem {
   domain: string;
   companyMatch?: string;
   roleRelevance?: string;
+  unblockedDrives?: string[];
+}
+
+export interface RecommendationOptions {
+  targetJobRole?: string;
+  targetCompany?: string;
+  assessmentScores?: Record<string, number>;
+  blockedDrives?: Array<{ title: string; packageLpa?: number; missingSkills?: string[] | string }>;
+  weakConcepts?: Array<{ skillName: string; conceptTitle?: string; whyStruggled?: string }>;
 }
 
 export interface RecommendationResult {
@@ -440,7 +449,36 @@ export function computeSkillRecommendations(
       }
     }
 
-    // 1. Skill synergy rules with STRICT bound checking
+    // 1. Blocked Campus Recruitment Drives Unblocking (Highest Priority Placement Factor)
+    const unblockedDrives: string[] = [];
+    if (options?.blockedDrives && options.blockedDrives.length > 0) {
+      for (const drive of options.blockedDrives) {
+        const dTitle = drive.title || 'Campus Drive';
+        const dPkg = drive.packageLpa ? ` (₹${drive.packageLpa} LPA)` : '';
+        const rawMissing = drive.missingSkills || [];
+        const missingList = Array.isArray(rawMissing)
+          ? rawMissing
+          : typeof rawMissing === 'string'
+          ? (rawMissing as string).split(',').map(s => s.trim())
+          : [];
+
+        const matchesMissing = missingList.some(m => isSkillMatch(candidateNorm, normalizeName(m)));
+        if (matchesMissing) {
+          const driveLabel = `${dTitle}${dPkg}`;
+          if (!unblockedDrives.includes(driveLabel)) {
+            unblockedDrives.push(driveLabel);
+          }
+        }
+      }
+
+      if (unblockedDrives.length > 0) {
+        totalScore += 70;
+        synergyTag = 'Drive Unblocker';
+        matchReason = `Directly unlocks eligibility for ${unblockedDrives.slice(0, 2).join(' & ')} by closing mandatory hiring requirements.`;
+      }
+    }
+
+    // 2. Skill synergy rules with clean specific reasoning
     if (hasSkills) {
       for (const studentSkill of topSkills) {
         const studentNorm = normalizeName(studentSkill.skillName);
@@ -450,15 +488,31 @@ export function computeSkillRecommendations(
             const matchesTarget = rule.targetSkills.some(t => isSkillMatch(candidateNorm, t));
             if (matchesTarget) {
               totalScore += rule.boost;
-              matchReason = `${rule.reason} (based on your ${studentSkill.skillName} skill)`;
-              synergyTag = rule.tag;
+              if (unblockedDrives.length === 0) {
+                matchReason = `${rule.reason} (leveraging your ${studentSkill.skillName} foundation)`;
+                synergyTag = rule.tag;
+              }
             }
           }
         }
       }
     }
 
-    // 2. Company technology alignment
+    // 3. Diagnosed Concept Weakness Remediation
+    if (options?.weakConcepts && options.weakConcepts.length > 0) {
+      for (const weak of options.weakConcepts) {
+        const weakNorm = normalizeName(weak.skillName);
+        if (isSkillMatch(candidateNorm, weakNorm)) {
+          totalScore += 35;
+          if (unblockedDrives.length === 0) {
+            matchReason = `Bridges diagnosed concept deficits in ${weak.skillName} (${weak.conceptTitle || 'fundamentals'}) through hands-on practice.`;
+            synergyTag = 'Remediation Catalyst';
+          }
+        }
+      }
+    }
+
+    // 4. Company technology alignment
     if (options?.targetCompany) {
       const companyKey = options.targetCompany.toLowerCase().trim();
       const companyConfig = COMPANY_TECH_STACKS[companyKey];
@@ -467,13 +521,15 @@ export function computeSkillRecommendations(
         if (matchesCompany) {
           totalScore += 45;
           companyMatch = companyConfig.label;
-          matchReason = `${companyConfig.reason}; builds on your active stack`;
-          synergyTag = `${companyConfig.label} Stack`;
+          if (unblockedDrives.length === 0) {
+            matchReason = `${companyConfig.reason}; strategically aligns with ${companyConfig.label} hiring rounds`;
+            synergyTag = `${companyConfig.label} Stack`;
+          }
         }
       }
     }
 
-    // 3. Job role target alignment
+    // 5. Job role target alignment
     if (options?.targetJobRole) {
       const roleConfig = JOB_ROLE_TARGETS[options.targetJobRole];
       if (roleConfig) {
@@ -481,27 +537,9 @@ export function computeSkillRecommendations(
         if (matchesRole) {
           totalScore += 40;
           roleRelevance = roleConfig.label;
-          if (!companyMatch) {
-            matchReason = `${roleConfig.reason}`;
+          if (unblockedDrives.length === 0 && !companyMatch) {
+            matchReason = `${roleConfig.reason} for ${roleConfig.label} positions`;
             synergyTag = 'Role Priority';
-          }
-        }
-      }
-    }
-
-    // 4. Assessment scores & remediation priorities
-    if (options?.assessmentScores) {
-      for (const [assessedSkill, score] of Object.entries(options.assessmentScores)) {
-        if (score < 60) {
-          const assessedNorm = normalizeName(assessedSkill);
-          const rules = SPECIFIC_SYNERGIES[assessedNorm];
-          if (rules) {
-            const isPrereqOrCompanion = rules.some(r => r.targetSkills.some(t => isSkillMatch(candidateNorm, t)));
-            if (isPrereqOrCompanion) {
-              totalScore += 25;
-              matchReason = `Reinforces fundamental concepts to boost your ${assessedSkill} assessment performance (${score}%)`;
-              synergyTag = 'Remediation Path';
-            }
           }
         }
       }
@@ -509,8 +547,8 @@ export function computeSkillRecommendations(
 
     if (['systemdesign', 'datastructuresalgorithms', 'dsa', 'oop'].includes(candidateNorm)) {
       totalScore += 15;
-      if (!matchReason.includes('interview')) {
-        matchReason = `${matchReason} & critical for SDE technical interviews`;
+      if (!matchReason.includes('interview') && unblockedDrives.length === 0) {
+        matchReason = `${matchReason} & critical for SDE Tier-1 technical interviews`;
       }
     }
 
@@ -521,7 +559,8 @@ export function computeSkillRecommendations(
       synergyTag,
       domain: candidateDomain,
       companyMatch,
-      roleRelevance
+      roleRelevance,
+      unblockedDrives: unblockedDrives.length > 0 ? unblockedDrives : undefined
     });
   }
 

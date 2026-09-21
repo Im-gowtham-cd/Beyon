@@ -22,15 +22,27 @@ export const questionApi = {
 };
 
 export const practiceApi = {
-  getQuestions: (params?: { skillId?: string; topicId?: string; difficulty?: string; page?: number; size?: number }) => {
+  getQuestions: (params?: { skillId?: string; topicId?: string; difficulty?: string; category?: string; search?: string; page?: number; size?: number }) => {
     const q = new URLSearchParams();
     if (params?.skillId) q.set('skillId', params.skillId);
     if (params?.topicId) q.set('topicId', params.topicId);
-    if (params?.difficulty) q.set('difficulty', params.difficulty);
+    if (params?.difficulty && params.difficulty !== 'ALL') q.set('difficulty', params.difficulty);
+    if (params?.category && params.category !== 'ALL') q.set('category', params.category);
+    if (params?.search) q.set('search', params.search);
     if (params?.page !== undefined) q.set('page', String(params.page));
     if (params?.size !== undefined) q.set('size', String(params.size));
     return api.get<Question[]>(`/practice/questions?${q.toString()}`);
   },
+  getQuestionsCount: (params?: { skillId?: string; topicId?: string; difficulty?: string; category?: string; search?: string }) => {
+    const q = new URLSearchParams();
+    if (params?.skillId) q.set('skillId', params.skillId);
+    if (params?.topicId) q.set('topicId', params.topicId);
+    if (params?.difficulty && params.difficulty !== 'ALL') q.set('difficulty', params.difficulty);
+    if (params?.category && params.category !== 'ALL') q.set('category', params.category);
+    if (params?.search) q.set('search', params.search);
+    return api.get<number>(`/practice/questions/count?${q.toString()}`);
+  },
+  getBankStats: () => api.get<Record<string, number>>('/practice/bank-stats'),
   getQuestion: (id: string) => api.get<Question>(`/practice/questions/${id}`),
   submit: (questionId: string, answer: string, timeSpentSeconds?: number) =>
     api.post<StudentQuestionAttempt>('/practice/submit', { questionId, answer, timeSpentSeconds }),

@@ -37,6 +37,9 @@ public interface QuestionRepository extends JpaRepository<Question, UUID> {
     @Query("SELECT COUNT(q) FROM Question q WHERE (q.status = 'PUBLISHED' OR q.status = 'ACTIVE') AND q.difficulty = :difficulty")
     long countPublishedByDifficulty(@Param("difficulty") String difficulty);
 
+    @Query("SELECT COUNT(q) FROM Question q WHERE (q.status = 'PUBLISHED' OR q.status = 'ACTIVE') AND q.difficulty IN :difficulties")
+    long countPublishedByDifficultyIn(@Param("difficulties") List<String> difficulties);
+
     @Query("SELECT q FROM Question q WHERE (q.status = 'PUBLISHED' OR q.status = 'ACTIVE') AND q.id NOT IN (SELECT a.questionId FROM StudentQuestionAttempt a WHERE a.studentId = :studentId) ORDER BY FUNCTION('RAND')")
     List<Question> findUnsolvedForStudent(@Param("studentId") UUID studentId, Pageable pageable);
 

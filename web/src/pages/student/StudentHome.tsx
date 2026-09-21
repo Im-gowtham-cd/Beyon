@@ -32,12 +32,13 @@ export function StudentHome() {
   const [stats, setStats] = useState<any>(null);
   const [assessmentStatus, setAssessmentStatus] = useState<any>(null);
   const [studentSkills, setStudentSkills] = useState<any[]>([]);
+  const [drives, setDrives] = useState<any[]>([]);
 
   useEffect(() => {
     let mounted = true;
     async function loadData() {
       try {
-        const [profRes, chalRes, coinRes, streakRes, statsRes, assessRes, skillsRes] = await Promise.all([
+        const [profRes, chalRes, coinRes, streakRes, statsRes, assessRes, skillsRes, oppsRes] = await Promise.all([
           api.get<any>('/student/profile').catch(() => null),
           api.get<any>('/daily-challenge/today').catch(() => null),
           api.get<any>('/coins/balance').catch(() => null),
@@ -45,6 +46,7 @@ export function StudentHome() {
           api.get<any>('/practice/stats').catch(() => null),
           api.get<any>('/skills/assessment/status').catch(() => null),
           api.get<any>('/student/skills').catch(() => null),
+          api.get<any>('/opportunities').catch(() => []),
         ]);
         if (!mounted) return;
         if (profRes) setProfileData(profRes.data || profRes);
@@ -53,6 +55,10 @@ export function StudentHome() {
         if (skillsRes) {
           const sData = (skillsRes as any)?.data || skillsRes;
           if (Array.isArray(sData)) setStudentSkills(sData);
+        }
+        if (oppsRes) {
+          const oppList = Array.isArray(oppsRes) ? oppsRes : (oppsRes as any)?.data || [];
+          setDrives(oppList.filter((o: any) => o.opportunityType === 'CAMPUS_DRIVE' || o.title.toLowerCase().includes('drive')));
         }
         if (typeof coinRes === 'number') {
           setCoins(coinRes);
@@ -290,31 +296,54 @@ export function StudentHome() {
 
               {/* Assessed Skills Pills */}
               <div className={styles.skillsPillsContainer}>
-                {testedSkills.slice(0, 9).map((sk) => (
-                  <div key={sk.id || sk.skillName} className={`${styles.skillPill} ${sk.verified ? styles.skillPillVerified : ''}`}>
-                    <div className={styles.skillPillTop}>
-                      <span className={styles.skillPillName}>{sk.skillName}</span>
-                      {sk.verified ? (
-                        <span className={styles.pillBadgeSuccess}>
-                          <ShieldCheck size={11} /> {Number(sk.score).toFixed(0)}%
+                {testedSkills.slice(0, 9).map((sk) => {
+                  const numScore = sk.score != null ? Number(sk.score) : 0;
+                  // Color scheme: Green for 90-100%, Orange for Pass (50-89%), Red for Fail (<50%)
+                  const isExcellence = numScore >= 90;
+                  const isPass = numScore >= 50;
+                  const color = isExcellence ? '#15803d' : isPass ? '#d97706' : '#dc2626';
+                  const progressBg = isExcellence ? '#16a34a' : isPass ? '#f59e0b' : '#ef4444';
+                  const border = isExcellence ? '#bbf7d0' : isPass ? '#fde68a' : '#fecaca';
+                  const bg = isExcellence ? '#f0fdf4' : isPass ? '#fffbeb' : '#fef2f2';
+                  const showShield = isExcellence || (isPass && Boolean(sk.verified));
+
+                  return (
+                    <div
+                      key={sk.id || sk.skillName}
+                      className={styles.skillPill}
+                      style={{
+                        borderColor: border,
+                        background: bg,
+                      }}
+                    >
+                      <div className={styles.skillPillTop}>
+                        <span className={styles.skillPillName}>{sk.skillName}</span>
+                        <span
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '3px',
+                            fontSize: '0.72rem',
+                            fontWeight: 800,
+                            color,
+                          }}
+                        >
+                          {showShield && <ShieldCheck size={11} style={{ color }} />}
+                          {numScore.toFixed(0)}%
                         </span>
-                      ) : (
-                        <span className={styles.pillBadgeMuted}>
-                          {sk.score != null ? `${Number(sk.score).toFixed(0)}%` : 'Pending'}
-                        </span>
-                      )}
+                      </div>
+                      <div className={styles.pillProgressBar}>
+                        <div
+                          className={styles.pillProgressFill}
+                          style={{
+                            width: `${Math.min(100, Math.max(0, numScore))}%`,
+                            background: progressBg,
+                          }}
+                        />
+                      </div>
                     </div>
-                    <div className={styles.pillProgressBar}>
-                      <div
-                        className={styles.pillProgressFill}
-                        style={{
-                          width: `${Math.min(100, Math.max(0, Number(sk.score) || 0))}%`,
-                          background: sk.verified ? '#15803d' : '#f59e0b',
-                        }}
-                      />
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
               <div className={styles.assessmentBannerActions}>
@@ -390,6 +419,130 @@ export function StudentHome() {
               </Link>
             </div>
           )}
+
+          {/* AI-Recommended Campus Drives & Skill Alignment Section */}
+          <div style={{ marginTop: '24px', marginBottom: '24px' }}>
+            <div className={styles.sectionHeader}>
+              <h2 className={styles.sectionTitle} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Sparkles size={18} style={{ color: '#15803d' }} />
+                <span>AI-Recommended Campus Drives &amp; Skill Mapping</span>
+              </h2>
+              <Link to="/opportunities" style={{ fontSize: '0.82rem', color: '#1c2d81', fontWeight: 700, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                View All Drives ({drives.length}) <ArrowRight size={13} />
+              </Link>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '14px' }}>
+              {drives.slice(0, 3).map((d) => {
+                const reqSkills = (d.requiredSkills || '').split(',').map((s: string) => s.trim()).filter(Boolean);
+                const matchedCount = reqSkills.filter((req: string) =>
+                  studentSkills.some((sk: any) => (sk.skillName || '').toLowerCase().includes(req.toLowerCase()) || req.toLowerCase().includes((sk.skillName || '').toLowerCase()))
+                ).length;
+                const matchPct = reqSkills.length > 0 ? Math.round((matchedCount / reqSkills.length) * 100) : 80;
+                const isCriticalGap = matchPct < 60;
+
+                return (
+                  <div
+                    key={d.id}
+                    style={{
+                      background: '#ffffff',
+                      border: '1px solid #e2e8f0',
+                      borderTop: isCriticalGap ? '3px solid #dc2626' : '3px solid #15803d',
+                      padding: '16px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between',
+                      gap: '10px'
+                    }}
+                  >
+                    <div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                        <span style={{
+                          fontSize: '0.72rem',
+                          fontWeight: 700,
+                          padding: '2px 7px',
+                          background: isCriticalGap ? '#fee2e2' : '#dcfce7',
+                          color: isCriticalGap ? '#991b1b' : '#15803d',
+                          border: `1px solid ${isCriticalGap ? '#fecaca' : '#bbf7d0'}`
+                        }}>
+                          {isCriticalGap ? `${matchPct}% Skill Gap` : `${matchPct}% High Match`}
+                        </span>
+                        <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#15803d' }}>
+                          ₹{d.packageLpa || 12} LPA
+                        </span>
+                      </div>
+
+                      <h4 style={{ fontSize: '0.94rem', fontWeight: 700, color: '#0f172a', margin: '0 0 6px', lineHeight: 1.35 }}>
+                        {d.title}
+                      </h4>
+
+                      <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', marginTop: '6px' }}>
+                        {reqSkills.slice(0, 4).map((s: string, idx: number) => {
+                          const isMatched = studentSkills.some((sk: any) => (sk.skillName || '').toLowerCase().includes(s.toLowerCase()));
+                          return (
+                            <span
+                              key={idx}
+                              style={{
+                                fontSize: '0.68rem',
+                                padding: '2px 6px',
+                                background: isMatched ? '#f0fdf4' : '#fef2f2',
+                                color: isMatched ? '#166534' : '#991b1b',
+                                border: `1px solid ${isMatched ? '#bbf7d0' : '#fecaca'}`,
+                                fontWeight: 500
+                              }}
+                            >
+                              {s}
+                            </span>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px solid #f1f5f9' }}>
+                      {isCriticalGap ? (
+                        <Link
+                          to="/student/skills?section=weakness"
+                          style={{
+                            fontSize: '0.76rem',
+                            fontWeight: 700,
+                            color: '#991b1b',
+                            background: '#fee2e2',
+                            padding: '6px 10px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '4px',
+                            textDecoration: 'none'
+                          }}
+                        >
+                          <Target size={12} /> Train in Concept Weakness Diagnosis
+                        </Link>
+                      ) : (
+                        <Link
+                          to="/opportunities"
+                          style={{
+                            fontSize: '0.76rem',
+                            fontWeight: 700,
+                            color: '#15803d',
+                            background: '#f0fdf4',
+                            padding: '6px 10px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '4px',
+                            textDecoration: 'none'
+                          }}
+                        >
+                          <span>Apply for Drive</span>
+                          <ArrowRight size={12} />
+                        </Link>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
 
           <div className={styles.sectionHeader}>
             <h2 className={styles.sectionTitle}>

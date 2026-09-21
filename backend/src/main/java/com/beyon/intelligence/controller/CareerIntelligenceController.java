@@ -2,6 +2,7 @@ package com.beyon.intelligence.controller;
 
 import com.beyon.intelligence.model.*;
 import com.beyon.intelligence.service.*;
+import com.beyon.intelligence.client.AiIntelligenceClient;
 import com.beyon.identity.security.JwtUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
@@ -20,6 +21,7 @@ public class CareerIntelligenceController {
     private final AdaptiveLearningService adaptiveService;
     private final PortfolioAnalysisService portfolioService;
     private final OpportunityMatchService matchService;
+    private final AiIntelligenceClient aiClient;
     private final JwtUtil jwtUtil;
 
     public CareerIntelligenceController(SkillTaxonomyService taxonomyService,
@@ -30,6 +32,7 @@ public class CareerIntelligenceController {
                                          AdaptiveLearningService adaptiveService,
                                          PortfolioAnalysisService portfolioService,
                                          OpportunityMatchService matchService,
+                                         @org.springframework.beans.factory.annotation.Autowired(required = false) AiIntelligenceClient aiClient,
                                          JwtUtil jwtUtil) {
         this.taxonomyService = taxonomyService;
         this.graphService = graphService;
@@ -39,6 +42,7 @@ public class CareerIntelligenceController {
         this.adaptiveService = adaptiveService;
         this.portfolioService = portfolioService;
         this.matchService = matchService;
+        this.aiClient = aiClient;
         this.jwtUtil = jwtUtil;
     }
 
@@ -237,6 +241,18 @@ public class CareerIntelligenceController {
         dashboard.put("careerReadiness", Map.of("score", 0, "pathsStarted", 0));
 
         return ResponseEntity.ok(dashboard);
+    }
+
+    @PostMapping("/recommendations/ai-skill-advisor")
+    public ResponseEntity<?> getAiSkillRecommendations(@RequestBody(required = false) Map<String, Object> payload, HttpServletRequest request) {
+        UUID userId = extractUserId(request);
+        Map<String, Object> modifiable = new HashMap<>(payload != null ? payload : Collections.emptyMap());
+        modifiable.put("student_id", userId.toString());
+        if (aiClient != null) {
+            Map<String, Object> result = aiClient.getAiSkillRecommendations(modifiable);
+            return ResponseEntity.ok(result);
+        }
+        return ResponseEntity.ok(Collections.emptyMap());
     }
 
     private UUID extractUserId(HttpServletRequest request) {

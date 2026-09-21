@@ -29,12 +29,29 @@ public class PracticeController {
             @RequestParam(required = false) UUID skillId,
             @RequestParam(required = false) UUID topicId,
             @RequestParam(required = false) String difficulty,
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) String search,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
-        return ResponseEntity.ok(ApiResponse.ok(practiceService.getQuestions(skillId, topicId, difficulty, page, size)));
+        return ResponseEntity.ok(ApiResponse.ok(practiceService.getQuestions(skillId, topicId, difficulty, category, search, page, size)));
     }
 
-    @GetMapping("/questions/{id}")
+    @GetMapping("/questions/count")
+    public ResponseEntity<ApiResponse<Long>> getQuestionsCount(
+            @RequestParam(required = false) UUID skillId,
+            @RequestParam(required = false) UUID topicId,
+            @RequestParam(required = false) String difficulty,
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) String search) {
+        return ResponseEntity.ok(ApiResponse.ok(practiceService.getQuestionsCount(skillId, topicId, difficulty, category, search)));
+    }
+
+    @GetMapping("/bank-stats")
+    public ResponseEntity<ApiResponse<Map<String, Long>>> getBankStats() {
+        return ResponseEntity.ok(ApiResponse.ok(practiceService.getBankStats()));
+    }
+
+    @GetMapping("/questions/{id:[0-9a-fA-F\\-]{36}}")
     public ResponseEntity<ApiResponse<Question>> getQuestion(@PathVariable UUID id) {
         return ResponseEntity.ok(ApiResponse.ok(practiceService.getQuestion(id)));
     }
