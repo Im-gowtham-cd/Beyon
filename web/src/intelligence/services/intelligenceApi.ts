@@ -92,5 +92,7 @@ export const intelligenceApi = {
     api.post('/career-intel/adaptive-test/generate', { targetSkill, companionSkill, weakConcept, totalQuestions }),
   submitAdaptiveTest: async (submission: any): Promise<any> =>
     api.post('/career-intel/adaptive-test/submit', submission),
+  getAiSkillRecommendations: async (payload: any): Promise<any> =>
+    api.post('/career-intel/recommendations/ai-skill-advisor', payload),
 };
 

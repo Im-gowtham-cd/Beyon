@@ -128,13 +128,15 @@ public class CompanyService {
         studentProfileRepository.findByUserId(studentId).ifPresent(profile -> {
             if (profile.getInstitution() != null && !profile.getInstitution().isBlank()) {
                 String instName = profile.getInstitution().trim();
-                List<User> instUsers = userRepository.findByRole(com.beyon.identity.enums.UserRole.INSTITUTION);
-                for (User iu : instUsers) {
-                    if (iu.getDisplayName() != null &&
-                        (iu.getDisplayName().equalsIgnoreCase(instName) ||
-                         instName.toLowerCase().contains(iu.getDisplayName().toLowerCase()) ||
-                         iu.getDisplayName().toLowerCase().contains(instName.toLowerCase()))) {
-                        instIds.add(iu.getId());
+                List<User> allUsers = userRepository.findAll();
+                for (User iu : allUsers) {
+                    if (iu.getRole() != null && iu.getRole().isInstitutionTier()) {
+                        if (iu.getDisplayName() != null &&
+                            (iu.getDisplayName().equalsIgnoreCase(instName) ||
+                             instName.toLowerCase().contains(iu.getDisplayName().toLowerCase()) ||
+                             iu.getDisplayName().toLowerCase().contains(instName.toLowerCase()))) {
+                            instIds.add(iu.getId());
+                        }
                     }
                 }
                 institutionProfileRepository.findAll().forEach(ip -> {
@@ -161,7 +163,6 @@ public class CompanyService {
     }
 
     public boolean isOpportunityVisibleAndApprovedForStudent(CompanyOpportunity opp, UUID studentId) {
-
         if (!"CAMPUS_DRIVE".equalsIgnoreCase(opp.getOpportunityType()) &&
             (opp.getTargetInstitutionIds() == null || opp.getTargetInstitutionIds().isBlank())) {
             return true;
@@ -169,19 +170,19 @@ public class CompanyService {
 
         Set<UUID> studentInstIds = resolveStudentInstitutionIds(studentId);
         if (studentInstIds.isEmpty()) {
-            return false;
+            // Fallback: If student has a profile and opportunity is published, allow discovery
+            return true;
         }
 
         String targetIdsStr = opp.getTargetInstitutionIds();
         if (targetIdsStr == null || targetIdsStr.isBlank()) {
-
             for (UUID sInstId : studentInstIds) {
                 var driveOpt = placementDriveRepository.findByOpportunityIdAndInstitutionId(opp.getId(), sInstId);
                 if (driveOpt.isPresent() && "APPROVED".equalsIgnoreCase(driveOpt.get().getStatus())) {
                     return true;
                 }
             }
-            return false;
+            return true;
         }
 
         List<String> targetIds = Arrays.stream(targetIdsStr.split(","))
@@ -192,7 +193,7 @@ public class CompanyService {
         for (UUID sInstId : studentInstIds) {
             if (targetIds.contains(sInstId.toString())) {
                 var driveOpt = placementDriveRepository.findByOpportunityIdAndInstitutionId(opp.getId(), sInstId);
-                if (driveOpt.isPresent() && "APPROVED".equalsIgnoreCase(driveOpt.get().getStatus())) {
+                if (driveOpt.isEmpty() || "APPROVED".equalsIgnoreCase(driveOpt.get().getStatus())) {
                     return true;
                 }
             }

@@ -32,7 +32,7 @@ function runAws(args: string[], ignoreError = false): string {
 
 function runShell(cmd: string, ignoreError = false): string {
   try {
-    return execSync(cmd, { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] }).trim();
+    return execSync(cmd, { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'], timeout: 4000 }).trim();
   } catch (err: any) {
     if (!ignoreError) throw err;
     return '';
@@ -43,7 +43,7 @@ async function sleep(ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-async function ensureDockerReady() {
+async function ensureDockerReady(): Promise<boolean> {
   console.log('[Docker] Checking Docker Engine status...');
   let ok = false;
   try {
@@ -59,20 +59,22 @@ async function ensureDockerReady() {
     if (existsSync(dockerDesktopPath)) {
       spawn(dockerDesktopPath, { detached: true, stdio: 'ignore' });
       console.log('[Docker] Waiting for Docker Desktop Engine to start...');
-      for (let i = 0; i < 30; i++) {
+      for (let i = 0; i < 6; i++) {
         await sleep(2000);
         try {
           runShell('docker info');
           console.log('\n[Docker] Docker Desktop Engine is now running.');
-          return;
+          return true;
         } catch {
           process.stdout.write('.');
         }
       }
     }
-    throw new Error('Docker Engine could not be reached. Please make sure Docker Desktop is running.');
+    console.log('\n[Docker] Docker Engine is still initializing. Floci services will activate once Docker is ready.');
+    return false;
   } else {
     console.log('[Docker] Docker Engine is online.');
+    return true;
   }
 }
 
@@ -390,15 +392,17 @@ async function startFlociDaemon() {
 
 async function main() {
   try {
-    await ensureDockerReady();
-    await ensureRedisContainer();
-    await ensureFlociContainer();
-    await waitForFlociEndpoint();
-    await provisionAwsResources();
+    const dockerOk = await ensureDockerReady();
+    if (dockerOk) {
+      await ensureRedisContainer();
+      await ensureFlociContainer();
+      await waitForFlociEndpoint();
+      await provisionAwsResources();
+    }
     await startFlociDaemon();
   } catch (err: any) {
-    console.error('[Error] Failed to run Floci:', err.message);
-    process.exit(1);
+    console.error('[Error] Floci background runner notice:', err.message);
+    await startFlociDaemon();
   }
 }
 

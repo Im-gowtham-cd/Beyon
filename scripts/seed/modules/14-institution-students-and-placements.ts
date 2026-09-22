@@ -1,4 +1,4 @@
-﻿
+
 
 import { doltBatch, esc, doltQuery, toUUID } from "../engine/dolt.js";
 import { studentUserIds } from "./04-users.js";
@@ -51,8 +51,10 @@ export async function seedInstitutionStudentsAndPlacements(cfg: SeedConfig): Pro
   const instStudentStmts: string[] = [];
   let sIdx = 0;
 
+  const kecInstId = institutionUserIds["INST_KEC"] || toUUID("beyon-inst-user-inst_kec");
+
   for (const studentId of studentUserIds) {
-    const instId = instIdList[sIdx % instIdList.length];
+    const instId = kecInstId;
     const dept = DEPARTMENTS[sIdx % DEPARTMENTS.length];
     const batch = BATCHES[sIdx % BATCHES.length];
     const isPending = sIdx % 7 === 0;

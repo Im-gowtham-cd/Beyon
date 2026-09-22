@@ -20,9 +20,13 @@ public class AiIntelligenceClient {
     private static final Logger log = LoggerFactory.getLogger(AiIntelligenceClient.class);
     private final RestClient restClient;
 
-    public AiIntelligenceClient(@Value("${beyon.ai-service.url:http://localhost:8000}") String aiServiceUrl) {
+    public AiIntelligenceClient(@Value("${beyon.ai-service.url:http://127.0.0.1:8000}") String aiServiceUrl) {
         log.info("Initializing AiIntelligenceClient with endpoint: {}", aiServiceUrl);
+        var factory = new org.springframework.http.client.SimpleClientHttpRequestFactory();
+        factory.setConnectTimeout(10000);
+        factory.setReadTimeout(60000);
         this.restClient = RestClient.builder()
+                .requestFactory(factory)
                 .baseUrl(aiServiceUrl)
                 .build();
     }
@@ -330,5 +334,22 @@ public class AiIntelligenceClient {
 
     public Map<String, Object> lookupCinCompany(String cin) {
         return lookupCinCompany(cin, null, null, null);
+    }
+
+    /**
+     * Request AI skill recommendations powered by Ollama Qwen 3.5 (4B) and multi-factor engine.
+     */
+    public Map<String, Object> getAiSkillRecommendations(Map<String, Object> requestPayload) {
+        try {
+            return restClient.post()
+                    .uri("/api/v1/intelligence/recommendations/ai-skill-advisor")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(requestPayload != null ? requestPayload : Collections.emptyMap())
+                    .retrieve()
+                    .body(new ParameterizedTypeReference<Map<String, Object>>() {});
+        } catch (Exception e) {
+            log.warn("Failed to get AI skill recommendations from AI service: {}", e.getMessage());
+            return Collections.emptyMap();
+        }
     }
 }

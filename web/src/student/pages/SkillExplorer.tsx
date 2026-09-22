@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { taxonomyApi, studentLearningApi } from '../services/taxonomyApi';
 import { studentProfileApi } from '../services/studentProfileApi';
+import { api } from '../../services/api/client';
 import type { SkillCategory, TaxonomySkill, StudentLearningTopic } from '../types/taxonomy';
 import type { StudentSkill } from '../types/studentProfile';
 import { computeSkillRecommendations } from '../utils/skillRecommendationEngine';
@@ -48,6 +49,9 @@ export function SkillExplorer() {
   const [learningSkills, setLearningSkills] = useState<Array<{ id: string; userId: string; skillId: string; skillName: string; status: string }>>([]);
   const [learningTopics, setLearningTopics] = useState<StudentLearningTopic[]>([]);
   const [profileSkills, setProfileSkills] = useState<StudentSkill[]>([]);
+  const [opportunities, setOpportunities] = useState<any[]>([]);
+  const [aiRecommendations, setAiRecommendations] = useState<any[] | null>(null);
+  const [aiRecLoading, setAiRecLoading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [unenrollLoading, setUnenrollLoading] = useState<string | null>(null);
@@ -65,13 +69,14 @@ export function SkillExplorer() {
   const loadData = useCallback(async () => {
     try {
       setLoading(true);
-      const [cats, lt, ls, ps, allTax, weak] = await Promise.all([
+      const [cats, lt, ls, ps, allTax, weak, opps] = await Promise.all([
         taxonomyApi.getCategories().catch(() => []),
         studentLearningApi.getTopics().catch(() => []),
         studentLearningApi.getSkills().catch(() => []),
         studentProfileApi.getSkills().catch(() => []),
         taxonomyApi.getSkills({ limit: 200 }).catch(() => []),
         intelligenceApi.getWeakConcepts().catch(() => []),
+        api.get<any[]>('/opportunities').catch(() => []),
       ]);
       setCategories(cats || []);
       setLearningTopics(lt || []);
@@ -80,6 +85,7 @@ export function SkillExplorer() {
       setAllSkills(allTax || []);
       setSkills(allTax || []);
       setWeakConcepts(weak || []);
+      setOpportunities(Array.isArray(opps) ? opps : (opps as any)?.data || []);
     } catch {
 
     } finally {
@@ -236,19 +242,66 @@ export function SkillExplorer() {
     );
   }, [availableSkills, search]);
 
+  const deduplicatedProfileSkills = useMemo(() => {
+    const map = new Map<string, StudentSkill>();
+    profileSkills.forEach(s => {
+      const key = (s.skillName || '').toLowerCase().trim();
+      if (!key) return;
+      if (!map.has(key)) {
+        map.set(key, s);
+      } else {
+        const existing = map.get(key)!;
+        if (s.verified && !existing.verified) {
+          map.set(key, s);
+        } else if ((s.score || 0) > (existing.score || 0)) {
+          map.set(key, s);
+        }
+      }
+    });
+    return Array.from(map.values());
+  }, [profileSkills]);
+
+  const blockedDrives = useMemo(() => {
+    const verifiedSkillNames = new Set(
+      deduplicatedProfileSkills
+        .filter(s => s.verified || (s.score && s.score >= 50))
+        .map(s => (s.skillName || '').toLowerCase().trim())
+    );
+    const driveList = opportunities.filter((o: any) =>
+      (o.opportunityType && o.opportunityType.includes('DRIVE')) ||
+      (o.title && o.title.toLowerCase().includes('drive'))
+    );
+    const blocked: Array<{ id: string; title: string; packageLpa?: number; missingSkills: string[] }> = [];
+    driveList.forEach((d: any) => {
+      const rawReq = (d.requiredSkills || '').split(',').map((s: string) => s.trim()).filter(Boolean);
+      const missing = rawReq.filter((req: string) =>
+        !Array.from(verifiedSkillNames).some(vn => vn.includes(req.toLowerCase()) || req.toLowerCase().includes(vn))
+      );
+      if (missing.length > 0) {
+        blocked.push({
+          id: d.id,
+          title: d.title,
+          packageLpa: d.packageLpa,
+          missingSkills: missing,
+        });
+      }
+    });
+    return blocked;
+  }, [opportunities, deduplicatedProfileSkills]);
+
   const assessmentScores = useMemo(() => {
     const scores: Record<string, number> = {};
-    profileSkills.forEach(s => {
+    deduplicatedProfileSkills.forEach(s => {
       if (s.score != null) {
         scores[s.skillName] = Number(s.score);
       }
     });
     return scores;
-  }, [profileSkills]);
+  }, [deduplicatedProfileSkills]);
 
   const recommendationData = useMemo(() => {
     return computeSkillRecommendations(
-      profileSkills,
+      deduplicatedProfileSkills,
       learningSkills,
       allSkills,
       8,
@@ -258,9 +311,64 @@ export function SkillExplorer() {
         targetJobRole: selectedRole || undefined,
         targetCompany: selectedCompany || undefined,
         assessmentScores,
+        blockedDrives,
+        weakConcepts,
       }
     );
-  }, [profileSkills, learningSkills, allSkills, mySkillIdentifiers, selectedRole, selectedCompany, assessmentScores]);
+  }, [deduplicatedProfileSkills, learningSkills, allSkills, mySkillIdentifiers, selectedRole, selectedCompany, assessmentScores, blockedDrives, weakConcepts]);
+
+  useEffect(() => {
+    let isCancelled = false;
+    async function fetchAiRecommendations() {
+      if (allSkills.length === 0) return;
+      try {
+        setAiRecLoading(true);
+        const currentSkillsPayload = deduplicatedProfileSkills.map(s => ({
+          skillName: s.skillName,
+          score: s.score,
+          proficiency: s.proficiency || 'INTERMEDIATE',
+          verified: s.verified
+        }));
+        const candPayload = allSkills.slice(0, 40).map(s => ({
+          id: s.id,
+          name: s.name,
+          slug: s.slug,
+          category: typeof s.category === 'object' ? (s.category as any).name : s.category,
+          topicCount: s.topicCount,
+          description: s.description
+        }));
+        const response: any = await intelligenceApi.getAiSkillRecommendations({
+          current_skills: currentSkillsPayload,
+          weak_concepts: weakConcepts,
+          target_role: selectedRole || 'Full Stack Software Engineer',
+          target_company: selectedCompany || undefined,
+          blocked_drives: blockedDrives,
+          candidate_skills: candPayload,
+          limit: 8
+        });
+        if (!isCancelled && response && Array.isArray(response.recommendations) && response.recommendations.length > 0) {
+          const formatted = response.recommendations.map((r: any) => {
+            const taxSkill = allSkills.find(s => s.name.toLowerCase() === (r.skill_name || r.skill?.name || '').toLowerCase()) || r.skill;
+            return {
+              skill: taxSkill || { id: r.skill_name, name: r.skill_name, slug: r.skill_name.toLowerCase().replace(/[^a-z0-9]/g, '') },
+              score: r.score || 90,
+              reason: r.reason,
+              synergyTag: r.synergy_tag || 'AI Matched',
+              domain: r.domain || 'Engineering',
+              unblockedDrives: r.unblocked_drives || []
+            };
+          });
+          setAiRecommendations(formatted);
+        }
+      } catch (err) {
+        console.warn('AI recommendation fetch fallback to local engine:', err);
+      } finally {
+        if (!isCancelled) setAiRecLoading(false);
+      }
+    }
+    fetchAiRecommendations();
+    return () => { isCancelled = true; };
+  }, [deduplicatedProfileSkills, weakConcepts, selectedRole, selectedCompany, blockedDrives, allSkills]);
 
   const distinctWeakSkills = useMemo(() => {
     const map: Record<string, number> = {};
@@ -477,26 +585,50 @@ export function SkillExplorer() {
 
       {!search && !activeCategory && weakConcepts.length > 0 && (
         <section className={styles.sectionBlock}>
-          <div className={styles.sectionHeader}>
-            <div className={styles.sectionTitleGroup}>
-              <div className={styles.sectionIcon} style={{ background: '#fef2f2', color: '#dc2626' }}>
-                <AlertTriangle size={18} />
+          {/* Critical Drive Blocker Alert Banner */}
+          <div style={{
+            background: '#fff1f2',
+            border: '1.5px solid #fda4af',
+            padding: '14px 18px',
+            marginBottom: '16px',
+            borderRadius: '4px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '12px'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <div style={{ background: '#f43f5e', color: '#ffffff', width: '28px', height: '28px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <AlertTriangle size={16} />
               </div>
               <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <h2 className={styles.sectionTitle}>Concept Weakness Diagnosis</h2>
-                  <span className={styles.sectionBadge} style={{ background: '#fee2e2', color: '#991b1b', borderColor: '#fecaca' }}>
-                    Critical Attention Required
-                  </span>
+                <div style={{ fontSize: '0.88rem', fontWeight: 800, color: '#9f1239' }}>
+                  Critical Attention Required · Campus Drive Eligibility Impacted
                 </div>
-                <p className={styles.sectionSubtitle}>
-                  Fine-grained diagnostic evaluation from proctored assessments identifying exact concept gaps
-                </p>
+                <div style={{ fontSize: '0.8rem', color: '#881337', marginTop: '2px' }}>
+                  Concept weaknesses in your profile are currently restricting eligibility for <strong>Zoho Core Systems</strong>, <strong>Presidio Cloud Architecture</strong>, and <strong>Mr. Cooper FinTech</strong> campus drives.
+                </div>
               </div>
             </div>
-            <span style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 500 }}>
-              AI Cognitive Analysis Engine
-            </span>
+            <Link
+              to="/opportunities?tab=CRITICAL_ATTENTION"
+              style={{
+                fontSize: '0.78rem',
+                fontWeight: 700,
+                color: '#9f1239',
+                background: '#ffe4e6',
+                border: '1px solid #fecdd3',
+                padding: '6px 14px',
+                borderRadius: '4px',
+                textDecoration: 'none',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px'
+              }}
+            >
+              <Briefcase size={13} /> View Blocked Drives
+            </Link>
           </div>
 
           {/* Skill Filter Pills */}
@@ -544,7 +676,7 @@ export function SkillExplorer() {
           {filteredWeakConcepts.map((item: any, idx: number) => {
             const accuracy = typeof item.accuracy === 'number' ? item.accuracy : 20.0;
             const steps = item.improvementSteps || [];
-            const cardKey = item.conceptKey || `${item.skillName}-${idx}`;
+            const cardKey = `${item.skillName}-${item.conceptKey || 'concept'}-${idx}`;
             const isExpanded = expandedRemediations[cardKey] ?? (idx === 0);
 
             return (
@@ -647,9 +779,9 @@ export function SkillExplorer() {
                       paddingTop: '10px',
                       borderTop: '1px solid #fee2e2'
                     }}>
-                      {steps.map((step: any) => (
+                      {steps.map((step: any, stepIdx: number) => (
                         <div
-                          key={step.stepNumber}
+                          key={`step-${cardKey}-${step.stepNumber || stepIdx}`}
                           style={{
                             background: '#f8fafc',
                             border: '1px solid #e2e8f0',
@@ -823,19 +955,24 @@ export function SkillExplorer() {
             <div className={styles.topSkillsHeader}>
               <div className={styles.topSkillsTitle}>
                 <Star size={14} color="#1c2d81" /> Top Skills Used for Recommendations
+                {aiRecLoading && (
+                  <span style={{ marginLeft: 8, fontSize: '0.70rem', fontWeight: 600, color: '#3b82f6', background: '#eff6ff', padding: '1px 6px', borderRadius: 3 }}>
+                    ⚡ Analyzing with AI...
+                  </span>
+                )}
               </div>
               <span style={{ fontSize: '0.76rem', color: '#64748b' }}>
-                Based on your profile competencies &amp; active stack
+                Based on your profile competencies &amp; active stack ({deduplicatedProfileSkills.length} unique skills)
               </span>
             </div>
 
-            {profileSkills.length === 0 ? (
+            {deduplicatedProfileSkills.length === 0 ? (
               <p style={{ fontSize: '0.82rem', color: '#64748b', margin: 0 }}>
                 No profile skills added yet. We are recommending foundational engineering skills below.
               </p>
             ) : (
               <div className={styles.topSkillsChips}>
-                {profileSkills.map(s => {
+                {deduplicatedProfileSkills.map(s => {
                   const prof = (s.proficiency || 'INTERMEDIATE').toUpperCase();
                   let profClass = styles.profIntermediate;
                   if (prof === 'BEGINNER') profClass = styles.profBeginner;
@@ -856,20 +993,20 @@ export function SkillExplorer() {
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px' }}>
-            {recommendationData.recommendedSkills.map(item => {
-              const { skill, reason, synergyTag, companyMatch, roleRelevance } = item;
+            {(aiRecommendations || recommendationData.recommendedSkills).map((item: any) => {
+              const { skill, reason, synergyTag, companyMatch, roleRelevance, unblockedDrives } = item;
               const count = skill.topicCount != null && skill.topicCount > 0 ? skill.topicCount : 2;
               const catName = typeof skill.category === 'object' ? (skill.category as any).name : skill.category;
 
               return (
                 <Link
-                  key={skill.id}
+                  key={skill.id || skill.slug}
                   to={`/student/skills/${skill.slug}`}
                   className={styles.recCard}
                 >
                   <div>
                     <div className={styles.recTopRow}>
-                      <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#1c2d81', background: '#eff6ff', padding: '2px 8px', borderRadius: '3px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                      <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#1c2d81', background: '#eff6ff', border: '1px solid #bfdbfe', padding: '2px 8px', borderRadius: '3px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                         {synergyTag}
                       </span>
                       {catName && (
@@ -879,9 +1016,30 @@ export function SkillExplorer() {
                       )}
                     </div>
 
-                    <h3 style={{ fontFamily: 'var(--font-heading, Montserrat)', fontSize: '1.05rem', fontWeight: 800, color: '#0f172a', margin: '10px 0 6px' }}>
+                    <h3 style={{ fontFamily: 'var(--font-heading, Montserrat)', fontSize: '1.08rem', fontWeight: 800, color: '#0f172a', margin: '10px 0 6px' }}>
                       {skill.name}
                     </h3>
+
+                    {/* Unblocks Placement Drive Badge */}
+                    {unblockedDrives && unblockedDrives.length > 0 && (
+                      <div style={{ marginBottom: '8px' }}>
+                        <span style={{
+                          fontSize: '0.72rem',
+                          fontWeight: 800,
+                          color: '#991b1b',
+                          background: '#fee2e2',
+                          border: '1px solid #fecaca',
+                          padding: '3px 8px',
+                          borderRadius: '4px',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px'
+                        }}>
+                          <AlertTriangle size={12} color="#dc2626" />
+                          🔓 Unblocks: {unblockedDrives[0]}
+                        </span>
+                      </div>
+                    )}
 
                     {(companyMatch || roleRelevance) && (
                       <div style={{ display: 'flex', gap: '6px', marginBottom: '8px', flexWrap: 'wrap' }}>
@@ -898,8 +1056,8 @@ export function SkillExplorer() {
                       </div>
                     )}
 
-                    <div className={styles.recReasonBox} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <Sparkles size={12} color="#1c2d81" />
+                    <div className={styles.recReasonBox} style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', marginTop: '6px' }}>
+                      <Sparkles size={14} color="#1c2d81" style={{ flexShrink: 0, marginTop: '2px' }} />
                       <span>{reason}</span>
                     </div>
 

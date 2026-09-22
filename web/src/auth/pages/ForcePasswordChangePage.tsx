@@ -346,7 +346,7 @@ export function ForcePasswordChangePage() {
                   type={showCurrentPassword ? 'text' : 'password'}
                   value={currentPassword}
                   onChange={(e) => setCurrentPassword(e.target.value)}
-                  placeholder="Enter provided temporary password"
+                  placeholder="Enter provided temporary password (e.g. Password@123)"
                   autoComplete="current-password"
                   style={{
                     width: '100%',

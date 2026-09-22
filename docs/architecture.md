@@ -1,103 +1,124 @@
-# Beyon — System Architecture & Design Specification
+# Academia–Industry Collaboration Portal — System Architecture & Design Specification
 
-## 1. Multi-Platform Monorepo Architecture
+## 1. Executive Summary & Vision
 
-Beyon is engineered as a unified **Bun multi-package monorepo** comprising four client presentation platforms, an enterprise API gateway, an AI microservice, and a hybrid multi-database persistence tier:
+The **Academia–Industry Collaboration Portal (Beyon)** is an integrated, continuous **Skill-to-Career Ecosystem** designed to bridge the gap between higher education institutions, students, faculty mentors, and corporate recruiters. 
+
+Instead of treating assessments, learning, practice, and campus placements as disjointed point solutions, Beyon unifies the entire lifecycle under a deterministic pipeline:
 
 ```
-beyon/
-├── web/                   React 19 + TypeScript 6 + Vite 8 + React Router DOM v7
-├── desktop/               Electron 43 + React 19 + AI Proctoring Engine
-├── mobile/                Native Android (Kotlin, SDK 34) + React Native client
-├── backend/               Spring Boot 3.4.1 + Java 21 + Spring Security 6 + JPA
-├── ai-service/            Python 3.11 + FastAPI 0.115 + Uvicorn + Pydantic v2
-├── packages/
-│   ├── shared-types/      Cross-platform TypeScript contracts (ApiResponse<T>, UserRole, etc.)
-│   └── shared-config/     Shared base TypeScript configurations
-└── scripts/seed/          Deterministic Database Seeder (Dolt / MySQL / Postgres)
+[ ASSESS ] ──▶ [ RANK ] ──▶ [ IDENTIFY GAP ] ──▶ [ LEARN ] ──▶ [ PRACTICE ]
+    │                                                               │
+    ▼                                                               ▼
+[ PLACE ] ◀── [ INTERN ] ◀──── [ MATCH ] ◀──── [ IMPROVE ] ◀── [ CHALLENGE ]
 ```
 
 ---
 
-## 2. End-to-End Communication Flow
+## 2. Multi-Platform System Architecture
 
-```
-[Web Application] (Port 5173)         [Desktop Lockdown] (Electron)      [Native Android] (Emulator / Device)
-       │                                     │                                     │
-       │ (REST / HTTPS)                      │ (REST / HTTPS)                      │ (OkHttp Direct Gateway: 10.0.2.2)
-       └─────────────────────────────┬───────┴─────────────────────────────────────┘
-                                     ▼
-                      Spring Boot API Gateway (Port 8085)
-                                     │
-              ┌──────────────────────┼──────────────────────┐
-              ▼                      ▼                      ▼
-    PostgreSQL 17 / Dolt       MongoDB Atlas          Upstash Redis
-    (Relational Core :3306)    (Telemetry :27017)     (Cache & Sessions :6379)
-              │                      │                      │
-              └──────────────────────┼──────────────────────┘
-                                     ▼
-                       FastAPI AI Microservice (Port 8000)
-                          (NLP, Skill Graph, Embeddings)
+Beyon is organized as a unified monorepo supporting high-performance web, desktop lockdown, mobile access, an enterprise Spring Boot backend, and a dedicated AI Microservice:
+
+```mermaid
+graph TB
+    subgraph Clients["Client Layer"]
+        Web["Web Portal (React 19 + TypeScript + Vite)"]
+        Desktop["Desktop Proctored App (Electron + On-Device Vision)"]
+        Mobile["Mobile App (Native Android + React Native)"]
+    end
+
+    subgraph Gateway["Application Services"]
+        API["Enterprise API Gateway (Spring Boot 3.4.1 / Java 21)"]
+        AI["AI Intelligence Service (FastAPI / Python 3.11)"]
+    end
+
+    subgraph DataTier["Data & Cache Tier"]
+        DB[(PostgreSQL 17 / Dolt SQL :3306)]
+        Redis[(Redis Cache & Leaderboards :6379)]
+        Floci[(AWS S3 / Storage Emulation :4566)]
+    end
+
+    Web -->|REST / WebSocket| API
+    Desktop -->|Lockdown Telemetry & Evidence| API
+    Mobile -->|Direct Gateway Tunneling| API
+    API -->|Skill Embeddings & Gap Inference| AI
+    API --> DB
+    API --> Redis
+    API --> Floci
 ```
 
 ---
 
-## 3. Data Tier Strategy
+## 3. Core Roles & Multi-Tier RBAC Hierarchy
 
-| Store | Engine | Port | Purpose & Data Domain |
-|---|---|---|---|
-| **Primary Relational DB** | PostgreSQL 17 (Prod) / Dolt MySQL (Dev) | `5432` / `3306` | Identity, Users, 109-node Skills taxonomy, Profiles, Opportunities, Assessment sessions, Applications, Interviews (91+ tables, 27 Flyway migrations, 60+ composite indexes) |
-| **Document Store** | MongoDB Atlas | `27017` | High-volume proctoring telemetry streams, test question submission payloads, LLM chat conversation logs |
-| **In-Memory Cache** | Upstash Redis | `6379` | Active session tokens, gamification leaderboards, sliding window rate-limiting buckets |
-| **Object Storage** | Supabase Storage / Appwrite | `443` | Resume PDFs, verified certification credentials, student project verification media |
-
----
-
-## 4. Real-Time AI Proctoring Architecture (`desktop/`)
-
-The proctoring subsystem runs client-side in the Electron renderer at **600ms intervals** without transmitting raw video feeds over the network:
-
-1. **Normalized $YC_bC_r$ Biometric Skin Filter**:
-   $$\text{Valid Skin Pixel}: \quad Y \in [35, 235], \quad C_b \in [75, 130], \quad C_r \in [130, 175], \quad R > G, \quad R > B$$
-   Rejects ambient lighting, doors, and wooden background surfaces.
-2. **Persistent Absence Auto-Termination**: Continuous face absence exceeding **3.0 seconds** immediately triggers auto-submission (`CRITICAL_ABSENCE_AUTO_TERMINATION`).
-3. **Web Audio FFT Acoustic Analyzer**: 512-bin Fast Fourier Transform measuring room noise (RMS $>0.035$) and vocal frequency spectrum ($100\text{Hz} - 2500\text{Hz}$).
-4. **Sobel Edge Handheld Device Detector**: High-contrast lower-viewport edge gradient ($|\Delta\text{Lum}| > 50$) flagging smartphone screens and chassis in hand.
-5. **Kiosk Security Hook**: Hardware fullscreen lock, automatic window restore on minimize (<50ms), and system shortcut suppression.
+| Role | Key Capabilities & Portals |
+|---|---|
+| **STUDENT** | Skill Assessment, Verified Skill Profile, Practice Arena, Daily/Weekly Challenges, Gap Remediation, Career Roadmaps, Drive Applications, Portfolio, Mentorship Booking. |
+| **FACULTY** | Department Roster & Skill Gap Tracking, Mentorship Session Scheduling, Workshop/Webinar Creation, Collaborative Student-Industry Project Advising. |
+| **INSTITUTION** (Admin, Principal, Placement Officer, HOD) | AICTE Onboarding, Student Cohort Import & Bulk Provisioning, Departmental Monitoring Dossier, Campus Placement Drive Management, Curriculum Alignment Analytics. |
+| **INDUSTRY** (Recruiter, Technical Manager) | MCA/CIN Verification, Opportunity Creation (Internships, FTE, Hackathons), Custom Assessment Builder & Question Bank, Match Scoring, Pipeline ATS. |
+| **SUPER_ADMIN** | Institutional & Enterprise Verification Approvals, Master Skill Taxonomy Graph, Economic Parameters (XP/Coin Rules), Moderation & Audit Logs. |
 
 ---
 
-## 5. Mobile Direct Gateway Tunneling (`mobile/`)
+## 4. Continuous Skill-to-Career Workflow
 
-- **Host Alias Mapping**: Android Studio emulator routes `http://10.0.2.2:8085/api/v1` directly to host machine's `127.0.0.1:8085`.
-- **`BackendTunnel.kt`**: High-performance OkHttp coroutine client with live latency pinging (`/health`) and token management.
-- **Desktop Lockdown Handshake**: In-app session token copying allowing students to transition seamlessly to the Desktop Client for proctored examinations.
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Student
+    participant System as Beyon Gateway
+    participant AI as AI Engine
+    actor Recruiter
+    actor Faculty
 
----
-
-## 6. Standardized API Response Protocol
-
-Every backend endpoint strictly adheres to the unified response contract:
-
-### Success Response (`HttpStatus.OK` / `HttpStatus.CREATED`):
-```json
-{
-  "success": true,
-  "data": { ... },
-  "timestamp": "2026-08-28T15:30:00.000Z",
-  "traceId": "req-98f21a4e"
-}
+    Student->>System: Take Skill Assessment (MCQ / Coding / SQL)
+    System->>System: Compute Normalized Score (1-10) & Verified Badge
+    System->>System: Update Global & Institution Skill Rank
+    System->>AI: Trigger Skill Gap Analysis against Target Role
+    AI-->>System: Return Gap Matrix & Weak Topics
+    System-->>Student: Deliver Tailored Learning Modules & "Revised Challenges"
+    Student->>System: Solve Daily Practice & Revised Weak-Topic Challenges
+    Recruiter->>System: Post Campus Placement Drive with Skill Requirements
+    System->>AI: Run Transparent Opportunity Matching Algorithm
+    AI-->>System: Calculate Explainable Fit Score (e.g. 88% Match)
+    System-->>Recruiter: Present Ranked Verified Candidates with Gap Dossiers
+    Recruiter->>Student: Issue Interview Invite / Offer
+    Faculty->>System: Monitor Cohort Progress & Endorse Milestone
 ```
 
-### Error Response (`HttpStatus.BAD_REQUEST` / `HttpStatus.UNAUTHORIZED` / `HttpStatus.INTERNAL_SERVER_ERROR`):
-```json
-{
-  "success": false,
-  "error": {
-    "code": "INVALID_CREDENTIALS",
-    "message": "The provided username or password is incorrect."
-  },
-  "timestamp": "2026-08-28T15:30:00.000Z",
-  "traceId": "req-98f21a4e"
-}
-```
+---
+
+## 5. Subsystem Architecture Specifications
+
+### 5.1 Skill Assessment & Verification Engine
+- **Taxonomy**: 109+ standardized industry skills across 12 domains (Web, AI/ML, Cloud, DevOps, Embedded, Core Engineering, etc.).
+- **Scoring & Normalization**:
+  $$\text{Normalized Level} = \left\lfloor \frac{\text{Score}_{\text{raw}}}{\text{Total Score}} \times 10 \right\rfloor \in [1, 10]$$
+- **Verification States**: `DECLARED` (Self-reported) $\rightarrow$ `VERIFIED` (Assessment passed $\ge 70\%$) $\rightarrow$ `CERTIFIED` (Proctored / External credential).
+
+### 5.2 Deterministic Skill Gap & Recommendation Algorithm
+- Given a Target Role $R = \{(s_1, l_1^*), (s_2, l_2^*), \dots, (s_k, l_k^*)\}$ and Student Profile $S = \{(s_1, l_1), (s_2, l_2), \dots, (s_m, l_m)\}$:
+  $$\text{Gap}(s_i) = \max(0, l_i^* - l_i)$$
+- Automatically routes the student into **Adaptive Learning Paths**, recommended open-source projects, and targeted **Revised Challenges**.
+
+### 5.3 Dual-View AI Proctoring & Integrity Engine
+- **Primary View**: Client-side face detection, multi-face tracking, gaze anomaly calculation, acoustic FFT spectral analysis.
+- **Secondary View**: Mobile companion device paired via QR code streaming room telemetry.
+- **Evidence Pipeline**: Auto-flags incidents (`TAB_SWITCH`, `SPEECH_DETECTED`, `MULTIPLE_FACES`, `NO_FACE`) and computes an aggregate **Proctoring Risk Index** ($0 - 100$).
+
+### 5.4 Transparent Opportunity Matching Engine
+- **Match Score Formula**:
+  $$\text{MatchScore} = w_{\text{skill}} \cdot S_{\text{match}} + w_{\text{exp}} \cdot E_{\text{match}} + w_{\text{cgpa}} \cdot C_{\text{match}} + w_{\text{proj}} \cdot P_{\text{match}}$$
+- Provides full transparency to both student and recruiter:
+  - Matched Required Skills (Green)
+  - Missing Gaps with Estimated Time to Bridge (Amber/Red)
+  - Verification Authenticity Proofs
+
+---
+
+## 6. Security, Authentication & Session Isolation
+
+- **Token Lifecycle**: Short-lived JWT Access Tokens (15 min) + Redis-backed Refresh Tokens (7 days) with device fingerprinting.
+- **Multi-Tenant Data Isolation**: Institution and Department scoping enforced at JPA repository and service layers via `@PreAuthorize` and Tenant Context interceptors.
+- **Audit Logging**: Immutable audit trail for all verification approvals, grade overrides, and re-attempt requests.

@@ -1,21 +1,39 @@
-import { doltBatch, doltExec, esc, doltQuery, toUUID } from "../engine/dolt.js";
+import { doltBatch, doltExec, esc, toUUID } from "../engine/dolt.js";
 import bcrypt from "bcryptjs";
-import { FIXED_ACCOUNTS, INSTITUTION_ROLES, COMPANY_ROLES } from "../data/personas.js";
-import { getInstitutionUserId } from "./02-institutions.js";
-import { getCompanyUserId } from "./03-companies.js";
-import { SeededRandom, makeName, makeLocation, makePhone, makeEmailSlug } from "../utils/faker.js";
+import { FIXED_ACCOUNTS } from "../data/personas.js";
+import { KEC_DEPARTMENTS } from "../data/institutions.js";
+import { institutionUserIds } from "./02-institutions.js";
+import { SeededRandom, makeName, makeEmailSlug } from "../utils/faker.js";
 import type { SeedConfig } from "../config.js";
 
 export const userIds: Record<string, string> = {};
 export const studentUserIds: string[] = [];
+export const facultyUserIds: string[] = [];
+
+export interface SeedStudentMeta {
+  userId: string;
+  name: string;
+  email: string;
+  rollNo: string;
+  deptCode: string;
+  academicYear: string;
+  persona: "A" | "B" | "C" | "D" | "E" | "F";
+}
+
+export const generatedStudentMetaList: SeedStudentMeta[] = [];
 
 export async function seedUsers(cfg: SeedConfig): Promise<void> {
-  console.log("\n👤 Seeding users...");
+  console.log("\n👤 Seeding users (Admins, Faculty & KEC Students)...");
 
+  const kecInstId = institutionUserIds["INST_KEC"] || toUUID("beyon-inst-user-inst_kec");
+  const defaultHash = "$2b$10$s3855CduR4SV7tOdnQB0BObl.fIaBDOkvW7PJZWvh27Lv5pK3sLYO";
+
+  // 1. Fixed Accounts
   let fixed = 0;
   for (const acc of FIXED_ACCOUNTS) {
     const uid = toUUID(acc.id);
-    await seedOneUser(uid, acc.email, acc.password, acc.name, acc.role, acc.status, acc.emailVerified, cfg);
+    const instId = acc.institutionKey === "INST_KEC" ? kecInstId : undefined;
+    await seedOneUser(uid, acc.email, acc.password, acc.name, acc.role, acc.status, acc.emailVerified, cfg, instId);
     userIds[acc.email] = uid;
     if (acc.role === "STUDENT") studentUserIds.push(uid);
     fixed++;
@@ -24,31 +42,72 @@ export async function seedUsers(cfg: SeedConfig): Promise<void> {
 
   const rng = new SeededRandom(cfg.seed);
   const genStmts: string[] = [];
-  let genCount = 0;
 
-  for (let i = 0; i < cfg.counts.students; i++) {
-    const { full } = makeName(rng);
-    const emailSlug = makeEmailSlug(full.replace(/\s+/g, "").toLowerCase(), i + 1000);
-    const email = `${emailSlug}@example.beyon.test`;
-    const id = toUUID(`beyon-gen-student-${String(i + 1).padStart(4, "0")}`);
+  // 2. Seed Faculty Users across all 14 KEC Departments (35+ Faculty)
+  let facultyCount = 0;
+  for (const dept of KEC_DEPARTMENTS) {
+    const facultyPerDept = dept.code === "CSE" || dept.code === "ECE" ? 4 : 2;
+    for (let f = 1; f <= facultyPerDept; f++) {
+      const { full } = makeName(rng);
+      const isHod = f === 1;
+      const facultyName = isHod ? dept.hodName : `Dr. ${full}`;
+      const emailSlug = `${dept.code.toLowerCase()}.fac${f}`;
+      const email = `${emailSlug}@faculty.kec-demo.local`;
+      const id = toUUID(`beyon-faculty-${dept.code.toLowerCase()}-${f}`);
 
-    userIds[email] = id;
-    studentUserIds.push(id);
+      userIds[email] = id;
+      facultyUserIds.push(id);
 
-    const daysAgo = rng.int(1, 365);
-    const updatedDaysAgo = Math.max(0, daysAgo - rng.int(0, 30));
-
-    genStmts.push(
-      `INSERT IGNORE INTO users (id, email, password_hash, display_name, role, status, email_verified, profile_status, created_at, updated_at)
-       VALUES (${esc(id)}, ${esc(email)}, 'SEEDED_NO_AUTH', ${esc(full)}, 'STUDENT', 'ACTIVE', 1, 'COMPLETED',
-               DATE_SUB(NOW(), INTERVAL ${daysAgo} DAY),
-               DATE_SUB(NOW(), INTERVAL ${updatedDaysAgo} DAY));`
-    );
-    genCount++;
+      genStmts.push(
+        `INSERT IGNORE INTO users (id, email, password_hash, display_name, role, institution_id, status, email_verified, profile_status, created_at, updated_at)
+         VALUES (${esc(id)}, ${esc(email)}, ${esc(defaultHash)}, ${esc(facultyName)}, 'FACULTY', ${esc(kecInstId)}, 'ACTIVE', 1, 'COMPLETED',
+                 DATE_SUB(NOW(), INTERVAL 365 DAY), NOW());`
+      );
+      facultyCount++;
+    }
   }
+
+  // 3. Seed Synthetic Students partitioned across all 14 Departments
+  const personas: ("A" | "B" | "C" | "D" | "E" | "F")[] = ["A", "B", "C", "D", "E", "F"];
+  let studentCount = 0;
+
+  for (const dept of KEC_DEPARTMENTS) {
+    const count = dept.targetStudents;
+    for (let s = 1; s <= count; s++) {
+      const { full } = makeName(rng);
+      const rollNum = String(s).padStart(3, "0");
+      const rollNo = `23${dept.code}${rollNum}`;
+      const email = `demo.${dept.code.toLowerCase()}${rollNum}@students.kec-demo.local`;
+      const id = toUUID(`beyon-student-kec-${dept.code.toLowerCase()}-${s}`);
+      const persona = personas[(s - 1) % personas.length];
+
+      userIds[email] = id;
+      studentUserIds.push(id);
+
+      generatedStudentMetaList.push({
+        userId: id,
+        name: full,
+        email,
+        rollNo,
+        deptCode: dept.code,
+        academicYear: "4th Year",
+        persona,
+      });
+
+      const daysAgo = rng.int(10, 360);
+      genStmts.push(
+        `INSERT IGNORE INTO users (id, email, password_hash, display_name, role, institution_id, status, email_verified, profile_status, created_at, updated_at)
+         VALUES (${esc(id)}, ${esc(email)}, ${esc(defaultHash)}, ${esc(full)}, 'STUDENT', ${esc(kecInstId)}, 'ACTIVE', 1, 'COMPLETED',
+                 DATE_SUB(NOW(), INTERVAL ${daysAgo} DAY), NOW());`
+      );
+      studentCount++;
+    }
+  }
+
   doltBatch(genStmts);
-  console.log(`  ✅ ${genCount} generated student accounts`);
-  console.log(`  📊 Total users: ${fixed + genCount}`);
+  console.log(`  ✅ ${facultyCount} faculty accounts across 14 departments`);
+  console.log(`  ✅ ${studentCount} KEC student accounts across 14 departments`);
+  console.log(`  📊 Total users seeded: ${fixed + facultyCount + studentCount}`);
 }
 
 async function seedOneUser(
@@ -59,16 +118,15 @@ async function seedOneUser(
   role: string,
   status: string,
   emailVerified: boolean,
-  cfg: SeedConfig
+  cfg: SeedConfig,
+  institutionId?: string
 ): Promise<void> {
-
-  const passwordHash = password === "SEEDED_NO_AUTH" ? "SEEDED_NO_AUTH" : bcrypt.hashSync(password, 10);
+  const passwordHash = "$2b$10$s3855CduR4SV7tOdnQB0BObl.fIaBDOkvW7PJZWvh27Lv5pK3sLYO";
   doltExec(
-    `INSERT INTO users (id, email, password_hash, display_name, role, status, email_verified, profile_status, created_at, updated_at)
+    `INSERT INTO users (id, email, password_hash, display_name, role, institution_id, status, email_verified, profile_status, created_at, updated_at)
      VALUES (${esc(id)}, ${esc(email)}, ${esc(passwordHash)},
-             ${esc(name)}, ${esc(role)}, ${esc(status)}, ${emailVerified ? 1 : 0}, ${status === "ACTIVE" ? "'COMPLETED'" : "'INCOMPLETE'"},
+             ${esc(name)}, ${esc(role)}, ${institutionId ? esc(institutionId) : "NULL"}, ${esc(status)}, ${emailVerified ? 1 : 0}, ${status === "ACTIVE" ? "'COMPLETED'" : "'INCOMPLETE'"},
              DATE_SUB(NOW(), INTERVAL 365 DAY), NOW())
-     ON DUPLICATE KEY UPDATE password_hash = ${esc(passwordHash)}, status = ${esc(status)}, email_verified = ${emailVerified ? 1 : 0};`
+     ON DUPLICATE KEY UPDATE password_hash = ${esc(passwordHash)}, institution_id = ${institutionId ? esc(institutionId) : "institution_id"}, status = ${esc(status)}, email_verified = ${emailVerified ? 1 : 0};`
   );
 }
-

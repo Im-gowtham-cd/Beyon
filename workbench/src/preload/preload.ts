@@ -25,6 +25,15 @@ export interface WorkbenchApi {
   listEventBridgeRules: () => Promise<any>;
   putEventBridgeEvent: (params: { source: string; detailType: string; detail: string }) => Promise<any>;
 
+  // Redis
+  getRedisStatus: () => Promise<any>;
+  listRedisKeys: (pattern?: string) => Promise<any>;
+  getRedisValue: (key: string) => Promise<any>;
+  setRedisValue: (params: { key: string; value: string; ttl?: number }) => Promise<any>;
+  deleteRedisKey: (key: string) => Promise<any>;
+  flushRedisDb: () => Promise<any>;
+  executeRedisCommand: (command: string) => Promise<any>;
+
   // System & AI
   getClusterHealth: () => Promise<any>;
   testAiEndpoint: (params: { path: string; method?: string; body?: any }) => Promise<any>;
@@ -54,6 +63,15 @@ const api: WorkbenchApi = {
   listSnsTopics: () => ipcRenderer.invoke('floci:sns:list-topics'),
   listEventBridgeRules: () => ipcRenderer.invoke('floci:events:list-rules'),
   putEventBridgeEvent: (params) => ipcRenderer.invoke('floci:events:put-event', params),
+
+  // Redis
+  getRedisStatus: () => ipcRenderer.invoke('redis:status'),
+  listRedisKeys: (pattern) => ipcRenderer.invoke('redis:keys', pattern),
+  getRedisValue: (key) => ipcRenderer.invoke('redis:get-value', key),
+  setRedisValue: (params) => ipcRenderer.invoke('redis:set-value', params),
+  deleteRedisKey: (key) => ipcRenderer.invoke('redis:delete-key', key),
+  flushRedisDb: () => ipcRenderer.invoke('redis:flush-db'),
+  executeRedisCommand: (cmd) => ipcRenderer.invoke('redis:execute-command', cmd),
 
   // System & AI
   getClusterHealth: () => ipcRenderer.invoke('system:health'),

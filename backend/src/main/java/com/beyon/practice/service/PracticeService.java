@@ -24,6 +24,7 @@ public class PracticeService {
     private final CoinService coinService;
     private final SkillXpService skillXpService;
     private final StreakService streakService;
+    private final org.springframework.jdbc.core.JdbcTemplate jdbcTemplate;
 
     public PracticeService(QuestionRepository questionRepository,
                             QuestionOptionRepository optionRepository,
@@ -32,7 +33,8 @@ public class PracticeService {
                             StudentPracticeStatsRepository statsRepository,
                             CoinService coinService,
                             SkillXpService skillXpService,
-                            StreakService streakService) {
+                            StreakService streakService,
+                            org.springframework.jdbc.core.JdbcTemplate jdbcTemplate) {
         this.questionRepository = questionRepository;
         this.optionRepository = optionRepository;
         this.testCaseRepository = testCaseRepository;
@@ -41,23 +43,121 @@ public class PracticeService {
         this.coinService = coinService;
         this.skillXpService = skillXpService;
         this.streakService = streakService;
+        this.jdbcTemplate = jdbcTemplate;
+    }
+
+    private static class QueryBuilder {
+        final StringBuilder sql = new StringBuilder();
+        final List<Object> params = new java.util.ArrayList<>();
+    }
+
+    private QueryBuilder buildQuestionsQuery(UUID skillId, UUID topicId, String difficulty, String category, String search) {
+        QueryBuilder qb = new QueryBuilder();
+        qb.sql.append(" WHERE (status = 'PUBLISHED' OR status = 'ACTIVE')");
+
+        if (skillId != null) {
+            qb.sql.append(" AND skill_id = ?");
+            qb.params.add(skillId.toString());
+        }
+        if (topicId != null) {
+            qb.sql.append(" AND topic_id = ?");
+            qb.params.add(topicId.toString());
+        }
+        if (difficulty != null && !difficulty.isBlank() && !"ALL".equalsIgnoreCase(difficulty)) {
+            String diffUpper = difficulty.toUpperCase().trim();
+            if ("EASY".equals(diffUpper) || "BEGINNER".equals(diffUpper)) {
+                qb.sql.append(" AND difficulty IN ('EASY', 'BEGINNER')");
+            } else if ("MEDIUM".equals(diffUpper) || "INTERMEDIATE".equals(diffUpper)) {
+                qb.sql.append(" AND difficulty IN ('MEDIUM', 'INTERMEDIATE')");
+            } else if ("HARD".equals(diffUpper) || "ADVANCED".equals(diffUpper) || "EXPERT".equals(diffUpper)) {
+                qb.sql.append(" AND difficulty IN ('HARD', 'ADVANCED', 'EXPERT')");
+            } else {
+                qb.sql.append(" AND difficulty = ?");
+                qb.params.add(diffUpper);
+            }
+        }
+        if (category != null && !category.isBlank() && !"ALL".equalsIgnoreCase(category)) {
+            String cat = category.trim().toLowerCase();
+            if (cat.contains("java") || cat.contains("spring")) {
+                qb.sql.append(" AND (LOWER(tags) LIKE '%java%' OR LOWER(tags) LIKE '%spring%' OR LOWER(title) LIKE '%java%' OR LOWER(title) LIKE '%spring%')");
+            } else if (cat.contains("angular")) {
+                qb.sql.append(" AND (LOWER(tags) LIKE '%angular%' OR LOWER(title) LIKE '%angular%')");
+            } else if (cat.contains("react") || cat.contains("frontend")) {
+                qb.sql.append(" AND (LOWER(tags) LIKE '%react%' OR LOWER(tags) LIKE '%next%' OR LOWER(tags) LIKE '%css%' OR LOWER(tags) LIKE '%html%' OR LOWER(tags) LIKE '%javascript%' OR LOWER(tags) LIKE '%typescript%' OR LOWER(tags) LIKE '%vue%' OR LOWER(tags) LIKE '%bootstrap%' OR LOWER(title) LIKE '%react%')");
+            } else if (cat.contains("dsa") || cat.contains("algorithm")) {
+                qb.sql.append(" AND (LOWER(tags) LIKE '%algorithm%' OR LOWER(tags) LIKE '%data structures%' OR LOWER(tags) LIKE '%dsa%' OR LOWER(title) LIKE '%dsa%' OR LOWER(title) LIKE '%algorithm%' OR LOWER(title) LIKE '%data structure%')");
+            } else if (cat.contains("python") || cat.contains("ai")) {
+                qb.sql.append(" AND (LOWER(tags) LIKE '%python%' OR LOWER(tags) LIKE '%django%' OR LOWER(tags) LIKE '%fastapi%' OR LOWER(tags) LIKE '%machine learning%' OR LOWER(tags) LIKE '%deep learning%' OR LOWER(tags) LIKE '%pytorch%' OR LOWER(tags) LIKE '%scikit%' OR LOWER(tags) LIKE '%nlp%' OR LOWER(tags) LIKE '%numpy%' OR LOWER(tags) LIKE '%matplotlib%' OR LOWER(title) LIKE '%python%')");
+            } else if (cat.contains("sql") || cat.contains("database") || cat.contains("dbms")) {
+                qb.sql.append(" AND (LOWER(tags) LIKE '%sql%' OR LOWER(tags) LIKE '%mysql%' OR LOWER(tags) LIKE '%postgres%' OR LOWER(tags) LIKE '%mongodb%' OR LOWER(tags) LIKE '%redis%' OR LOWER(tags) LIKE '%database%' OR LOWER(tags) LIKE '%dbms%' OR LOWER(tags) LIKE '%sqlite%' OR LOWER(tags) LIKE '%cassandra%' OR LOWER(tags) LIKE '%dynamodb%' OR question_type = 'SQL')");
+            } else if (cat.contains("system design") || cat.contains("devops") || cat.contains("cloud") || cat.contains("security")) {
+                qb.sql.append(" AND (LOWER(tags) LIKE '%system design%' OR LOWER(tags) LIKE '%devops%' OR LOWER(tags) LIKE '%docker%' OR LOWER(tags) LIKE '%kubernetes%' OR LOWER(tags) LIKE '%linux%' OR LOWER(tags) LIKE '%cloud%' OR LOWER(tags) LIKE '%aws%' OR LOWER(tags) LIKE '%azure%' OR LOWER(tags) LIKE '%google cloud%' OR LOWER(tags) LIKE '%jenkins%' OR LOWER(tags) LIKE '%git%' OR LOWER(tags) LIKE '%cybersecurity%' OR LOWER(tags) LIKE '%wireshark%' OR LOWER(tags) LIKE '%burp%' OR LOWER(tags) LIKE '%kafka%' OR LOWER(title) LIKE '%system design%')");
+            } else if (cat.contains("mobile") || cat.contains("flutter")) {
+                qb.sql.append(" AND (LOWER(tags) LIKE '%flutter%' OR LOWER(tags) LIKE '%react native%' OR LOWER(tags) LIKE '%mobile%' OR LOWER(tags) LIKE '%android%' OR LOWER(tags) LIKE '%ios%')");
+            } else {
+                qb.sql.append(" AND (LOWER(tags) LIKE ? OR LOWER(title) LIKE ?)");
+                qb.params.add("%" + cat + "%");
+                qb.params.add("%" + cat + "%");
+            }
+        }
+        if (search != null && !search.isBlank()) {
+            String term = "%" + search.toLowerCase().trim() + "%";
+            qb.sql.append(" AND (LOWER(title) LIKE ? OR LOWER(description) LIKE ? OR LOWER(tags) LIKE ?)");
+            qb.params.add(term);
+            qb.params.add(term);
+            qb.params.add(term);
+        }
+        return qb;
+    }
+
+    public List<Question> getQuestions(UUID skillId, UUID topicId, String difficulty, String category, String search, int page, int size) {
+        QueryBuilder qb = buildQuestionsQuery(skillId, topicId, difficulty, category, search);
+        String sql = "SELECT id FROM questions " + qb.sql.toString() + " ORDER BY created_at DESC LIMIT ? OFFSET ?";
+        List<Object> queryParams = new java.util.ArrayList<>(qb.params);
+        int limit = Math.max(1, Math.min(size, 500));
+        int offset = Math.max(0, page) * limit;
+        queryParams.add(limit);
+        queryParams.add(offset);
+
+        List<String> ids = jdbcTemplate.query(sql, (rs, rowNum) -> rs.getString("id"), queryParams.toArray());
+        if (ids.isEmpty()) {
+            return java.util.Collections.emptyList();
+        }
+        List<UUID> uuids = ids.stream().map(UUID::fromString).toList();
+        List<Question> questions = questionRepository.findAllById(uuids);
+        java.util.Map<UUID, Question> qMap = questions.stream().collect(java.util.stream.Collectors.toMap(Question::getId, q -> q));
+        List<Question> ordered = new java.util.ArrayList<>();
+        for (UUID u : uuids) {
+            Question q = qMap.get(u);
+            if (q != null) ordered.add(q);
+        }
+        populateOptions(ordered);
+        return ordered;
     }
 
     public List<Question> getQuestions(UUID skillId, UUID topicId, String difficulty, int page, int size) {
-        List<Question> questions;
-        if (skillId != null && difficulty != null) {
-            questions = questionRepository.findBySkillAndDifficulty(skillId, difficulty, org.springframework.data.domain.PageRequest.of(page, size));
-        } else if (skillId != null) {
-            questions = questionRepository.findBySkillIdPublished(skillId, org.springframework.data.domain.PageRequest.of(page, size));
-        } else if (topicId != null) {
-            questions = questionRepository.findByTopicIdPublished(topicId, org.springframework.data.domain.PageRequest.of(page, size));
-        } else if (difficulty != null) {
-            questions = questionRepository.findByDifficultyPublished(difficulty, org.springframework.data.domain.PageRequest.of(page, size));
+        return getQuestions(skillId, topicId, difficulty, null, null, page, size);
+    }
+
+    public long getQuestionsCount(UUID skillId, UUID topicId, String difficulty, String category, String search) {
+        QueryBuilder qb = buildQuestionsQuery(skillId, topicId, difficulty, category, search);
+        String sql = "SELECT COUNT(*) FROM questions " + qb.sql.toString();
+        Long count;
+        if (qb.params.isEmpty()) {
+            count = jdbcTemplate.queryForObject(sql, Long.class);
         } else {
-            questions = questionRepository.findByStatusInOrderByCreatedAtDesc(List.of("PUBLISHED", "ACTIVE"), org.springframework.data.domain.PageRequest.of(page, size));
+            count = jdbcTemplate.queryForObject(sql, Long.class, qb.params.toArray());
         }
-        populateOptions(questions);
-        return questions;
+        return count != null ? count : 0L;
+    }
+
+    public java.util.Map<String, Long> getBankStats() {
+        java.util.Map<String, Long> stats = new java.util.HashMap<>();
+        stats.put("total", questionRepository.countPublished());
+        stats.put("easy", questionRepository.countPublishedByDifficultyIn(List.of("EASY", "BEGINNER")));
+        stats.put("medium", questionRepository.countPublishedByDifficultyIn(List.of("MEDIUM", "INTERMEDIATE")));
+        stats.put("hard", questionRepository.countPublishedByDifficultyIn(List.of("HARD", "ADVANCED", "EXPERT")));
+        return stats;
     }
 
     public Question getQuestion(UUID questionId) {

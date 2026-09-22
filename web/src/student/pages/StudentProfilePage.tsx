@@ -25,6 +25,82 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'links', label: 'Links' },
 ];
 
+function deduplicateSkills(rawSkills: StudentSkill[]): StudentSkill[] {
+  const map = new Map<string, StudentSkill>();
+  for (const skill of rawSkills) {
+    const key = (skill.skillName || '').trim().toLowerCase();
+    if (!key) continue;
+    const existing = map.get(key);
+    if (!existing) {
+      map.set(key, { ...skill });
+    } else {
+      const isVerified = Boolean(existing.verified || skill.verified || (Number(skill.score) >= 60) || (Number(existing.score) >= 60));
+      const highestScore = Math.max(Number(existing.score ?? 0), Number(skill.score ?? 0));
+      const maxTested = Math.max(Number(existing.questionsTested ?? 0), Number(skill.questionsTested ?? 0));
+      const maxCorrect = Math.max(Number(existing.questionsCorrect ?? 0), Number(skill.questionsCorrect ?? 0));
+      const category = existing.category || skill.category || 'Technical';
+      const proficiency = (existing.score ?? 0) >= (skill.score ?? 0) ? existing.proficiency : skill.proficiency;
+      const retest = existing.retestAvailableAt || skill.retestAvailableAt;
+
+      map.set(key, {
+        ...existing,
+        verified: isVerified,
+        score: highestScore > 0 ? highestScore : (existing.score ?? skill.score),
+        questionsTested: maxTested > 0 ? maxTested : (existing.questionsTested ?? skill.questionsTested),
+        questionsCorrect: maxCorrect > 0 ? maxCorrect : (existing.questionsCorrect ?? skill.questionsCorrect),
+        category,
+        proficiency: proficiency || existing.proficiency || skill.proficiency || 'INTERMEDIATE',
+        retestAvailableAt: retest,
+      });
+    }
+  }
+  return Array.from(map.values());
+}
+
+function getSkillStatusAndColor(score: number | null | undefined, isVerifiedFlag?: boolean) {
+  const num = score != null ? Number(score) : 0;
+  if (num >= 90) {
+    return {
+      statusLabel: 'Verified Mastery',
+      color: '#15803d',
+      progressBg: '#16a34a',
+      bg: '#f0fdf4',
+      border: '#bbf7d0',
+      badgeBg: '#dcfce7',
+      badgeColor: '#15803d',
+      isPass: true,
+      showShield: true,
+      tier: 'EXCELLENT',
+    };
+  } else if (num >= 50) {
+    return {
+      statusLabel: isVerifiedFlag ? 'Verified' : 'Passed',
+      color: '#d97706',
+      progressBg: '#f59e0b',
+      bg: '#fffbeb',
+      border: '#fde68a',
+      badgeBg: '#fef3c7',
+      badgeColor: '#92400e',
+      isPass: true,
+      showShield: Boolean(isVerifiedFlag),
+      tier: 'PASS',
+    };
+  } else {
+    return {
+      statusLabel: 'Needs Review',
+      color: '#dc2626',
+      progressBg: '#ef4444',
+      bg: '#fef2f2',
+      border: '#fecaca',
+      badgeBg: '#fee2e2',
+      badgeColor: '#991b1b',
+      isPass: false,
+      showShield: false,
+      tier: 'FAIL',
+    };
+  }
+}
+
 export function StudentProfilePage() {
   const [profile, setProfile] = useState<StudentProfile | null>(null);
   const [skills, setSkills] = useState<StudentSkill[]>([]);
@@ -53,7 +129,7 @@ export function StudentProfilePage() {
         studentProfileApi.getCareerPreferences().catch(() => null),
       ]);
       setProfile(p);
-      setSkills(s ?? []);
+      setSkills(deduplicateSkills(s ?? []));
       setProjects(pr ?? []);
       setCerts(c ?? []);
       setAchievements(a ?? []);
@@ -297,27 +373,57 @@ function OverviewSection({ profile, skills, learningSkills, careerPrefs }: {
           <div className={styles.assessmentSkillsGrid}>
             {skills.map(s => {
               const score = s.score != null ? Number(s.score) : 0;
-              const isVerified = Boolean(s.verified || (s.score != null && Number(s.score) >= 60));
+              const meta = getSkillStatusAndColor(score, Boolean(s.verified));
               return (
-                <div key={s.id} className={styles.assessmentSkillCard}>
+                <div
+                  key={s.id}
+                  className={styles.assessmentSkillCard}
+                  style={{
+                    borderLeft: `4px solid ${meta.color}`,
+                  }}
+                >
                   <div className={styles.assessmentSkillCardHeader}>
                     <div>
                       <div className={styles.assessmentSkillName}>{s.skillName}</div>
                       <span className={styles.assessmentSkillCat}>{s.category || 'Technical'}</span>
                     </div>
-                    {isVerified ? (
-                      <span className={styles.verifiedSkillBadge}>
-                        <ShieldCheck size={12} /> Verified
+                    {meta.isPass ? (
+                      <span
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          fontSize: '0.72rem',
+                          fontWeight: 700,
+                          padding: '2px 8px',
+                          borderRadius: '4px',
+                          background: meta.badgeBg,
+                          color: meta.badgeColor,
+                        }}
+                      >
+                        <ShieldCheck size={12} /> {meta.statusLabel}
                       </span>
                     ) : (
-                      <span className={styles.unverifiedSkillBadge}>
+                      <span
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          fontSize: '0.72rem',
+                          fontWeight: 700,
+                          padding: '2px 8px',
+                          borderRadius: '4px',
+                          background: meta.badgeBg,
+                          color: meta.badgeColor,
+                        }}
+                      >
                         Needs Review
                       </span>
                     )}
                   </div>
 
                   <div className={styles.assessmentSkillScoreRow}>
-                    <span className={styles.assessmentSkillScore} style={{ color: isVerified ? '#15803d' : '#b45309' }}>
+                    <span className={styles.assessmentSkillScore} style={{ color: meta.color, fontWeight: 800 }}>
                       {score.toFixed(1)}%
                     </span>
                     {s.questionsTested ? (
@@ -332,7 +438,7 @@ function OverviewSection({ profile, skills, learningSkills, careerPrefs }: {
                       className={styles.assessmentProgressFill}
                       style={{
                         width: `${Math.min(100, Math.max(0, score))}%`,
-                        background: isVerified ? '#15803d' : '#f59e0b',
+                        background: meta.progressBg,
                       }}
                     />
                   </div>
@@ -349,17 +455,29 @@ function OverviewSection({ profile, skills, learningSkills, careerPrefs }: {
           <p className={styles.emptyText}>No skills added yet</p>
         ) : (
           <div className={styles.skillChips}>
-            {skills.slice(0, 12).map(s => (
-              <span key={s.id} className={`${styles.skillChip} ${s.verified ? styles.verifiedChip : ''}`}>
-                {s.verified && <ShieldCheck size={13} style={{ color: '#15803d' }} />}
-                <span className={styles.skillChipName}>{s.skillName}</span>
-                {s.score != null ? (
-                  <span className={styles.skillChipScore}>{Number(s.score).toFixed(0)}%</span>
-                ) : s.proficiency ? (
-                  <span className={styles.skillChipProf}>{s.proficiency}</span>
-                ) : null}
-              </span>
-            ))}
+            {skills.slice(0, 12).map(s => {
+              const meta = getSkillStatusAndColor(s.score != null ? Number(s.score) : 50, Boolean(s.verified));
+              return (
+                <span
+                  key={s.id}
+                  className={`${styles.skillChip} ${s.verified ? styles.verifiedChip : ''}`}
+                  style={{
+                    borderColor: meta.border,
+                    background: meta.bg,
+                    color: meta.color,
+                    fontWeight: 700,
+                  }}
+                >
+                  {s.verified && <ShieldCheck size={13} style={{ color: meta.color }} />}
+                  <span className={styles.skillChipName} style={{ color: '#0f172a' }}>{s.skillName}</span>
+                  {s.score != null ? (
+                    <span className={styles.skillChipScore} style={{ color: meta.color, fontWeight: 800 }}>{Number(s.score).toFixed(0)}%</span>
+                  ) : s.proficiency ? (
+                    <span className={styles.skillChipProf}>{s.proficiency}</span>
+                  ) : null}
+                </span>
+              );
+            })}
           </div>
         )}
       </div>
@@ -527,21 +645,51 @@ function SkillsSection({ skills, learningSkills, onReload }: {
         <div className={styles.assessmentSkillsGrid} style={{ marginTop: 'var(--space-md)' }}>
           {skills.map(s => {
             const score = s.score != null ? Number(s.score) : null;
-            const isVerified = Boolean(s.verified);
+            const meta = getSkillStatusAndColor(score, Boolean(s.verified));
             return (
-              <div key={s.id} className={styles.assessmentSkillCard}>
+              <div
+                key={s.id}
+                className={styles.assessmentSkillCard}
+                style={{
+                  borderLeft: `4px solid ${meta.color}`,
+                }}
+              >
                 <div className={styles.assessmentSkillCardHeader}>
                   <div>
                     <div className={styles.assessmentSkillName}>{s.skillName}</div>
                     <span className={styles.assessmentSkillCat}>{s.category || 'Technical'} • {s.proficiency || 'INTERMEDIATE'}</span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    {isVerified ? (
-                      <span className={styles.verifiedSkillBadge}>
-                        <ShieldCheck size={12} /> Verified
+                    {meta.isPass ? (
+                      <span
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          fontSize: '0.72rem',
+                          fontWeight: 700,
+                          padding: '2px 8px',
+                          borderRadius: '4px',
+                          background: meta.badgeBg,
+                          color: meta.badgeColor,
+                        }}
+                      >
+                        <ShieldCheck size={12} /> {meta.statusLabel}
                       </span>
                     ) : (
-                      <span className={styles.unverifiedSkillBadge}>
+                      <span
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          fontSize: '0.72rem',
+                          fontWeight: 700,
+                          padding: '2px 8px',
+                          borderRadius: '4px',
+                          background: meta.badgeBg,
+                          color: meta.badgeColor,
+                        }}
+                      >
                         {score != null ? 'Needs Review' : 'Self-Reported'}
                       </span>
                     )}
@@ -552,7 +700,7 @@ function SkillsSection({ skills, learningSkills, onReload }: {
                 {score != null ? (
                   <>
                     <div className={styles.assessmentSkillScoreRow}>
-                      <span className={styles.assessmentSkillScore} style={{ color: isVerified ? '#15803d' : '#b45309' }}>
+                      <span className={styles.assessmentSkillScore} style={{ color: meta.color, fontWeight: 800 }}>
                         {score.toFixed(1)}% Accuracy
                       </span>
                       {s.questionsTested ? (
@@ -567,7 +715,7 @@ function SkillsSection({ skills, learningSkills, onReload }: {
                         className={styles.assessmentProgressFill}
                         style={{
                           width: `${Math.min(100, Math.max(0, score))}%`,
-                          background: isVerified ? '#15803d' : '#f59e0b',
+                          background: meta.progressBg,
                         }}
                       />
                     </div>

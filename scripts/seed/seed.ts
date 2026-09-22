@@ -14,6 +14,8 @@ import { seedNotifications } from "./modules/11-notifications.js";
 import { seedCommunity } from "./modules/12-community.js";
 import { seedInstitutionStudentsAndPlacements } from "./modules/14-institution-students-and-placements.js";
 import { seedRecruitmentAndIntelligence } from "./modules/15-recruitment-pipelines-and-intelligence.js";
+import { seedChallengesContestsPractice } from "./modules/16-challenges-contests-practice.js";
+import { seedMentorshipProjectsProctoring } from "./modules/17-mentorship-projects-proctoring.js";
 import { validateIntegrity } from "./modules/13-validate.js";
 import { doltQuery, getQueryCount } from "./engine/dolt.js";
 import * as fs from "fs";
@@ -67,9 +69,10 @@ if (mode === "reset") {
     "student_projects", "student_certifications", "student_achievements", "student_links",
     "student_learning_topics", "student_learning_skills", "student_career_preferences",
     "student_skills", "student_streaks", "student_practice_stats", "student_profiles",
-    "institution_students", "institution_representatives", "institution_rating_snapshots", "institution_profiles",
-    "company_representatives", "company_skills", "company_hiring_preferences", "company_profiles",
+    "institution_students", "institution_representatives", "institution_rating_snapshots", "institution_departments", "institution_profiles",
+    "company_representatives", "company_skills", "company_hiring_preferences", "company_verifications", "company_profiles",
     "topic_relationships", "skill_relationships", "skill_subtopics", "skill_topics", "skills", "skill_categories",
+    "mentor_profiles", "mentorship_requests", "portfolio_projects",
     "users",
   ];
 
@@ -101,11 +104,13 @@ async function runBase() {
 async function runAssessment() {
   await seedQuestions(cfg);
   await seedAssessments(cfg);
+  await seedChallengesContestsPractice(cfg);
 }
 
 async function runRecruitment() {
   await seedOpportunities(cfg);
   await seedApplicationsAndCoins(cfg);
+  await seedMentorshipProjectsProctoring(cfg);
 }
 
 async function runCommunity() {

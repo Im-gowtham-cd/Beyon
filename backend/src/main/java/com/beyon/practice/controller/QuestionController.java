@@ -78,10 +78,10 @@ public class QuestionController {
     public ResponseEntity<ApiResponse<java.util.Map<String, Long>>> getStats() {
         java.util.Map<String, Long> stats = new java.util.HashMap<>();
         stats.put("total", questionBankService.countPublished());
+        stats.put("easy", questionBankService.countByDifficulties(List.of("EASY", "BEGINNER")));
+        stats.put("medium", questionBankService.countByDifficulties(List.of("MEDIUM", "INTERMEDIATE")));
+        stats.put("hard", questionBankService.countByDifficulties(List.of("HARD", "ADVANCED", "EXPERT")));
         stats.put("beginner", questionBankService.countByDifficulty("BEGINNER"));
-        stats.put("easy", questionBankService.countByDifficulty("EASY"));
-        stats.put("medium", questionBankService.countByDifficulty("MEDIUM"));
-        stats.put("hard", questionBankService.countByDifficulty("HARD"));
         stats.put("advanced", questionBankService.countByDifficulty("ADVANCED"));
         stats.put("expert", questionBankService.countByDifficulty("EXPERT"));
         return ResponseEntity.ok(ApiResponse.ok(stats));

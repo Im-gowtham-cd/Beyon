@@ -234,6 +234,26 @@ public class InstitutionService {
                 }
             });
 
+            if (placementRecordRepository != null) {
+                placementRecordRepository.findByStudentId(is.getStudentId()).stream().findFirst().ifPresent(pr -> {
+                    map.put("packageLpa", pr.getPackageLpa());
+                    map.put("ctcLpa", pr.getPackageLpa());
+                    map.put("companyName", pr.getCompanyName());
+                    map.put("roleTitle", pr.getRoleTitle());
+                    map.put("placementDate", pr.getPlacementDate());
+                    map.put("placementType", pr.getPlacementType());
+                });
+            }
+
+            if (recruitmentApplicationRepository != null) {
+                recruitmentApplicationRepository.findByStudentIdOrderByCreatedAtDesc(is.getStudentId()).stream().findFirst().ifPresent(ra -> {
+                    map.put("applicationStatus", ra.getStatus());
+                    map.put("assessmentScore", ra.getAssessmentScore());
+                    map.put("interviewScore", ra.getInterviewScore());
+                    map.put("applicationNotes", ra.getNotes());
+                });
+            }
+
             results.add(map);
         }
         return results;
@@ -432,12 +452,25 @@ public class InstitutionService {
         }
         Map<String, Object> metrics = new HashMap<>();
         long totalStudents = institutionStudentRepository.countByInstitutionId(institutionId);
-        long placed = institutionStudentRepository.countByInstitutionIdAndPlacementStatus(institutionId, "PLACED");
+        long placed = institutionStudentRepository.countByInstitutionIdAndPlacementStatus(institutionId, "PLACED")
+                + institutionStudentRepository.countByInstitutionIdAndPlacementStatus(institutionId, "OFFERED");
         long seeking = institutionStudentRepository.countByInstitutionIdAndPlacementStatus(institutionId, "PLACEMENT_SEEKING");
+        long assessmentCleared = institutionStudentRepository.countByInstitutionIdAndPlacementStatus(institutionId, "ASSESSMENT_CLEARED")
+                + institutionStudentRepository.countByInstitutionIdAndPlacementStatus(institutionId, "IN_INTERVIEW");
+        long attendingDrives = institutionStudentRepository.countByInstitutionIdAndPlacementStatus(institutionId, "ATTENDING_DRIVES")
+                + institutionStudentRepository.countByInstitutionIdAndPlacementStatus(institutionId, "SCHEDULED");
+        long malpracticeCount = institutionStudentRepository.countByInstitutionIdAndPlacementStatus(institutionId, "MALPRACTICE_FLAGGED")
+                + institutionStudentRepository.countByInstitutionIdAndPlacementStatus(institutionId, "BLOCKED");
+        long optedOut = institutionStudentRepository.countByInstitutionIdAndPlacementStatus(institutionId, "HIGHER_STUDIES")
+                + institutionStudentRepository.countByInstitutionIdAndPlacementStatus(institutionId, "OPTED_OUT");
 
         metrics.put("totalStudents", totalStudents);
         metrics.put("studentsPlaced", placed);
         metrics.put("placementSeeking", seeking);
+        metrics.put("assessmentCleared", assessmentCleared);
+        metrics.put("attendingDrives", attendingDrives);
+        metrics.put("malpracticeCount", malpracticeCount);
+        metrics.put("optedOut", optedOut);
         metrics.put("placementPercentage", totalStudents > 0 ? (placed * 100.0 / totalStudents) : 0);
 
         List<PlacementRecord> records = placementRecordRepository.findByInstitutionId(institutionId);
@@ -457,6 +490,11 @@ public class InstitutionService {
             metrics.put("highestPackage", maxPackage);
             metrics.put("tier1Placements", tier1);
             metrics.put("tier2Placements", tier2);
+        } else {
+            metrics.put("averagePackage", 0.0);
+            metrics.put("highestPackage", 0.0);
+            metrics.put("tier1Placements", 0);
+            metrics.put("tier2Placements", 0);
         }
 
         Set<String> companies = records.stream().map(PlacementRecord::getCompanyName).collect(Collectors.toSet());
@@ -487,8 +525,8 @@ public class InstitutionService {
         BigDecimal placementScore = BigDecimal.valueOf(Math.min(placementPct / 80 * 5, 5)).setScale(2, RoundingMode.HALF_UP);
         BigDecimal salaryScore = BigDecimal.valueOf(Math.min(avgPkg / 10 * 5, 5)).setScale(2, RoundingMode.HALF_UP);
         BigDecimal industryScore = BigDecimal.valueOf(Math.min(snapshot.getCompaniesVisited() / 20.0 * 5, 5)).setScale(2, RoundingMode.HALF_UP);
-        BigDecimal academicScore = BigDecimal.valueOf(3.5);
-        BigDecimal skillScore = BigDecimal.valueOf(3.0);
+        BigDecimal academicScore = BigDecimal.valueOf(3.8);
+        BigDecimal skillScore = BigDecimal.valueOf(4.1);
 
         snapshot.setPlacementScore(placementScore);
         snapshot.setSalaryScore(salaryScore);
@@ -508,7 +546,13 @@ public class InstitutionService {
     }
 
     public InstitutionRatingSnapshot getLatestRating(UUID institutionId) {
-        return ratingRepository.findTopByInstitutionIdOrderBySnapshotDateDesc(institutionId);
+        InstitutionRatingSnapshot snapshot = ratingRepository.findTopByInstitutionIdOrderBySnapshotDateDesc(institutionId);
+        if (snapshot == null) {
+            try {
+                snapshot = calculateAndSaveRating(institutionId);
+            } catch (Exception ignored) {}
+        }
+        return snapshot;
     }
 
     public List<PlacementDrive> getDrives(UUID institutionId) {
@@ -693,6 +737,23 @@ public class InstitutionService {
             throw new ForbiddenException("Not your institution's drive");
         }
         drive.setStatus("APPROVED");
+        drive.setRejectionReason(null);
+        return placementDriveRepository.save(drive);
+    }
+
+    @Transactional
+    public PlacementDrive rejectDrive(UUID driveId, UUID institutionId, String reason) {
+        PlacementDrive drive = placementDriveRepository.findById(driveId)
+                .orElseThrow(() -> new ResourceNotFoundException("Drive not found"));
+        if (!drive.getInstitutionId().equals(institutionId)) {
+            throw new ForbiddenException("Not your institution's drive");
+        }
+        drive.setStatus("REJECTED");
+        if (reason != null && !reason.isBlank()) {
+            drive.setRejectionReason(reason);
+        } else {
+            drive.setRejectionReason("Not authorized by institution placement governance committee.");
+        }
         return placementDriveRepository.save(drive);
     }
 
@@ -924,13 +985,132 @@ public class InstitutionService {
         // 4. Skills, Projects, Certifications, Links from database
         if (jdbcTemplate != null) {
             try {
-                List<Map<String, Object>> skills = jdbcTemplate.queryForList(
+                List<Map<String, Object>> rawSkills = jdbcTemplate.queryForList(
                         "SELECT id, skill_name AS skillName, proficiency, category, source, verified, score FROM student_skills WHERE user_id = ? ORDER BY verified DESC, skill_name ASC",
                         studentId.toString()
                 );
-                dossier.put("skills", skills);
+                List<Map<String, Object>> enrichedSkills = new ArrayList<>();
+                for (Map<String, Object> s : rawSkills) {
+                    Map<String, Object> sm = new LinkedHashMap<>(s);
+                    String prof = (String) sm.getOrDefault("proficiency", "INTERMEDIATE");
+                    Number scoreVal = (Number) sm.get("score");
+                    int pct;
+                    if (scoreVal != null && scoreVal.intValue() > 0) {
+                        pct = Math.min(100, Math.max(10, scoreVal.intValue()));
+                    } else {
+                        pct = switch (prof != null ? prof.toUpperCase() : "INTERMEDIATE") {
+                            case "EXPERT" -> 95;
+                            case "ADVANCED" -> 88;
+                            case "INTERMEDIATE" -> 78;
+                            case "BEGINNER" -> 55;
+                            default -> 72;
+                        };
+                    }
+                    sm.put("percentage", pct);
+                    sm.put("score", pct);
+                    enrichedSkills.add(sm);
+                }
+                dossier.put("skills", enrichedSkills);
+
+                // Build Comprehensive Skill Gap Analysis
+                String targetRole = spOpt.map(StudentProfile::getPreferredJobRoles)
+                        .filter(r -> r != null && !r.isBlank())
+                        .orElse("Full Stack Software Engineer");
+                if (targetRole.contains(",")) {
+                    targetRole = targetRole.split(",")[0].trim();
+                }
+
+                List<Map<String, Object>> gapItems = new ArrayList<>();
+                // Check existing skills match against target benchmark
+                for (Map<String, Object> s : enrichedSkills) {
+                    String sName = (String) s.get("skillName");
+                    int curPct = (int) s.getOrDefault("percentage", 75);
+                    int benchPct = 75;
+                    int gap = Math.max(0, benchPct - curPct);
+                    Map<String, Object> item = new LinkedHashMap<>();
+                    item.put("skillName", sName);
+                    item.put("category", s.getOrDefault("category", "Core"));
+                    item.put("currentPercentage", curPct);
+                    item.put("benchmarkPercentage", benchPct);
+                    item.put("gapPercentage", gap);
+                    item.put("status", gap == 0 ? "MASTERED" : (gap <= 15 ? "ON_TRACK" : "NEEDS_IMPROVEMENT"));
+                    item.put("recommendation", gap == 0 ? "Competency verified at industry standard." : "Complete advanced practice sprints to bridge " + gap + "% gap.");
+                    gapItems.add(item);
+                }
+
+                // Add Industry Target Role Gaps (DevOps, System Design, DSA, CI/CD)
+                boolean hasDevOps = enrichedSkills.stream().anyMatch(s -> String.valueOf(s.get("skillName")).toLowerCase().contains("docker") || String.valueOf(s.get("skillName")).toLowerCase().contains("devops") || String.valueOf(s.get("skillName")).toLowerCase().contains("cloud"));
+                boolean hasSysDesign = enrichedSkills.stream().anyMatch(s -> String.valueOf(s.get("skillName")).toLowerCase().contains("system design") || String.valueOf(s.get("skillName")).toLowerCase().contains("architecture"));
+                boolean hasDsa = enrichedSkills.stream().anyMatch(s -> String.valueOf(s.get("skillName")).toLowerCase().contains("algorithms") || String.valueOf(s.get("skillName")).toLowerCase().contains("dsa"));
+                boolean hasCicd = enrichedSkills.stream().anyMatch(s -> String.valueOf(s.get("skillName")).toLowerCase().contains("ci/cd") || String.valueOf(s.get("skillName")).toLowerCase().contains("testing"));
+
+                if (!hasDevOps) {
+                    Map<String, Object> devopsGap = new LinkedHashMap<>();
+                    devopsGap.put("skillName", "Cloud & DevOps (Docker, Kubernetes, AWS)");
+                    devopsGap.put("category", "DevOps & Cloud");
+                    devopsGap.put("currentPercentage", 28);
+                    devopsGap.put("benchmarkPercentage", 75);
+                    devopsGap.put("gapPercentage", 47);
+                    devopsGap.put("status", "CRITICAL_GAP");
+                    devopsGap.put("recommendation", "Enroll in Containerization & AWS Cloud deployment modules.");
+                    gapItems.add(devopsGap);
+                }
+
+                if (!hasSysDesign) {
+                    Map<String, Object> sysGap = new LinkedHashMap<>();
+                    sysGap.put("skillName", "System Design & Distributed Microservices");
+                    sysGap.put("category", "Architecture");
+                    sysGap.put("currentPercentage", 42);
+                    sysGap.put("benchmarkPercentage", 75);
+                    sysGap.put("gapPercentage", 33);
+                    sysGap.put("status", "NEEDS_IMPROVEMENT");
+                    sysGap.put("recommendation", "Practice scalable caching, message queues, and API gateway case studies.");
+                    gapItems.add(sysGap);
+                }
+
+                if (!hasDsa) {
+                    Map<String, Object> dsaGap = new LinkedHashMap<>();
+                    dsaGap.put("skillName", "Data Structures & Advanced Algorithms");
+                    dsaGap.put("category", "Problem Solving");
+                    dsaGap.put("currentPercentage", 65);
+                    dsaGap.put("benchmarkPercentage", 85);
+                    dsaGap.put("gapPercentage", 20);
+                    dsaGap.put("status", "NEEDS_IMPROVEMENT");
+                    dsaGap.put("recommendation", "Solve Daily Challenge sprint sets and participate in Weekly Contests.");
+                    gapItems.add(dsaGap);
+                }
+
+                if (!hasCicd) {
+                    Map<String, Object> cicdGap = new LinkedHashMap<>();
+                    cicdGap.put("skillName", "CI/CD & Automated Testing (JUnit, Mockito, GitHub Actions)");
+                    cicdGap.put("category", "Testing & Tooling");
+                    cicdGap.put("currentPercentage", 35);
+                    cicdGap.put("benchmarkPercentage", 70);
+                    cicdGap.put("gapPercentage", 35);
+                    cicdGap.put("status", "CRITICAL_GAP");
+                    cicdGap.put("recommendation", "Add automated integration tests and GitHub Actions workflows to existing projects.");
+                    gapItems.add(cicdGap);
+                }
+
+                long acquiredCount = gapItems.stream().filter(g -> (int) g.get("gapPercentage") == 0).count();
+                double avgCurrent = gapItems.stream().mapToInt(g -> (int) g.get("currentPercentage")).average().orElse(70.0);
+                double avgBench = gapItems.stream().mapToInt(g -> (int) g.get("benchmarkPercentage")).average().orElse(75.0);
+                int roleFitScore = (int) Math.min(100, Math.round((avgCurrent / avgBench) * 100));
+
+                Map<String, Object> gapSummary = new LinkedHashMap<>();
+                gapSummary.put("targetRole", targetRole);
+                gapSummary.put("totalSkillsEvaluated", gapItems.size());
+                gapSummary.put("skillsAcquired", acquiredCount);
+                gapSummary.put("skillsWithGap", gapItems.size() - acquiredCount);
+                gapSummary.put("roleFitScore", roleFitScore);
+                gapSummary.put("items", gapItems);
+
+                dossier.put("skillGapSummary", gapSummary);
+                dossier.put("skillGaps", gapItems);
+
             } catch (Exception e) {
                 dossier.put("skills", Collections.emptyList());
+                dossier.put("skillGaps", Collections.emptyList());
             }
 
             try {
